@@ -190,7 +190,8 @@ export function schermoIntero(scene) {
 }
 
 // Menu a lista: frecce + INVIO, oppure mouse o dito (un tocco = scegli)
-export function menuLista(scene, voci, x, y, passo = 20, size = 8) {
+// o.pos(i) -> [x, y]: posizione di ogni voce (per le liste a colonne); o.larghezza: zona di tocco
+export function menuLista(scene, voci, x, y, passo = 20, size = 8, o = {}) {
   let sel = 0;
   const evid = scene.add.graphics();
   const agg = () => {
@@ -201,9 +202,10 @@ export function menuLista(scene, voci, x, y, passo = 20, size = 8) {
     evid.fillStyle(0xffe14a, 1); evid.fillRoundedRect(t.x - w / 2, t.y - h / 2, w, h, h / 2);
   };
   const testi = voci.map((v, i) => {
-    const t = txt(scene, x, y + i * passo, v.label, { size });
+    const [tx, ty] = o.pos ? o.pos(i) : [x, y + i * passo];
+    const t = txt(scene, tx, ty, v.label, { size });
     // zona di tocco larga quanto la riga, non solo quanto la scritta: col dito si prende meglio
-    const W = Math.max(t.width + 20, 150);
+    const W = o.larghezza ?? Math.max(t.width + 20, 150);
     t.setInteractive({ hitArea: new Phaser.Geom.Rectangle((t.width - W) / 2, (t.height - passo) / 2, W, passo), hitAreaCallback: Phaser.Geom.Rectangle.Contains, useHandCursor: true });
     t.on('pointerover', () => { if (sel !== i) { sel = i; Audio.sfx('muovi'); agg(); } });
     // il tocco sceglie subito (col dito non c'è il passaggio del mouse che prima evidenzia)

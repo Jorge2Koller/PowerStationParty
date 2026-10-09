@@ -6,6 +6,10 @@ import { BarbaScene } from './BarbaScene.js';
 import { PaninoScene } from './PaninoScene.js';
 import { ManiScene } from './ManiScene.js';
 import { SegoScene } from './SegoScene.js';
+import { RondaScene } from './RondaScene.js';
+import { BlackjackScene } from './BlackjackScene.js';
+import { PalleggiScene } from './PalleggiScene.js';
+import { PassaseoScene } from './PassaseoScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -14,4 +18,8 @@ export const MICROGIOCHI = {
   panino: PaninoScene,
   mani: ManiScene,
   sego: SegoScene,
+  ronda: RondaScene,
+  blackjack: BlackjackScene,
+  palleggi: PalleggiScene,
+  passaseo: PassaseoScene,
 };

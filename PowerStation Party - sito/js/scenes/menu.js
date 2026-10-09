@@ -53,12 +53,14 @@ export class MenuScene extends Phaser.Scene {
       } });
     });
 
-    pannello(this, 240, 152, 150, 92, { alfa: 0.55, bordo: null, raggio: 10 });
+    pannello(this, 240, 151, 178, 112, { alfa: 0.55, bordo: null, raggio: 10 });
     menuLista(this, [
-      { label: 'GIOCA', azione: () => { Sessione.nuovaSfida(); this.scene.start('Intro'); } },
+      { label: 'SFIDA COMPLETA', azione: () => { Sessione.nuovaSfida(); this.scene.start('Intro'); } },
+      { label: 'SFIDA AL MEGLIO DI 3', azione: () => { Sessione.nuovaSfidaVeloce(3); this.scene.start('Intro'); } },
+      { label: 'SFIDA AL MEGLIO DI 5', azione: () => { Sessione.nuovaSfidaVeloce(5); this.scene.start('Intro'); } },
       { label: 'PARTITA SINGOLA', azione: () => this.scene.start('Allenamento') },
       { label: 'COMANDI', azione: () => this.scene.start('Comandi') },
-    ], 240, 128, 24, 10);
+    ], 240, 111, 20, 9);
     txt(this, 240, 218, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
     pulsantiAngolo(this);
   }
@@ -111,10 +113,13 @@ export class AllenamentoScene extends Phaser.Scene {
       },
     }));
     voci.push({ label: 'Indietro', azione: () => this.scene.start('Menu') });
-    // la lista si stringe quando i microgiochi sono tanti
-    const passo = Math.min(22, 112 / (voci.length - 1)), cy = 156;
-    pannello(this, 240, cy, 230, 18 + voci.length * passo, { alfa: 0.55, bordo: null, raggio: 10 });
-    menuLista(this, voci, 240, cy - ((voci.length - 1) * passo) / 2, passo, passo < 20 ? 8.5 : 9);
+    // tanti microgiochi: due colonne (su e giù scorrono la prima colonna e poi la seconda), Indietro sotto
+    const n = voci.length - 1, righe = Math.ceil(n / 2), passo = Math.min(20, 100 / righe), y0 = 152 - (righe * passo) / 2;
+    pannello(this, 240, 154, 290, righe * passo + passo + 14, { alfa: 0.55, bordo: null, raggio: 10 });
+    menuLista(this, voci, 240, y0, passo, 7.5, {
+      larghezza: 140,
+      pos: (i) => (i === n ? [240, y0 + righe * passo + 6] : [i < righe ? 168 : 312, y0 + (i % righe) * passo]),
+    });
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
   }
 }

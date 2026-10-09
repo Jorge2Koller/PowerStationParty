@@ -582,6 +582,168 @@ function portone(c, x, y, aperto) {
   for (const s of [-1, 1]) { ellisse(c, x + w / 2 + s * 3, y + 30, 1.4, 1.4); c.fillStyle = '#e8c048'; c.fill(); }
 }
 
+// ------------------------------------------------------------
+//  SPIAGGIA di TorRONDAcelli: mare con l'Elba all'orizzonte, battigia, sabbia
+// ------------------------------------------------------------
+export const SPIAGGIA = { orizzonte: 54, riva: 198 };
+
+function sfondoSpiaggia(c) {
+  const r = casuale(81), O = SPIAGGIA.orizzonte, R = SPIAGGIA.riva;
+  c.fillStyle = gradL(c, 0, 0, 0, O, [[0, '#6fc0f0'], [1, '#d6f0fb']]); c.fillRect(0, 0, 480, O);
+  for (const [x, y, k] of [[80, 18, 1], [300, 12, 0.8], [430, 26, 0.6]]) for (const [dx, dy, rr] of [[0, 0, 9], [9, -3, 7], [-9, 2, 6], [16, 2, 5]]) { ellisse(c, x + dx * k, y + dy * k, rr * k * 1.4, rr * k); c.fillStyle = 'rgba(255,255,255,0.9)'; c.fill(); }
+  poli(c, [[288, O + 0.5], [312, O - 8], [334, O - 6], [356, O - 13], [380, O - 9], [404, O - 4], [420, O + 0.5]]); c.fillStyle = '#8aa8b8'; c.fill(); // l'Elba
+  c.fillStyle = gradL(c, 0, O, 0, R, [[0, '#2a6fb0'], [0.55, '#3a9cd0'], [1, '#68cce0']]); c.fillRect(0, O, 480, R - O + 6);
+  c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(0, O, 480, 1);
+  for (let i = 0; i < 110; i++) {
+    const y = O + 3 + Math.pow(r(), 1.5) * (R - O - 6), k = (y - O) / (R - O), w = 3 + k * 12, x = r() * 480;
+    c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + w / 2, y - 1 - k, x + w, y); tratto(c, `rgba(255,255,255,${0.25 + k * 0.35})`, 0.5 + k * 1.1);
+  }
+  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 120, O + 30, 60, '#fff3c0', 0.18); c.restore();
+  // battigia con la schiuma
+  c.beginPath(); c.moveTo(0, R + 2);
+  for (let x = 0; x <= 480; x += 16) c.quadraticCurveTo(x + 8, R - 4 + (x % 32 ? 2 : -1), x + 16, R + 2);
+  c.lineTo(480, R + 10); c.lineTo(0, R + 10); c.closePath(); c.fillStyle = 'rgba(255,255,255,0.88)'; c.fill();
+  c.fillStyle = gradL(c, 0, R + 4, 0, 270, [[0, '#d2ae70'], [0.12, '#ead096'], [1, '#f6e4b8']]); c.fillRect(0, R + 6, 480, 270 - R);
+  for (let i = 0; i < 260; i++) { ellisse(c, r() * 480, R + 8 + r() * (262 - R), 0.6, 0.5); c.fillStyle = r() < 0.5 ? 'rgba(160,120,60,0.35)' : 'rgba(255,255,255,0.5)'; c.fill(); }
+  // telo da mare e sedia del bagnino
+  c.save(); c.translate(430, 250); c.rotate(-0.15); rrect(c, -22, -9, 44, 18, 2); c.fillStyle = '#2f6fd8'; c.fill();
+  c.fillStyle = '#ffffff'; for (let i = 0; i < 4; i++) c.fillRect(-22 + 6 + i * 11, -9, 4, 18); c.restore();
+  c.fillStyle = '#d83a3a'; c.fillRect(452, 160, 3, 72); c.fillRect(470, 160, 3, 72);
+  for (const y of [176, 196, 216]) { c.fillStyle = '#f4f4f4'; c.fillRect(452, y, 21, 3); }
+  rrect(c, 448, 154, 29, 9, 2); c.fillStyle = '#f4f4f4'; c.fill(); tratto(c, '#8a2a20', 1);
+  c.fillStyle = '#3a3a40'; c.fillRect(462, 120, 1.5, 34); poli(c, [[463.5, 120], [478, 125], [463.5, 130]]); c.fillStyle = '#d83a3a'; c.fill();
+  c.fillStyle = gradR(c, 240, 140, 160, 340, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,20,40,0.28)']]); c.fillRect(0, 0, 480, 270);
+}
+
+// ------------------------------------------------------------
+//  CASINÒ dell'Ingiocabile: parete scura con lampadari, tavolo verde davanti
+// ------------------------------------------------------------
+function sfondoCasino(c) {
+  const r = casuale(23);
+  c.fillStyle = gradL(c, 0, 0, 0, 140, [[0, '#1a0c14'], [1, '#3a1422']]); c.fillRect(0, 0, 480, 140);
+  c.globalAlpha = 0.09;
+  for (let y = 8; y < 130; y += 14) for (let x = (y / 14) % 2 ? 8 : 18; x < 480; x += 20) {
+    poli(c, [[x, y - 5], [x + 4, y], [x, y + 5], [x - 4, y]]); c.fillStyle = '#ffd36a'; c.fill();
+  }
+  c.globalAlpha = 1;
+  // tende rosse ai lati
+  for (const [x0, dir] of [[0, 1], [480, -1]]) {
+    c.beginPath(); c.moveTo(x0, 0); c.lineTo(x0 + dir * 62, 0); c.quadraticCurveTo(x0 + dir * 40, 60, x0 + dir * 20, 140); c.lineTo(x0, 140); c.closePath();
+    c.fillStyle = gradL(c, x0, 0, x0 + dir * 62, 0, [[0, '#6a0e18'], [0.6, '#a01c28'], [1, '#5a0a14']]); c.fill(); tratto(c, '#2a0408', 1);
+    for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(x0 + dir * k * 14, 0); c.quadraticCurveTo(x0 + dir * (k * 10 + 4), 70, x0 + dir * k * 5, 140); tratto(c, 'rgba(0,0,0,0.25)', 1.2); }
+    rrect(c, x0 + (dir > 0 ? 8 : -24), 70, 16, 6, 3); c.fillStyle = '#e8c048'; c.fill();
+  }
+  // slot machine sullo sfondo
+  for (const x of [92, 360]) {
+    rrect(c, x, 34, 30, 70, 4); c.fillStyle = gradL(c, x, 0, x + 30, 0, [[0, '#6a5a20'], [0.5, '#d8b24a'], [1, '#6a5a20']]); c.fill(); tratto(c, '#2a2008', 1);
+    rrect(c, x + 4, 44, 22, 14, 2); c.fillStyle = '#f6f0e0'; c.fill();
+    for (let i = 0; i < 3; i++) { ellisse(c, x + 8 + i * 7, 51, 2.4, 2.4); c.fillStyle = ['#d83a3a', '#e8c048', '#3ac04a'][(i + x) % 3]; c.fill(); }
+    rrect(c, x + 3, 30, 24, 6, 3); c.fillStyle = '#ff5a6a'; c.fill();
+    c.fillStyle = '#ffd36a'; c.fillRect(x + 30, 48, 3, 1.5); ellisse(c, x + 34, 44, 2.5, 2.5); c.fillStyle = '#d83a3a'; c.fill();
+  }
+  // lampadari
+  for (const x of [170, 310]) {
+    c.fillStyle = '#d8b24a'; c.fillRect(x - 0.5, 0, 1, 14);
+    poli(c, [[x - 16, 22], [x + 16, 22], [x + 8, 14], [x - 8, 14]]); c.fillStyle = '#e8c048'; c.fill(); tratto(c, '#6a5010', 0.8);
+    for (let i = -2; i <= 2; i++) { ellisse(c, x + i * 6, 25, 1.4, 2.4); c.fillStyle = '#fff6c8'; c.fill(); }
+    c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x, 26, 46, '#ffd890', 0.3); c.restore();
+  }
+  for (let i = 0; i < 30; i++) { ellisse(c, r() * 480, r() * 120, 0.6, 0.6); c.fillStyle = 'rgba(255,220,140,0.4)'; c.fill(); }
+  c.fillStyle = '#12080c'; c.fillRect(0, 136, 480, 134);
+}
+
+function tavoloVerde(c) {
+  // il bordo dritto davanti al banco è in alto (y 0); il panno arriva fino in fondo
+  c.fillStyle = gradR(c, 240, 70, 20, 300, [[0, '#1f8a4a'], [0.6, '#146a36'], [1, '#0a3e1e']]); c.fillRect(0, 6, 480, 164);
+  const r = casuale(5);
+  for (let i = 0; i < 900; i++) { c.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.035)'; c.fillRect(r() * 480, 6 + r() * 164, 0.8, 0.8); }
+  // linee stampate sul panno
+  c.beginPath(); c.ellipse(240, -40, 200, 128, 0, 0.12 * Math.PI, 0.88 * Math.PI); tratto(c, 'rgba(232,210,122,0.55)', 1.2);
+  c.beginPath(); c.ellipse(240, -40, 186, 114, 0, 0.14 * Math.PI, 0.86 * Math.PI); tratto(c, 'rgba(232,210,122,0.35)', 0.8);
+  // cerchio della puntata
+  ellisse(c, 120, 106, 17, 13); tratto(c, 'rgba(232,210,122,0.75)', 1.3);
+  ellisse(c, 120, 106, 14, 10.5); tratto(c, 'rgba(232,210,122,0.35)', 0.7);
+  // bordo imbottito
+  rrect(c, -4, 0, 488, 10, 5); c.fillStyle = gradL(c, 0, 0, 0, 10, [[0, '#5a3418'], [0.4, '#3a200e'], [1, '#1e0e06']]); c.fill();
+  c.fillStyle = 'rgba(255,220,170,0.25)'; c.fillRect(0, 1.5, 480, 1.2);
+  c.fillStyle = gradL(c, 0, 10, 0, 18, [[0, 'rgba(0,0,0,0.45)'], [1, 'rgba(0,0,0,0)']]); c.fillRect(0, 10, 480, 8);
+}
+
+// ------------------------------------------------------------
+//  PARCO di MaraZio: prato, colline toscane coi cipressi
+// ------------------------------------------------------------
+export const PARCO = { terra: 240 };
+
+function cipresso(c, x, y, h) {
+  c.beginPath(); c.moveTo(x, y - h); c.bezierCurveTo(x + h * 0.2, y - h * 0.6, x + h * 0.16, y - h * 0.1, x, y);
+  c.bezierCurveTo(x - h * 0.16, y - h * 0.1, x - h * 0.2, y - h * 0.6, x, y - h); c.closePath();
+  c.fillStyle = gradL(c, x - h * 0.15, 0, x + h * 0.15, 0, [[0, '#2a4a24'], [1, '#14281a']]); c.fill();
+}
+
+function sfondoParco(c) {
+  const r = casuale(64), T = PARCO.terra;
+  c.fillStyle = gradL(c, 0, 0, 0, 150, [[0, '#7cc4f2'], [1, '#e2f2fa']]); c.fillRect(0, 0, 480, 150);
+  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 404, 40, 50, '#fff2b0', 0.5); c.restore();
+  ellisse(c, 404, 40, 12, 12); c.fillStyle = '#fff6c8'; c.fill();
+  for (const [x, y, k] of [[90, 30, 1], [250, 18, 0.8]]) for (const [dx, dy, rr] of [[0, 0, 9], [10, -3, 7], [-10, 2, 6], [18, 2, 5]]) { ellisse(c, x + dx * k, y + dy * k, rr * k * 1.5, rr * k); c.fillStyle = 'rgba(255,255,255,0.9)'; c.fill(); }
+  // colline una dietro l'altra
+  const colle = (y0, amp, fase, col) => {
+    c.beginPath(); c.moveTo(0, 170);
+    for (let x = 0; x <= 480; x += 8) c.lineTo(x, y0 - Math.sin(x / 90 + fase) * amp - Math.sin(x / 37 + fase * 2) * amp * 0.3);
+    c.lineTo(480, 170); c.closePath(); c.fillStyle = col; c.fill();
+  };
+  colle(118, 14, 0.5, '#a8c48a'); colle(132, 12, 2.1, '#8ab46a');
+  // casale con i cipressi
+  rrect(c, 300, 108, 30, 18, 1); c.fillStyle = '#e8c89a'; c.fill();
+  poli(c, [[297, 109], [315, 100], [333, 109]]); c.fillStyle = '#b8583a'; c.fill();
+  rrect(c, 322, 98, 9, 12, 0); c.fillStyle = '#e8c89a'; c.fill(); poli(c, [[320.5, 99], [326.5, 95], [332.5, 99]]); c.fillStyle = '#b8583a'; c.fill();
+  for (const [x, w] of [[306, 3], [316, 3]]) { c.fillStyle = '#7a4a2a'; c.fillRect(x, 114, w, 4); }
+  for (let i = 0; i < 9; i++) cipresso(c, 150 + i * 13 + r() * 4, 132 + r() * 3, 18 + r() * 8);
+  for (const x of [292, 340, 352]) cipresso(c, x, 127, 24);
+  colle(150, 8, 3.7, '#74a456');
+  // prato
+  c.fillStyle = gradL(c, 0, 150, 0, 270, [[0, '#6aa848'], [1, '#3e7a2a']]); c.fillRect(0, 148, 480, 122);
+  for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; poli(c, [[i * 60 - 40, 150], [i * 60 + 20, 150], [i * 60 + 60 + i * 6, 270], [i * 60 - 10 + i * 6, 270]]); c.fill(); }
+  // porta da calcio lontana
+  c.strokeStyle = '#ffffff'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(40, 172); c.lineTo(40, 150); c.lineTo(96, 150); c.lineTo(96, 172); c.stroke();
+  c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 0.5;
+  for (let x = 44; x < 96; x += 4) { c.beginPath(); c.moveTo(x, 150); c.lineTo(x + 3, 168); c.stroke(); }
+  for (let i = 0; i < 380; i++) { const y = 150 + r() * 120; c.fillStyle = r() < 0.5 ? 'rgba(20,60,10,0.35)' : 'rgba(180,230,120,0.3)'; c.fillRect(r() * 480, y, 0.7, 1.5 + (y - 150) / 40); }
+  ellisse(c, 240, T + 6, 300, 10); c.fillStyle = 'rgba(0,0,0,0.06)'; c.fill();
+}
+
+// ------------------------------------------------------------
+//  STRADA TOSCANA vista dall'alto (si ripete in verticale): campi, vigne, cipressi
+// ------------------------------------------------------------
+export const STRADA = { sx: 160, dx: 320 };
+
+function sfondoStradaToscana(c) {
+  const r = casuale(91), { sx, dx } = STRADA;
+  // disegna anche una copia sopra e sotto, così la texture si ripete senza giunte
+  const tre = (y, fn) => { for (const k of [-270, 0, 270]) fn(y + k); };
+  c.fillStyle = '#8ab45a'; c.fillRect(0, 0, 480, 270);
+  // campi: a sinistra vigna a filari, a destra grano
+  for (let x = 10; x < sx - 16; x += 9) { c.fillStyle = '#6a8a3a'; c.fillRect(x, 0, 3.5, 270); for (let y = 2; y < 270; y += 7) { ellisse(c, x + 1.7, y, 2.8, 2.6); c.fillStyle = r() < 0.5 ? '#4e7a2a' : '#5e8e34'; c.fill(); } }
+  c.fillStyle = '#e2c46a'; c.fillRect(dx + 18, 0, 480 - dx - 18, 270);
+  for (let i = 0; i < 400; i++) { c.fillStyle = r() < 0.5 ? 'rgba(180,140,40,0.5)' : 'rgba(255,240,170,0.5)'; c.fillRect(dx + 18 + r() * (480 - dx - 18), r() * 270, 0.8, 2.4); }
+  // banchine sterrate
+  for (const [x0, x1] of [[sx - 14, sx], [dx, dx + 14]]) { c.fillStyle = '#c8b088'; c.fillRect(x0, 0, x1 - x0, 270); for (let i = 0; i < 80; i++) { c.fillStyle = 'rgba(120,90,50,0.4)'; c.fillRect(x0 + r() * (x1 - x0), r() * 270, 1, 1); } }
+  // asfalto
+  c.fillStyle = gradL(c, sx, 0, dx, 0, [[0, '#55565c'], [0.5, '#64656c'], [1, '#55565c']]); c.fillRect(sx, 0, dx - sx, 270);
+  for (let i = 0; i < 500; i++) { c.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)'; c.fillRect(sx + r() * (dx - sx), r() * 270, 0.9, 0.9); }
+  c.fillStyle = '#f2f2ea'; c.fillRect(sx + 3, 0, 2, 270); c.fillRect(dx - 5, 0, 2, 270);
+  for (let y = 0; y < 270; y += 30) c.fillRect(239, y + 4, 2, 16);
+  // toppe sull'asfalto
+  for (let i = 0; i < 4; i++) { const y = r() * 270, x = sx + 20 + r() * 120; tre(y, (yy) => { rrect(c, x, yy, 14 + r() * 10, 8 + r() * 6, 3); c.fillStyle = 'rgba(30,30,36,0.35)'; c.fill(); }); }
+  // cipressi visti dall'alto, con l'ombra
+  for (const [x, y] of [[132, 30], [134, 100], [130, 168], [136, 236], [346, 60], [344, 134], [348, 206]]) tre(y, (yy) => {
+    ellisse(c, x + 5, yy + 6, 9, 9); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fill();
+    ellisse(c, x, yy, 8.5, 8.5); c.fillStyle = gradR(c, x - 3, yy - 3, 1, 9, [[0, '#4a7a3a'], [1, '#1e3a1a']]); c.fill();
+  });
+  // un casolare tra il grano
+  tre(80, (yy) => { rrect(c, 410, yy, 42, 30, 2); c.fillStyle = '#b8583a'; c.fill(); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(431, yy, 21, 30); c.fillStyle = '#9a4428'; c.fillRect(430, yy, 2, 30); });
+}
+
 export function creaSfondi(scene) {
   tela(scene, 'bgPub', 480, 270, sfondoPub);
   tela(scene, 'bancone', 480, 112, bancone);
@@ -593,6 +755,11 @@ export function creaSfondi(scene) {
   tela(scene, 'tavola', 480, 190, tavola);
   tela(scene, 'bgCortile', 480, 270, sfondoCortile);
   tela(scene, 'portoneAperto', 60, 54, (c) => portone(c, 12, 2, true));
+  tela(scene, 'bgSpiaggia', 480, 270, sfondoSpiaggia);
+  tela(scene, 'bgCasino', 480, 270, sfondoCasino);
+  tela(scene, 'tavoloVerde', 480, 170, tavoloVerde);
+  tela(scene, 'bgParco', 480, 270, sfondoParco);
+  tela(scene, 'bgStradaToscana', 480, 270, sfondoStradaToscana);
   // vignettatura per le schermate di menu
   tela(scene, 'vignetta', 480, 270, (c) => {
     c.fillStyle = gradR(c, 240, 135, 60, 310, [[0, 'rgba(255,255,255,0.16)'], [0.45, 'rgba(0,0,0,0)'], [1, 'rgba(20,0,30,0.55)']]);

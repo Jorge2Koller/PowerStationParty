@@ -33,7 +33,10 @@ export class IntroScene extends Phaser.Scene {
     this.input.setDefaultCursor('default');
     raggi(this, m.colore, scurisci(m.colore));
 
-    const round = S.modo !== 'sfida' ? 'ALLENAMENTO' : S.lista.length > 1 ? `ROUND ${S.indice + 1} DI ${S.lista.length}` : 'SFIDA A DUE';
+    const vinti = S.classifica().round;
+    const round = S.modo !== 'sfida' ? 'ALLENAMENTO'
+      : S.meglioDi ? `AL MEGLIO DI ${S.meglioDi}: ROUND ${S.indice + 1}  (${vinti[0]} - ${vinti[1]})`
+      : S.lista.length > 1 ? `ROUND ${S.indice + 1} DI ${S.lista.length}` : 'SFIDA A DUE';
     txt(this, 240, 14, `${round}  -  ${S.modo === 'sfida' ? `turno ${S.passo + 1} di 2` : g.nome}`, { size: 7 });
     const titolo = txt(this, 240, 40, m.titolo, { size: 19, color: '#ffe14a', wrap: 460 });
     titolo.setScale(0);
@@ -144,7 +147,11 @@ export class RisultatoScene extends Phaser.Scene {
       txt(this, 330, 179, `${G[0].nome} ${a.punteggio}  -  ${b.punteggio} ${G[1].nome}`, { size: 9 });
       const esito = v < 0 ? 'ROUND PARI!' : `ROUND A ${G[v].nome.toUpperCase()}!`;
       this.time.delayedCall(700, () => { scritta(this, 330, 197, esito, { size: 14, color: v < 0 ? '#ffffff' : G[v].colore, durata: 999999 }); Audio.sfx('ok'); });
-      const ultimo = S.indice >= S.lista.length - 1;
+      const ultimo = S.finita;
+      if (S.meglioDi) {
+        const vr = S.classifica().round;
+        txt(this, 330, 214, `AL MEGLIO DI ${S.meglioDi}:  ${G[0].nome} ${vr[0]} - ${vr[1]} ${G[1].nome}`, { size: 7, color: '#7dff9a' });
+      }
       prompt = perDito(ultimo ? 'INVIO: classifica finale' : 'INVIO: prossimo round', ultimo ? 'Tocca: classifica finale' : 'Tocca: prossimo round');
       avanti = () => {
         if (ultimo) return this.scene.start('Finale');
@@ -163,28 +170,33 @@ export class FinaleScene extends Phaser.Scene {
   constructor() { super('Finale'); }
   create() {
     inquadra(this);
-    const S = Sessione, G = CONFIG.giocatori, cl = S.classifica(), v = cl.vincitore, n = S.lista.length;
+    const S = Sessione, G = CONFIG.giocatori, cl = S.classifica(), v = cl.vincitore, n = S.giocati;
     Audio.musica('menu');
     raggi(this, 0xe09a28, 0xf2c14a);
     Audio.sfx('vittoria');
     txt(this, 240, 18, 'CLASSIFICA FINALE', { size: 18, color: '#ffe14a' });
 
     // tabellone dei round (da 4 round in su, una riga per round: titolo a sinistra, punti a destra)
-    const compatto = n > 3, passo = compatto ? 14 : 22, alt = compatto ? 34 + n * passo : 36 + n * 22;
+    const compatto = n > 3, fitto = n > 6, passo = fitto ? 10 : compatto ? 14 : 22, y0 = fitto ? 46 : 48;
+    const alt = fitto ? 28 + n * passo : compatto ? 34 + n * passo : 36 + n * 22;
     pannello(this, 240, 36 + alt / 2, 250, alt);
-    S.lista.forEach((id, i) => {
+    S.lista.slice(0, n).forEach((id, i) => {
       const [a, b] = S.risultati[i], vr = S.vincitoreRound(i), col = vr < 0 ? '#ffffff' : G[vr].colore;
       if (compatto) {
-        txt(this, 126, 48 + i * passo, CONFIG.microgiochi[id].titolo, { size: 7, color: '#ffe14a', ox: 0 });
-        txt(this, 354, 48 + i * passo, `${a.punteggio}  -  ${b.punteggio}`, { size: 8, color: col, ox: 1 });
+        txt(this, 126, y0 + i * passo, CONFIG.microgiochi[id].titolo, { size: fitto ? 6 : 7, color: '#ffe14a', ox: 0 });
+        txt(this, 354, y0 + i * passo, `${a.punteggio}  -  ${b.punteggio}`, { size: fitto ? 6.5 : 8, color: col, ox: 1 });
       } else {
         txt(this, 240, 46 + i * 22, CONFIG.microgiochi[id].titolo, { size: 7, color: '#ffe14a' });
         txt(this, 240, 56 + i * 22, `${a.punteggio}  -  ${b.punteggio}`, { size: 8, color: col });
       }
     });
-    const yRiep = compatto ? 40 + n * passo + 6 : 40 + n * 22 + 8;
-    txt(this, 240, yRiep, `ROUND: ${cl.round[0]} - ${cl.round[1]}      PUNTI: ${cl.punti[0]} - ${cl.punti[1]}`, { size: 7.5, color: '#7dff9a' });
-    txt(this, 240, yRiep + 11, `${G[0].nome}  -  ${G[1].nome}`, { size: 6.5, color: '#fff3d6' });
+    const yRiep = fitto ? y0 + n * passo + 2 : compatto ? 40 + n * passo + 6 : 40 + n * 22 + 8;
+    // quello che decide la sfida va per primo: i minigiochi vinti nella veloce, i punti nella completa
+    const riep = S.meglioDi
+      ? `MINIGIOCHI VINTI: ${cl.round[0]} - ${cl.round[1]}      punti: ${cl.punti[0]} - ${cl.punti[1]}`
+      : `PUNTI TOTALI: ${cl.punti[0]} - ${cl.punti[1]}      round vinti: ${cl.round[0]} - ${cl.round[1]}`;
+    txt(this, 240, yRiep, riep, { size: 7.5, color: '#7dff9a' });
+    txt(this, 240, yRiep + (fitto ? 9 : 11), `${G[0].nome}  -  ${G[1].nome}`, { size: 6.5, color: '#fff3d6' });
 
     const XV = 62, XP = 418, Y = 236;
     const mostra = (i, x, espr) => {

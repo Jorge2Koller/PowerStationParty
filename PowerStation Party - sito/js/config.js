@@ -19,7 +19,8 @@ export const CONFIG = {
   ],
 
   // Ordine dei microgiochi nella modalità sfida
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego'],
+  // (la sfida veloce li pesca a caso da questa lista)
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo'],
 
   microgiochi: {
     // ---------------------------------------------------------
@@ -274,6 +275,171 @@ export const CONFIG = {
       frasi: ['Chi è?', 'Cinque minuti!', 'Non ci sono!', 'Sto arrivando...', 'Sto finendo una cosa!', 'Ma che volete?'],
       frasiTosse: ['COF COF!', 'Ma siete matti?!', 'Che fumo!', 'Non si respira!'],
       frasiChiude: ['Chiudo tutto!', 'Che spiffero!', 'Fuori di qui!'],
+    },
+
+    // ---------------------------------------------------------
+    ronda: {
+      titolo: 'TorRONDAcelli',
+      durata: 45,
+      colore: 0x2f8fd0,
+      ospite: { id: 'generale', etichetta: 'AGLI ORDINI\nDEL GENERALE' },
+      comandi: [
+        'Il mouse mira, il CLIC spara (oppure FRECCE + SPAZIO)',
+        'Affonda le bagnarole dei pirati prima che tocchino riva',
+        'Se arrivano si prendono un ombrellone: affondali mentre scappano per riaverlo',
+        'Clicca la cassa del Generale (o premi R) per le munizioni',
+        'Gommone: 1 colpo. Pedalò: 2. Galeone: 3',
+      ],
+      comandiTouch: [
+        'Tocca il mare: il cannone spara lì',
+        'Affonda le bagnarole dei pirati prima che tocchino riva',
+        'Se arrivano si prendono un ombrellone: affondali mentre scappano per riaverlo',
+        'Tocca la cassa del Generale per le munizioni',
+        'Gommone: 1 colpo. Pedalò: 2. Galeone: 3',
+      ],
+      obiettivo: 'Salva almeno 3 ombrelloni su 5!',
+      obiettivoOmbrelloni: 3,
+      // munizioni
+      colpiMax: 6,
+      colpiCassa: 4,          // colpi in una cassa del Generale
+      cassaOgni: 4.5,         // secondi tra una cassa e l'altra (se quella prima è stata presa)
+      ricaricaLenta: 3.5,     // intanto, un colpo in più ogni tot secondi
+      velMira: 230,           // tastiera: velocità del mirino (unità/s)
+      // punti
+      puntiAffondata: 10,
+      bonusLontano: 5,        // ...se affondata lontano dalla riva (sopra yLontano)
+      yLontano: 100,
+      puntiRipreso: 5,        // ombrellone recuperato da una bagnarola in fuga
+      puntiOmbrellone: 15,    // a fine partita, per ogni ombrellone ancora piantato
+      // bagnarole: colpi per affondarle e lentezza rispetto alla velocità della fase
+      hp: { gommone: 1, pedalo: 2, galeone: 3 },
+      passo: { gommone: 1, pedalo: 0.9, galeone: 0.72 },
+      // difficoltà a inizio e a fine partita (in mezzo si sfuma)
+      inizio: { intervallo: 2.7, vel: 16, maxBarche: 2, pedalo: 0.25, galeone: 0, zigzag: 0 },
+      fine: { intervallo: 1.1, vel: 30, maxBarche: 6, pedalo: 0.4, galeone: 0.3, zigzag: 20 },
+      frasi: ['FUOCO!', 'Mirate alla chiglia!', 'Non un passo indietro!', 'Difendete gli ombrelloni!', 'Avanti, soldato!', 'Ricaricate!'],
+      frasiCassa: ['Munizioni!', 'Prendi, soldato!', 'Al volo!'],
+      frasiRubato: ['Il mio ombrellone!', 'Inseguiteli!', 'Vergogna!', 'Ritirata no!'],
+      frasiPirati: ['Arrr!', 'Questo è nostro!', 'Bottino!', 'Si va al largo!'],
+    },
+
+    // ---------------------------------------------------------
+    blackjack: {
+      titolo: "L'Ingiocabile",
+      durata: 60,
+      colore: 0x1f8a4a,
+      ospite: { id: 'ingiocabile', etichetta: "AL BANCO:\nL'INGIOCABILE" },
+      comandi: [
+        '1, 2, 3 (o clic sulle fiches): punti 10, 25 o 50',
+        'C o SPAZIO: carta    S o INVIO: stai    D: raddoppia',
+        'Arriva più vicino possibile a 21 senza sballare',
+        'Il banco sta su 17. Il blackjack paga 3 a 2',
+        'Si parte con 100 fiches',
+      ],
+      comandiTouch: [
+        'Tocca una fiche per puntare 10, 25 o 50',
+        'Poi tocca CARTA, STAI o RADDOPPIA',
+        'Arriva più vicino possibile a 21 senza sballare',
+        'Il banco sta su 17. Il blackjack paga 3 a 2',
+        'Si parte con 100 fiches',
+      ],
+      obiettivo: 'Finisci con più di 100 fiches!',
+      fiches: 100,
+      puntate: [10, 25, 50],
+      mazzi: 2,
+      rimescola: 20,          // sotto queste carte rimaste, il sabot si rimescola
+      stai: 17,               // il banco tira finché non arriva almeno a questo
+      frasi: ['Puntate, signori.', 'Fate il vostro gioco.', 'Il banco aspetta.', 'Coraggio...', 'Carte!'],
+      frasiPerde: ['Mah...', 'Fortuna.', 'Stavolta passi.', 'Mischio meglio la prossima.', 'Pff.'],
+      fraseVince: 'Come le leggo!',
+    },
+
+    // ---------------------------------------------------------
+    palleggi: {
+      titolo: 'MaraZio',
+      durata: 45,
+      colore: 0x4a9a3a,
+      ospite: { id: 'zio', etichetta: 'SFIDA\nLO ZIO' },
+      comandi: [
+        'FRECCE SINISTRA/DESTRA (o A/D), oppure il mouse: muoviti',
+        'SPAZIO o CLIC: calcia, quando il pallone arriva al piede',
+        'Più il colpo è preciso, più il pallone sale dritto',
+        'Colpo scarso: il pallone scappa di lato. Se cade, si ricomincia',
+        'Lo Zio intanto palleggia. E non sbaglia mai.',
+      ],
+      comandiTouch: [
+        'Trascina il dito sul prato: ti muovi',
+        'Tocca CALCIA quando il pallone arriva al piede',
+        'Più il colpo è preciso, più il pallone sale dritto',
+        'Colpo scarso: il pallone scappa di lato. Se cade, si ricomincia',
+        'Lo Zio intanto palleggia. E non sbaglia mai.',
+      ],
+      obiettivo: 'Fai una serie di almeno 12 palleggi!',
+      obiettivoSerie: 12,
+      // punti
+      puntiPalleggio: 10,
+      bonusPerfetto: 5,
+      bonusSerie: 5,          // a fine partita, per ogni palleggio della serie migliore
+      // fisica (unità e secondi)
+      gravita: 300,
+      // velocità verso l'alto e spinta di lato per ogni tipo di colpo: [vy, vx minima, vx massima]
+      colpi: { perfetto: [232, 0, 10], buono: [215, 18, 42], scarso: [192, 45, 78] },
+      // zona del colpo: quanto sopra (e sotto) al piede può essere il pallone, e quanto lontano
+      sopra: 34, sotto: 10, portata: 24,
+      perfetto: { altezza: 8, distanza: 9 },
+      buono: { altezza: 18, distanza: 16 },
+      velGiocatore: 210,
+      guadagnoDito: 1.2,
+      ricarica: 0.3,          // secondi prima di poter calciare di nuovo dopo un colpo a vuoto
+      frasi: ['Io non sbaglio mai.', 'Visto? Facile.', 'Palla incollata al piede.', 'Mai sbagliato in vita mia.', 'Guarda e impara.'],
+      frasiErrore: ["Te l'avevo detto...", 'Ahia.', 'Guarda me!', 'Piede di legno!', 'Si ricomincia.'],
+    },
+
+    // ---------------------------------------------------------
+    passaseo: {
+      titolo: 'Passa di qua',
+      durata: 45,
+      colore: 0xd83a3a,
+      ospite: { id: 'passaseo', etichetta: 'IN BICI:\nPASSASEO' },
+      comandi: [
+        'FRECCE SINISTRA/DESTRA (o A/D), oppure il mouse: sterzi',
+        "Prendi le pozzanghere quando c'è un Passaseo in bici accanto: SPLASH!",
+        'Più schizzi di fila, più punti',
+        'Non toccare i ciclisti: freni e perdi punti',
+        'Occhio a trattori e Vespe',
+      ],
+      comandiTouch: [
+        'Trascina il dito a destra e a sinistra: sterzi',
+        "Prendi le pozzanghere quando c'è un Passaseo in bici accanto: SPLASH!",
+        'Più schizzi di fila, più punti',
+        'Non toccare i ciclisti: freni e perdi punti',
+        'Occhio a trattori e Vespe',
+      ],
+      obiettivo: 'Schizza almeno 8 Passaseo!',
+      obiettivoSchizzi: 8,
+      // punti
+      puntiSchizzo: 10,       // moltiplicato per la serie di schizzi di fila (fino a maxSerie)
+      maxSerie: 4,
+      puntiPozzanghera: 1,    // pozzanghera presa senza nessuno accanto
+      malusCiclista: 10,
+      malusVeicolo: 5,
+      // guida
+      velInizio: 130,         // velocità della strada (unità/s)
+      velFine: 210,
+      velFreno: 35,           // dopo un tocco si scende a questa velocità...
+      ripresa: 1.4,           // ...e si torna su in questi secondi
+      velSterzo: 210,
+      guadagnoDito: 1.25,
+      // traffico
+      intervalloInizio: 1.9,  // secondi tra un incontro e l'altro
+      intervalloFine: 1.15,
+      veicoliInizio: 0.12,    // probabilità che invece del ciclista arrivi un trattore o una Vespa
+      veicoliFine: 0.3,
+      bici: 0.35,             // velocità del ciclista rispetto alla strada
+      trattore: 0.55,
+      vespa: 70,              // la Vespa arriva contromano, con questa velocità in più
+      frasi: ['Ma dai!', 'Sono fradicio!', 'La mia divisa!', 'Ma guarda te!', 'Che doccia!', 'Passa di là!'],
+      frasiSfiorato: ['Attento!', 'Piano!', 'Ehi!'],
     },
   },
 

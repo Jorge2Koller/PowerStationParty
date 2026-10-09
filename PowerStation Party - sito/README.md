@@ -3,7 +3,7 @@
 Microgiochi in stile WarioWare con Phaser 3. Riccardo contro Giorgio: stesso
 microgioco, un turno a testa, vince il round chi fa più punti.
 
-I microgiochi sono sei:
+I microgiochi sono dieci:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -13,6 +13,10 @@ I microgiochi sono sei:
 | `panino` | Il Panino di Marsupino | Marsupino |
 | `mani` | Guerra, via quelle mani! | Guerra |
 | `sego` | Sego, sono sotto casa! | Franci (Sego) |
+| `ronda` | TorRONDAcelli | il Generale |
+| `blackjack` | L'Ingiocabile | l'Ingiocabile |
+| `palleggi` | MaraZio | lo Zio |
+| `passaseo` | Passa di qua | Passaseo |
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -156,11 +160,16 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
 
 ## Modalità
 
-- **Gioca**: sfida completa sui 6 microgiochi. Ogni round lo giocano entrambi,
+- **Sfida completa**: tutti e 10 i microgiochi. Ogni round lo giocano entrambi,
   uno dopo l'altro; chi comincia si alterna a ogni round e il secondo vede a
-  schermo il punteggio da battere.
+  schermo il punteggio da battere. Vince chi fa più **punti in totale** (a parità
+  di punti, chi ha vinto più round).
+- **Sfida al meglio di 3** e **al meglio di 5**: microgiochi pescati a caso, vince
+  chi ne vince prima 2 (o 3). Un round pari non conta e se ne gioca un altro;
+  se i microgiochi finissero prima, decidono i punti.
 - **Partita singola**: un solo microgioco, in sfida a due oppure in allenamento
-  da soli (SINISTRA/DESTRA per scegliere, o col dito le frecce < e >).
+  da soli (SINISTRA/DESTRA per scegliere, o col dito le frecce < e >). I
+  microgiochi sono su due colonne: SU/GIÙ scorrono la prima e poi la seconda.
 
 ## Comandi
 
@@ -203,12 +212,46 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
   - dito: appoggia, tira indietro come una fionda, lascia
   - la traiettoria tratteggiata e il mirino dicono dove arriva: verde = finestra
     aperta, rosso = persiane chiuse, grigio = muro
+- TorRONDAcelli:
+  - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
+    dito: tocca il mare dove vuoi colpire
+  - la palla ci mette di più ad arrivare lontano: mira un po' avanti alla bagnarola
+  - gommone 1 colpo, pedalò 2, galeone 3. Se toccano riva si prendono un
+    ombrellone: affondali mentre scappano e l'ombrellone torna
+  - munizioni: la cassa che lancia il Generale (clic, tocco o R); un colpo torna
+    anche da solo ogni tanto
+- L'Ingiocabile (blackjack):
+  - 1, 2, 3 o clic/tocco sulle fiches: punti 10, 25 o 50
+  - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
+  - il banco sta su 17, il blackjack paga 3 a 2; nella sfida tutti e due trovano
+    lo stesso mazzo
+- MaraZio (palleggi):
+  - FRECCE SINISTRA/DESTRA (o A/D) o il mouse per muoversi, SPAZIO o clic per calciare;
+    col dito: trascina sul prato per muoverti e tocca CALCIA
+  - calcia quando il pallone arriva al piede: perfetto = sale dritto, buono =
+    scappa un po', scarso = scappa tanto; se cade, la serie riparte
+- Passa di qua:
+  - FRECCE SINISTRA/DESTRA (o A/D), il mouse o il dito trascinato per sterzare
+  - passa nella pozzanghera proprio mentre affianchi un Passaseo in bici: SPLASH
+  - non toccare i ciclisti (si frena e si perdono punti), occhio a trattori e Vespe
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
 brevemente il telefono.
 
 ## Punteggi dei microgiochi nuovi
+
+- **TorRONDAcelli** (45 s): +10 per ogni bagnarola affondata (+5 se lontana dalla
+  riva), +5 per ogni ombrellone ripreso, +15 per ogni ombrellone ancora piantato
+  alla fine. Vittoria con almeno 3 ombrelloni su 5; persi tutti, finisce prima.
+- **L'Ingiocabile** (60 s): si parte con 100 fiches, il punteggio sono le fiches
+  alla fine (una mano a metà si annulla). Vittoria con più di 100; al verde,
+  finisce prima.
+- **MaraZio** (45 s): +10 per ogni palleggio (+5 se perfetto), +5 per ogni palleggio
+  della serie migliore. Vittoria con una serie di almeno 12.
+- **Passa di qua** (45 s): SPLASH +10, +20, +30, +40 se fatti di fila (si riparte
+  da +10 dopo un tocco), +1 per una pozzanghera presa senza nessuno accanto,
+  -10 per un ciclista sfiorato, -5 per trattori e Vespe. Vittoria con almeno 8 schizzi.
 
 - **Panino** (45 s): +10 per ogni ingrediente che mancava, +3 per i doppioni,
   +30 per ogni panino completo (+10 se fatto in meno di 8 s), -10 per ogni
@@ -248,13 +291,16 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        gli otto personaggi: tratti, espressioni, vestiti
+    personaggi.js        i dodici personaggi: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     oggetti.js           Golf di ReGrorio, pinte, spina, clienti, attrezzi del
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
-                         finestre con le persiane, fumogeni
+                         finestre con le persiane, fumogeni, ombrelloni,
+                         cannone e bagnarole dei pirati, carte e fiches,
+                         pallone, Panda, ciclisti scout, trattore e Vespa
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
-                         cortile con la villetta di Franci
+                         cortile con la villetta di Franci, spiaggia, casinò e
+                         tavolo verde, prato toscano, strada tra vigne e grano
   scenes/menu.js         boot, menu, partita singola, comandi, pausa
   scenes/flusso.js       introduzione, risultato, classifica finale
   microgames/
@@ -262,6 +308,7 @@ js/
     index.js             registro dei microgiochi
     SpinaScene.js  ReGrorioScene.js  BarbaScene.js
     PaninoScene.js  ManiScene.js  SegoScene.js
+    RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -274,20 +321,26 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
 `js/grafica/personaggi.js`. Oltre a colori e forma del viso (`faccia`) ci sono:
 
 - `stile` dei capelli: `ricci`, `indietro`, `corto`, `ciuffo`, `grigio`, `rasato`
-  (Marsupino), `stempiato` (Guerra), `spettinato` (Sego)
-- `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `piena`, `folta`, `corta`
+  (Marsupino), `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale,
+  l'Ingiocabile), `lunghiBagnati` (lo Zio)
+- `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
-  naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta
+  naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
+  con `tondi: true` occhiali tondi (Passaseo)
+- `cappello: { tipo: 'basco', colore, stemma }` (il Generale)
 - `corporatura` (1 = normale, 1.2 = robusta), `labbra`, `sopraDritte`,
   `sopraDavanti` (sopracciglia sopra la frangia), `sguardo` (lo strabismo di Beppe)
 - `vestito.tipo`: `tshirt`, `giacca` (con `sotto` = colore della maglietta, se no
-  camicia a quadretti), `piumino` (con `camicia` a righe e `catenina`)
+  camicia a quadretti), `piumino` (con `camicia` a righe e `catenina`), `mimetica`,
+  `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe);
+  `corti: true` per i pantaloncini, `calzettoni` per i calzettoni
 
 Ogni personaggio ha 5 espressioni: `normale`, `felice`, `triste`, `shock`,
 `sufficienza` (texture `id_espressione`, es. `sego_felice`).
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
-`panino`, `mani`, `sego`) apre subito quel microgioco.
+`panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`) apre subito
+quel microgioco.
 
 ## Aggiungere un microgioco
 

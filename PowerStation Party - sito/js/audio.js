@@ -81,6 +81,43 @@ const SFX = {
   tosse: (t) => { for (const dt of [0, 0.22, 0.4]) { rumore(t + dt, 0.12, 0.22, 900); nota(210, t + dt, 0.1, 'sawtooth', 0.05, 140); } },
   sbam: (t) => { rumore(t, 0.1, 0.25, 1200); nota(200, t, 0.12, 'square', 0.08, 90); },
   porta: (t) => { nota(180, t, 0.5, 'sawtooth', 0.04, 260); nota(240, t + 0.3, 0.3, 'triangle', 0.05, 160); },
+  // TorRONDAcelli
+  cannonata: (t) => { rumore(t, 0.5, 0.34, 500, 'lowpass'); rumore(t, 0.12, 0.2, 2500); nota(120, t, 0.3, 'square', 0.12, 40); },
+  buco: (t) => { rumore(t, 0.14, 0.22, 1400); nota(520, t, 0.16, 'square', 0.06, 180); },
+  affonda: (t) => { rumore(t, 0.6, 0.14, 700, 'lowpass'); for (let i = 0; i < 4; i++) nota(700 - i * 110, t + 0.15 + i * 0.13, 0.1, 'triangle', 0.08, 380 - i * 60); },
+  ricarica: (t) => { rumore(t, 0.05, 0.2, 3000, 'highpass'); nota(700, t + 0.07, 0.06, 'square', 0.06); rumore(t + 0.14, 0.05, 0.22, 3000, 'highpass'); },
+  vuoto: (t) => { nota(900, t, 0.05, 'square', 0.05); rumore(t + 0.03, 0.04, 0.08, 4000, 'highpass'); },
+  fischietto: (t) => { for (let i = 0; i < 10; i++) nota(i % 2 ? 2350 : 2550, t + i * 0.035, 0.04, 'square', 0.035); nota(2450, t + 0.36, 0.3, 'square', 0.04); },
+  rubato: (t) => arp(t, [76, 73, 70, 66], 0.09, 0.14, 0.07),
+  // Passa di qua
+  schizzo: (t) => { rumore(t, 0.5, 0.3, 900, 'lowpass'); rumore(t + 0.04, 0.35, 0.14, 3500, 'highpass'); },
+  campanello: (t) => { for (const dt of [0, 0.16]) { nota(2637, t + dt, 0.18, 'triangle', 0.08); nota(3520, t + dt, 0.12, 'triangle', 0.04); } },
+  frenata: (t) => { rumore(t, 0.4, 0.12, 3000); nota(1700, t, 0.4, 'sawtooth', 0.03, 1100); },
+  // MaraZio
+  calcio: (t) => { rumore(t, 0.08, 0.26, 700, 'lowpass'); nota(160, t, 0.1, 'triangle', 0.14, 70); },
+  rimbalzo: (t) => { rumore(t, 0.06, 0.12, 500, 'lowpass'); nota(110, t, 0.08, 'triangle', 0.09, 60); },
+  vuotoCalcio: (t) => rumore(t, 0.16, 0.08, 2200),
+  // L'Ingiocabile
+  carta: (t) => { rumore(t, 0.07, 0.12, 5000, 'highpass'); rumore(t + 0.03, 0.05, 0.06, 1800); },
+  gira: (t) => { rumore(t, 0.05, 0.1, 3500, 'highpass'); nota(1200, t, 0.04, 'triangle', 0.04); },
+  fiches: (t) => { for (let i = 0; i < 4; i++) { nota(2600 + i * 180, t + i * 0.035, 0.06, 'triangle', 0.05); rumore(t + i * 0.035, 0.02, 0.06, 6000, 'highpass'); } },
+  // un fischio solo, lungo quanto la spazzolata del braccio: sale mentre il braccio tira a sé le fiches
+  fischio: (t) => {
+    const o = ac.createOscillator(), g = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), d = 1.15;
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1250, t);
+    o.frequency.exponentialRampToValueAtTime(1500, t + 0.25);
+    o.frequency.exponentialRampToValueAtTime(2350, t + d);
+    lfo.frequency.value = 7; lg.gain.value = 28;
+    lfo.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.exponentialRampToValueAtTime(0.13, t + 0.06);
+    g.gain.setValueAtTime(0.13, t + d - 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, t + d);
+    o.connect(g); g.connect(master);
+    o.start(t); lfo.start(t); o.stop(t + d + 0.02); lfo.stop(t + d + 0.02);
+    rumore(t, d, 0.02, 3200);
+  },
 };
 
 // Musica: lead (onda quadra) + basso (triangolare), un passo = un ottavo

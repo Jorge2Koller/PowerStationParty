@@ -485,6 +485,274 @@ function bacinella(c) {
   for (const [x, y, r] of [[52, 15, 3], [56, 18, 2.2], [48, 19, 1.8], [20, 18, 2]]) { ellisse(c, x, y, r, r * 0.7); c.fillStyle = 'rgba(255,255,255,0.85)'; c.fill(); }
 }
 
+// ------------------------------------------------------------
+//  TORRONDACELLI: ombrelloni, cannone, bagnarole dei pirati, pirati a nuoto, munizioni
+// ------------------------------------------------------------
+// un pirata da operetta (testa e spalle) in (x, y), grande s; v: 0 bandana, 1 cappello, 2 pappagallo
+function pirata(c, x, y, s, v) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  rrect(c, -7, 4, 14, 8, 3); c.fillStyle = ['#2f3c66', '#7a1f2a', '#2e6b3a'][v % 3]; c.fill(); tratto(c, CONT, 1);
+  c.fillStyle = 'rgba(255,255,255,0.8)'; for (let i = 0; i < 3; i++) c.fillRect(-6, 5.5 + i * 2.2, 12, 0.9);
+  ellisse(c, 0, 0, 6.5, 7); c.fillStyle = '#f0c09a'; c.fill(); tratto(c, CONT, 1);
+  c.beginPath(); c.moveTo(-3.5, 3); c.quadraticCurveTo(0, 1.6, 3.5, 3); tratto(c, '#3a2414', 1.4);         // baffoni
+  ellisse(c, 2.3, -1, 1.2, 1.2); c.fillStyle = CONT; c.fill();
+  ellisse(c, -2.4, -1, 1.8, 1.6); c.fillStyle = '#141418'; c.fill();                                     // benda
+  c.beginPath(); c.moveTo(-6.5, -3); c.lineTo(5.5, -5.5); tratto(c, '#141418', 0.7);
+  if (v === 1) {
+    poli(c, [[-10, -4], [0, -12], [10, -4], [0, -6]]); c.fillStyle = '#1c1c22'; c.fill(); tratto(c, CONT, 0.8);
+    ellisse(c, 0, -8, 1.6, 1.4); c.fillStyle = '#ffffff'; c.fill();
+  } else {
+    c.beginPath(); c.ellipse(0, -3, 7, 5, 0, Math.PI, 0); c.closePath(); c.fillStyle = '#d83a3a'; c.fill(); tratto(c, CONT, 0.8);
+    c.fillStyle = 'rgba(255,255,255,0.85)'; for (const [dx, dy] of [[-3, -5], [1, -6], [4, -4]]) { ellisse(c, dx, dy, 0.8, 0.8); c.fill(); }
+    poli(c, [[6, -3], [10, -1], [8.5, 1]]); c.fillStyle = '#d83a3a'; c.fill();
+  }
+  if (v === 2) {   // pappagallo sulla spalla
+    ellisse(c, 9, 1, 3, 4); c.fillStyle = '#3ac04a'; c.fill(); tratto(c, CONT, 0.7);
+    poli(c, [[10.5, -2], [13, -1], [11, 0]]); c.fillStyle = '#f2c43a'; c.fill();
+    ellisse(c, 8.6, -1.5, 0.6, 0.6); c.fillStyle = CONT; c.fill();
+  }
+  c.restore();
+}
+
+// bagnarole viste dalla riva, centro in basso a metà: gommone (64x34), pedalò (64x36), galeone (90x64)
+function bagnarola(c, tipo) {
+  if (tipo === 'gommone') {
+    pirata(c, 22, 13, 1, 0); pirata(c, 41, 12, 1, 2);
+    rrect(c, 3, 17, 58, 14, 7); c.fillStyle = gradL(c, 0, 17, 0, 31, [[0, '#ffb24a'], [1, '#d86a10']]); c.fill(); tratto(c, CONT, 1.2);
+    c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(8, 19, 46, 2);
+    for (const x of [14, 32, 50]) { c.beginPath(); c.moveTo(x, 18); c.lineTo(x, 30); tratto(c, 'rgba(120,50,0,0.4)', 0.8); }
+    c.beginPath(); c.moveTo(6, 23); c.quadraticCurveTo(32, 28, 58, 23); tratto(c, '#2a2a30', 0.8);
+  } else if (tipo === 'pedalo') {
+    poli(c, [[44, 6], [52, 6], [58, 24], [52, 24]]); c.fillStyle = '#f2c43a'; c.fill(); tratto(c, CONT, 1);   // scivolo
+    pirata(c, 20, 13, 1, 1); pirata(c, 37, 13, 1, 0);
+    rrect(c, 2, 19, 60, 14, [3, 3, 8, 8]); c.fillStyle = gradL(c, 0, 19, 0, 33, [[0, '#ffffff'], [1, '#c8d8e8']]); c.fill(); tratto(c, CONT, 1.2);
+    rrect(c, 2, 19, 60, 4, 2); c.fillStyle = '#2f6fd8'; c.fill();
+    for (const x of [14, 50]) { ellisse(c, x, 30, 4, 2); c.fillStyle = 'rgba(40,60,100,0.35)'; c.fill(); }
+  } else {
+    // galeone gonfiabile con la bandiera
+    c.beginPath(); c.moveTo(45, 4); c.lineTo(45, 40); tratto(c, '#5a3a1a', 2.2);
+    poli(c, [[46, 6], [72, 9], [70, 24], [46, 22]]); c.fillStyle = '#18181e'; c.fill(); tratto(c, CONT, 0.8);
+    ellisse(c, 58, 13, 3.6, 3.4); c.fillStyle = '#ffffff'; c.fill();
+    for (const dx of [-1.3, 1.3]) { ellisse(c, 58 + dx, 12.6, 0.8, 0.9); c.fillStyle = '#18181e'; c.fill(); }
+    c.beginPath(); c.moveTo(53, 17); c.lineTo(63, 21); c.moveTo(63, 17); c.lineTo(53, 21); tratto(c, '#ffffff', 1.1);
+    pirata(c, 22, 33, 1.1, 1); pirata(c, 40, 32, 1.1, 2); pirata(c, 62, 33, 1.1, 0);
+    c.beginPath(); c.moveTo(2, 38); c.quadraticCurveTo(4, 60, 20, 61); c.lineTo(70, 61); c.quadraticCurveTo(86, 60, 88, 38); c.closePath();
+    c.fillStyle = gradL(c, 0, 38, 0, 61, [[0, '#b8783a'], [1, '#6a3a14']]); c.fill(); tratto(c, CONT, 1.3);
+    for (const y of [45, 53]) { c.beginPath(); c.moveTo(5, y); c.quadraticCurveTo(45, y + 3, 85, y); tratto(c, 'rgba(60,30,10,0.5)', 1); }
+    for (const x of [22, 45, 68]) { ellisse(c, x, 49, 3, 3); c.fillStyle = '#1c1c22'; c.fill(); tratto(c, '#e8c048', 0.8); }   // oblò
+    rrect(c, 0, 36, 90, 5, 2.5); c.fillStyle = '#e8c048'; c.fill(); tratto(c, CONT, 1);
+  }
+}
+
+function ombrellone(c) {
+  ellisse(c, 20, 44, 13, 2.5); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fill();
+  c.fillStyle = '#e8e2d4'; c.fillRect(19, 12, 2, 32);
+  const tela = () => { c.beginPath(); c.moveTo(1, 16); c.quadraticCurveTo(20, -4, 39, 16); c.quadraticCurveTo(34.5, 13, 29.5, 16); c.quadraticCurveTo(25, 13, 20, 16); c.quadraticCurveTo(15, 13, 10.5, 16); c.quadraticCurveTo(5.5, 13, 1, 16); c.closePath(); };
+  tela(); c.fillStyle = '#ffffff'; c.fill();
+  c.save(); tela(); c.clip();
+  for (let i = 0; i < 4; i++) { poli(c, [[20, 2], [1 + i * 9.5 * 1.05, 18], [5.5 + i * 9.5 * 1.05, 18]]); c.fillStyle = '#d83a3a'; c.fill(); }
+  c.restore();
+  tela(); tratto(c, CONT, 1.1);
+  ellisse(c, 20, 3.5, 1.4, 1.4); c.fillStyle = '#e8e2d4'; c.fill(); tratto(c, CONT, 0.6);
+}
+
+function cannone(c) {
+  // canna (40x16): perno a sinistra (4, 8), bocca a destra
+  rrect(c, 2, 2.5, 36, 11, [5.5, 3, 3, 5.5]); c.fillStyle = gradL(c, 0, 2.5, 0, 13.5, [[0, '#6a6e7a'], [0.35, '#2a2c34'], [1, '#101116']]); c.fill(); tratto(c, '#000000', 1);
+  for (const x of [12, 24]) { rrect(c, x, 2, 3, 12, 1); c.fillStyle = '#c8a040'; c.fill(); tratto(c, '#5a4010', 0.6); }
+  rrect(c, 34, 1, 5, 14, 2); c.fillStyle = '#2a2c34'; c.fill(); tratto(c, '#000000', 1);
+  c.fillStyle = 'rgba(255,255,255,0.3)'; c.fillRect(6, 4.5, 26, 1.4);
+}
+function affusto(c) {
+  poli(c, [[4, 4], [34, 4], [38, 16], [2, 16]]); c.fillStyle = gradL(c, 0, 4, 0, 16, [[0, '#a8743a'], [1, '#6a4018']]); c.fill(); tratto(c, CONT, 1);
+  for (const x of [9, 31]) { ellisse(c, x, 17, 6.5, 6.5); c.fillStyle = '#7a4a1e'; c.fill(); tratto(c, CONT, 1); ellisse(c, x, 17, 2, 2); c.fillStyle = '#c8a040'; c.fill(); for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(x, 17); c.lineTo(x + Math.cos(k * 0.785 * 2) * 6, 17 + Math.sin(k * 0.785 * 2) * 6); tratto(c, '#4a2a0e', 0.8); } }
+}
+
+function cassaMunizioni(c) {
+  rrect(c, 1, 3, 22, 13, 2); c.fillStyle = gradL(c, 0, 3, 0, 16, [[0, '#6a7a3a'], [1, '#3e4a20']]); c.fill(); tratto(c, CONT, 1);
+  c.fillStyle = '#e8c048'; c.fillRect(1.5, 8, 21, 3);
+  for (const x of [5, 12, 19]) { ellisse(c, x, 9.5, 1.6, 1.6); c.fillStyle = '#18181e'; c.fill(); }
+  rrect(c, 8, 0.5, 8, 3.5, 1.5); tratto(c, '#2a2a20', 1.2);
+}
+
+function pirataNuota(c) {
+  ellisse(c, 12, 12, 11, 4.5); c.fillStyle = '#ff8a2a'; c.fill(); tratto(c, CONT, 1);
+  c.fillStyle = '#ffffff'; for (const x of [4, 12, 20]) c.fillRect(x - 1.5, 9, 3, 6);
+  pirata(c, 12, 7, 0.8, 0);
+  ellisse(c, 12, 12.5, 7, 2.2); c.fillStyle = '#3fa0d0'; c.fill();
+}
+
+function spruzzo(c) {
+  for (const [x, y, rr] of [[12, 16, 7], [6, 13, 4.5], [18, 13, 4.5], [12, 9, 4], [8, 6, 2.5], [16, 5, 2.5], [12, 3, 2]]) {
+    ellisse(c, x, y, rr, rr * 0.9); c.fillStyle = gradR(c, x - 1, y - 1, 0.5, rr, [[0, '#ffffff'], [1, 'rgba(200,235,250,0.85)']]); c.fill();
+  }
+}
+
+function creaRonda(scene) {
+  for (const t of ['gommone', 'pedalo']) tela(scene, 'barca_' + t, 64, 36, (c) => bagnarola(c, t), 5);
+  tela(scene, 'barca_galeone', 90, 64, (c) => bagnarola(c, 'galeone'), 5);
+  tela(scene, 'ombrellone', 40, 46, ombrellone, 5);
+  tela(scene, 'cannone', 40, 16, cannone, 6);
+  tela(scene, 'affusto', 40, 24, affusto, 6);
+  tela(scene, 'cassaMunizioni', 24, 17, cassaMunizioni, 6);
+  tela(scene, 'pirataNuota', 24, 18, pirataNuota, 6);
+  tela(scene, 'spruzzo', 24, 20, spruzzo, 5);
+  tela(scene, 'palla', 8, 8, (c) => { ellisse(c, 4, 4, 3.6, 3.6); c.fillStyle = gradR(c, 3, 3, 0.3, 3.6, [[0, '#8a8e9a'], [1, '#141418']]); c.fill(); }, 8);
+}
+
+// ------------------------------------------------------------
+//  L'INGIOCABILE: carte, semi, fiches, sabot, avambraccio a spazzola
+// ------------------------------------------------------------
+export function seme(c, x, y, k, tipo) {
+  c.save(); c.translate(x, y); c.scale(k, k);
+  c.beginPath();
+  if (tipo === 'cuori') { c.moveTo(0, 4); c.bezierCurveTo(-6, -1, -4, -6, 0, -3); c.bezierCurveTo(4, -6, 6, -1, 0, 4); }
+  else if (tipo === 'quadri') { c.moveTo(0, -5); c.lineTo(3.6, 0); c.lineTo(0, 5); c.lineTo(-3.6, 0); }
+  else if (tipo === 'picche') { c.moveTo(0, -5); c.bezierCurveTo(5, -1, 5, 3, 1, 2.2); c.lineTo(2, 5); c.lineTo(-2, 5); c.lineTo(-1, 2.2); c.bezierCurveTo(-5, 3, -5, -1, 0, -5); }
+  else { for (const [dx, dy] of [[0, -2.4], [-2.6, 1], [2.6, 1]]) { c.moveTo(dx + 2.3, dy); c.arc(dx, dy, 2.3, 0, 6.3); } c.moveTo(-0.6, 1); c.lineTo(-2, 5); c.lineTo(2, 5); c.lineTo(0.6, 1); }
+  c.closePath();
+  c.fillStyle = tipo === 'cuori' || tipo === 'quadri' ? '#d22a34' : '#16161c'; c.fill('nonzero');
+  c.restore();
+}
+
+function carta(c, dorso) {
+  rrect(c, 1, 1.5, 26, 36, 3); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill();
+  rrect(c, 0.5, 0.5, 26, 36, 3); c.fillStyle = dorso ? '#f6f6f2' : gradL(c, 0, 0, 0, 36, [[0, '#ffffff'], [1, '#ece8de']]); c.fill(); tratto(c, '#8a8478', 0.6);
+  if (!dorso) return;
+  rrect(c, 2.5, 2.5, 22, 32, 2); c.fillStyle = '#2a4ab8'; c.fill();
+  c.save(); rrect(c, 2.5, 2.5, 22, 32, 2); c.clip();
+  for (let k = -40; k < 40; k += 3.2) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 40, 40); c.moveTo(k + 40, 0); c.lineTo(k, 40); tratto(c, 'rgba(255,255,255,0.22)', 0.6); }
+  c.restore();
+  ellisse(c, 13.5, 18.5, 5.5, 7.5); c.fillStyle = '#c0392b'; c.fill(); tratto(c, '#ffffff', 0.8);
+  seme(c, 13.5, 18.5, 0.75, 'picche');
+}
+
+function fiche(c, col) {
+  ellisse(c, 8, 9, 7.6, 5.4); c.fillStyle = scuro(col, 0.35); c.fill();
+  ellisse(c, 8, 7, 7.6, 5.4); c.fillStyle = col; c.fill(); tratto(c, scuro(col, 0.5), 0.7);
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; c.save(); c.translate(8 + Math.cos(a) * 6.3, 7 + Math.sin(a) * 4.4); c.rotate(a); c.fillStyle = '#ffffff'; c.fillRect(-1.1, -0.7, 2.2, 1.4); c.restore(); }
+  ellisse(c, 8, 7, 4.4, 3.1); tratto(c, 'rgba(255,255,255,0.7)', 0.6);
+  c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(2, 9.6, 12, 1);
+}
+
+// avambraccio del banco, steso sul tavolo: gomito a destra (x 74), mano aperta a sinistra
+function avambraccio(c) {
+  rrect(c, 20, 3, 56, 13, 6); c.fillStyle = gradL(c, 0, 3, 0, 16, [[0, '#3a6ad0'], [1, '#1c3a8a']]); c.fill(); tratto(c, CONT, 1.1);
+  for (const x of [34, 52]) { c.beginPath(); c.moveTo(x, 4); c.quadraticCurveTo(x - 3, 9.5, x, 15); tratto(c, 'rgba(0,0,0,0.25)', 0.8); }
+  rrect(c, 15, 3.5, 7, 12, 2); c.fillStyle = '#f4f4f4'; c.fill(); tratto(c, CONT, 0.9);
+  ellisse(c, 18.5, 9.5, 1, 1); c.fillStyle = '#e8c048'; c.fill();
+  // mano di taglio, che spinge
+  c.beginPath(); c.moveTo(16, 4.5); c.quadraticCurveTo(4, 3, 1.5, 8); c.quadraticCurveTo(1, 13, 7, 15); c.lineTo(16, 14.5); c.closePath();
+  c.fillStyle = '#e6b28a'; c.fill(); tratto(c, CONT, 1);
+  for (const y of [7.5, 10.2, 12.6]) { c.beginPath(); c.moveTo(3, y); c.lineTo(9, y + 0.3); tratto(c, 'rgba(120,60,30,0.5)', 0.6); }
+}
+
+function sabot(c) {
+  poli(c, [[2, 26], [6, 6], [38, 4], [40, 26]]); c.fillStyle = gradL(c, 0, 4, 0, 26, [[0, '#4a2a14'], [1, '#22120a']]); c.fill(); tratto(c, CONT, 1);
+  poli(c, [[8, 8], [36, 6.5], [36, 18], [9, 19]]); c.fillStyle = '#2a4ab8'; c.fill(); tratto(c, '#f6f6f2', 0.8);
+  poli(c, [[2, 26], [6, 22], [16, 20], [14, 26]]); c.fillStyle = '#f6f6f2'; c.fill(); tratto(c, '#8a8478', 0.6);
+}
+
+function creaBlackjack(scene) {
+  tela(scene, 'carta', 28, 38, (c) => carta(c, false), 6);
+  tela(scene, 'cartaDorso', 28, 38, (c) => carta(c, true), 6);
+  for (const t of ['cuori', 'quadri', 'fiori', 'picche']) tela(scene, 'seme_' + t, 12, 12, (c) => seme(c, 6, 6, 1, t), 8);
+  for (const [v, col] of [[10, '#2f6fd8'], [25, '#2e9a4a'], [50, '#1c1c24']]) tela(scene, 'fiche_' + v, 16, 15, (c) => fiche(c, col), 8);
+  tela(scene, 'avambraccio', 78, 18, avambraccio, 6);
+  tela(scene, 'sabot', 42, 28, sabot, 6);
+}
+
+// ------------------------------------------------------------
+//  PASSA DI QUA: Panda rossa, Passaseo scout in bici, pozzanghere, trattore e Vespa (dall'alto)
+// ------------------------------------------------------------
+function panda(c, freni) {
+  rrect(c, 3, 4, 26, 46, 5); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill();
+  for (const y of [9, 36]) for (const x of [1.5, 26.5]) { rrect(c, x, y, 4, 9, 1.5); c.fillStyle = '#1b1c22'; c.fill(); }
+  const scocca = () => rrect(c, 3, 2, 26, 46, [6, 6, 4, 4]);
+  scocca(); c.fillStyle = gradL(c, 3, 0, 29, 0, [[0, '#a8201c'], [0.15, '#e23a30'], [0.5, '#f04a3e'], [0.85, '#e23a30'], [1, '#a8201c']]); c.fill();
+  c.save(); scocca(); c.clip();
+  poli(c, [[6, 11], [26, 11], [24, 17], [8, 17]]); c.fillStyle = gradL(c, 0, 11, 0, 17, [[0, '#6d86b0'], [1, '#32405c']]); c.fill();         // parabrezza
+  rrect(c, 7, 17, 18, 18, 1.5); c.fillStyle = '#d8322a'; c.fill(); tratto(c, 'rgba(0,0,0,0.25)', 0.8);                                      // tetto
+  for (const x of [8.5, 22.5]) { c.fillStyle = '#2a2a30'; c.fillRect(x, 18, 1.2, 16); }                                                    // barre
+  poli(c, [[8, 35], [24, 35], [25, 40], [7, 40]]); c.fillStyle = '#32405c'; c.fill();                                                     // lunotto
+  c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(9, 12, 5, 4);
+  c.fillStyle = '#2a2a30'; c.fillRect(3, 44, 26, 4);
+  for (const x of [5, 23]) { rrect(c, x, 2.5, 4, 3, 1); c.fillStyle = '#fff6c2'; c.fill(); }
+  for (const x of [4, 24]) { rrect(c, x, 44.5, 4, 3, 0.8); c.fillStyle = freni ? '#ff3a2a' : '#8a1a14'; c.fill(); }
+  c.restore();
+  if (freni) for (const x of [6, 26]) { c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x, 47, 7, '#ff3020', 0.7); c.restore(); }
+  for (const x of [1, 28]) { ellisse(c, x, 15, 2, 1.4); c.fillStyle = '#c8281e'; c.fill(); tratto(c, CONT, 0.6); }
+  scocca(); tratto(c, CONT, 1.1);
+}
+
+// Passaseo scout in bici visto dall'alto, va verso l'alto (18x36)
+function ciclista(c, bagnato) {
+  ellisse(c, 11, 20, 7, 14); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fill();
+  for (const y of [1, 26]) { rrect(c, 8.2, y, 1.6, 9, 0.8); c.fillStyle = '#1c1c22'; c.fill(); }
+  c.fillStyle = '#8a8e98'; c.fillRect(8.5, 9, 1, 18);
+  c.beginPath(); c.moveTo(3, 8); c.lineTo(15, 8); tratto(c, '#3a3a40', 1.3);                         // manubrio
+  for (const x of [3.5, 14.5]) { c.beginPath(); c.moveTo(x, 8.5); c.lineTo(x < 9 ? 5 : 13, 15); tratto(c, '#ecb894', 2); } // braccia
+  for (const x of [5.5, 12.5]) { ellisse(c, x, 22, 2, 3); c.fillStyle = '#2c3a62'; c.fill(); }    // ginocchia
+  ellisse(c, 9, 17, 6.2, 4.6); c.fillStyle = bagnato ? '#4a6a9a' : '#6c8fbe'; c.fill(); tratto(c, CONT, 0.8);   // spalle
+  // fazzolettone sulla schiena, a righe
+  c.save(); poli(c, [[4.5, 17.5], [13.5, 17.5], [9, 23]]); c.clip();
+  ['#2f5fc0', '#f2c43a', '#d83a3a'].forEach((col, i) => { c.fillStyle = col; c.fillRect(4, 17.5 + i * 1.9, 10, 1.9); });
+  c.restore();
+  ellisse(c, 9, 14.5, 4, 4.2); c.fillStyle = '#2a1a12'; c.fill(); tratto(c, CONT, 0.7);             // testa riccia
+  c.fillStyle = 'rgba(120,80,60,0.6)'; for (const [dx, dy] of [[-1.6, -1.4], [1.4, -1.8], [0, 0.6], [-1.8, 1.4], [1.8, 1.2]]) { ellisse(c, 9 + dx, 14.5 + dy, 0.9, 0.9); c.fill(); }
+  if (bagnato) for (const [x, y] of [[3, 13], [15, 15], [6, 24], [13, 26], [9, 30]]) { ellisse(c, x, y, 1, 1.4); c.fillStyle = '#9fd4ff'; c.fill(); }
+}
+
+function pozzanghera(c) {
+  c.beginPath(); c.moveTo(4, 9);
+  c.bezierCurveTo(2, 3, 12, 1, 18, 2.5); c.bezierCurveTo(26, 0.5, 34, 4, 32, 9); c.bezierCurveTo(33, 14, 22, 16, 15, 14.5); c.bezierCurveTo(8, 16, 2, 13, 4, 9);
+  c.closePath(); c.fillStyle = gradL(c, 0, 1, 0, 15, [[0, '#7aa0c0'], [1, '#4a6a88']]); c.fill(); tratto(c, 'rgba(40,40,50,0.5)', 0.8);
+  c.beginPath(); c.moveTo(9, 6); c.quadraticCurveTo(15, 4, 21, 5.5); tratto(c, 'rgba(255,255,255,0.55)', 1);
+  ellisse(c, 26, 10, 2.5, 1); c.fillStyle = 'rgba(255,255,255,0.35)'; c.fill();
+}
+
+function trattore(c) {
+  rrect(c, 2, 6, 26, 40, 4); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fill();
+  for (const x of [0, 22]) { rrect(c, x, 26, 8, 16, 2); c.fillStyle = '#1c1c22'; c.fill(); c.fillStyle = '#3a3a40'; for (let y = 28; y < 42; y += 3) c.fillRect(x + 1, y, 6, 1.2); }
+  for (const x of [4, 21]) { rrect(c, x, 3, 5, 9, 1.5); c.fillStyle = '#1c1c22'; c.fill(); }
+  rrect(c, 9, 1, 12, 24, 3); c.fillStyle = gradL(c, 9, 0, 21, 0, [[0, '#2a7a2a'], [0.5, '#4ab04a'], [1, '#2a7a2a']]); c.fill(); tratto(c, CONT, 1);
+  c.fillStyle = '#1c1c22'; c.fillRect(11, 3, 8, 1.2);
+  rrect(c, 7, 24, 16, 18, 2); c.fillStyle = '#e8c048'; c.fill(); tratto(c, CONT, 1);
+  rrect(c, 9, 27, 12, 10, 1.5); c.fillStyle = '#3a8a3a'; c.fill();
+  ellisse(c, 15, 18, 1.4, 1.4); c.fillStyle = '#3a3a40'; c.fill();
+}
+
+function vespa(c) {
+  ellisse(c, 7, 15, 6, 13); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fill();
+  rrect(c, 5.2, 0.5, 1.6, 6, 0.8); c.fillStyle = '#1c1c22'; c.fill(); rrect(c, 5.2, 21.5, 1.6, 6, 0.8); c.fill();
+  c.beginPath(); c.moveTo(6, 4); c.quadraticCurveTo(1, 14, 3, 22); c.lineTo(9, 22); c.quadraticCurveTo(11, 14, 6, 4); c.closePath();
+  c.fillStyle = '#a8d8c8'; c.fill(); tratto(c, CONT, 0.8);
+  c.beginPath(); c.moveTo(1, 5); c.lineTo(11, 5); tratto(c, '#3a3a40', 1.2);
+  ellisse(c, 6, 13, 3.6, 3); c.fillStyle = '#c0392b'; c.fill();       // giubbotto
+  ellisse(c, 6, 10.5, 2.6, 2.6); c.fillStyle = '#f4f4f4'; c.fill(); tratto(c, CONT, 0.6);  // casco
+}
+
+function creaPassaseo(scene) {
+  tela(scene, 'panda', 32, 52, (c) => panda(c, false), 6);
+  tela(scene, 'pandaFreni', 32, 52, (c) => panda(c, true), 6);
+  tela(scene, 'ciclista', 18, 36, (c) => ciclista(c, false), 6);
+  tela(scene, 'ciclistaBagnato', 18, 36, (c) => ciclista(c, true), 6);
+  tela(scene, 'pozzanghera', 36, 17, pozzanghera, 6);
+  tela(scene, 'trattore', 30, 48, trattore, 6);
+  tela(scene, 'vespa', 12, 28, vespa, 6);
+}
+
+// pallone da calcio classico (12x12)
+function pallone(c) {
+  ellisse(c, 6, 6, 5.4, 5.4); c.fillStyle = gradR(c, 4.5, 4.5, 0.5, 6, [[0, '#ffffff'], [1, '#d8dce4']]); c.fill();
+  c.save(); ellisse(c, 6, 6, 5.4, 5.4); c.clip();
+  const pent = (x, y, rr, a0) => { c.beginPath(); for (let i = 0; i < 5; i++) { const a = a0 + i * 1.2566; c[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fillStyle = '#1c1c22'; c.fill(); };
+  pent(6, 6, 1.9, -1.57);
+  for (let i = 0; i < 5; i++) { const a = -1.57 + i * 1.2566 + 0.63; pent(6 + Math.cos(a) * 5.4, 6 + Math.sin(a) * 5.4, 1.8, a); }
+  c.restore();
+  ellisse(c, 6, 6, 5.4, 5.4); tratto(c, CONT, 0.8);
+}
+
 export function creaOggetti(scene) {
   [-0.1, 0.07].forEach((v, f) => {
     tela(scene, `golfGiu${f}`, 60, 104, (c) => golf(c, false, v), 6);
@@ -496,6 +764,10 @@ export function creaOggetti(scene) {
   for (const t of ['aperta', 'presa', 'colpita', 'guanto']) tela(scene, `manoGuerra_${t}`, 40, 56, (c) => manoGuerra(c, t), 6);
   tela(scene, 'manicaGuerra', 18, 16, manicaGuerra, 6);
   creaPanino(scene);
+  creaRonda(scene);
+  creaBlackjack(scene);
+  tela(scene, 'pallone', 12, 12, pallone, 8);
+  creaPassaseo(scene);
   for (const cibo of ['spaghetti', 'pizza', 'cotoletta', 'lasagna', 'tiramisu']) tela(scene, 'piatto_' + cibo, 64, 40, (c) => piatto(c, cibo), 6);
   tela(scene, 'manoMia', 40, 56, manoMia, 6);
   tela(scene, 'finestraAperta', 58, 44, (c) => finestra(c, true), 6);
