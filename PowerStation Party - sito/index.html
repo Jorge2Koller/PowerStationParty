@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>PowerStation Party</title>
+  <!-- telefono: niente zoom (doppio tocco o pizzico) e si usa tutto lo schermo, tacca compresa -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#140c20">
+  <!-- "Aggiungi a schermata Home": si apre a tutto schermo, come un'app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PowerStation">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icone/icona-192.png">
+  <link rel="apple-touch-icon" href="icone/icona-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0; height: 100%; height: 100dvh; background: #140c20; overflow: hidden;
+      overscroll-behavior: none; touch-action: none;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    }
+    /* il gioco sta dentro la zona sicura: niente sotto la tacca o la barra di sistema */
+    #gioco {
+      position: fixed;
+      top: env(safe-area-inset-top, 0px); right: env(safe-area-inset-right, 0px);
+      bottom: env(safe-area-inset-bottom, 0px); left: env(safe-area-inset-left, 0px);
+    }
+    #gioco canvas { touch-action: none; }
+
+    /* telefono in verticale: "Gira il telefono" (lo accende js/main.js) */
+    #gira {
+      display: none; position: fixed; inset: 0; z-index: 10;
+      flex-direction: column; align-items: center; justify-content: center; gap: 4vh;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(255,255,255,0.12), rgba(0,0,0,0) 45%, rgba(20,0,30,0.55) 100%),
+        repeating-conic-gradient(from 0deg at 50% 45%, #ff9a3c 0deg 10deg, #ffb85a 10deg 20deg);
+      font-family: Fredoka, "Trebuchet MS", "Segoe UI", sans-serif; font-weight: 600; text-align: center;
+    }
+    body.verticale #gira { display: flex; }
+    #gira svg { width: 46vw; max-width: 260px; height: auto; overflow: visible; }
+    #gira .telefono { transform-origin: 100px 100px; animation: gira 2.4s ease-in-out infinite; }
+    #gira .freccia { transform-origin: 100px 100px; animation: freccia 2.4s ease-in-out infinite; }
+    @keyframes gira { 0%, 25% { transform: rotate(0deg); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+    @keyframes freccia { 0%, 20% { opacity: 1; } 45%, 100% { opacity: 0; } }
+    #gira h1 {
+      margin: 0 6vw; font-size: 9vw; line-height: 1.05; color: #ffe14a; letter-spacing: 0.5px;
+      text-shadow: 0 0.6vw 0 #7a1f2a, 0.5vw 0 0 #7a1f2a, -0.5vw 0 0 #7a1f2a, 0 -0.5vw 0 #7a1f2a, 0 1.2vw 1vw rgba(0,0,0,0.35);
+    }
+    #gira p { margin: 0 8vw; font-size: 4.6vw; color: #fff3d6; text-shadow: 0 0.4vw 0 #1f1430, 0.3vw 0 0 #1f1430, -0.3vw 0 0 #1f1430; }
+  </style>
+</head>
+<body>
+  <div id="gioco"></div>
+  <div id="gira" aria-live="polite">
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <g class="freccia" fill="none" stroke="#2b1b17" stroke-width="13" stroke-linecap="round">
+        <path d="M 160 52 A 78 78 0 0 0 82 26"/>
+        <path d="M 160 52 A 78 78 0 0 0 82 26" stroke="#ffe14a" stroke-width="7"/>
+        <path d="M 150 62 L 162 50 L 147 40" stroke-linejoin="round"/>
+        <path d="M 150 62 L 162 50 L 147 40" stroke="#ffe14a" stroke-width="7" stroke-linejoin="round"/>
+      </g>
+      <g class="telefono">
+        <rect x="64" y="34" width="72" height="132" rx="14" fill="#2b2b36" stroke="#2b1b17" stroke-width="5"/>
+        <rect x="72" y="46" width="56" height="104" rx="5" fill="#ff9a3c"/>
+        <path d="M 100 98 L 72 46 L 92 46 Z M 100 98 L 108 46 L 128 46 L 128 60 Z M 100 98 L 128 92 L 128 118 Z M 100 98 L 112 150 L 88 150 Z M 100 98 L 72 120 L 72 92 Z" fill="#ffb85a"/>
+        <circle cx="100" cy="88" r="13" fill="#e9b58d" stroke="#2b1b17" stroke-width="2.5"/>
+        <circle cx="95" cy="86" r="2.4" fill="#2b1b17"/><circle cx="105" cy="86" r="2.4" fill="#2b1b17"/>
+        <path d="M 93 93 Q 100 99 107 93" fill="none" stroke="#2b1b17" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M 87 82 Q 88 70 100 70 Q 112 70 113 82 Q 108 76 100 76 Q 92 76 87 82 Z" fill="#1a1920"/>
+        <rect x="80" y="114" width="40" height="10" rx="5" fill="#ffe14a" stroke="#2b1b17" stroke-width="2"/>
+        <rect x="88" y="157" width="24" height="4" rx="2" fill="#5a5a68"/>
+      </g>
+    </svg>
+    <h1>Gira il telefono!</h1>
+    <p>PowerStation Party si gioca in orizzontale</p>
+  </div>
+  <script src="js/vendor/phaser.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
