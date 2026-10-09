@@ -404,19 +404,19 @@ export const CONFIG = {
       comandi: [
         'FRECCE SINISTRA/DESTRA (o A/D), oppure il mouse: sterzi',
         "Prendi le pozzanghere quando c'è un Passaseo in bici accanto: SPLASH!",
-        'Più schizzi di fila, più punti',
+        'Più schizzi di fila, più punti (se ne lasci passare uno asciutto si riparte)',
         'Non toccare i ciclisti: freni e perdi punti',
         'Occhio a trattori e Vespe',
       ],
       comandiTouch: [
         'Trascina il dito a destra e a sinistra: sterzi',
         "Prendi le pozzanghere quando c'è un Passaseo in bici accanto: SPLASH!",
-        'Più schizzi di fila, più punti',
+        'Più schizzi di fila, più punti (se ne lasci passare uno asciutto si riparte)',
         'Non toccare i ciclisti: freni e perdi punti',
         'Occhio a trattori e Vespe',
       ],
-      obiettivo: 'Schizza almeno 8 Passaseo!',
-      obiettivoSchizzi: 8,
+      obiettivo: 'Schizza almeno 12 Passaseo!',
+      obiettivoSchizzi: 12,
       // punti
       puntiSchizzo: 10,       // moltiplicato per la serie di schizzi di fila (fino a maxSerie)
       maxSerie: 4,
@@ -424,20 +424,24 @@ export const CONFIG = {
       malusCiclista: 10,
       malusVeicolo: 5,
       // guida
-      velInizio: 130,         // velocità della strada (unità/s)
-      velFine: 210,
+      velInizio: 165,         // velocità della strada (unità/s)
+      velFine: 265,
       velFreno: 35,           // dopo un tocco si scende a questa velocità...
       ripresa: 1.4,           // ...e si torna su in questi secondi
-      velSterzo: 210,
+      velSterzo: 175,
+      presa: 13,              // quanto (in unità) il centro della Panda può stare fuori dal centro della pozzanghera
+      distanzaPozza: 30,      // la pozzanghera è a questa distanza dal ciclista, verso il centro strada
+      ondeggioInizio: 2,      // il ciclista ondeggia a destra e a sinistra di tanto (unità)...
+      ondeggioFine: 6,        // ...e a fine partita di più
       guadagnoDito: 1.25,
       // traffico
-      intervalloInizio: 1.9,  // secondi tra un incontro e l'altro
-      intervalloFine: 1.15,
-      veicoliInizio: 0.12,    // probabilità che invece del ciclista arrivi un trattore o una Vespa
-      veicoliFine: 0.3,
+      intervalloInizio: 1.6,  // secondi tra un incontro e l'altro
+      intervalloFine: 0.95,
+      veicoliInizio: 0.2,     // probabilità che invece del ciclista arrivi un trattore o una Vespa
+      veicoliFine: 0.4,
       bici: 0.35,             // velocità del ciclista rispetto alla strada
       trattore: 0.55,
-      vespa: 70,              // la Vespa arriva contromano, con questa velocità in più
+      vespa: 95,              // la Vespa arriva contromano, con questa velocità in più
       frasi: ['Ma dai!', 'Sono fradicio!', 'La mia divisa!', 'Ma guarda te!', 'Che doccia!', 'Passa di là!'],
       frasiSfiorato: ['Attento!', 'Piano!', 'Ehi!'],
     },

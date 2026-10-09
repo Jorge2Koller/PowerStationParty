@@ -106,9 +106,10 @@ export class BlackjackScene extends MicrogiocoBase {
   }
 
   mostra(quali) {
-    for (const b of this.bottoniPunta) b.cont.setVisible(quali === 'punta');
+    // i pulsanti nascosti non devono prendere il tocco: stanno sopra le fiches e le coprirebbero
+    for (const b of this.bottoniPunta) { b.cont.setVisible(quali === 'punta'); b.zona.input.enabled = quali === 'punta'; }
     this.etichettaPunta.setVisible(quali === 'punta');
-    for (const b of this.bottoniGioco) b.cont.setVisible(quali === 'gioco');
+    for (const b of this.bottoniGioco) { b.cont.setVisible(quali === 'gioco'); b.zona.input.enabled = quali === 'gioco'; }
     if (quali === 'punta') this.cfg.puntate.forEach((v, i) => this.bottoniPunta[i].cont.setAlpha(this.fiches >= v ? 1 : 0.3));
     if (quali === 'gioco') this.bottoniGioco[2].cont.setAlpha(this.mia.length === 2 && this.fiches >= this.puntata ? 1 : 0.3);
   }

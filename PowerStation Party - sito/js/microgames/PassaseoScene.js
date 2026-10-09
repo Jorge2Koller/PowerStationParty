@@ -15,7 +15,7 @@ const Y_AUTO = 214;
 const X_MIN = STRADA.sx - 10, X_MAX = STRADA.dx + 10;
 const AUTO = { mx: 13, my: 23 };            // mezza larghezza e mezza lunghezza della Panda
 // corsie: a destra si va nel nostro verso, a sinistra si arriva contromano
-const LATO = { dx: { bici: STRADA.dx - 12, pozza: STRADA.dx - 37, verso: -1 }, sx: { bici: STRADA.sx + 12, pozza: STRADA.sx + 37, verso: 1 } };
+const LATO = { dx: { bici: STRADA.dx - 12, verso: -1 }, sx: { bici: STRADA.sx + 12, verso: 1 } };
 
 export class PassaseoScene extends MicrogiocoBase {
   constructor() { super('passaseo'); }
@@ -80,9 +80,11 @@ export class PassaseoScene extends MicrogiocoBase {
     const f = 1 + L.verso * c.bici;
     let yb, yp;
     if (f < 1) { yb = -30; yp = Y_AUTO - (Y_AUTO - yb) / f; } else { yp = -20; yb = Y_AUTO - (Y_AUTO - yp) * f; }
-    const pozza = this.aggiungi('pozza', L.pozza + Phaser.Math.Between(-3, 3), yp, 1);
+    const pozza = this.aggiungi('pozza', L.bici + L.verso * c.distanzaPozza + Phaser.Math.Between(-3, 3), yp, 1);
     if (Math.random() < 0.12) return;           // ogni tanto una pozzanghera e basta
-    const bici = this.aggiungi('bici', L.bici + Phaser.Math.Between(-2, 2), yb, f, { pozza, lato });
+    // il ciclista ondeggia attorno alla sua riga: passargli accanto senza toccarlo è più delicato
+    const bici = this.aggiungi('bici', L.bici, yb, f, { pozza, lato, x0: L.bici, onda: lerp(c.ondeggioInizio, c.ondeggioFine, p), fase: Math.random() * 6.28 });
+    pozza.bici = bici;
     bici.img.setFlipY(L.verso > 0);
   }
 
@@ -158,8 +160,9 @@ export class PassaseoScene extends MicrogiocoBase {
 
     for (const o of this.cose) {
       o.img.y += o.f * dD + (o.extra ?? 0) * dt;
+      if (o.onda && !o.sfiorato) { o.fase += dt * 2.6; o.img.x = o.x0 + Math.sin(o.fase) * o.onda; }
       const dx = Math.abs(this.x - o.img.x), dy = Math.abs(Y_AUTO - o.img.y);
-      if (o.tipo === 'pozza' && !o.presa && dy < 12 && dx < 20) {
+      if (o.tipo === 'pozza' && !o.presa && dy < 12 && dx < c.presa) {
         o.presa = true;
         const bici = this.cose.find((b) => b.tipo === 'bici' && !b.bagnato && !b.sfiorato && Math.abs(b.img.y - o.img.y) < 34 && Math.abs(b.img.x - o.img.x) < 44);
         if (bici) this.schizza(bici, o);
@@ -189,6 +192,10 @@ export class PassaseoScene extends MicrogiocoBase {
         this.frena('-' + c.malusVeicolo);
         this.scansa(o.img.x, AUTO.mx + (o.tipo === 'trattore' ? 16 : 8));
       }
+    }
+    for (const o of this.cose) if (o.tipo === 'pozza' && !o.presa && !o.persa && o.bici && !o.bici.bagnato && o.img.y > Y_AUTO + 14) {
+      o.persa = true;
+      if (this.serie > 0) { this.serie = 0; this.testoSerie.setText(''); scritta(this, o.bici.img.x, o.bici.img.y - 20, 'ASCIUTTO!', { size: 8, color: '#ffffff', durata: 300 }); }
     }
     for (const o of this.cose) if (o.img.y > 310 || o.img.y < -500) { this.tweens.killTweensOf(o.img); o.img.destroy(); o.via = true; }
     this.cose = this.cose.filter((o) => !o.via);
