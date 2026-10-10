@@ -51,7 +51,7 @@ export class MicrogiocoBase extends Phaser.Scene {
     const rientro = () => this.alRientro?.();
     this.events.on('resume', rientro);
     this.events.once('shutdown', () => { this.events.off('resume', rientro); Audio.versaFine(); Audio.tempo(1); this.pulisci?.(); });
-    Audio.musica('gioco');
+    Audio.musica(this.cfg.musica ?? 'gioco');   // (Petri Tentacolari ha la sua musica da disco)
     this.cameras.main.fadeIn(150);
     this.inCorso = true;
   }

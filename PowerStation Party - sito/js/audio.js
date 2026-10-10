@@ -100,6 +100,20 @@ const SFX = {
   schizzo: (t) => { rumore(t, 0.5, 0.3, 900, 'lowpass'); rumore(t + 0.04, 0.35, 0.14, 3500, 'highpass'); },
   campanello: (t) => { for (const dt of [0, 0.16]) { nota(2637, t + dt, 0.18, 'triangle', 0.08); nota(3520, t + dt, 0.12, 'triangle', 0.04); } },
   frenata: (t) => { rumore(t, 0.4, 0.12, 3000); nota(1700, t, 0.4, 'sawtooth', 0.03, 1100); },
+  // Il Passaggiorgio
+  apri: (t) => { rumore(t, 0.06, 0.16, 2500, 'highpass'); nota(320, t, 0.12, 'square', 0.04, 520); },
+  portiera: (t) => { rumore(t, 0.14, 0.35, 350, 'lowpass'); nota(110, t, 0.15, 'square', 0.1, 60); rumore(t + 0.02, 0.05, 0.12, 3000, 'highpass'); },
+  motore: (t) => {
+    for (let i = 0; i < 6; i++) nota(70 + i * 6, t + i * 0.07, 0.09, 'sawtooth', 0.09, 55 + i * 6);
+    nota(90, t + 0.42, 0.55, 'sawtooth', 0.08, 170); rumore(t + 0.42, 0.5, 0.08, 400, 'lowpass');
+  },
+  tossisce: (t) => { for (const dt of [0, 0.22, 0.5]) { rumore(t + dt, 0.12, 0.25, 500, 'lowpass'); nota(80, t + dt, 0.12, 'square', 0.08, 50); } },
+  tintinnio: (t) => { for (let i = 0; i < 5; i++) nota(3200 + (i % 2) * 700, t + i * 0.045, 0.07, 'triangle', 0.05); },
+  // Petri Tentacolari
+  plop: (t) => { nota(700, t, 0.1, 'triangle', 0.1, 180); rumore(t, 0.05, 0.08, 900, 'lowpass'); },
+  glu: (t) => { for (let i = 0; i < 3; i++) { nota(260 - i * 30, t + i * 0.16, 0.1, 'triangle', 0.1, 140 - i * 15); rumore(t + i * 0.16, 0.06, 0.08, 600, 'lowpass'); } },
+  salva: (t) => arp(t, [79, 84, 88, 91], 0.06, 0.12, 0.07),
+  bonk: (t) => { nota(330, t, 0.12, 'square', 0.08, 160); rumore(t, 0.08, 0.15, 700, 'lowpass'); },
   // MaraZio
   calcio: (t) => { rumore(t, 0.08, 0.26, 700, 'lowpass'); nota(160, t, 0.1, 'triangle', 0.14, 70); },
   rimbalzo: (t) => { rumore(t, 0.06, 0.12, 500, 'lowpass'); nota(110, t, 0.08, 'triangle', 0.09, 60); },
@@ -135,6 +149,13 @@ const TRACCE = {
            81, 0, 77, 0, 81, 0, 84, 0, 79, 0, 76, 0, 79, 0, 0, 0, 77, 0, 76, 0, 74, 0, 72, 0, 74, 0, 79, 0, 72, 0, 0, 0],
     basso: [48, 53, 48, 43, 53, 48, 50, 43],
   },
+  // la disco: cassa dritta, basso a ottave, battimani sul 2 e sul 4 (vedi suonaPasso)
+  disco: {
+    bpm: 122, disco: true,
+    lead: [79, 0, 79, 81, 0, 79, 76, 0, 74, 0, 76, 0, 0, 0, 0, 0, 79, 0, 79, 81, 0, 83, 84, 0, 83, 0, 81, 0, 0, 0, 0, 0,
+           76, 0, 76, 79, 0, 76, 74, 0, 72, 0, 74, 0, 0, 76, 0, 0, 74, 0, 72, 74, 0, 76, 79, 0, 77, 0, 76, 0, 74, 0, 0, 0],
+    basso: [45, 45, 48, 48, 43, 43, 41, 43],
+  },
   gioco: {
     bpm: 156,
     lead: [76, 76, 0, 76, 0, 72, 76, 0, 79, 0, 0, 0, 67, 0, 0, 0, 72, 0, 0, 67, 0, 0, 64, 0, 0, 69, 0, 71, 0, 70, 69, 0,
@@ -148,6 +169,13 @@ function suonaPasso(T, i, t) {
   const n = T.lead[i];
   if (n) nota(midi(n), t, d * 1.6, 'square', 0.045);
   const fond = T.basso[Math.floor(i / 8) % T.basso.length];
+  if (T.disco) {
+    nota(midi(fond - (i % 2 ? 0 : 12)), t, d * 0.9, 'triangle', 0.14);           // basso a ottave
+    if (i % 2 === 0) nota(120, t, 0.12, 'sine', 0.22, 45);                       // cassa
+    else rumore(t, 0.05, 0.05, 8000, 'highpass');                                // charleston in levare
+    if (i % 4 === 2) rumore(t, 0.09, 0.09, 1600);                                // battimani
+    return;
+  }
   if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.8, 'triangle', 0.14);
   if (i % 4 === 2) nota(midi(fond - 5), t, d * 1.5, 'triangle', 0.11);
   if (i % 2 === 1) rumore(t, 0.03, 0.025, 7000, 'highpass');

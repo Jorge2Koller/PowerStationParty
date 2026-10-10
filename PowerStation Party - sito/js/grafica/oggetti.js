@@ -1,6 +1,6 @@
 // Oggetti di scena: la Golf di ReGrorio, pinte, spina, clienti, mani di Guerra, panino,
 // attrezzi del barbiere, particelle.
-import { tela, CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, mix, alone, casuale } from './base.js';
+import { tela, CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, mix, alfa, alone, casuale } from './base.js';
 import { PERSONAGGI, disegnaTesta } from './personaggi.js';
 
 // ------------------------------------------------------------
@@ -755,6 +755,223 @@ function pallone(c) {
   ellisse(c, 6, 6, 5.4, 5.4); tratto(c, CONT, 0.8);
 }
 
+
+// ------------------------------------------------------------
+//  IL PASSAGGIORGIO: macchine viste di lato (muso a destra), chiavi, cartello
+// ------------------------------------------------------------
+// Misure in unità: x dal centro della macchina (positivo verso il muso), altezze dal suolo.
+//  m = mezza lunghezza, sotto = altezza della scocca da terra, cintura = linea dei finestrini,
+//  tetto = altezza del tetto, xr = dove comincia il tetto dietro, xt = dove finisce davanti,
+//  xa = base del parabrezza, cofano = altezza del cofano, ruota = raggio, xRuote = passo / 2.
+//  baule: berlina col bagagliaio (per ora nessuna: hanno tutte il portellone).
+//  La Golf di Greg, la Panda di Guerra, il SUV di Sego e l'A3 bianca di Giorgio (senza loghi).
+export const MODELLI = {
+  panda: { m: 54, sotto: 9, cintura: 31, tetto: 57, xr: -50, xt: 20, xa: 33, cofano: 31, ruota: 9, xRuote: 36 },
+  golf: { m: 60, sotto: 9, cintura: 31, tetto: 53, xr: -44, xt: 16, xa: 37, cofano: 29, ruota: 10, xRuote: 40 },
+  suv: { m: 64, sotto: 14, cintura: 39, tetto: 65, xr: -57, xt: 18, xa: 40, cofano: 37, ruota: 13, xRuote: 42 },
+  a3: { m: 61, sotto: 9, cintura: 31, tetto: 52, xr: -41, xt: 13, xa: 38, cofano: 28, ruota: 10.5, xRuote: 41, calandra: true },
+};
+export const AUTO = { w: 140, h: 76, suolo: 72 };   // texture: suolo a 72 unità dall'alto
+
+// porte che si vedono dal lato: [inizio, fine] in x (posteriore e anteriore) e dove si sale dietro
+export function porteAuto(M) {
+  const xc = M.baule ? M.xr + 3 : M.xr + 7, xb = Math.round((xc + M.xa) / 2) - 2;
+  return { post: [xc, xb], ant: [xb, M.xa - 2], bag: [-M.m + 2, M.baule ? M.xr - 2 : M.xr + 6] };
+}
+
+function auto(c, M, col, o = {}) {
+  const X = (x) => AUTO.w / 2 + x, Y = (h) => AUTO.suolo - h;
+  const { m, sotto, cintura, tetto, xr, xt, xa, cofano, ruota } = M;
+  const xrt = M.baule ? xr + 16 : xr;              // dove comincia davvero il tetto (la berlina ha il lunotto inclinato)
+  const P = porteAuto(M);
+  // ombra a terra
+  ellisse(c, X(0), Y(0.5), m + 2, 3.2); c.fillStyle = 'rgba(0,0,0,0.35)'; c.fill();
+  const scocca = () => {
+    c.beginPath();
+    c.moveTo(X(-m + 3), Y(sotto));
+    c.quadraticCurveTo(X(-m), Y(sotto), X(-m), Y(sotto + 4));
+    if (M.baule) {
+      c.lineTo(X(-m - 1), Y(cintura - 3)); c.quadraticCurveTo(X(-m), Y(cintura + 2), X(-m + 5), Y(cintura + 2));
+      c.lineTo(X(xr), Y(cintura + 3));
+      c.quadraticCurveTo(X(xr + 9), Y(tetto - 3), X(xrt), Y(tetto));
+    } else {
+      c.lineTo(X(-m - 1), Y(cintura));
+      c.quadraticCurveTo(X(-m + 1), Y(tetto - 2), X(xrt + 4), Y(tetto));
+    }
+    c.lineTo(X(xt - 4), Y(tetto));
+    c.quadraticCurveTo(X(xt + 2), Y(tetto), X(xt + 5), Y(tetto - 4));
+    c.lineTo(X(xa), Y(cintura + 3));
+    c.quadraticCurveTo(X(xa + 6), Y(cofano + 1), X(m - 6), Y(cofano));
+    c.quadraticCurveTo(X(m), Y(cofano - 1), X(m), Y(cofano - 7));
+    c.lineTo(X(m), Y(sotto + 4));
+    c.quadraticCurveTo(X(m), Y(sotto), X(m - 3), Y(sotto));
+    c.closePath();
+  };
+  scocca();
+  c.fillStyle = gradL(c, 0, Y(tetto), 0, Y(sotto), [[0, chiaro(col, 0.22)], [0.45, col], [0.62, scuro(col, 0.08)], [1, scuro(col, 0.3)]]); c.fill();
+  c.save(); scocca(); c.clip();
+  // riflesso lungo la fiancata e fascia di plastica in basso (Panda e SUV)
+  c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(X(-m), Y(cintura - 3), m * 2, 2.2);
+  if (M === MODELLI.panda || M === MODELLI.suv) { c.fillStyle = '#3a3c44'; c.fillRect(X(-m), Y(sotto + 7), m * 2, 7); }
+  // finestrini laterali (vetro semitrasparente: dietro si vede chi guida)
+  const wTop = tetto - 4, wBot = cintura + 3;
+  const xrTop = M.baule ? xrt + 3 : xrt + 8, xrBot = M.baule ? xr + 6 : -m + 12;
+  const vetro = () => poli(c, [[X(xrTop), Y(wTop)], [X(xt - 1), Y(wTop)], [X(xa - 4), Y(wBot)], [X(xrBot), Y(wBot)]]);
+  vetro(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = 'rgba(0,0,0,0.62)'; c.fill(); c.globalCompositeOperation = 'source-over';
+  vetro(); c.fillStyle = 'rgba(40,58,92,0.38)'; c.fill();
+  c.save(); vetro(); c.clip();
+  poli(c, [[X(xrTop + 6), Y(wTop)], [X(xrTop + 14), Y(wTop)], [X(xrTop + 6), Y(wBot)], [X(xrTop - 2), Y(wBot)]]); c.fillStyle = 'rgba(255,255,255,0.22)'; c.fill();
+  poli(c, [[X(xt - 12), Y(wTop)], [X(xt - 7), Y(wTop)], [X(xt - 15), Y(wBot)], [X(xt - 20), Y(wBot)]]); c.fillStyle = 'rgba(255,255,255,0.16)'; c.fill();
+  c.restore();
+  vetro(); tratto(c, '#1a1a22', 1.6);
+  c.fillStyle = '#1a1a22'; c.fillRect(X(P.ant[0] - 1.6), Y(wTop), 3.2, wTop - wBot);            // montante centrale
+  // linee delle porte e maniglie
+  c.strokeStyle = alfa('#000000', 0.45); c.lineWidth = 0.9;
+  for (const x of [P.post[0], P.ant[0], P.ant[1]]) { c.beginPath(); c.moveTo(X(x), Y(wBot)); c.lineTo(X(x + (x === P.ant[1] ? 1 : 0)), Y(sotto + 2)); c.stroke(); }
+  c.beginPath(); c.moveTo(X(P.post[0]), Y(sotto + 2)); c.lineTo(X(P.ant[1]), Y(sotto + 2)); c.stroke();
+  for (const [a] of [P.post, P.ant]) { rrect(c, X(a + 4), Y(cintura - 4), 6, 1.8, 0.8); c.fillStyle = scuro(col, 0.4); c.fill(); }
+  // portellone o bagagliaio
+  c.beginPath(); c.moveTo(X(P.bag[1]), Y(M.baule ? cintura + 3 : tetto - 1)); c.lineTo(X(P.bag[1] + (M.baule ? 0 : -2)), Y(cintura - 6)); c.lineTo(X(-m), Y(cintura - 6)); c.stroke();
+  c.restore();
+  scocca(); tratto(c, CONT, 1.4);
+  // fari, fanali, paraurti, specchietto
+  rrect(c, X(m - 7), Y(cofano - 2), 7, 4.5, 1.8); c.fillStyle = '#fff4c0'; c.fill(); tratto(c, CONT, 0.8);
+  rrect(c, X(-m - 0.5), Y(cintura - 2), 4, 6, 1.5); c.fillStyle = '#e0302a'; c.fill(); tratto(c, CONT, 0.8);
+  for (const [x, w] of [[-m - 1.5, 13], [m - 11.5, 13]]) { rrect(c, X(x), Y(sotto + 6), w, 6, 2.5); c.fillStyle = '#2a2a30'; c.fill(); }
+  rrect(c, X(xa - 6), Y(cintura + 7), 5, 4, 1.5); c.fillStyle = col; c.fill(); tratto(c, CONT, 1);
+  if (M.calandra) {   // muso grintoso: calandra grande e scura, fari affilati
+    poli(c, [[X(m - 1.5), Y(cofano - 7)], [X(m + 0.5), Y(cofano - 7)], [X(m + 0.5), Y(sotto + 6)], [X(m - 2.5), Y(sotto + 7)]]); c.fillStyle = '#1c1c22'; c.fill();
+    poli(c, [[X(m - 12), Y(cofano - 1)], [X(m - 1), Y(cofano - 3)], [X(m - 1), Y(cofano - 5.5)], [X(m - 10), Y(cofano - 3.5)]]); c.fillStyle = '#fff4c0'; c.fill(); tratto(c, CONT, 0.8);
+  }
+  if (M === MODELLI.suv) {   // barre sul tetto
+    c.fillStyle = '#2a2a30'; c.fillRect(X(xrt + 6), Y(tetto + 2.5), xt - xrt - 12, 2);
+    for (const x of [xrt + 8, xt - 8]) c.fillRect(X(x), Y(tetto + 2.5), 2, 2.5);
+  }
+  // ruote (la gomma sgonfia si schiaccia)
+  for (const s of [-1, 1]) {
+    const x = X(s * M.xRuote), sgonfia = o.gomma && s > 0;
+    ellisse(c, x, Y(ruota), ruota + 2.6, ruota + 2.6); c.fillStyle = '#121216'; c.fill();
+    const ry = sgonfia ? ruota - 2.6 : ruota, cy = Y(ry);
+    ellisse(c, x, cy, sgonfia ? ruota + 1.6 : ruota, ry); c.fillStyle = '#24242a'; c.fill(); tratto(c, CONT, 1);
+    ellisse(c, x, cy, ruota * 0.52, ry * 0.52); c.fillStyle = gradR(c, x - 1, cy - 1, 0.5, ruota * 0.55, [[0, '#f2f4f8'], [1, '#9aa0aa']]); c.fill();
+    for (let i = 0; i < 5; i++) { const a = i * 1.2566; ellisse(c, x + Math.cos(a) * ruota * 0.3, cy + Math.sin(a) * ry * 0.3, 0.9, 0.9); c.fillStyle = '#6a707a'; c.fill(); }
+  }
+  if (o.polvere) {
+    // ferma da anni: polvere a chiazze, la scritta col dito e le ragnatele
+    const r = casuale(2019);
+    c.save(); scocca(); c.clip();
+    c.fillStyle = gradL(c, 0, Y(tetto), 0, Y(sotto), [[0, 'rgba(176,160,132,0.55)'], [1, 'rgba(140,124,98,0.3)']]); c.fillRect(0, 0, AUTO.w, AUTO.h);
+    for (let i = 0; i < 260; i++) { ellisse(c, X(-m + r() * m * 2), Y(sotto + r() * (tetto - sotto)), 0.4 + r() * 1.6, 0.4 + r() * 1.2); c.fillStyle = `rgba(${150 + r() * 40 | 0},${132 + r() * 30 | 0},${100 + r() * 20 | 0},${0.25 + r() * 0.35})`; c.fill(); }
+    c.restore();
+    // sui vetri la polvere è più leggera: chi guida si deve vedere
+    vetro(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fill(); c.globalCompositeOperation = 'source-over';
+    // (la scritta è al contrario: l'A3 nel gioco è girata col muso a sinistra, così si legge dritta)
+    c.save(); c.translate(X((P.post[0] + P.post[1]) / 2), Y(cintura - 13)); c.scale(-1, 1); c.rotate(-0.06);
+    c.font = 'bold 6.5px sans-serif'; c.textAlign = 'center'; c.fillStyle = alfa(chiaro(col, 0.35), 0.95); c.fillText('LAVAMI', 0, 0);
+    c.restore();
+    const ragnatela = (x, y, R, a0, a1) => {
+      c.strokeStyle = 'rgba(245,245,250,0.75)'; c.lineWidth = 0.45;
+      for (let i = 0; i <= 5; i++) { const a = a0 + (a1 - a0) * i / 5; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); c.stroke(); }
+      for (let k = 1; k <= 3; k++) { c.beginPath(); for (let i = 0; i <= 5; i++) { const a = a0 + (a1 - a0) * i / 5, rr = R * k / 3.4; c[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.stroke(); }
+    };
+    ragnatela(X(xa - 4), Y(wBot), 9, -Math.PI / 2, -Math.PI);                                // nell'angolo del finestrino
+    ragnatela(X(-M.xRuote), Y(ruota * 2 + 2.4), 8, Math.PI * 0.15, Math.PI * 0.85);          // sulla ruota dietro
+    ragnatela(X(xa - 6), Y(cintura + 11), 6, -Math.PI * 0.1, Math.PI * 0.6);                 // dallo specchietto
+  }
+}
+
+// mazzo di chiavi col telecomando (30x30)
+function chiavi(c) {
+  ellisse(c, 9, 8, 6, 6); tratto(c, CONT, 3.2); ellisse(c, 9, 8, 6, 6); tratto(c, '#d8dce4', 1.8);
+  const chiave = (ang, col) => {
+    c.save(); c.translate(9, 13); c.rotate(ang);
+    ellisse(c, 0, 3, 3.6, 3.6); c.fillStyle = col; c.fill(); tratto(c, CONT, 1);
+    ellisse(c, 0, 3, 1.2, 1.2); c.fillStyle = '#1f1430'; c.fill();
+    rrect(c, -1.2, 6, 2.4, 10, 0.6); c.fillStyle = col; c.fill(); tratto(c, CONT, 0.9);
+    c.fillStyle = col; c.fillRect(1, 11, 2.2, 1.6); c.fillRect(1, 13.6, 1.6, 1.6);
+    c.restore();
+  };
+  chiave(0.5, '#e8c048'); chiave(-0.15, '#c8ccd6');
+  // telecomando dell'auto (polveroso pure lui)
+  c.save(); c.translate(14, 9); c.rotate(-0.5);
+  rrect(c, 0, 0, 8, 12, 3); c.fillStyle = '#26262e'; c.fill(); tratto(c, CONT, 1);
+  ellisse(c, 4, 4, 1.8, 1.8); c.fillStyle = '#e0302a'; c.fill(); ellisse(c, 4, 8.4, 1.4, 1.4); c.fillStyle = '#8a8e98'; c.fill();
+  c.restore();
+}
+
+// cartello di cartone appoggiato alla macchina di Giorgio (40x30)
+function cartello2019(c) {
+  c.fillStyle = '#7a5530'; c.fillRect(18.5, 16, 3, 14);
+  c.save(); c.translate(20, 10); c.rotate(-0.05);
+  rrect(c, -18, -8.5, 36, 17, 1.5); c.fillStyle = '#d9b07a'; c.fill(); tratto(c, CONT, 1.2);
+  c.fillStyle = 'rgba(120,80,40,0.35)'; c.fillRect(-18, 3, 36, 1);
+  c.font = 'bold 6px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#3a1a10';
+  c.fillText('FERMA', 0, -1); c.fillText('DAL 2019', 0, 6);
+  c.restore();
+}
+
+export const COLORI_AUTO = { panda: '#f08a24', golf: '#f2f4f7', suv: '#8c929b', a3: '#f4f5f7' };
+
+function creaParcheggio(scene) {
+  for (const [nome, M] of Object.entries(MODELLI)) {
+    const o = nome === 'a3' ? { polvere: true, gomma: true } : {};
+    tela(scene, 'auto_' + nome, AUTO.w, AUTO.h, (c) => auto(c, M, COLORI_AUTO[nome], o), 6);
+  }
+  tela(scene, 'chiavi', 30, 30, chiavi, 8);
+  tela(scene, 'cartello2019', 40, 30, cartello2019, 6);
+}
+
+
+// ------------------------------------------------------------
+//  DISCOTECA: consolle del DJ, tavolini, shottino, icona dell'amico
+// ------------------------------------------------------------
+function consolle(c) {
+  rrect(c, 4, 8, 112, 30, 4); c.fillStyle = gradL(c, 0, 8, 0, 38, [[0, '#3a3450'], [1, '#1a1628']]); c.fill(); tratto(c, CONT, 1.4);
+  rrect(c, 4, 4, 112, 10, 3); c.fillStyle = '#4a4466'; c.fill(); tratto(c, CONT, 1.2);   // il piano
+  for (const x of [26, 94]) {   // i due giradischi
+    ellisse(c, x, 9, 13, 4.5); c.fillStyle = '#121218'; c.fill(); tratto(c, '#6a6a80', 0.8);
+    ellisse(c, x, 9, 4, 1.5); c.fillStyle = '#e8463a'; c.fill();
+  }
+  rrect(c, 46, 5, 28, 8, 1.5); c.fillStyle = '#22202e'; c.fill();
+  for (let i = 0; i < 6; i++) { c.fillStyle = ['#5ad0ff', '#ff5a8a', '#ffd84a'][i % 3]; c.fillRect(49 + i * 4, 7 + (i % 2) * 2, 2.4, 2.4); }
+  // davanti: le lucine e la scritta
+  for (let i = 0; i < 14; i++) { ellisse(c, 12 + i * 7.3, 32, 1.6, 1.6); c.fillStyle = ['#ff5ad0', '#5ad0ff', '#7dff9a', '#ffd84a'][i % 4]; c.fill(); }
+  c.save(); c.font = 'bold 10px sans-serif'; c.textAlign = 'center'; c.shadowColor = '#ff5ad0'; c.shadowBlur = 5; c.fillStyle = '#ff9af0'; c.fillText('DJ', 60, 26); c.restore();
+}
+
+// tavolino da cocktail visto un po' dall'alto, con la tovaglia fino a terra (ci si nasconde un tentacolo)
+function tavolino(c) {
+  ellisse(c, 15, 30, 13, 4); c.fillStyle = 'rgba(0,0,0,0.4)'; c.fill();
+  poli(c, [[3, 10], [27, 10], [29, 29], [1, 29]]); c.fillStyle = gradL(c, 0, 10, 0, 29, [[0, '#e8e4f0'], [1, '#a8a0b8']]); c.fill(); tratto(c, CONT, 1);
+  c.beginPath(); c.moveTo(1, 29); c.quadraticCurveTo(15, 32, 29, 29); tratto(c, CONT, 1);
+  ellisse(c, 15, 10, 12, 4); c.fillStyle = '#f6f2fa'; c.fill(); tratto(c, CONT, 1);
+  for (const [x, col] of [[10, '#ff5a8a'], [19, '#7dff9a']]) {
+    poli(c, [[x - 2.5, 2], [x + 2.5, 2], [x, 6]]); c.fillStyle = col; c.fill(); tratto(c, CONT, 0.6);
+    c.fillStyle = '#c8c8d0'; c.fillRect(x - 0.3, 6, 0.6, 3);
+  }
+}
+
+function shottino(c) {
+  poli(c, [[1.5, 1], [10.5, 1], [9, 13], [3, 13]]); c.fillStyle = 'rgba(220,240,255,0.5)'; c.fill();
+  poli(c, [[2.6, 5], [9.4, 5], [8.6, 12], [3.4, 12]]); c.fillStyle = gradL(c, 0, 5, 0, 12, [[0, '#ffc34a'], [1, '#d87a10']]); c.fill();
+  poli(c, [[1.5, 1], [10.5, 1], [9, 13], [3, 13]]); tratto(c, CONT, 0.9);
+  c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(3, 2, 1, 9);
+}
+
+function icoAmico(c) {
+  ellisse(c, 8, 5, 3.6, 3.6); c.fillStyle = '#ffe14a'; c.fill(); tratto(c, CONT, 0.9);
+  c.beginPath(); c.moveTo(2, 15); c.quadraticCurveTo(2, 9, 8, 9); c.quadraticCurveTo(14, 9, 14, 15); c.closePath(); c.fillStyle = '#ffe14a'; c.fill(); tratto(c, CONT, 0.9);
+  // la mano alzata: "ferma!"
+  c.beginPath(); c.moveTo(13, 10); c.lineTo(15.5, 4); tratto(c, CONT, 2.6); tratto(c, '#ffe14a', 1.4);
+}
+
+function creaDisco(scene) {
+  tela(scene, 'consolle', 120, 40, consolle, 6);
+  tela(scene, 'tavolino', 30, 34, tavolino, 6);
+  tela(scene, 'shottino', 12, 14, shottino, 8);
+  tela(scene, 'icoAmico', 17, 16, icoAmico, 8);
+}
+
 export function creaOggetti(scene) {
   [-0.1, 0.07].forEach((v, f) => {
     tela(scene, `golfGiu${f}`, 60, 104, (c) => golf(c, false, v), 6);
@@ -770,6 +987,8 @@ export function creaOggetti(scene) {
   creaBlackjack(scene);
   tela(scene, 'pallone', 12, 12, pallone, 8);
   creaPassaseo(scene);
+  creaParcheggio(scene);
+  creaDisco(scene);
   for (const cibo of ['spaghetti', 'pizza', 'cotoletta', 'lasagna', 'tiramisu']) tela(scene, 'piatto_' + cibo, 64, 40, (c) => piatto(c, cibo), 6);
   tela(scene, 'manoMia', 40, 56, manoMia, 6);
   tela(scene, 'finestraAperta', 58, 44, (c) => finestra(c, true), 6);

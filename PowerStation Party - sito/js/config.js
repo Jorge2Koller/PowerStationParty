@@ -20,7 +20,7 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra'],
 
   microgiochi: {
     // ---------------------------------------------------------
@@ -516,6 +516,124 @@ export const CONFIG = {
       frasiOnda: ['È gelata!', "L'acqua no!"],
       frasiSabbia: ['Pure la sabbia!', 'Che vento!'],
     },
+
+    // ---------------------------------------------------------
+    guida: {
+      titolo: 'Il Passaggiorgio',
+      durata: 45,
+      colore: 0x3a3a8a,
+      ospite: { id: 'giorgio', etichetta: 'STASERA GUIDA:\nGIORGIO' },
+      comandi: [
+        'Giorgio si infila nelle macchine degli altri: CLICCALO prima che chiuda!',
+        'Quando è a terra TRASCINA LE CHIAVI fino a lui: deve guidare lui!',
+        'TASTIERA: FRECCE scegli la macchina, SPAZIO lo tiri fuori, INVIO le chiavi',
+        'Occhio alle sagome di cartone e agli amici incappucciati',
+        'Clic a vuoto: la mano resta ferma per un attimo',
+      ],
+      comandiTouch: [
+        'Giorgio si infila nelle macchine degli altri: TOCCALO prima che chiuda!',
+        'Quando è a terra TRASCINA LE CHIAVI fino a lui: deve guidare lui!',
+        'Occhio alle sagome di cartone e agli amici incappucciati',
+        'Tocco a vuoto: la mano resta ferma per un attimo',
+      ],
+      obiettivo: 'Fallo guidare almeno 2 volte!',
+      obiettivoGuidate: 2,
+      // punti
+      puntiFuori: 10,          // Giorgio tirato fuori da una macchina
+      bonusUltimo: 5,          // ...se era già quasi dentro (oltre "quasiDentro" della finestra)
+      quasiDentro: 0.66,
+      puntiGuida: 50,          // Giorgio si siede al volante della sua A3
+      malusPassaggio: 20,      // riesce a chiudere la portiera: passaggio scroccato
+      malusSbagliato: 5,       // tirata fuori la persona sbagliata (l'amico incappucciato)
+      bloccoVuoto: 0.6,        // secondi di mano ferma dopo un clic a vuoto
+      // tempi
+      scopertoInizio: 2.6,     // secondi che Giorgio resta a terra (le chiavi vanno portate prima)
+      scopertoFine: 2.0,
+      alVolante: 2.4,          // secondi al volante prima di scendere con una scusa
+      rientro: 4,              // secondi prima che torni la macchina partita con Giorgio dentro
+      raggioChiavi: 28,        // quanto vicino a Giorgio vanno lasciate le chiavi (unità)
+      raggioDito: 6,           // col dito si prende un po' più largo
+      // Fasi di difficoltà. "da" = secondo da cui vale la fase.
+      //  vel = corsa di Giorgio (unità/s), finestra = secondi per tirarlo fuori, finta = probabilità che
+      //  cambi macchina all'ultimo, insieme = portiere aperte insieme (le altre con la sagoma di cartone),
+      //  travestimento = probabilità di cappuccio e occhiali (con un sosia incappucciato), bagagliaio = probabilità
+      //  che si infili nel bagagliaio, pausa = [min,max] secondi prima della corsa successiva
+      fasi: [
+        { da: 0,  vel: 90,  finestra: 1.3,  finta: 0,    insieme: 1, travestimento: 0,   bagagliaio: 0,    pausa: [0.7, 1.0] },
+        { da: 10, vel: 110, finestra: 1.1,  finta: 0.25, insieme: 1, travestimento: 0,   bagagliaio: 0,    pausa: [0.5, 0.8] },
+        { da: 18, vel: 130, finestra: 1.0,  finta: 0.35, insieme: 2, travestimento: 0.3, bagagliaio: 0,    pausa: [0.4, 0.7] },
+        { da: 30, vel: 150, finestra: 0.85, finta: 0.4,  insieme: 2, travestimento: 0.3, bagagliaio: 0.35, pausa: [0.3, 0.6] },
+        { da: 38, vel: 170, finestra: 0.7,  finta: 0.45, insieme: 3, travestimento: 0.2, bagagliaio: 0.35, pausa: [0.2, 0.5] },
+      ],
+      scuse: ['Stasera bevo io!', "Ce l'ho dal meccanico", 'Tanto passi tu da casa mia', 'Non trovo le chiavi',
+        'Mi si è scaricata', 'La mia consuma troppo', 'Guido al ritorno, giuro', 'Ho appena lavato i sedili', 'Non so dove parcheggiare'],
+      frasiFuori: ['Ero quasi dentro!', 'Ma dai!', 'Ahia!', 'Uffa...', 'Che cattiveria!'],
+      frasiVolante: ['Va bene, va bene...', 'E la benzina chi la paga?', 'Ma torniamo presto, eh'],
+      frasiScende: ['Ho scordato il telefono!', 'Mi scappa!', 'Fa un rumore strano...', 'Torno subito!'],
+      frasiAmici: ['Miracolo!', 'Fate una foto!', 'Grande Giorgio!', 'Non ci credo!'],
+      frasiAutisti: ['Ma scendi!', 'Di nuovo?!', 'Fuori dalla mia macchina!', 'Ancora tu?!'],
+      frasiSosia: ['Ehi, io pago la benzina!', 'Ma che fai?!', 'Non sono Giorgio!'],
+      frasiCiao: ['Ciao ciao!', 'Grazie del passaggio!', 'Ci vediamo in disco!'],
+    },
+
+    // ---------------------------------------------------------
+    piovra: {
+      titolo: 'Petri Tentacolari',
+      durata: 45,
+      colore: 0x7a2fa8,
+      musica: 'disco',
+      ospite: { id: 'petri', etichetta: 'OCCHIO A:\nIL PIOVRA' },
+      comandi: [
+        'Clicca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
+        'CLIC sui tentacoli del Petri: SCIAF! Mollano la presa',
+        'Aiuti (in basso o 1 e 2): SHOTTINO GRATIS (poi clicca dove lanciarlo) e AMICO IN MEZZO',
+        'TASTIERA: TAB scegli la ragazza, FRECCE la guidi, SPAZIO schiaffo',
+      ],
+      comandiTouch: [
+        'Tocca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
+        'Tocca i tentacoli del Petri: SCIAF! Mollano la presa (anche con un altro dito)',
+        'Aiuti in basso: SHOTTINO GRATIS (poi tocca dove lanciarlo) e AMICO IN MEZZO',
+      ],
+      obiettivo: 'Fai scappare almeno 10 ragazze!',
+      obiettivoSalvate: 10,
+      // punti
+      puntiSalvata: 10,
+      bonusSerie: 5,           // fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla terza...
+      maxBonusSerie: 20,
+      malusAgganciata: 15,     // a fine partita, per ogni ragazza ancora agganciata
+      // ragazze
+      velSegue: 95,            // velocità lungo la strada disegnata (unità/s)
+      velBalla: 22,            // mentre balla si sposta piano
+      velTrascinata: 45,       // agganciata, il tentacolo la tira verso il Petri
+      distanzaChiacchiera: 40, // ...fin qui
+      // schiaffi
+      raggioTentacolo: 5,      // quanto lontano dal tentacolo vale il colpo (unità, oltre al suo spessore)
+      raggioDito: 4,           // col dito un po' di più
+      // aiuti
+      shottino: { ricarica: 9, durata: 3, velPetri: 170 },
+      amico: { ricarica: 11, durata: 4, raggio: 18 },
+      amici: ['beppe', 'marsupino', 'guerra', 'sego', 'greg', 'generale', 'ingiocabile', 'zio', 'passaseo', 'bota', 'marco'],
+      // Fasi di difficoltà. "da" = secondo da cui vale la fase.
+      //  ogni = secondi tra una ragazza nuova e l'altra, max = ragazze in pista insieme, tentacoli = quanti ne usa,
+      //  vel = velocità dei tentacoli (unità/s), portata = fin dove arrivano, petri = velocità con cui si sposta
+      //  (0 = fermo), reazione = [min,max] secondi prima che un tentacolo libero punti qualcuno
+      fasi: [
+        { da: 0,  ogni: 3.0, max: 3, tentacoli: 2, vel: 70,  portata: 120, petri: 0,  reazione: [0.9, 1.6] },
+        { da: 12, ogni: 2.4, max: 4, tentacoli: 3, vel: 85,  portata: 140, petri: 12, reazione: [0.7, 1.3] },
+        { da: 24, ogni: 2.0, max: 5, tentacoli: 4, vel: 100, portata: 160, petri: 20, reazione: [0.5, 1.1] },
+        { da: 36, ogni: 1.6, max: 6, tentacoli: 5, vel: 120, portata: 180, petri: 30, reazione: [0.4, 0.9] },
+      ],
+      // tentacolo a sorpresa (da sotto un tavolino o dalla consolle)
+      sorpresaDa: 15,
+      sorpresaOgni: [6, 8],
+      velSorpresa: 150,
+      frasiPetri: ['Ciao, vieni spesso qui?', 'Ti offro da bere?', 'Sai che faccio palestra?', 'Che segno sei?', 'Balli benissimo!', 'Ti posso dire una cosa?'],
+      frasiRagazze: ['Aiuto!', 'Le mie amiche mi aspettano!', 'Ma quante mani hai?!', 'Ehm... devo andare', 'Lasciami!'],
+      frasiSalva: ['Ciao ciao!', 'Salva!', 'Grazie!', 'Arrivo, ragazze!'],
+      frasiSchiaffo: ['Ahia!', 'Era per salutare!', 'Che manesca!', 'Ma dai!'],
+      frasiShottino: ['Shottino gratis?! Arrivo!', 'Uno shottino! Mio!', 'Offre la casa?!'],
+      frasiAmico: ['Ehi, io no!', 'Petri, calmati!', 'Giù le mani!', 'Fermo lì!'],
+    },
   },
 
   // Frasi di sfottò per chi perde. {perdente} e {vincitore} vengono sostituiti.
@@ -542,6 +660,12 @@ export const CONFIG = {
     "{perdente}, il Bota per colpa tua stanotte dorme in piedi.",
     "{vincitore} abbronza, {perdente} arrostisce: chiedete al Bota.",
     "{perdente}, spalmava meglio il gabbiano. E ti ha pure fregato il tubetto.",
+    "{perdente}, pure Giorgio stasera ha guidato più di te.",
+    "{perdente}, a te non danno un passaggio neanche gli scrocconi.",
+    "{vincitore} ha messo Giorgio al volante. {perdente} non trova neanche la freccia.",
+    "{perdente}, il Piovra ti ha battuto pure a te.",
+    "{perdente}, il Petri rimorchia più di te. Coi tentacoli.",
+    "{vincitore} libera la pista, {perdente} libera solo il guardaroba.",
   ],
   frasiPareggio: [
     'Pareggio! Rivincita obbligatoria, paga chi perde.',

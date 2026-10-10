@@ -744,6 +744,142 @@ function sfondoStradaToscana(c) {
   tre(80, (yy) => { rrect(c, 410, yy, 42, 30, 2); c.fillStyle = '#b8583a'; c.fill(); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(431, yy, 21, 30); c.fillStyle = '#9a4428'; c.fillRect(430, yy, 2, 30); });
 }
 
+
+// ------------------------------------------------------------
+//  PARCHEGGIO SOTTO CASA di sabato sera (Il Passaggiorgio)
+// ------------------------------------------------------------
+// strada dietro (dove partono le macchine), fila delle macchine degli amici, fila davanti
+export const PARCHEGGIO = { strada: 150, fila: 198, davanti: 266 };
+
+function sfondoParcheggio(c) {
+  const r = casuale(2019), P = PARCHEGGIO;
+  // cielo di notte, stelle e luna
+  c.fillStyle = gradL(c, 0, 0, 0, 140, [[0, '#0f1330'], [0.7, '#2a2452'], [1, '#4a3462']]); c.fillRect(0, 0, 480, 140);
+  for (let i = 0; i < 70; i++) { ellisse(c, r() * 480, r() * 100, 0.5 + r() * 0.6, 0.5 + r() * 0.6); c.fillStyle = `rgba(255,255,240,${0.4 + r() * 0.5})`; c.fill(); }
+  alone(c, 430, 30, 30, '#fff6d0', 0.25);
+  ellisse(c, 430, 30, 12, 12); c.fillStyle = '#fff4cc'; c.fill();
+  for (const [x, y, rr] of [[426, 27, 2], [433, 34, 1.5], [424, 35, 1]]) { ellisse(c, x, y, rr, rr); c.fillStyle = 'rgba(200,190,150,0.6)'; c.fill(); }
+  // palazzi: quello di Giorgio in mezzo, più chiaro, con le finestre accese
+  const palazzo = (x, w, top, col, luci) => {
+    c.fillStyle = col; c.fillRect(x, top, w, 140 - top);
+    c.fillStyle = scuro(col, 0.25); c.fillRect(x, top, w, 3);
+    for (let y = top + 9; y < 128; y += 14) for (let xx = x + 7; xx < x + w - 10; xx += 16) {
+      const acc = r() < luci;
+      rrect(c, xx, y, 9, 8, 1); c.fillStyle = acc ? (r() < 0.25 ? '#ffd9a0' : '#ffe78a') : scuro(col, 0.35); c.fill();
+      if (acc) { c.save(); c.globalCompositeOperation = 'lighter'; alone(c, xx + 4.5, y + 4, 9, '#ffd070', 0.12); c.restore(); }
+      c.fillStyle = scuro(col, 0.45); c.fillRect(xx - 1, y + 8, 11, 1.4);
+    }
+  };
+  palazzo(-10, 120, 54, '#2b2a46', 0.25);
+  palazzo(370, 120, 62, '#2b2a46', 0.3);
+  palazzo(130, 220, 24, '#5a4a62', 0.45);
+  // portone e insegna del civico
+  rrect(c, 226, 110, 28, 30, [6, 6, 0, 0]); c.fillStyle = '#3a2a22'; c.fill(); tratto(c, '#1a1210', 1.2);
+  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 240, 106, 22, '#ffd070', 0.35); c.restore();
+  rrect(c, 236, 100, 8, 5, 1); c.fillStyle = '#ffe9a0'; c.fill();
+  // lucine colorate appese tra i balconi
+  const lucine = (x0, y0, x1, y1, abbasso, seme) => {
+    const rr = casuale(seme);
+    c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2, Math.max(y0, y1) + abbasso, x1, y1); tratto(c, '#1a1424', 0.8);
+    for (let i = 1; i < 18; i++) {
+      const t = i / 18, x = (1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * (x0 + x1) / 2 + t * t * x1;
+      const y = (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * (Math.max(y0, y1) + abbasso) + t * t * y1;
+      const col = ['#ff5a6a', '#ffd84a', '#5ad0ff', '#7dff9a', '#ff9af0'][Math.floor(rr() * 5)];
+      c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x, y + 2, 5, col, 0.5); c.restore();
+      ellisse(c, x, y + 2, 1.5, 1.9); c.fillStyle = col; c.fill();
+    }
+  };
+  lucine(0, 70, 240, 60, 22, 3); lucine(240, 60, 480, 76, 20, 4);
+  // marciapiede, strada dietro, cordolo
+  c.fillStyle = '#4a4656'; c.fillRect(0, 136, 480, 6);
+  c.fillStyle = '#6a6676'; c.fillRect(0, 136, 480, 1.4);
+  c.fillStyle = gradL(c, 0, 142, 0, 166, [[0, '#24222e'], [1, '#2e2c38']]); c.fillRect(0, 142, 480, 24);
+  c.fillStyle = 'rgba(240,240,230,0.55)'; for (let x = 6; x < 480; x += 30) c.fillRect(x, 153, 16, 1.6);
+  c.fillStyle = '#5a5666'; c.fillRect(0, 165, 480, 3);
+  // il parcheggio: asfalto, strisce degli stalli e qualche macchia d'olio
+  c.fillStyle = gradL(c, 0, 168, 0, 270, [[0, '#33313f'], [1, '#403d4c']]); c.fillRect(0, 168, 480, 102);
+  for (let i = 0; i < 500; i++) { ellisse(c, r() * 480, 168 + r() * 102, 0.5, 0.4); c.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.08)'; c.fill(); }
+  c.fillStyle = 'rgba(245,245,235,0.6)';
+  for (const x of [58, 198, 338, 478]) { poli(c, [[x - 1, 170], [x + 1, 170], [x - 3, P.fila + 4], [x - 5.5, P.fila + 4]]); c.fill(); }
+  c.fillRect(0, P.fila + 4, 480, 1.5);
+  for (const x of [0, 140]) { poli(c, [[x + 1, P.fila + 14], [x + 3, P.fila + 14], [x + 1, 270], [x - 2, 270]]); c.fill(); }
+  for (const [x, y, w] of [[300, 228, 16], [90, 186, 10], [420, 250, 12]]) { ellisse(c, x, y, w, w * 0.3); c.fillStyle = 'rgba(10,8,20,0.35)'; c.fill(); }
+  // lampioni con la luce che cade a terra
+  for (const x of [26, 452]) {
+    c.save(); c.globalCompositeOperation = 'lighter';
+    poli(c, [[x + 8, 76], [x + 14, 76], [x + 48, 236], [x - 28, 236]]); c.fillStyle = gradL(c, 0, 76, 0, 236, [[0, 'rgba(255,220,140,0.22)'], [1, 'rgba(255,220,140,0)']]); c.fill();
+    ellisse(c, x + 10, 228, 40, 12); c.fillStyle = 'rgba(255,215,130,0.10)'; c.fill();
+    c.restore();
+    c.fillStyle = '#1e1c26'; c.fillRect(x - 1.5, 76, 3, 92);
+    c.beginPath(); c.moveTo(x, 78); c.quadraticCurveTo(x, 70, x + 10, 72); tratto(c, '#1e1c26', 2.6);
+    rrect(c, x + 5, 71, 12, 5, 2); c.fillStyle = '#2a2833'; c.fill();
+    c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x + 11, 77, 14, '#ffd88a', 0.6); c.restore();
+    ellisse(c, x + 11, 76.5, 4.5, 1.6); c.fillStyle = '#fff2c0'; c.fill();
+  }
+  // cartello del parcheggio
+  c.fillStyle = '#8a8a96'; c.fillRect(110, 112, 2, 56);
+  rrect(c, 102, 98, 18, 18, 2.5); c.fillStyle = '#2f6fd8'; c.fill(); tratto(c, '#f2f2f2', 1.2);
+  c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.fillText('P', 111, 112);
+  c.fillStyle = gradR(c, 240, 150, 170, 330, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(5,0,20,0.4)']]); c.fillRect(0, 0, 480, 270);
+}
+
+
+// ------------------------------------------------------------
+//  LA DISCOTECA vista dall'alto (Petri Tentacolari)
+// ------------------------------------------------------------
+// la pista a mattonelle (le luci colorate le accende la scena), l'ingresso a sinistra
+// e il tavolo delle amiche (l'uscita) a destra
+export const DISCO = { x0: 40, y0: 78, col: 10, righe: 6, lato: 40, alto: 31, uscita: 440, uscitaY: [96, 214], ingressoY: 156 };
+
+function neon(c, x, y, s, col, size = 8) {
+  c.save(); c.font = `bold ${size}px sans-serif`; c.textAlign = 'center';
+  c.shadowColor = col; c.shadowBlur = 6; c.fillStyle = col; c.fillText(s, x, y);
+  c.shadowBlur = 0; c.fillStyle = '#ffffff'; c.globalAlpha = 0.7; c.fillText(s, x, y); c.restore();
+}
+
+function sfondoDisco(c) {
+  const D = DISCO, r = casuale(808);
+  // parete in fondo, col neon che corre lungo il bordo
+  c.fillStyle = gradL(c, 0, 0, 0, 78, [[0, '#120a22'], [1, '#2a1648']]); c.fillRect(0, 0, 480, 78);
+  for (let x = 6; x < 480; x += 22) { rrect(c, x, 20, 12, 30, 2); c.fillStyle = 'rgba(80,50,140,0.25)'; c.fill(); }   // pannelli fonoassorbenti
+  c.save(); c.globalCompositeOperation = 'lighter';
+  c.fillStyle = gradL(c, 0, 70, 0, 80, [[0, 'rgba(255,60,200,0)'], [0.5, 'rgba(255,60,200,0.55)'], [1, 'rgba(255,60,200,0)']]); c.fillRect(0, 70, 480, 10);
+  c.restore();
+  c.fillStyle = '#ff7ae0'; c.fillRect(0, 74.5, 480, 1.2);
+  // la palla stroboscopica
+  c.fillStyle = '#6a6a7a'; c.fillRect(239.5, 0, 1, 8);
+  ellisse(c, 240, 16, 9, 9); c.fillStyle = gradR(c, 237, 13, 1, 10, [[0, '#ffffff'], [1, '#8a8aa0']]); c.fill();
+  c.save(); ellisse(c, 240, 16, 9, 9); c.clip();
+  for (let x = 231; x < 250; x += 3) for (let y = 7; y < 26; y += 3) { c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.7)' : 'rgba(90,90,120,0.6)'; c.fillRect(x, y, 2.4, 2.4); }
+  c.restore();
+  ellisse(c, 240, 16, 9, 9); tratto(c, '#2a2a3a', 0.8);
+  // pavimento: moquette scura ai lati, pista a mattonelle in mezzo
+  c.fillStyle = '#160e26'; c.fillRect(0, 78, 480, 192);
+  for (let i = 0; i < 400; i++) { ellisse(c, r() * 480, 78 + r() * 192, 0.6, 0.6); c.fillStyle = 'rgba(255,255,255,0.05)'; c.fill(); }
+  for (let j = 0; j < D.righe; j++) for (let i = 0; i < D.col; i++) {
+    const x = D.x0 + i * D.lato, y = D.y0 + j * D.alto;
+    rrect(c, x + 1, y + 1, D.lato - 2, D.alto - 2, 2.5);
+    c.fillStyle = gradL(c, x, y, x + D.lato, y + D.alto, [[0, '#2c2248'], [1, '#1e1834']]); c.fill();
+    tratto(c, 'rgba(255,255,255,0.08)', 0.6);
+  }
+  rrect(c, D.x0 - 1, D.y0 - 1, D.col * D.lato + 2, D.righe * D.alto + 2, 3); tratto(c, '#ff7ae0', 1.2);
+  // l'ingresso a sinistra, con l'insegna
+  rrect(c, 0, 124, 22, 64, [0, 4, 4, 0]); c.fillStyle = '#0a0612'; c.fill(); tratto(c, '#5a3a8a', 1.5);
+  c.fillStyle = 'rgba(120,200,255,0.18)'; c.fillRect(0, 128, 18, 56);
+  for (const y of [138, 150, 162, 174]) { c.fillStyle = '#c8a050'; c.fillRect(19, y, 3, 2); }   // il cordone
+  neon(c, 22, 114, 'ENTRATA', '#5ad0ff', 7);
+  // il tavolo delle amiche a destra: divanetto di velluto, tavolino coi drink, tappeto
+  c.save(); c.globalCompositeOperation = 'lighter';
+  c.fillStyle = gradL(c, 436, 0, 480, 0, [[0, 'rgba(255,90,170,0)'], [1, 'rgba(255,90,170,0.25)']]); c.fillRect(436, 96, 44, 118);
+  c.restore();
+  rrect(c, 458, 102, 22, 108, [8, 0, 0, 8]); c.fillStyle = gradL(c, 458, 0, 480, 0, [[0, '#8a1f52'], [1, '#5a0f32']]); c.fill(); tratto(c, CONT, 1.2);
+  for (const y of [120, 140, 160, 180, 198]) { c.beginPath(); c.moveTo(461, y); c.lineTo(478, y); tratto(c, 'rgba(0,0,0,0.3)', 1); }
+  rrect(c, 446, 132, 10, 48, 3); c.fillStyle = '#3a2a1e'; c.fill(); tratto(c, CONT, 1);
+  for (const [y, col] of [[140, '#ff5a8a'], [154, '#5ad0ff'], [168, '#ffd84a']]) { ellisse(c, 451, y, 3.2, 3.2); c.fillStyle = col; c.fill(); tratto(c, '#ffffff', 0.6); }
+  neon(c, 456, 92, 'LE AMICHE', '#ff7ae0', 7);
+  c.fillStyle = gradR(c, 240, 160, 150, 330, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(5,0,20,0.45)']]); c.fillRect(0, 0, 480, 270);
+}
+
 export function creaSfondi(scene) {
   tela(scene, 'bgPub', 480, 270, sfondoPub);
   tela(scene, 'bancone', 480, 112, bancone);
@@ -760,6 +896,8 @@ export function creaSfondi(scene) {
   tela(scene, 'tavoloVerde', 480, 170, tavoloVerde);
   tela(scene, 'bgParco', 480, 270, sfondoParco);
   tela(scene, 'bgStradaToscana', 480, 270, sfondoStradaToscana);
+  tela(scene, 'bgParcheggio', 480, 270, sfondoParcheggio);
+  tela(scene, 'bgDisco', 480, 270, sfondoDisco);
   // vignettatura per le schermate di menu
   tela(scene, 'vignetta', 480, 270, (c) => {
     c.fillStyle = gradR(c, 240, 135, 60, 310, [[0, 'rgba(255,255,255,0.16)'], [0.45, 'rgba(0,0,0,0)'], [1, 'rgba(20,0,30,0.55)']]);

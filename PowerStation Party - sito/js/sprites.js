@@ -2,7 +2,7 @@
 // codice su canvas ad alta risoluzione (cartella js/grafica): nessuna immagine esterna.
 import { tela } from './grafica/base.js';
 import { CONFIG } from './config.js';
-import { PERSONAGGI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
+import { PERSONAGGI, RAGAZZE, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
 import { creaMarco } from './grafica/marco.js';
 import { creaOggetti } from './grafica/oggetti.js';
 import { creaSfondi } from './grafica/sfondi.js';
@@ -33,6 +33,20 @@ export function creaTexture(scene) {
   // a chiazze, col segno degli occhiali, rigido come un robot
   personaggio('bota_abbronzato', { ...PERSONAGGI.bota, ...BOTA_ABBRONZATO }, 'occhiolino', { posa: 'pollice' });
   personaggio('bota_aragosta', { ...PERSONAGGI.bota, ...BOTA_ARAGOSTA }, 'triste', { posa: 'robot' });
+  // Il Passaggiorgio: Giorgio vestito da sera (camicia), con le cuffie quando si fa scarrozzare,
+  // e incappucciato con gli occhiali da sole (il travestimento), come l'amico che gli fa da sosia
+  const sera = { ...PERSONAGGI.giorgio, vestito: { tipo: 'camicia', colore: '#eef2f8' }, pantaloni: '#2a2c38', scarpe: '#3a2418' };
+  for (const e of ESPRESSIONI) personaggio('giorgioSera_' + e, sera, e);
+  personaggio('giorgioCuffie', { ...sera, cuffie: true }, 'felice');
+  const incognito = { cappuccio: '#3e4452', occhiali: { montatura: '#121216', lenti: '#1c2029' }, vestito: { tipo: 'tshirt', colore: '#3e4452', collo: 'giro', maniche: 'lunghe' }, pantaloni: '#2a2c38' };
+  for (const id of ['giorgio', 'marco', 'beppe', 'bota']) {
+    const p = { ...PERSONAGGI[id], ...incognito };
+    personaggio(`incognito_${id}`, p, 'normale');
+    personaggio(`incognito_${id}_shock`, p, 'shock');
+  }
+  // Petri Tentacolari: le ragazze della disco (ragazza0 ... ragazza4, tutte le espressioni)
+  RAGAZZE.forEach((p, i) => { for (const e of ESPRESSIONI) personaggio(`ragazza${i}_${e}`, p, e); });
+  personaggio('zioDJ', { ...PERSONAGGI.zio, cuffie: true }, 'felice');   // il DJ
   creaMarco(scene);
   creaOggetti(scene);
   creaSfondi(scene);

@@ -2,7 +2,7 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party';
+const CACHE = 'powerstation-party';   // versione 2: Il Passaggiorgio e Petri Tentacolari
 const FONT = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -17,11 +17,17 @@ self.addEventListener('message', (e) => {
     .map((u) => c.add(u).catch(() => {})))));
 });
 
+// "no-cache": ogni file si ricontrolla col server (se non è cambiato risponde "uguale" e costa poco).
+// Senza, il browser può tenere per qualche minuto i file vecchi (GitHub Pages li fa tenere 10 minuti)
+// e dopo un aggiornamento mescolare file vecchi e nuovi. (Le richieste della pagina, mode "navigate",
+// non si possono ricreare con delle opzioni: per quelle si usa l'indirizzo.)
+const rete = (req) => (req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache' }) : fetch(req, { cache: 'no-cache' }));
+
 self.addEventListener('fetch', (e) => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET' || (url.origin !== location.origin && !FONT.includes(url.hostname))) return;
   e.respondWith(
-    fetch(req)
+    rete(req)
       .then((r) => {
         if (r.ok || r.type === 'opaque') {
           const copia = r.clone();

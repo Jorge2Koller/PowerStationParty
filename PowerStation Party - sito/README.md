@@ -3,7 +3,7 @@
 Microgiochi in stile WarioWare con Phaser 3. Riccardo contro Giorgio: stesso
 microgioco, un turno a testa, vince il round chi fa più punti.
 
-I microgiochi sono undici:
+I microgiochi sono tredici:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -18,6 +18,8 @@ I microgiochi sono undici:
 | `palleggi` | MaraZio | lo Zio |
 | `passaseo` | Passa di qua | Passaseo |
 | `bota` | Spalma il Bota! | il Bota |
+| `guida` | Il Passaggiorgio | Giorgio |
+| `piovra` | Petri Tentacolari | il Petri ("il Piovra") |
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -146,7 +148,9 @@ https://app.netlify.com/drop (serve un account gratuito per tenerlo online).
 Così si apre a tutto schermo, senza le barre del browser. Dal sito https (GitHub
 Pages) dopo la prima apertura il gioco funziona anche **senza internet**
 (`sw.js`); dall'indirizzo di casa `http://192.168...` no, perché i browser lo
-permettono solo su https.
+permettono solo su https. Il service worker ricontrolla ogni file col server (se non è
+cambiato costa pochissimo), così dopo un aggiornamento su GitHub non si mescolano file vecchi
+e nuovi; se il telefono mostra ancora la versione di prima, basta chiudere e riaprire il gioco.
 
 Su iPhone l'audio parte al primo tocco e rispetta l'interruttore del silenzioso:
 se non si sente niente, controlla che il telefono non sia in modalità silenziosa.
@@ -161,7 +165,7 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
 
 ## Modalità
 
-- **Sfida completa**: tutti e 10 i microgiochi. Ogni round lo giocano entrambi,
+- **Sfida completa**: tutti e 13 i microgiochi. Ogni round lo giocano entrambi,
   uno dopo l'altro; chi comincia si alterna a ogni round e il secondo vede a
   schermo il punteggio da battere. Vince chi fa più **punti in totale** (a parità
   di punti, chi ha vinto più round).
@@ -256,6 +260,29 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
   - niente crema su occhi e bocca; se è lui a muoversi sotto la mano non conta
   - col dito: l'interruttore in basso a sinistra sceglie TUBETTO o MANO, l'attrezzo sta
     un po' sopra il dito; tubetto e gabbiano si toccano
+- Il Passaggiorgio (stasera guida Giorgio, per forza):
+  - Giorgio corre verso le macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV
+    di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
+    e vola in mezzo al parcheggio. Se la chiude, la macchina parte con lui dentro e torna
+    dopo qualche secondo (passaggio scroccato)
+  - quando è a terra, trascina le chiavi (in basso a destra) fino a lui: va alla sua A3
+    impolverata e si mette al volante (poi scende con una scusa e si ricomincia)
+  - tastiera: FRECCE SINISTRA/DESTRA scelgono la macchina, SPAZIO lo tira fuori, INVIO gli
+    lancia le chiavi quando è a terra
+  - più avanti: finte, sagome di cartone di Giorgio nelle altre portiere, Giorgio col
+    cappuccio e gli occhiali con un sosia incappucciato (da non tirare fuori), il bagagliaio
+  - clic a vuoto (o sul cartone): la mano resta ferma per un attimo
+- Petri Tentacolari (scappa dal Piovra):
+  - tocca (o clicca) una ragazza e trascina: le disegni la strada, lei la segue. Se arriva al
+    tavolo delle amiche, a destra, è salva
+  - i tentacoli del Petri puntano la ragazza più vicina: se la prendono resta agganciata a
+    chiacchierare. Tocca il tentacolo (SCIAF!) per liberarla; col dito si può guidare una
+    ragazza e intanto schiaffeggiare con un altro dito
+  - aiuti in basso, con la ricarica: SHOTTINO GRATIS (poi tocca dove lanciarlo: il Petri ci si
+    fionda e molla tutto) e AMICO IN MEZZO (un personaggio del gioco blocca i tentacoli)
+  - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
+    vicino a lei, 1 e 2 gli aiuti (lo shottino va da solo nel punto più lontano dalle ragazze)
+  - ogni tanto un tentacolo a sorpresa sbuca da sotto un tavolino o dalla consolle
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -286,6 +313,13 @@ brevemente il telefono.
   trascinando via un piatto (è un recupero, vale meno: se no converrebbe lasciarli
   prendere apposta), +2 per il guanto tolto, +15 per ogni piatto ancora tuo alla
   fine. Vittoria con almeno 3 piatti su 5; persi tutti, finisce prima.
+- **Il Passaggiorgio** (45 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
+  quasi dentro), +50 ogni volta che si mette al volante della sua A3, -20 per ogni passaggio
+  scroccato, -5 se si tira fuori il sosia incappucciato. Vittoria se guida almeno 2 volte.
+- **Petri Tentacolari** (45 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
+  la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
+  terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine. Vittoria con almeno
+  10 ragazze salvate.
 - **Sego** (50 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
   Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
   per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
@@ -317,7 +351,8 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i tredici personaggi: tratti, espressioni, vestiti
+    personaggi.js        i quattordici personaggi (col Petri) e le ragazze della disco:
+                         tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
                          c'è pelle, la spiaggia col telo, sole, tubetto, mano,
@@ -326,10 +361,15 @@ js/
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
                          finestre con le persiane, fumogeni, ombrelloni,
                          cannone e bagnarole dei pirati, carte e fiches,
-                         pallone, Panda, ciclisti scout, trattore e Vespa
+                         pallone, Panda, ciclisti scout, trattore e Vespa,
+                         macchine viste di lato (Panda, Golf, SUV e l'A3 di
+                         Giorgio), chiavi, cartello, consolle del DJ, tavolini,
+                         shottino
+    tentacoli.js         i tentacoli del Petri (ridisegnati a ogni fotogramma)
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
-                         tavolo verde, prato toscano, strada tra vigne e grano
+                         tavolo verde, prato toscano, strada tra vigne e grano,
+                         parcheggio sotto casa di notte, pista della discoteca
   scenes/menu.js         boot, menu, partita singola, comandi, pausa
   scenes/flusso.js       introduzione, risultato, classifica finale
   microgames/
@@ -338,7 +378,7 @@ js/
     SpinaScene.js  ReGrorioScene.js  BarbaScene.js
     PaninoScene.js  ManiScene.js  SegoScene.js
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
-    BotaScene.js
+    BotaScene.js  GuidaScene.js  PiovraScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -351,15 +391,20 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
 `js/grafica/personaggi.js`. Oltre a colori e forma del viso (`faccia`) ci sono:
 
 - `stile` dei capelli: `ricci` (Passaseo), `ricciMedi` (Riccardo: gli stessi riccioli ma
-  più raccolti), `indietro`, `corto`, `ciuffo`, `grigio`, `rasato` (Marsupino),
+  più raccolti), `indietroLungo` (Giorgio: all'indietro, ai lati fino al lobo),
+  `spuntato` (il Petri: corti, tirati su a punte), `indietro`, `corto`, `ciuffo`, `grigio`, `rasato` (Marsupino),
   `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale, l'Ingiocabile),
-  `lunghiBagnati` (lo Zio); con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota)
+  `lunghiBagnati` (lo Zio); per le ragazze della disco `lunghi`, `caschetto`, `ricciLunghi`,
+  `coda`, `chignon`; con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota)
 - `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
   naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
   con `tondi: true` occhiali tondi (Passaseo), con `inFronte: true` tirati su sulla
   fronte (il Bota)
-- `cappello: { tipo: 'basco', colore, stemma }` (il Generale)
+- `cappello: { tipo: 'basco', colore, stemma }` (il Generale); `cappuccio: colore` (la felpa
+  tirata su: il travestimento del Passaggiorgio), `cuffie: true`
+- `statura` (1 = normale; il Petri 0.88: più basso, coi piedi sempre a terra), `ciglia: true`,
+  `rossetto: colore`
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -369,6 +414,8 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   bottoni grossi, con `camicia`, `quadretti` e `bottoni`), `piumino` (con `camicia` a
   righe e `catenina`), `mimetica`,
   `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe),
+  `camicia` (Giorgio vestito da sera), `felpa` (col cappuccio abbassato: il Petri),
+  `abito` (il vestito a bretelline delle ragazze: con `pantaloni` del colore della pelle),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
   `corti: true` per i pantaloncini, `calzettoni` per i calzettoni, `infradito: true`
@@ -380,11 +427,17 @@ Ogni personaggio ha 5 espressioni: `normale`, `felice`, `triste`, `shock`,
 palleggio `id_calcio1D`, `id_calcio2D` (gamba destra a metà e in alto; `S` per la
 sinistra) per i due giocatori e per lo Zio; `bota_abbronzato` (occhiolino e pollice
 in su) e `bota_aragosta` (rosso a chiazze col segno degli occhiali) per il finale di
-"Spalma il Bota!".
+"Spalma il Bota!"; per il Passaggiorgio `giorgioSera_<espressione>` (in camicia),
+`giorgioCuffie` e `incognito_<id>` (cappuccio e occhiali: Giorgio e i sosia); per Petri
+Tentacolari `ragazza0_<espressione>` ... `ragazza4_<espressione>` (le cinque ragazze, in
+`RAGAZZE`) e `zioDJ` (lo Zio alla consolle, con le cuffie).
+
+Le icone dell'app (`icone/`) sono Riccardo e Giorgio felici sui raggi arancioni del menu,
+disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno rifatte.
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
-`panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`) apre
-subito quel microgioco.
+`panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
+`piovra`) apre subito quel microgioco.
 
 ## Aggiungere un microgioco
 
@@ -420,6 +473,8 @@ export class MioGiocoScene extends MicrogiocoBase {
    - `comandi`: righe per tastiera e mouse; `comandiTouch`: le stesse righe per
      chi gioca col dito (saranno mostrate sul telefono)
    - `obiettivo` e tutti i parametri di difficoltà del tuo gioco
+   - facoltativo: `musica`, il nome di una traccia di `audio.js` (se no `gioco`; Petri
+     Tentacolari usa `disco`)
    
    e inserisci `'miogioco'` in `ordineSfida` se deve entrare nella sfida.
 
