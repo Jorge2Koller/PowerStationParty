@@ -8,6 +8,8 @@
 //  Facoltativi:
 //    finale(ris, fatto)   -> animazione conclusiva; chiamare fatto() alla fine
 //    pulisci()            -> chiamato quando la scena si chiude
+//    alRientro()          -> chiamato quando si riprende dopo una pausa: azzera dita e
+//                            pulsanti "tenuti premuti" (il rilascio, in pausa, non arriva)
 //
 //  La base gestisce: inquadratura, timer, barra del tempo, punteggio da battere,
 //  pausa con ESC (sul telefono: pulsanti pausa e audio in alto a destra), musica che
@@ -33,6 +35,7 @@ export class MicrogiocoBase extends Phaser.Scene {
   init() {
     this.giocatore = Sessione.giocatore;
     this.durata = this.cfg.durata;
+    this.oraVera = 0;
     this.trascorso = 0;
     this.inCorso = false;
     this.finito = false;
@@ -43,7 +46,11 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.prepara();
     this.creaHud();
     this.input.keyboard.on('keydown-ESC', () => this.pausa());
-    this.events.once('shutdown', () => { Audio.versaFine(); Audio.tempo(1); this.pulisci?.(); });
+    // Durante la pausa la scena non riceve i rilasci di dita e mouse: al rientro ogni
+    // microgioco azzera (in alRientro) quello che credeva ancora premuto. I tasti li azzera Phaser.
+    const rientro = () => this.alRientro?.();
+    this.events.on('resume', rientro);
+    this.events.once('shutdown', () => { this.events.off('resume', rientro); Audio.versaFine(); Audio.tempo(1); this.pulisci?.(); });
     Audio.musica('gioco');
     this.cameras.main.fadeIn(150);
     this.inCorso = true;
@@ -72,7 +79,10 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.testoTempo.setText(Math.ceil(r) + 's');
   }
 
-  update(_t, delta) {
+  update(ora, delta) {
+    // orologio vero del fotogramma (ms). "delta" invece è una media degli ultimi fotogrammi:
+    // va bene per muovere le cose, non per misurare la velocità di un gesto
+    this.oraVera = ora;
     if (!this.inCorso) return;
     const dt = Math.min(delta, 50) / 1000;
     this.trascorso += dt;

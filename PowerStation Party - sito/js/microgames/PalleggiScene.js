@@ -5,17 +5,19 @@
 //  perfetto (sale dritto), buono (scappa un po'), scarso (scappa tanto).
 //  Se cade a terra la serie riparte. Accanto, lo Zio palleggia senza sbagliare
 //  mai, e ci tiene a farlo sapere.
+//  Tutti e due palleggiano col piede: a ogni colpo la gamba si alza di lato in due tempi
+//  (texture "id_calcio1D/2D" e "S" per la sinistra, create in sprites.js).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { PARCO } from '../grafica/sfondi.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, fumetto, vibra, eTouch, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, multiTouch } from '../fx.js';
 
 const TERRA = PARCO.terra;
 const Y_PIEDE = TERRA - 12;                 // altezza del pallone quando lo colpisci
 const R_PALLA = 5.4;
 const X_MIN = 40, X_MAX = 292;              // dove può andare il giocatore
 const BORDO = [26, 318];                    // il pallone rimbalza qui (oltre c'è lo Zio)
-const ZIO = { x: 392, periodo: 0.95, alto: 92, lato: 31 };
+const ZIO = { x: 392, periodo: 0.95, alto: 92, lato: 16 };   // lato: il pallone cade sul suo piede destro
 const migliaia = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const TAGLIA = 0.58;
 const PULSANTE = { x: 436, y: 236, r: 23 };
@@ -35,10 +37,15 @@ export class PalleggiScene extends MicrogiocoBase {
     this.modo = 'tastiera';
     this.ricarica = 0;
     this.tCalcio = 0;
+    this.latoCalcio = 'D';    // con che gamba si calcia: quella dalla parte del pallone
     this.tFrase = 3;
     this.contaZio = 4312;
     this.tZio = 0;
     this.giriZio = 0;
+    // (la scena viene riusata da una partita all'altra: si azzera anche quello che resta in memoria)
+    this.dito = null;
+    this.tEsprIo = 0;
+    this.tEsprZio = 0;
 
     im(this, 0, 0, 'bgParco').setOrigin(0);
     this.ombra = this.add.ellipse(this.x, TERRA + 1, 34, 6, 0x000000, 0.22).setDepth(5);
@@ -89,6 +96,9 @@ export class PalleggiScene extends MicrogiocoBase {
     this.servi(0.9);
   }
 
+  // dopo una pausa il dito che trascinava non c'è più (se no non si potrebbe più muoversi)
+  alRientro() { this.dito = null; }
+
   // il pallone torna in mano: cade dall'alto sopra il giocatore
   servi(attesa = 0) {
     this.statoPalla = 'attesa';
@@ -102,11 +112,20 @@ export class PalleggiScene extends MicrogiocoBase {
     this.fumZio = fumetto(this, ZIO.x - 40, 100, s, ms, 800);
   }
 
+  // mette a un personaggio la texture di una posa (solo se è cambiata)
+  posa(img, id, nome) {
+    const k = `${id}_${nome}`;
+    if (img.texture.key !== k) img.setTexture(k);
+  }
+
   calcia() {
     if (!this.inCorso || this.ricarica > 0 || this.tCalcio > 0) return;
     const c = this.cfg;
-    this.tCalcio = 0.18;
-    this.io.setAngle(this.palla.x < this.x ? -7 : 7);
+    this.tCalcio = 0.2;
+    // la gamba dalla parte del pallone si alza, il corpo si piega dall'altra per stare in equilibrio
+    const sinistra = this.palla.visible && this.palla.x < this.x;
+    this.latoCalcio = sinistra ? 'S' : 'D';
+    this.io.setAngle(sinistra ? 5 : -5);
     const dy = this.palla.y - Y_PIEDE, dx = Math.abs(this.palla.x - this.x);
     const inZona = this.statoPalla === 'volo' && this.vy > 0 && dy > -c.sopra && dy < c.sotto && dx < c.portata;
     if (!inZona) {
@@ -145,11 +164,9 @@ export class PalleggiScene extends MicrogiocoBase {
     if (this.serie >= 3) Audio.sfx('errore');
     this.serie = 0;
     this.testoPalleggi.setText('0');
-    this.zio.setTexture('zio_sufficienza');
-    this.tEsprZio = 1.6;
+    this.tEsprZio = 1.6;      // sguardo di sufficienza (le texture le sceglie aggiorna)
     this.zioParla(caso(this.cfg.frasiErrore), 1400);
-    this.io.setTexture(`${this.giocatore.id}_triste`);
-    this.tEsprIo = 1.2;
+    this.tEsprIo = 1.2;       // e io ci resto male
   }
 
   aggiorna(dt) {
@@ -165,7 +182,9 @@ export class PalleggiScene extends MicrogiocoBase {
     this.io.x = this.x;
     this.ombra.x = this.x;
     if (this.tCalcio > 0) { this.tCalcio -= dt; if (this.tCalcio <= 0) this.io.setAngle(0); }
-    if (this.tEsprIo > 0) { this.tEsprIo -= dt; if (this.tEsprIo <= 0) this.io.setTexture(`${this.giocatore.id}_normale`); }
+    if (this.tEsprIo > 0) this.tEsprIo -= dt;
+    // la gamba che calcia: subito sul pallone (2), poi torna giù passando da metà altezza (1)
+    this.posa(this.io, this.giocatore.id, this.tCalcio > 0.08 ? `calcio2${this.latoCalcio}` : this.tCalcio > 0 ? `calcio1${this.latoCalcio}` : this.tEsprIo > 0 ? 'triste' : 'normale');
 
     // il pallone
     if (this.statoPalla === 'attesa') {
@@ -202,10 +221,15 @@ export class PalleggiScene extends MicrogiocoBase {
       this.giriZio = giro;
       this.contaZio++;
       this.testoZio.setText('ZIO: ' + migliaia(this.contaZio));
-      this.zio.setAngle(giro % 2 ? 4 : -4);
+      this.zio.setAngle(-4);
       this.time.delayedCall(120, () => this.zio.setAngle(0));
     }
-    if (this.tEsprZio > 0) { this.tEsprZio -= dt; if (this.tEsprZio <= 0) this.zio.setTexture('zio_normale'); }
+    // la sua gamba destra si alza un attimo prima che il pallone arrivi (u = 0) e si riabbassa
+    // subito dopo; se intanto mi guarda con sufficienza, palleggia lo stesso, a braccia conserte
+    if (this.tEsprZio > 0) this.tEsprZio -= dt;
+    const calcio = u > 0.95 || u < 0.07 ? 'calcio2D' : u > 0.87 || u < 0.15 ? 'calcio1D' : null;
+    const aria = this.tEsprZio > 0 ? 'sufficienza' : 'normale';
+    this.posa(this.zio, 'zio', calcio ? (aria === 'normale' ? calcio : `${calcio}_${aria}`) : aria);
     this.tFrase -= dt;
     if (this.tFrase <= 0) { this.tFrase = 5 + Math.random() * 3; this.zioParla(caso(c.frasi)); }
   }
@@ -215,13 +239,15 @@ export class PalleggiScene extends MicrogiocoBase {
     return {
       punteggio: this.punti + this.serieMigliore * c.bonusSerie,
       vittoria: this.serieMigliore >= c.obiettivoSerie,
-      riepilogo: `${this.palleggi} palleggi, serie migliore ${this.serieMigliore}, ${this.perfetti} perfetti`,
+      riepilogo: `${quanti(this.palleggi, 'palleggio', 'palleggi')}, serie migliore ${this.serieMigliore}, ${quanti(this.perfetti, 'perfetto', 'perfetti')}`,
     };
   }
 
   finale(ris, fatto) {
     for (const o of [...this.hud, this.palla, this.ombraPalla]) o.setVisible(false);
     this.fumZio?.destroy();
+    this.posa(this.io, this.giocatore.id, 'normale');
+    this.io.setAngle(0);
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });

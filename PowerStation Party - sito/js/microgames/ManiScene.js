@@ -7,7 +7,7 @@
 //  Schiaffo a vuoto: la tua mano resta dolorante per un attimo (niente clic a caso).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { txt, im, scalaDi, scritta, stelle, scuoti, caso, colpetto, fumetto, vibra, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch } from '../fx.js';
 
 const PIATTI = [
   { cibo: 'spaghetti', x: 84, y: 214 },
@@ -41,6 +41,8 @@ export class ManiScene extends MicrogiocoBase {
     this.tFrase = 3;
     this.tEspr = 0;
     this.bloccata = 0;
+    this.hud = null;   // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
+    this.dopo = null;
 
     im(this, 0, 0, 'bgSala').setOrigin(0);
     this.guerra = im(this, 240, Y_GUERRA, 'guerra_normale', 0.8).setOrigin(0.5, 1).setDepth(5);
@@ -280,7 +282,7 @@ export class ManiScene extends MicrogiocoBase {
     return {
       punteggio: this.punti + rimasti * c.puntiPiatto,
       vittoria: rimasti >= c.piattiMinimi,
-      riepilogo: `${this.schiaffi} schiaffi, ${rimasti} piatti salvati su ${PIATTI.length} (+${rimasti * c.puntiPiatto})`,
+      riepilogo: `${quanti(this.schiaffi, 'schiaffo', 'schiaffi')}, ${quanti(rimasti, 'piatto salvato', 'piatti salvati')} su ${PIATTI.length} (+${rimasti * c.puntiPiatto})`,
       titoloFine: rimasti ? 'TEMPO!' : 'TUTTO SPARITO!',
     };
   }
@@ -290,6 +292,7 @@ export class ManiScene extends MicrogiocoBase {
     for (const m of this.mani) { m.img.destroy(); m.braccio.destroy(); }
     this.mani = [];
     this.manoMia.setVisible(false);
+    for (const o of [this.testoPunti, this.testoPiatti]) o.setVisible(false);   // il conto finale è nella schermata dopo
     this.input.setDefaultCursor('default');
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);

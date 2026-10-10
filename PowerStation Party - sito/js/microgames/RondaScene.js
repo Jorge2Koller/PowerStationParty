@@ -8,7 +8,7 @@
 //  Le munizioni le lancia il Generale: una cassa ogni tanto, da prendere al volo.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, fumetto, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, fumetto, vibra } from '../fx.js';
 import { SPIAGGIA } from '../grafica/sfondi.js';
 
 const O = SPIAGGIA.orizzonte, RIVA = 196;
@@ -35,6 +35,7 @@ export class RondaScene extends MicrogiocoBase {
     this.tFrase = 6;
     this.tEspr = 0;
     this.rinculo = 0;
+    this.tVuoto = null;        // (la scena viene riusata: senza azzerarlo l'avviso "MUNIZIONI!" non uscirebbe più)
     this.cassa = null;
     this.mira = { x: 240, y: 120 };
 
@@ -97,7 +98,7 @@ export class RondaScene extends MicrogiocoBase {
     if (!this.inCorso) return;
     if (this.colpi <= 0) {
       Audio.sfx('vuoto');
-      if (!this.tVuoto || this.trascorso - this.tVuoto > 1.5) { this.tVuoto = this.trascorso; scritta(this, 240, 214, 'MUNIZIONI!', { size: 9, color: '#ff6b5a', durata: 300, depth: 950 }); }
+      if (this.tVuoto == null || this.trascorso - this.tVuoto > 1.5) { this.tVuoto = this.trascorso; scritta(this, 240, 214, 'MUNIZIONI!', { size: 9, color: '#ff6b5a', durata: 300, depth: 950 }); }
       return;
     }
     this.colpi--;
@@ -309,7 +310,7 @@ export class RondaScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, this.punti + n * this.cfg.puntiOmbrellone),
       vittoria: n >= this.cfg.obiettivoOmbrelloni,
-      riepilogo: `${this.affondate} bagnarole affondate, ${n} ombrelloni salvati su 5`,
+      riepilogo: `${quanti(this.affondate, 'bagnarola affondata', 'bagnarole affondate')}, ${quanti(n, 'ombrellone salvato', 'ombrelloni salvati')} su 5`,
       titoloFine: n ? 'TEMPO!' : 'SPIAGGIA PERSA!',
     };
   }

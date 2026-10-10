@@ -67,14 +67,18 @@ export class IntroScene extends Phaser.Scene {
     const alt = td.y + td.height + 3 - cima;
     pannello(this, 240, cima + alt / 2, 256, alt, { depth: 1 });
 
-    // nella sfida, il secondo vede cosa deve battere
+    // nella sfida, il secondo vede cosa deve battere (sotto il pannello dei comandi: se i
+    // comandi sono tanti il riquadro scende, e con lui la scritta "quando sei pronto")
     const db = S.daBattere;
+    let yPronto = 252;
     if (db) {
-      pannello(this, 240, 225, 190, 15, { colore: 0x7a1f2a, raggio: 7 });
-      txt(this, 240, 225, `DA BATTERE: ${db.punteggio} punti di ${S.avversario.nome}`, { size: 7.5, color: '#ffe14a' });
+      const yb = Math.max(225, cima + alt + 10);
+      pannello(this, 240, yb, 190, 15, { colore: 0x7a1f2a, raggio: 7 });
+      txt(this, 240, yb, `DA BATTERE: ${db.punteggio} punti di ${S.avversario.nome}`, { size: 7.5, color: '#ffe14a' });
+      yPronto = Math.max(252, yb + 17);
     }
 
-    const pronto = txt(this, 240, 252, perDito('Premi SPAZIO quando sei pronto!', 'Tocca lo schermo quando sei pronto!'), { size: 10, color: '#ffe14a' });
+    const pronto = txt(this, 240, yPronto, perDito('Premi SPAZIO quando sei pronto!', 'Tocca lo schermo quando sei pronto!'), { size: 10, color: '#ffe14a' });
     lampeggia(this, pronto);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
     // sul telefono non c'è ESC: freccia per tornare al menu, audio e schermo intero
@@ -120,7 +124,8 @@ export class RisultatoScene extends Phaser.Scene {
     } else this.tweens.add({ targets: s, x: 106, duration: 60, yoyo: true, repeat: -1 });
     txt(this, 104, 219, g.nome.toUpperCase(), { size: 11, color: g.colore });
 
-    pannello(this, 330, 118, 240, 82, { alfa: 0.6, bordo: null, raggio: 10 });
+    // (il riquadro parte un po' più in alto: se il riepilogo va su due righe ci sta lo stesso)
+    pannello(this, 330, 116, 240, 86, { alfa: 0.6, bordo: null, raggio: 10 });
     txt(this, 330, 88, r.riepilogo, { size: 8, wrap: 230 });
     txt(this, 330, 106, 'PUNTEGGIO', { size: 9, color: '#ffe14a' });
     const pt = txt(this, 330, 134, String(r.punteggio), { size: 32 });
@@ -146,11 +151,12 @@ export class RisultatoScene extends Phaser.Scene {
       pannello(this, 330, 190, 240, 42, { alfa: 0.75, raggio: 9 });
       txt(this, 330, 179, `${G[0].nome} ${a.punteggio}  -  ${b.punteggio} ${G[1].nome}`, { size: 9 });
       const esito = v < 0 ? 'ROUND PARI!' : `ROUND A ${G[v].nome.toUpperCase()}!`;
-      this.time.delayedCall(700, () => { scritta(this, 330, 197, esito, { size: 14, color: v < 0 ? '#ffffff' : G[v].colore, durata: 999999 }); Audio.sfx('ok'); });
+      // (dritta: è larga, e con l'inclinazione a caso di scritta() finiva sopra la riga dei punteggi)
+      this.time.delayedCall(700, () => { scritta(this, 330, 197, esito, { size: 14, color: v < 0 ? '#ffffff' : G[v].colore, durata: 999999 }).setAngle(0); Audio.sfx('ok'); });
       const ultimo = S.finita;
       if (S.meglioDi) {
         const vr = S.classifica().round;
-        txt(this, 330, 214, `AL MEGLIO DI ${S.meglioDi}:  ${G[0].nome} ${vr[0]} - ${vr[1]} ${G[1].nome}`, { size: 7, color: '#7dff9a' });
+        txt(this, 330, 221, `AL MEGLIO DI ${S.meglioDi}:  ${G[0].nome} ${vr[0]} - ${vr[1]} ${G[1].nome}`, { size: 7, color: '#7dff9a' });   // sotto il riquadro, non sul bordo
       }
       prompt = perDito(ultimo ? 'INVIO: classifica finale' : 'INVIO: prossimo round', ultimo ? 'Tocca: classifica finale' : 'Tocca: prossimo round');
       avanti = () => {
@@ -177,7 +183,8 @@ export class FinaleScene extends Phaser.Scene {
     txt(this, 240, 18, 'CLASSIFICA FINALE', { size: 18, color: '#ffe14a' });
 
     // tabellone dei round (da 4 round in su, una riga per round: titolo a sinistra, punti a destra)
-    const compatto = n > 3, fitto = n > 6, passo = fitto ? 10 : compatto ? 14 : 22, y0 = fitto ? 46 : 48;
+    // (con più di 10 round le righe si stringono un po': il tabellone resta alto uguale)
+    const compatto = n > 3, fitto = n > 6, passo = fitto ? Math.min(10, 100 / n) : compatto ? 14 : 22, y0 = fitto ? 46 : 48;
     const alt = fitto ? 28 + n * passo : compatto ? 34 + n * passo : 36 + n * 22;
     pannello(this, 240, 36 + alt / 2, 250, alt);
     S.lista.slice(0, n).forEach((id, i) => {
@@ -198,7 +205,8 @@ export class FinaleScene extends Phaser.Scene {
     txt(this, 240, yRiep, riep, { size: 7.5, color: '#7dff9a' });
     txt(this, 240, yRiep + (fitto ? 9 : 11), `${G[0].nome}  -  ${G[1].nome}`, { size: 6.5, color: '#fff3d6' });
 
-    const XV = 62, XP = 418, Y = 236;
+    // (col tabellone lungo la scritta PAREGGIO! scende sotto il riquadro, e la frase con lei)
+    const XV = 62, XP = 418, Y = 236, yPari = Math.max(172, 36 + alt + 14);
     const mostra = (i, x, espr) => {
       ombra(this, x, Y, 62);
       return im(this, x, Y, `${G[i].id}_${espr}`).setOrigin(0.5, 1).setScale(3.2 * SP);
@@ -207,7 +215,7 @@ export class FinaleScene extends Phaser.Scene {
     let frase;
     if (v < 0) {
       [XV, XP].forEach((x, i) => { molleggia(this, mostra(i, x, 'shock')); txt(this, x, Y + 13, G[i].nome.toUpperCase(), { size: 10, color: G[i].colore }); });
-      txt(this, 240, 172, 'PAREGGIO!', { size: 18 });
+      txt(this, 240, yPari, 'PAREGGIO!', { size: 18 });
       frase = caso(CONFIG.frasiPareggio);
     } else {
       const p = 1 - v;
@@ -230,7 +238,7 @@ export class FinaleScene extends Phaser.Scene {
       frase = caso(CONFIG.sfotto).replaceAll('{perdente}', G[p].nome).replaceAll('{vincitore}', G[v].nome);
     }
     // frase di sfottò
-    const f = txt(this, 240, v < 0 ? 206 : 200, `"${frase}"`, { size: 9, wrap: 232 });
+    const f = txt(this, 240, v < 0 ? yPari + 34 : 200, `"${frase}"`, { size: 9, wrap: 232 });
     f.setScale(0);
     this.tweens.add({ targets: f, scale: 1, delay: 800, duration: 400, ease: 'Back.out' });
 

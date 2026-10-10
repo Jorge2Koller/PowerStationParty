@@ -7,12 +7,12 @@
 //  ciabatte rovinano il panino.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, scuoti, lerp, caso, colpetto, fumetto, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, colpetto, fumetto, vibra } from '../fx.js';
 
 const Y_PANE = 250;                     // dove appoggia il pane sul bancone
 const X_MIN = 36, X_MAX = 444;          // corsa del pane
 const H_PANE = 8;                       // altezza della mollica sopra il bancone
-const Y_MARS = 222, TAGLIA_MARS = 1.1;  // Marsupino, dietro al bancone
+const Y_MARS = 212, TAGLIA_MARS = 1.1;  // Marsupino, dietro al bancone (il pancione ci si appoggia sopra)
 const INGREDIENTI = ['prosciutto', 'wurstel', 'sottiletta', 'ketchup', 'maionese'];
 const LANCIABILI = ['prosciutto', 'wurstel', 'sottiletta'];
 const SALSE = ['ketchup', 'maionese'];
@@ -40,6 +40,11 @@ export class PaninoScene extends MicrogiocoBase {
     this.modo = 'tastiera';
     this.piega = 0;           // inclinazione della pila (spostamento per unità di altezza)
     this.vPiega = 0;
+    // (la scena viene riusata da una partita all'altra: si azzera anche quello che resta in memoria)
+    this.hud = null;
+    this.ditoX = null;
+    this.tPosa = 0;
+    this.dopo = null;
 
     im(this, 0, 0, 'bgBar').setOrigin(0);
     txt(this, 171, 60, 'PANINI', { size: 7, color: '#f6f1e0', thick: 0 });
@@ -90,6 +95,9 @@ export class PaninoScene extends MicrogiocoBase {
       }
     });
   }
+
+  // dopo una pausa il dito che trascinava non c'è più
+  alRientro() { this.ditoX = null; }
 
   // pane nuovo (fondo), ricetta da capo
   nuovoPane() {
@@ -286,11 +294,35 @@ export class PaninoScene extends MicrogiocoBase {
     this.cameras.main.flash(100, 255, 90, 90);
     scritta(this, this.x, Y_PANE - H - 40, caso(['PANINO ROVINATO!', 'CHE SCHIFO!', 'BLEAH!']), { size: 12, color: '#ff6b5a' });
     scritta(this, this.x, Y_PANE - H - 26, `-${c.malusSbagliato}`, { size: 10, color: '#ff6b5a' });
-    this.espressione('shock', 0.5, 'sufficienza', 1);
-    fumetto(this, this.mars.x + 50, 62, caso(c.frasiSbaglio), 1200, 40);
+    // un attimo di incredulità (gli scivolano gli occhiali) e poi esplode
+    this.espressione('shock', 0.4);
+    this.time.delayedCall(170, () => { if (this.inCorso) this.furia(); });
     const verso = this.x < 240 ? -1 : 1;
     this.tweens.add({ targets: vecchio, x: vecchio.x + verso * 140, y: 330, angle: verso * 220, duration: 650, ease: 'Quad.in', onComplete: () => vecchio.destroy() });
     this.nuovoPane();
+  }
+
+  // Marsupino va su tutte le furie: paonazzo, salta sul posto facendo tremare il bancone,
+  // gli esce il fumo dalle orecchie e urla a caratteri cubitali; poi brontola ancora un po'
+  furia() {
+    const c = this.cfg, m = this.mars;
+    this.espressione('rabbia', 1.6);
+    Audio.sfx('ruggito');
+    this.tweens.killTweensOf(m);      // una sfuriata sopra l'altra riparte da capo
+    m.setAngle(0).setY(Y_MARS);
+    const tonfo = () => {
+      if (!this.inCorso) return;
+      Audio.sfx('tonfo');
+      scuoti(this, 110, 0.007);
+      for (const s of [-1, 1]) fumo(this, m.x + s * 46, 197, 2, 12, 0xe6d8bc);
+    };
+    this.tweens.add({ targets: m, y: Y_MARS - 16, duration: 95, ease: 'Quad.out', yoyo: true, repeat: 2, onRepeat: tonfo, onComplete: tonfo });
+    this.tweens.add({ targets: m, angle: { from: -4, to: 4 }, duration: 50, yoyo: true, repeat: 13, onComplete: () => m.setAngle(0) });
+    this.time.addEvent({ delay: 110, repeat: 9, callback: () => { if (this.inCorso) for (const s of [-1, 1]) fumo(this, m.x + s * 40, m.y - 96, 1, 6); } });
+    const urlo = scritta(this, m.x, 64, caso(c.urla), { size: 15, color: '#ff3b2f', durata: 900, depth: 41 });
+    this.tweens.add({ targets: urlo, x: { from: m.x - 3, to: m.x + 3 }, duration: 45, yoyo: true, repeat: 12 });
+    this.time.delayedCall(800, () => { if (this.inCorso) fumetto(this, this.mars.x + 56, 70, caso(c.frasiSbaglio), 1200, 40); });
+    this.tFrase = Math.max(this.tFrase, 3);   // niente battute allegre mentre è furioso
   }
 
   // non presa: finisce sul bancone
@@ -363,7 +395,7 @@ export class PaninoScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, this.punti),
       vittoria: this.panini >= this.cfg.obiettivoPanini,
-      riepilogo: `${this.panini} panini, ${this.presi} ingredienti presi, ${this.schifezze} schifezze`,
+      riepilogo: `${quanti(this.panini, 'panino', 'panini')}, ${quanti(this.presi, 'ingrediente preso', 'ingredienti presi')}, ${quanti(this.schifezze, 'schifezza', 'schifezze')}`,
     };
   }
 
@@ -373,7 +405,8 @@ export class PaninoScene extends MicrogiocoBase {
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });
-    this.mars.setDepth(701).setTexture('marsupino_normale');
+    this.tweens.killTweensOf(this.mars);   // se stava ancora saltando di rabbia
+    this.mars.setDepth(701).setAngle(0).setTexture('marsupino_normale');
     this.tweens.add({ targets: this.mars, x: 240, y: 268, scale: scalaDi('marsupino_normale', 1.75), duration: 400, ease: 'Back.out' });
 
     // il panino gigante davanti a lui
@@ -401,11 +434,17 @@ export class PaninoScene extends MicrogiocoBase {
           if (i === 2) this.tweens.add({ targets: pan, alpha: 0, delay: 150, duration: 200, onComplete: () => stelle(this, 240, 150, 10, 712) });
         });
       } else {
-        this.mars.setTexture('marsupino_sufficienza');
+        // lo assaggia con lo sguardo, e si infuria: salta, fuma dalle orecchie e spazza via il panino
+        this.mars.setTexture('marsupino_rabbia');
         Audio.sfx('bleah');
-        txt(this, 240, 24, 'BLEAH... RIFALLO!', { size: 18, color: '#ff6b5a', depth: 710 });
-        this.tweens.add({ targets: this.mars, angle: { from: -3, to: 3 }, duration: 160, yoyo: true, repeat: 5 });
-        this.tweens.add({ targets: pan, x: 300, angle: 25, y: 300, delay: 700, duration: 500, ease: 'Quad.in' });
+        Audio.sfx('ruggito');
+        const titolo = txt(this, 240, 24, 'MA CHE SCHIFO! RIFALLO!', { size: 18, color: '#ff3b2f', depth: 710 });
+        this.tweens.add({ targets: titolo, x: { from: 237, to: 243 }, duration: 50, yoyo: true, repeat: 20 });
+        const tonfo = () => { Audio.sfx('tonfo'); scuoti(this, 120, 0.008); };
+        this.tweens.add({ targets: this.mars, y: 250, duration: 110, ease: 'Quad.out', yoyo: true, repeat: 3, onRepeat: tonfo, onComplete: tonfo });
+        this.tweens.add({ targets: this.mars, angle: { from: -4, to: 4 }, duration: 55, yoyo: true, repeat: 22, onComplete: () => this.mars.setAngle(0) });
+        this.time.addEvent({ delay: 120, repeat: 16, callback: () => { for (const s of [-1, 1]) fumo(this, 240 + s * 62, 114, 1, 705); } });
+        this.tweens.add({ targets: pan, x: 540, y: 110, angle: 540, delay: 520, duration: 380, ease: 'Quad.in', onStart: () => Audio.sfx('schiaffo') });
       }
     });
     this.time.delayedCall(3300, fatto);

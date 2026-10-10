@@ -138,16 +138,18 @@ function cliente(c, i, f) {
 //  LE MANI DI GUERRA: viste dall'alto, dita in su, polso in basso al centro (20, 56).
 //  Nel microgioco si ruotano verso il piatto e si attaccano a un braccio che si allunga.
 // ------------------------------------------------------------
+// polsino di lana a coste del cardigan
 function polsino(c, g) {
-  rrect(c, 10.5, 44, 19, 12, 3); c.fillStyle = gradL(c, 10, 0, 30, 0, [[0, scuro(g.vestito.colore, 0.3)], [0.5, chiaro(g.vestito.colore, 0.12)], [1, scuro(g.vestito.colore, 0.3)]]); c.fill(); tratto(c, CONT, 1.6);
-  c.fillStyle = 'rgba(255,255,255,0.14)'; c.fillRect(12, 46.5, 16, 1.1);
-  rrect(c, 9.5, 52, 21, 4, 1.5); c.fillStyle = scuro(g.vestito.colore, 0.4); c.fill(); tratto(c, CONT, 1.4);
+  const lana = scuro(g.vestito.colore, 0.24);
+  rrect(c, 10, 45.5, 20, 10.5, 2.5); c.fillStyle = gradL(c, 10, 0, 30, 0, [[0, scuro(lana, 0.3)], [0.5, chiaro(lana, 0.14)], [1, scuro(lana, 0.3)]]); c.fill(); tratto(c, CONT, 1.6);
+  c.fillStyle = 'rgba(0,0,0,0.24)';
+  for (let x = 12.6; x < 28.5; x += 2.6) c.fillRect(x, 46.6, 0.9, 8.4);
 }
 
 // dita: [angolo dalla verticale, lunghezza, spessore]
 const DITA = [[-0.4, 12.5, 5.6], [-0.13, 16, 5.9], [0.13, 15.5, 5.9], [0.4, 12.5, 5.4]];
 
-function manoAperta(c, S) {
+export function manoAperta(c, S) {
   const base = (a) => [20 + Math.sin(a) * 8, 29];
   const dito = ([a, l]) => { const [x, y] = base(a); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.sin(a) * l, y - Math.cos(a) * l); };
   const pollice = () => { c.beginPath(); c.moveTo(12, 37); c.lineTo(3.5, 27.5); };
@@ -207,12 +209,12 @@ function manoGuerra(c, tipo) {
   }
 }
 
-// pezzo di manica del piumino (si ripete in verticale per fare il braccio lungo)
+// pezzo di manica del cardigan di lana (si ripete in verticale per fare il braccio lungo)
 function manicaGuerra(c) {
   const col = PERSONAGGI.guerra.vestito.colore;
   c.fillStyle = gradL(c, 0, 0, 18, 0, [[0, scuro(col, 0.35)], [0.45, chiaro(col, 0.14)], [1, scuro(col, 0.4)]]); c.fillRect(1.2, 0, 15.6, 16);
-  c.fillStyle = 'rgba(255,255,255,0.08)'; c.fillRect(5, 2, 5, 11);
-  c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(1.2, 14.6, 15.6, 1.4);
+  c.fillStyle = 'rgba(0,0,0,0.17)';
+  for (let x = 3.6; x < 16; x += 2.8) c.fillRect(x, 0, 0.9, 16);   // coste della lana, lungo il braccio
   c.fillStyle = CONT; c.fillRect(0, 0, 1.4, 16); c.fillRect(16.6, 0, 1.4, 16);
 }
 

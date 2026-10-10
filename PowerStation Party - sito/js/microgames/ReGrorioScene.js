@@ -39,6 +39,11 @@ export class ReGrorioScene extends MicrogiocoBase {
     // in mezzo = salto. Con due dita si salta e si cambia corsia insieme.
     multiTouch(this);
     this.tocco = { sx: false, dx: false, salta: false };
+    // anche i tasti passano da qui: l'evento non si perde mai, nemmeno se il tasto viene
+    // premuto e lasciato nello stesso fotogramma (leggendo lo stato del tasto poteva capitare)
+    for (const [tasto, zona] of [['LEFT', 'sx'], ['RIGHT', 'dx'], ['SPACE', 'salta']]) {
+      this.input.keyboard.on('keydown-' + tasto, (e) => { if (!e.repeat) this.tocco[zona] = true; });
+    }
     this.input.on('pointerdown', (p) => {
       const x = this.cameras.main.getWorldPoint(p.x, p.y).x, zona = x < ZONE[0] ? 'sx' : x > ZONE[1] ? 'dx' : 'salta';
       this.tocco[zona] = true;
@@ -63,10 +68,10 @@ export class ReGrorioScene extends MicrogiocoBase {
   }
 
   aggiorna(dt) {
-    const c = this.cfg, JD = Phaser.Input.Keyboard.JustDown, S = this.scala;
+    const c = this.cfg, S = this.scala;
 
-    // --- movimento (tasti appena premuti oppure tocchi arrivati da un fotogramma all'altro) ---
-    const T = this.tocco, sx = JD(this.tasti.sx) || T.sx, dx = JD(this.tasti.dx) || T.dx, salta = JD(this.tasti.salta) || T.salta;
+    // --- movimento (tasti o tocchi arrivati da un fotogramma all'altro) ---
+    const T = this.tocco, sx = T.sx, dx = T.dx, salta = T.salta;
     T.sx = T.dx = T.salta = false;
     if (!this.colpito) {
       const d = (dx ? 1 : 0) - (sx ? 1 : 0);

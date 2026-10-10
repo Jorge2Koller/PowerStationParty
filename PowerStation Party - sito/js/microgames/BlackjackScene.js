@@ -9,7 +9,7 @@ import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, fumetto, vibra, perDito } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, perDito } from '../fx.js';
 
 const Y_TAVOLO = 100;
 const Y_BANCO = 126, Y_MIA = 206, PASSO_CARTA = 20;
@@ -252,7 +252,9 @@ export class BlackjackScene extends MicrogiocoBase {
       this.dai(this.mia);
       this.scrivi();
       if (conta(this.mia).tot > 21) this.dopo(450, () => { this.scopri(this.banco[1]); this.scrivi(); this.dopo(350, () => this.esito('sballato')); });
-      else { this.stato = 'gioca'; this.dopo(350, () => this.stai()); }
+      // dopo il raddoppio si sta per forza: lo stato torna "gioca" solo nell'istante in cui
+      // si passa la mano al banco (se no, nell'attesa, con C si poteva chiedere un'altra carta)
+      else this.dopo(350, () => { this.stato = 'gioca'; this.stai(); });
     });
   }
 
@@ -382,7 +384,7 @@ export class BlackjackScene extends MicrogiocoBase {
     return {
       punteggio: fiches,
       vittoria: fiches > this.cfg.fiches,
-      riepilogo: `${fiches} fiches, ${this.vinte} mani vinte su ${this.mani}` + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }

@@ -10,6 +10,7 @@ import { RondaScene } from './RondaScene.js';
 import { BlackjackScene } from './BlackjackScene.js';
 import { PalleggiScene } from './PalleggiScene.js';
 import { PassaseoScene } from './PassaseoScene.js';
+import { BotaScene } from './BotaScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -22,4 +23,5 @@ export const MICROGIOCHI = {
   blackjack: BlackjackScene,
   palleggi: PalleggiScene,
   passaseo: PassaseoScene,
+  bota: BotaScene,
 };

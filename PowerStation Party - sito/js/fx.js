@@ -19,6 +19,8 @@ export function multiTouch(scene, dita = 3) {
 export const FONT = 'Fredoka, "Trebuchet MS", "Segoe UI", sans-serif';
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const caso = (arr) => arr[Math.floor(Math.random() * arr.length)];
+// numero + parola al singolare o al plurale: quanti(1, 'panino', 'panini') -> "1 panino"
+export const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
 
 // Ogni scena lavora in unità logiche (480x270): la telecamera ingrandisce di RES
 // volte, così si disegna a 1920x1080 senza cambiare le coordinate di gioco.
@@ -33,10 +35,15 @@ export const im = (scene, x, y, key, scala = 1) => scene.add.image(x, y, key).se
 // tremolio dello schermo: forza = frazione della larghezza (0.01 = 1%)
 export const scuoti = (scene, ms, forza) => scene.cameras.main.shake(ms, forza / (RES * RES));
 
-// posizione del mouse in unità logiche
-export function puntatore(scene) {
-  const p = scene.input.activePointer;
-  return scene.cameras.main.getWorldPoint(p.x, p.y);
+// Posizione del mouse (o di un dito, p) in unità logiche. Non si usa getWorldPoint della
+// telecamera perché quello segue anche il tremolio di scuoti(): a mouse fermo il punto ballerebbe
+// di qualche unità a ogni fotogramma, e dove conta la strada fatta (la barba) sembrerebbe una corsa.
+export function puntatore(scene, p = scene.input.activePointer) {
+  const cam = scene.cameras.main;
+  return {
+    x: cam.scrollX + cam.width / 2 + (p.x - cam.width / 2) / cam.zoom,
+    y: cam.scrollY + cam.height / 2 + (p.y - cam.height / 2) / cam.zoom,
+  };
 }
 
 export function txt(scene, x, y, s, o = {}) {

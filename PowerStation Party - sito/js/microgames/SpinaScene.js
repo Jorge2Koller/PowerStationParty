@@ -62,6 +62,9 @@ export class SpinaScene extends MicrogiocoBase {
     this.nuovoBicchiere();
   }
 
+  // dopo una pausa nessun dito risulta più appoggiato (se no la spina resterebbe aperta)
+  alRientro() { this.premuti.clear(); }
+
   // bicchiere = contenitore con birra (ritagliata in base al livello), schiuma, zona verde e vetro
   creaBicchiere(x, zona) {
     const birra = im(this, 0, 1, 'pintaBirra').setOrigin(0.5, 1).setVisible(false);

@@ -3,7 +3,7 @@
 Microgiochi in stile WarioWare con Phaser 3. Riccardo contro Giorgio: stesso
 microgioco, un turno a testa, vince il round chi fa più punti.
 
-I microgiochi sono dieci:
+I microgiochi sono undici:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -17,6 +17,7 @@ I microgiochi sono dieci:
 | `blackjack` | L'Ingiocabile | l'Ingiocabile |
 | `palleggi` | MaraZio | lo Zio |
 | `passaseo` | Passa di qua | Passaseo |
+| `bota` | Spalma il Bota! | il Bota |
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -186,8 +187,13 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
     Si può premere o lasciare CTRL anche a metà passata per cambiare attrezzo
   - tasto sinistro: radi, solo dove c'è schiuma e senza correre (se vai veloce, taglietto)
   - quando la lama è piena, portala sulla bacinella per sciacquarla
-  - le zone più scure sono folte: schiuma e rasoio due volte
-  - niente rasoio su naso, labbra, occhi, orecchie e nei
+  - la barba copre guance, baffi e mento ed esce appena dal viso; quella tagliata resta
+    tagliata (la ricrescita è spenta: `ricrescitaInizio` e `ricrescitaFine` in `config.js`)
+  - niente rasoio su naso, labbra, occhi, orecchie e nei (nei e cerotti stanno sempre
+    sulla pelle del viso)
+  - contano solo gli errori di chi rade: la velocità è quella della mano (misurata sugli
+    ultimi due decimi di secondo), e se è De Luca a muoversi di scatto o ad aprire la bocca
+    sotto la lama non è un errore (`velSussulto` e `margineRincorsa` in `config.js`)
   - col dito: l'interruttore in basso a sinistra sceglie PENNELLO o RASOIO (si può
     cambiare anche a metà passata con un altro dito); l'attrezzo sta un po' sopra
     il dito, così si vede la lama; col dito si può andare un po' più veloci
@@ -200,6 +206,7 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
   - prendi prosciutto, würstel, sottiletta, ketchup e maionese (gli ultimi due
     arrivano come schizzi dai tubetti che passano in alto); con tutti e 5 il panino
     si chiude e ne parte un altro. Calzini, lische, ghiaccio e ciabatte lo rovinano
+    (e Marsupino va su tutte le furie: diventa paonazzo, salta, fuma dalle orecchie e urla)
   - si prende in cima alla pila: più è alta, più ondeggia quando ti muovi
 - Guerra, via quelle mani! (mouse o dito, niente tastiera):
   - clic o tocco sulla mano = schiaffo; col dito si possono colpire due mani insieme
@@ -230,10 +237,25 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
     col dito: trascina sul prato per muoverti e tocca CALCIA
   - calcia quando il pallone arriva al piede: perfetto = sale dritto, buono =
     scappa un po', scarso = scappa tanto; se cade, la serie riparte
+  - a ogni colpo la gamba dalla parte del pallone si alza (anche quella dello Zio)
 - Passa di qua:
   - FRECCE SINISTRA/DESTRA (o A/D), il mouse o il dito trascinato per sterzare
   - passa nella pozzanghera proprio mentre affianchi un Passaseo in bici: SPLASH
   - non toccare i ciclisti (si frena e si perdono punti), occhio a trattori e Vespe
+- Spalma il Bota! (mouse o trackpad):
+  - tasto destro: spremi una goccia di crema dove punti (sul trackpad del Mac: clic a
+    due dita, oppure CTRL + clic). Tenendo premuto ne escono altre
+  - tasto sinistro tenuto: spalmi. La mano porta via la crema in più e la lascia dove
+    manca; le zone spalmate bene luccicano, i mucchietti bianchi sono chiazze da stendere
+  - la pelle scoperta diventa rosa, poi rossa (da lì è scottata per sempre), poi rosso
+    aragosta. A metà partita il Bota si gira: il davanti resta com'era
+  - tubetto vuoto: tasto R, oppure clic sul tubetto in basso a destra, per scuoterlo
+    (tornano due gocce, ma si perde tempo)
+  - disturbi: il Bota si sposta, un'onda lava una gamba, il vento porta la sabbia (va
+    ripassata con la mano), un gabbiano viene a rubare il tubetto (cliccalo per cacciarlo)
+  - niente crema su occhi e bocca; se è lui a muoversi sotto la mano non conta
+  - col dito: l'interruttore in basso a sinistra sceglie TUBETTO o MANO, l'attrezzo sta
+    un po' sopra il dito; tubetto e gabbiano si toccano
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -251,7 +273,11 @@ brevemente il telefono.
   della serie migliore. Vittoria con una serie di almeno 12.
 - **Passa di qua** (45 s): SPLASH +10, +20, +30, +40 se fatti di fila (si riparte
   da +10 dopo un tocco), +1 per una pozzanghera presa senza nessuno accanto,
-  -10 per un ciclista sfiorato, -5 per trattori e Vespe. Vittoria con almeno 8 schizzi.
+  -10 per un ciclista sfiorato, -5 per trattori e Vespe. Vittoria con almeno 12 schizzi.
+- **Spalma il Bota!** (45 s): punti = percentuale di pelle protetta, meno 1 per ogni
+  punto percentuale di pelle scottata e di chiazze di troppa crema, più fino a 20 se
+  nel tubetto avanza crema. Vittoria con meno del 15% di pelle scottata. Le percentuali
+  contano la pelle che ha preso il sole: solo il davanti fino al giro, poi tutto.
 
 - **Panino** (45 s): +10 per ogni ingrediente che mancava, +3 per i doppioni,
   +30 per ogni panino completo (+10 se fatto in meno di 8 s), -10 per ogni
@@ -291,8 +317,11 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i dodici personaggi: tratti, espressioni, vestiti
+    personaggi.js        i tredici personaggi: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
+    bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
+                         c'è pelle, la spiaggia col telo, sole, tubetto, mano,
+                         gabbiano, onda
     oggetti.js           Golf di ReGrorio, pinte, spina, clienti, attrezzi del
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
                          finestre con le persiane, fumogeni, ombrelloni,
@@ -309,6 +338,7 @@ js/
     SpinaScene.js  ReGrorioScene.js  BarbaScene.js
     PaninoScene.js  ManiScene.js  SegoScene.js
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
+    BotaScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -320,27 +350,41 @@ si usa `im(scene, x, y, chiave)` di `fx.js`.
 Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
 `js/grafica/personaggi.js`. Oltre a colori e forma del viso (`faccia`) ci sono:
 
-- `stile` dei capelli: `ricci`, `indietro`, `corto`, `ciuffo`, `grigio`, `rasato`
-  (Marsupino), `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale,
-  l'Ingiocabile), `lunghiBagnati` (lo Zio)
+- `stile` dei capelli: `ricci` (Passaseo), `ricciMedi` (Riccardo: gli stessi riccioli ma
+  più raccolti), `indietro`, `corto`, `ciuffo`, `grigio`, `rasato` (Marsupino),
+  `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale, l'Ingiocabile),
+  `lunghiBagnati` (lo Zio); con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota)
 - `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
   naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
-  con `tondi: true` occhiali tondi (Passaseo)
+  con `tondi: true` occhiali tondi (Passaseo), con `inFronte: true` tirati su sulla
+  fronte (il Bota)
 - `cappello: { tipo: 'basco', colore, stemma }` (il Generale)
-- `corporatura` (1 = normale, 1.2 = robusta), `labbra`, `sopraDritte`,
+- `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
+  Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
+  larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
   `sopraDavanti` (sopracciglia sopra la frangia), `sguardo` (lo strabismo di Beppe)
 - `vestito.tipo`: `tshirt`, `giacca` (con `sotto` = colore della maglietta, se no
-  camicia a quadretti), `piumino` (con `camicia` a righe e `catenina`), `mimetica`,
-  `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe);
-  `corti: true` per i pantaloncini, `calzettoni` per i calzettoni
+  camicia a quadretti), `cardigan` (il vestito da nonno di Guerra: lana a coste coi
+  bottoni grossi, con `camicia`, `quadretti` e `bottoni`), `piumino` (con `camicia` a
+  righe e `catenina`), `mimetica`,
+  `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe),
+  `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
+  dei fiorellini);
+  `corti: true` per i pantaloncini, `calzettoni` per i calzettoni, `infradito: true`
+  per i piedi nudi nelle infradito
 
 Ogni personaggio ha 5 espressioni: `normale`, `felice`, `triste`, `shock`,
-`sufficienza` (texture `id_espressione`, es. `sego_felice`).
+`sufficienza` (texture `id_espressione`, es. `sego_felice`). In più, create in
+`js/sprites.js` solo per chi le usa: `marsupino_rabbia` (furioso) e le pose del
+palleggio `id_calcio1D`, `id_calcio2D` (gamba destra a metà e in alto; `S` per la
+sinistra) per i due giocatori e per lo Zio; `bota_abbronzato` (occhiolino e pollice
+in su) e `bota_aragosta` (rosso a chiazze col segno degli occhiali) per il finale di
+"Spalma il Bota!".
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
-`panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`) apre subito
-quel microgioco.
+`panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`) apre
+subito quel microgioco.
 
 ## Aggiungere un microgioco
 

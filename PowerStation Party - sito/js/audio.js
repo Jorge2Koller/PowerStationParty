@@ -69,6 +69,13 @@ const SFX = {
   splat: (t) => { rumore(t, 0.14, 0.16, 500, 'lowpass'); nota(160, t, 0.1, 'triangle', 0.08, 70); },
   gnam: (t) => { for (const dt of [0, 0.14]) { rumore(t + dt, 0.08, 0.16, 1200); nota(300, t + dt, 0.08, 'square', 0.06, 200); } },
   bleah: (t) => { nota(300, t, 0.5, 'sawtooth', 0.08, 120); nota(310, t, 0.5, 'square', 0.04, 110); },
+  // spalma il Bota
+  goccia: (t) => { nota(880, t, 0.09, 'triangle', 0.09, 300); rumore(t, 0.05, 0.06, 1800, 'lowpass'); },
+  scuoti: (t) => { for (const dt of [0, 0.09, 0.18, 0.27]) rumore(t + dt, 0.05, 0.12, 2400); },
+  sfrigola: (t) => rumore(t, 0.4, 0.07, 5200, 'highpass'),
+  gabbiano: (t) => { for (const dt of [0, 0.15, 0.3]) nota(1500, t + dt, 0.12, 'sawtooth', 0.06, 900); },
+  vento: (t) => { rumore(t, 0.7, 0.12, 700); rumore(t + 0.1, 0.5, 0.06, 2600, 'highpass'); },
+  ruggito: (t) => { nota(230, t, 0.6, 'sawtooth', 0.12, 95); nota(236, t, 0.6, 'square', 0.05, 100); rumore(t, 0.55, 0.14, 450, 'lowpass'); },
   // mani di Guerra
   schiaffo: (t) => { rumore(t, 0.09, 0.32, 3200, 'highpass'); rumore(t, 0.12, 0.2, 900); nota(1400, t, 0.06, 'square', 0.05, 500); },
   tonfo: (t) => { rumore(t, 0.12, 0.22, 300, 'lowpass'); nota(140, t, 0.14, 'triangle', 0.12, 60); },

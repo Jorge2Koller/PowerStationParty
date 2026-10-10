@@ -32,23 +32,24 @@ export class MenuScene extends Phaser.Scene {
     this.input.setDefaultCursor('default');
     raggi(this, 0xff9a3c, 0xffb85a);
 
-    // titolo che rimbalza
-    const titolo = txt(this, 240, 44, CONFIG.titolo, { size: 28, color: '#ffe14a', stroke: '#7a1f2a', thick: 8, wrap: 460 });
+    // titolo che rimbalza (in alto e un po' più piccolo dei personaggi sotto: le teste di
+    // Riccardo e Giorgio non devono coprire la prima e l'ultima lettera)
+    const titolo = txt(this, 240, 35, CONFIG.titolo, { size: 26, color: '#ffe14a', stroke: '#7a1f2a', thick: 8, wrap: 460 });
     titolo.setTint(0xffffff, 0xffffff, 0xffc04a, 0xffc04a).setScale(0);
     this.tweens.add({ targets: titolo, scale: 1, duration: 600, ease: 'Bounce.out' });
     this.tweens.add({ targets: titolo, angle: { from: -2, to: 2 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-    txt(this, 240, 80, CONFIG.sottotitolo, { size: 10 });
+    txt(this, 240, 71, CONFIG.sottotitolo, { size: 10 });
 
     // Riccardo e Giorgio animati
     CONFIG.giocatori.forEach((g, i) => {
       const x = i ? 404 : 76;
-      ombra(this, x, 238, 76);
-      const s = im(this, x, 238, g.id + '_normale').setOrigin(0.5, 1).setScale(4 * SP);
+      ombra(this, x, 241, 70);
+      const s = im(this, x, 241, g.id + '_normale').setOrigin(0.5, 1).setScale(3.6 * SP);
       molleggia(this, s, 340 + i * 70);
-      txt(this, x, 253, g.nome.toUpperCase(), { size: 10, color: g.colore });
+      txt(this, x, 255, g.nome.toUpperCase(), { size: 10, color: g.colore });
       this.time.addEvent({ delay: 2200 + i * 900, loop: true, callback: () => {
         s.setTexture(g.id + '_felice');
-        stelle(this, x, 110, 5);
+        stelle(this, x, 124, 5);
         this.time.delayedCall(700, () => s.setTexture(g.id + '_normale'));
       } });
     });
@@ -61,7 +62,7 @@ export class MenuScene extends Phaser.Scene {
       { label: 'PARTITA SINGOLA', azione: () => this.scene.start('Allenamento') },
       { label: 'COMANDI', azione: () => this.scene.start('Comandi') },
     ], 240, 111, 20, 9);
-    txt(this, 240, 218, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
+    txt(this, 240, 222, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
     pulsantiAngolo(this);
   }
 }
@@ -185,7 +186,7 @@ export class PausaScene extends Phaser.Scene {
     const t = txt(this, 240, 80, 'PAUSA', { size: 32, color: '#ffe14a' });
     this.tweens.add({ targets: t, scale: 1.1, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     const riprendi = () => {
-      if (['mg_barba', 'mg_mani'].includes(dati.chiave)) this.input.setDefaultCursor('none'); // usano un cursore disegnato
+      if (['mg_barba', 'mg_mani', 'mg_bota'].includes(dati.chiave)) this.input.setDefaultCursor('none'); // usano un cursore disegnato
       this.scene.resume(dati.chiave);
       this.scene.stop();
     };

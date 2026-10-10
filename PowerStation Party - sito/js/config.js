@@ -20,7 +20,7 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota'],
 
   microgiochi: {
     // ---------------------------------------------------------
@@ -41,8 +41,8 @@ export const CONFIG = {
       pausaPerfetta: 0.35, // secondi prima del bicchiere nuovo dopo una pinta buona
       penalita: 1.2,       // secondi persi per una pinta sbagliata
       // Beppe: secondi per pinta, normale e negli ultimi "beppeSprint" secondi
-      beppeIntervallo: 2.7,
-      beppeIntervalloFinale: 2.2,
+      beppeIntervallo: 2.0,
+      beppeIntervalloFinale: 1.7,
       beppeSprint: 20,
       frasiBeppe: ['Tsk.', 'Lento...', 'Mah.', 'Dilettante.', 'Guagliò...'],
       frasiClienti: ['Uè!', 'Ma dai!', "Un'altra!", 'Eh, oh!', 'Grande!', 'Mamma mia!', 'Offro io!', 'Ma che dici?!'],
@@ -83,7 +83,6 @@ export const CONFIG = {
         'TASTO DESTRO (o CTRL+clic): stendi la schiuma',
         'TASTO SINISTRO: radi dove c\'è schiuma. PIANO!',
         'Lama piena? Sciacquala nella bacinella',
-        'Le zone più scure vogliono due passate',
         'Evita naso, labbra, occhi, orecchie e nei',
       ],
       comandiTouch: [
@@ -93,32 +92,36 @@ export const CONFIG = {
         'Lama piena? Sciacquala nella bacinella',
         'Evita naso, labbra, occhi, orecchie e nei',
       ],
-      obiettivo: "Radi almeno l'85% della barba!",
-      soglia: 85,          // % per vincere
+      obiettivo: "Radi almeno l'80% della barba!",
+      soglia: 80,          // % per vincere
       sogliaFine: 98,      // % a cui il microgioco finisce in anticipo (bonus tempo)
       bonusPerSecondo: 2,  // punti per ogni secondo avanzato
       // --- attrezzi (misure in unità della faccia: 1 unità = 2 px di gioco) ---
-      raggio: 4.5,           // raggio del rasoio
-      raggioPennello: 8,     // raggio del pennello
-      durataSchiuma: 8,      // secondi prima che la schiuma si secchi
-      capienzaLama: 190,     // celle di barba che la lama regge prima di intasarsi (in tutto sono circa 600)
-      velMax: 95,            // velocità massima del rasoio (unità/s): oltre, taglietto
-      velMaxDito: 150,       // ...col dito, meno preciso del mouse e con passate più veloci
+      raggio: 5.5,           // raggio del rasoio (largo come la lama che si vede)
+      raggioPennello: 9,     // raggio del pennello
+      durataSchiuma: 15,     // secondi prima che la schiuma si secchi
+      capienzaLama: 200,     // celle di barba che la lama regge prima di intasarsi (in tutto sono circa 330)
+      velMax: 130,           // velocità massima del rasoio (unità/s): oltre, taglietto
+      velMaxDito: 190,       // ...col dito, meno preciso del mouse e con passate più veloci
+      velSussulto: 30,       // se la testa si sposta più veloce di così (unità/s) è uno scatto: per un quarto
+                             //   di secondo, quello che finisce sotto il rasoio non conta come errore
+      margineRincorsa: 1.5,  // ...e per 0,7 secondi il limite di velocità è più largo (x1,5): si rincorre la faccia
       sopraDito: 22,         // col dito l'attrezzo sta tante unità sopra il polpastrello (si vede la lama)
       penalitaTaglio: 1,     // secondi persi per un taglietto
       malusTaglio: 3,        // punti tolti a fine partita per ogni taglietto
-      penalita: 2,           // secondi persi se tocchi naso, labbra, occhi, orecchie o un neo
-      nei: 3,                // quanti nei spuntano (in posizioni casuali)
-      // ricrescita: probabilità (per tick da 0.25s) che una cella rasata
-      // confinante con barba non rasata ricresca, a inizio e fine partita
-      ricrescitaInizio: 0.01,
-      ricrescitaFine: 0.03,
+      penalita: 1,           // secondi persi se tocchi naso, labbra, occhi, orecchie o un neo
+      nei: 2,                // quanti nei spuntano (in posizioni casuali, sempre sulla pelle del viso)
+      // ricrescita: probabilità (per tick da 0.25s) che una cella rasata confinante con barba
+      // non rasata ricresca, a inizio e fine partita. 0 = spenta: la barba tagliata resta tagliata
+      // (accesa, sembrava che in certi punti il rasoio non tagliasse)
+      ricrescitaInizio: 0,
+      ricrescitaFine: 0,
       // quanto si agita De Luca (ampiezza in px, rotazione in radianti) e ogni quanti secondi fa qualcosa
       agitazioneInizio: 2,
-      agitazioneFine: 10,
-      rotazioneFine: 0.09,
-      eventoInizio: 3.4,
-      eventoFine: 1.3,
+      agitazioneFine: 5,
+      rotazioneFine: 0.06,
+      eventoInizio: 4,
+      eventoFine: 2.6,
       chiacchiere: ['E poi gli ho detto...', "Uè, fai piano!", 'Ma lo sai che...', "'O ssaje comm'è...", 'Senti questa!'],
     },
 
@@ -176,7 +179,9 @@ export const CONFIG = {
       velSchizzo: 1.35,       // gli schizzi cadono più veloci degli ingredienti
       frasi: ['Al volo!', 'Abbonda col ketchup!', 'Questo è arte.', 'Panino della casa!', 'Occhio al würstel!', 'Dai che si fredda!'],
       frasiPanino: ['Capolavoro!', 'Uno spettacolo!', 'Questo lo mangio io!', 'Chef stellato!'],
-      frasiSbaglio: ['Ops... era il mio calzino.', 'Quella non era per te!', 'Ma che hai preso?!', 'Eh no, eh!'],
+      // panino rovinato: prima l'urlo (corto, a caratteri cubitali), poi continua a brontolare
+      urla: ['MA CHE FAI?!', 'NOOOO!', 'CHE SCHIFO!', 'IL MIO PANINO!', 'MA SEI MATTO?!', 'ROBA DA PAZZI!'],
+      frasiSbaglio: ['Quello era il mio calzino!', 'Così me lo rovini!', 'Fuori dal mio bar!', 'Ma chi ti ha insegnato?!', 'Lo butto, lo butto tutto!', 'Non ci vedo più dalla rabbia!'],
     },
 
     // ---------------------------------------------------------
@@ -445,6 +450,72 @@ export const CONFIG = {
       frasi: ['Ma dai!', 'Sono fradicio!', 'La mia divisa!', 'Ma guarda te!', 'Che doccia!', 'Passa di là!'],
       frasiSfiorato: ['Attento!', 'Piano!', 'Ehi!'],
     },
+
+    // ---------------------------------------------------------
+    bota: {
+      titolo: 'Spalma il Bota!',
+      durata: 45,
+      colore: 0x1fa8c9,
+      ospite: { id: 'bota', etichetta: 'DA SPALMARE:\nIL BOTA' },
+      comandi: [
+        'TASTO DESTRO (o CTRL+clic): spremi una goccia di crema',
+        'TASTO SINISTRO tenuto: spalmala in giro, niente chiazze',
+        'Tubetto vuoto? Scuotilo: tasto R, o clic sul tubetto',
+        'Onde e sabbia rovinano il lavoro. Il gabbiano: cliccalo!',
+        'Niente crema su occhi e bocca. A metà partita si gira',
+      ],
+      comandiTouch: [
+        'In basso a sinistra scegli TUBETTO o MANO',
+        'TUBETTO: tocca dove vuoi la goccia. MANO: striscia e spalma',
+        'Tubetto vuoto? Toccalo per scuoterlo',
+        'Onde e sabbia rovinano il lavoro. Il gabbiano: toccalo!',
+        'Niente crema su occhi e bocca. A metà partita si gira',
+      ],
+      obiettivo: 'Finisci con meno del 15% di pelle scottata!',
+      sogliaScottata: 15,     // % di pelle scottata: per vincere bisogna restare sotto
+      // punti = % di pelle protetta - malus + bonus
+      malusScottata: 1,       // punti tolti per ogni punto percentuale di pelle scottata
+      malusChiazze: 1,        // ...e per ogni punto percentuale di chiazze di troppa crema
+      bonusTubetto: 20,       // punti in più col tubetto ancora pieno (in proporzione a quanta crema avanza)
+      // --- la crema (1 = una cella coperta per bene; le celle di pelle sono circa 260 per lato) ---
+      tubetto: 430,           // crema nel tubetto all'inizio: basta per davanti e schiena, con pochi sprechi
+      goccia: 11,             // crema in una goccia
+      ritmoGocce: 0.2,        // tenendo premuto, una goccia ogni tanti secondi
+      scossa: 22,             // crema che torna scuotendo il tubetto vuoto (due gocce)
+      tempoScossa: 0.55,      // secondi persi ogni volta che lo scuoti
+      strato: 0.75,           // quanta ne lascia la mano su ogni cella (spalmando porta via quella in più)
+      sogliaProtetta: 0.4,    // da qui in su la cella è protetta
+      troppa: 1.8,            // da qui in su è una chiazza bianca: va spalmata in giro
+      raggioMano: 8.5,        // raggio della mano che spalma (unità del corpo: 1 unità = 2 px di gioco)
+      capienzaMano: 26,       // quanta crema può portarsi dietro la mano
+      sopraDito: 22,          // col dito l'attrezzo sta tante unità sopra il polpastrello (così si vede)
+      // --- il sole ---
+      secondiRossoInizio: 21, // secondi di sole perché una cella scoperta diventi rossa, a inizio partita...
+      secondiRossoFine: 17,   //   ...e a fine partita (il sole picchia di più)
+      rossa: 0.5,             // scottatura da cui la cella è "rossa" e non torna più bianca (1 = rosso aragosta)
+      giraA: 0.5,             // a questo punto della partita (0..1) il Bota si gira a pancia in giù
+      // --- errori ---
+      penalita: 1.5,          // secondi persi se la crema finisce su occhi o bocca
+      velSussulto: 30,        // se il Bota si sposta più veloce di così (unità/s) e occhi o bocca finiscono
+                              //   sotto la mano, per un quarto di secondo non conta: non è colpa di chi spalma
+      // --- disturbi ---
+      primoDisturbo: 6,       // secondi prima del primo disturbo
+      disturboInizio: 6.5,    // secondi tra un disturbo e l'altro, a inizio partita...
+      disturboFine: 4.5,      //   ...e a fine partita
+      gabbianoTempo: 3.2,     // secondi che il gabbiano ci mette ad arrivare al tubetto (va cacciato prima)
+      gabbianoFurto: 4,       // secondi senza tubetto, se riesce a rubarlo
+      raggioSabbia: 15,       // raggio (unità del corpo) della zona che il vento copre di sabbia
+      // --- frasi del Bota ---
+      frasi: ['Spalma bene eh!', 'Dai che mi scotto!', 'Non lasciarmi le righe!', 'Che caldo oggi!', 'Più su... no, più giù!'],
+      frasiFredda: ["Fa freddo 'sta crema!", 'Brrr!', 'È gelata!'],
+      frasiTroppa: ['Ma quanta ne metti?!', 'Sembro un fantasma!', 'Piano con quel tubetto!'],
+      frasiBrucia: ['Lì mi brucia!', 'Ahia, scotta!', 'Sento friggere!', 'Sto cuocendo!'],
+      frasiGira: ['Fammi la schiena!'],
+      frasiMuove: { telefono: ["Aspe', il telefono!", 'Un messaggino...'], birra: ['Una birretta!', 'Che sete!'] },
+      frasiOcchi: ['NEGLI OCCHI NO!', 'BRUCIAAA!', 'MA DOVE SPALMI?!'],
+      frasiOnda: ['È gelata!', "L'acqua no!"],
+      frasiSabbia: ['Pure la sabbia!', 'Che vento!'],
+    },
   },
 
   // Frasi di sfottò per chi perde. {perdente} e {vincitore} vengono sostituiti.
@@ -468,6 +539,9 @@ export const CONFIG = {
     "{perdente}, Sego è ancora in casa che ride di te.",
     "{perdente}, con quella mira non affumichi nemmeno un salame.",
     "{vincitore} ha stanato Sego, {perdente} solo i piccioni.",
+    "{perdente}, il Bota per colpa tua stanotte dorme in piedi.",
+    "{vincitore} abbronza, {perdente} arrostisce: chiedete al Bota.",
+    "{perdente}, spalmava meglio il gabbiano. E ti ha pure fregato il tubetto.",
   ],
   frasiPareggio: [
     'Pareggio! Rivincita obbligatoria, paga chi perde.',

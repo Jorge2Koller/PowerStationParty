@@ -4,7 +4,7 @@
 //  punto mirato. Da una finestra aperta entra e la stanza si riempie di fumo, che
 //  passa piano alle stanze accanto e si dirada col tempo. Sul muro o sulle persiane
 //  chiuse rimbalza nel cortile: fumo sprecato che copre la vista per un po'.
-//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce.
+//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (soglia in config.js).
 //  Comandi: mouse (punta, tieni premuto: la forza sale e scende, rilascia),
 //  tastiera (frecce + SPAZIO tenuto), dito (fionda: tira indietro e lascia).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -38,6 +38,7 @@ export class SegoScene extends MicrogiocoBase {
     this.tChiude = c.franciInizio;
     this.tMuovi = 2.5;
     this.tFrase = 3;
+    this.hud = null;        // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
 
     im(this, 0, 0, 'bgCortile').setOrigin(0);
     // le 12 stanze: interno, Franci, fumo, finestra con le persiane
@@ -100,6 +101,9 @@ export class SegoScene extends MicrogiocoBase {
       if (t) this.lancia(t.x, t.forza);
     });
   }
+
+  // dopo una pausa non c'è più nessun lancio a metà (il rilascio, in pausa, non arriva)
+  alRientro() { this.carica = this.fionda = null; }
 
   // --- finestre ---
   apri(s, aperta, subito = false) {
@@ -378,7 +382,7 @@ export class SegoScene extends MicrogiocoBase {
     this.voli = [];
     this.carica = this.fionda = null;
     this.gMira.clear();
-    for (const o of [this.inMano, this.manoMia, ...this.hudSego]) o.setVisible(false);
+    for (const o of [this.inMano, this.manoMia, this.testoPunti, this.testoGranate, ...this.hudSego]) o.setVisible(false);
     Audio.sfx('tempo');
     const titolo = (s, col) => txt(this, 240, 24, s, { size: 18, color: col, depth: 710 });
     if (ris.vittoria) {
@@ -401,8 +405,9 @@ export class SegoScene extends MicrogiocoBase {
         });
       });
     } else {
-      // si affaccia tranquillo dalla finestra in alto
-      const s = this.stanze[1];
+      // si affaccia tranquillo da una finestra del primo piano
+      // (da quelle in alto il fumetto finirebbe sopra il titolo)
+      const s = this.stanze[5];
       this.franci.stanza = s;
       if (!s.aperta) this.apri(s, true);
       this.mostraFranci('sufficienza');

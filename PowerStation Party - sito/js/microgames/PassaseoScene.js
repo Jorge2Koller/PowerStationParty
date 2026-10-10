@@ -9,7 +9,7 @@
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { STRADA } from '../grafica/sfondi.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, scuoti, lerp, caso, fumetto, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, scuoti, lerp, caso, quanti, fumetto, vibra } from '../fx.js';
 
 const Y_AUTO = 214;
 const X_MIN = STRADA.sx - 10, X_MAX = STRADA.dx + 10;
@@ -35,6 +35,7 @@ export class PassaseoScene extends MicrogiocoBase {
     this.freno = 0;
     this.scorri = 0;
     this.tIncontro = 1;
+    this.dito = null;          // (la scena viene riusata: un dito rimasto "appoggiato" bloccherebbe lo sterzo)
     this.cose = [];            // { tipo: 'bici'|'pozza'|'trattore'|'vespa', img, f (velocità rispetto alla strada), extra, ... }
 
     this.fondo = [0, 1].map(() => im(this, 0, 0, 'bgStradaToscana').setOrigin(0));
@@ -57,6 +58,9 @@ export class PassaseoScene extends MicrogiocoBase {
     });
     this.input.on('pointerup', (p) => { if (this.dito?.id === p.id) this.dito = null; });
   }
+
+  // dopo una pausa il dito che sterzava non c'è più (se no non si potrebbe più sterzare)
+  alRientro() { this.dito = null; }
 
   aggiungi(tipo, x, y, f, extra = {}) {
     const chiave = { bici: 'ciclista', pozza: 'pozzanghera', trattore: 'trattore', vespa: 'vespa' }[tipo];
@@ -212,7 +216,7 @@ export class PassaseoScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, this.punti),
       vittoria: this.schizzi >= this.cfg.obiettivoSchizzi,
-      riepilogo: `${this.schizzi} Passaseo schizzati, ${this.sfiorati} sfiorati, ${this.urti} mezzi toccati`,
+      riepilogo: `${quanti(this.schizzi, 'Passaseo schizzato', 'Passaseo schizzati')}, ${quanti(this.sfiorati, 'sfiorato', 'sfiorati')}, ${quanti(this.urti, 'mezzo toccato', 'mezzi toccati')}`,
     };
   }
 

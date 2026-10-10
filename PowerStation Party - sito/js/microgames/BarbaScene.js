@@ -5,11 +5,11 @@
 //  COL DITO: interruttore PENNELLO / RASOIO in basso a sinistra (si può cambiare anche
 //  a metà passata con l'altro dito); l'attrezzo sta un po' sopra il dito, così si vede.
 //  TASTO SINISTRO = rasoio: taglia solo dove c'è schiuma, e solo andando piano
-//  La lama si intasa e va sciacquata nella bacinella. Le zone più scure sono
-//  folte e vogliono due passate. Naso, labbra, occhi, orecchie e nei: vietati.
+//  La lama si intasa e va sciacquata nella bacinella.
+//  Naso, labbra, occhi, orecchie e nei: vietati.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { FACCIA, ARTE, mascheraBarba, zonaDelicata, zonaFolta } from '../sprites.js';
+import { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from '../sprites.js';
 import { txt, im, scritta, stelle, fumo, pannello, scuoti, puntatore, colpetto, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
 
 const GW = FACCIA.w / 2, GH = FACCIA.h / 2; // griglia della barba: celle da 2x2 unità della faccia
@@ -28,13 +28,13 @@ export class BarbaScene extends MicrogiocoBase {
     txt(this, 388, 35, 'BARBERIA', { size: 9, color: '#fff3d6', thick: 0 });
     this.bacinella = im(this, BAC.x, BAC.y, 'bacinella').setDepth(40);
 
-    // griglia: -1 = niente barba, 2 = folta, 1 = barba, 0.5 = ricrescita, 0 = rasato
+    // griglia: -1 = niente barba, 1 = barba, 0.5 = ricrescita, 0 = rasato
     this.celle = new Float32Array(GW * GH);
     this.schiuma = new Float32Array(GW * GH); // secondi di schiuma rimasti su ogni cella
     this.totale = 0;
     for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
-      const x = gx * 2 + 1, y = gy * 2 + 1, ok = mascheraBarba(x, y);
-      this.celle[gy * GW + gx] = ok ? (zonaFolta(x, y) ? 2 : 1) : -1;
+      const ok = mascheraBarba(gx * 2 + 1, gy * 2 + 1);
+      this.celle[gy * GW + gx] = ok ? 1 : -1;
       if (ok) this.totale++;
     }
     for (const k of ['barba', 'schiumaViso']) if (this.textures.exists(k)) this.textures.remove(k);
@@ -60,9 +60,15 @@ export class BarbaScene extends MicrogiocoBase {
     this.stordito = 0;    // dopo un "AHIA" il rasoio non taglia per un attimo
     this.tEspr = 0;
     this.espr = 'normale';
-    this.boccaAperta = false;
-    this.prec = null;
-    this.precMondo = null;
+    this.prec = null;       // dov'era l'attrezzo sulla faccia nel fotogramma prima (durante una passata)
+    this.precMondo = null;  // dov'era il mouse sullo schermo nel fotogramma prima
+    this.locPrec = null;    // ...e dov'era sulla faccia (anche senza premere: serve a capire se si muove la testa)
+    this.traccia = [];      // ultimi punti della passata col loro orario, per misurare la velocità
+    this.tSussulto = 0;     // De Luca ha appena fatto uno scatto: per un attimo non è colpa mia
+    this.tRincorsa = 0;     // ...e per un po' posso rincorrere la faccia più in fretta senza taglietti
+    this.perdonato = false; // il rasoio è finito su una zona delicata per colpa sua: non conta finché non esco
+    this.tAppoggio = 0;     // col dito: un istante per vedere dove si appoggia la lama
+    this.tDisegno = 0;
     this.vel = 0;         // velocità del mouse (unità della faccia al secondo)
     this.lama = 0;        // quanto è intasata la lama
     this.tagli = 0;
@@ -93,6 +99,11 @@ export class BarbaScene extends MicrogiocoBase {
       this.dito = p;
       this.modoDito = true;
       this.prec = null;
+      // l'attrezzo compare sopra il dito solo adesso, e prima non si sa di preciso dove finirà:
+      // per un istante non taglia, e se la lama è atterrata su una zona delicata non conta
+      // (conta entrarci strisciando)
+      this.tAppoggio = 0.12;
+      this.tSussulto = Math.max(this.tSussulto, 0.3);
     });
     for (const ev of ['pointerup', 'pointerupoutside']) this.input.on(ev, (p) => { if (this.dito?.id === p.id) { this.dito = null; this.prec = null; } });
     if (eTouch()) this.creaInterruttore();
@@ -141,15 +152,20 @@ export class BarbaScene extends MicrogiocoBase {
 
   pulisci() { this.input.setDefaultCursor('default'); }
 
-  // nei in posizioni casuali dentro la barba, lontani dalle altre zone delicate
+  // dopo una pausa il dito che lavorava non c'è più (se no l'attrezzo resterebbe "premuto")
+  alRientro() { this.dito = null; this.prec = null; this.precMondo = null; this.locPrec = null; this.traccia.length = 0; this.perdonato = false; }
+
+  // nei in posizioni casuali sotto la barba, ma sulla pelle del viso (non dove la barba esce
+  // dalla faccia) e lontani dalle altre zone delicate
   mettiNei(n) {
     this.nei = [];
     for (let prove = 0; prove < 400 && this.nei.length < n; prove++) {
       const gx = Phaser.Math.Between(4, GW - 5), gy = Phaser.Math.Between(26, 44);
       if (this.celle[gy * GW + gx] !== 1) continue;
       const x = gx * 2 + 1, y = gy * 2 + 1;
+      if (!sulViso(x, y, 4)) continue;
       let libero = true;
-      for (let a = 0; a < 8; a++) if (zonaDelicata(x + Math.cos(a * 0.785) * 6, y + Math.sin(a * 0.785) * 6, true)) libero = false;
+      for (let a = 0; a < 8; a++) if (zonaDelicata(x + Math.cos(a * 0.785) * 6, y + Math.sin(a * 0.785) * 6, 'sbadiglio')) libero = false;   // lontani anche dalla bocca spalancata
       if (!libero || this.nei.some((m) => Math.hypot(m.x - x, m.y - y) < 14)) continue;
       this.nei.push({ x, y });
       this.testa.add(im(this, x - FACCIA.w / 2, y - FACCIA.h / 2, 'neo'));
@@ -163,11 +179,33 @@ export class BarbaScene extends MicrogiocoBase {
   }
 
   espressione(e, sec = 0) {
+    // quando apre la bocca la zona delicata si allarga di colpo: chi stava radendo lì sotto
+    // non ha sbagliato niente, quindi per un attimo vale come uno scatto della testa
+    if (e === 'parla' || e === 'sbadiglio') this.tSussulto = Math.max(this.tSussulto, 0.4);
     this.espr = e;
     this.imgBase.setTexture('marcoBase_' + e);
     this.imgTop.setTexture('marcoTop_' + e);
-    this.boccaAperta = e === 'parla' || e === 'urlo' || e === 'sbadiglio';
     this.tEspr = sec;
+  }
+
+  // Velocità della passata (unità della faccia al secondo): strada fatta dal mouse negli ultimi
+  // due decimi di secondo divisa per il tempo VERO passato. Misurarla su un solo fotogramma (e
+  // col delta "lisciato" di Phaser) dava taglietti a chi andava piano: bastava un fotogramma
+  // lento, o due eventi del mouse arrivati insieme, per far sembrare veloce una passata lenta.
+  misuraVel(w, appoggiato) {
+    const tr = this.traccia, ora = this.oraVera / 1000;
+    if (!appoggiato) { tr.length = 0; return 0; }
+    const ultimo = tr[tr.length - 1];
+    // un punto nuovo solo quando il mouse si è spostato: così il tempo tra due punti è quello del tratto
+    if (!ultimo || ultimo.x !== w.x || ultimo.y !== w.y) tr.push({ t: ora, x: w.x, y: w.y });
+    while (tr.length > 2 && ora - tr[1].t > 0.2) tr.shift();
+    const primo = tr[0], fine = tr[tr.length - 1];
+    if (ora - fine.t > 0.1) { tr.length = 0; tr.push({ t: ora, x: w.x, y: w.y }); return 0; }   // fermo
+    const tempo = fine.t - primo.t;
+    if (tr.length < 3 || tempo < 0.08) return 0;   // appena appoggiato: troppo poca strada per giudicare
+    let strada = 0;
+    for (let i = 1; i < tr.length; i++) strada += Math.hypot(tr[i].x - tr[i - 1].x, tr[i].y - tr[i - 1].y);
+    return strada / tempo / SCALA;
   }
 
   // dal punto sullo schermo alle coordinate della faccia (la testa trasla, ruota e si deforma)
@@ -206,7 +244,6 @@ export class BarbaScene extends MicrogiocoBase {
     k.fillStyle = '#100a08';
     this.tracciaCelle(k, this.celle, (v) => v >= 1, r + 0.3 * DB);      // contorno
     this.stampa(k, ARTE.barba, this.celle, (v) => v >= 1, r);
-    this.stampa(k, ARTE.folta, this.celle, (v) => v >= 2, r);            // zone folte, più scure
     // ricrescita: puntini di barba corta
     k.fillStyle = 'rgba(40,28,22,0.8)';
     for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
@@ -261,7 +298,7 @@ export class BarbaScene extends MicrogiocoBase {
       const v = this.celle[i];
       if (v <= 0) return;
       if (this.schiuma[i] <= 0) { this.aSecco = true; return; }
-      this.celle[i] = v >= 2 ? 1 : 0; // le zone folte calano di un livello per passata
+      this.celle[i] = 0;
       this.schiuma[i] = 0;
       n++;
     });
@@ -270,11 +307,12 @@ export class BarbaScene extends MicrogiocoBase {
   }
 
   pericolo(x, y) {
-    return zonaDelicata(x, y, this.boccaAperta) || this.nei.some((m) => Math.hypot(m.x - x, m.y - y) < 2.6);
+    return zonaDelicata(x, y, this.espr) || this.nei.some((m) => Math.hypot(m.x - x, m.y - y) < 2.4);
   }
 
   ricresci(p) {
     const prob = lerp(this.cfg.ricrescitaInizio, this.cfg.ricrescitaFine, p), c = this.celle;
+    if (prob <= 0) return;   // ricrescita spenta (config.js)
     const nuove = [];
     for (let gy = 1; gy < GH - 1; gy++) for (let gx = 1; gx < GW - 1; gx++) {
       const i = gy * GW + gx;
@@ -308,7 +346,7 @@ export class BarbaScene extends MicrogiocoBase {
     let insapono, rado, pennelloInMano;
     if (this.modoDito) {
       // col dito: l'attrezzo lo sceglie l'interruttore e sta un po' sopra il dito (si vede la lama)
-      if (this.dito) { const d = this.cameras.main.getWorldPoint(this.dito.x, this.dito.y); this.puntoDito = { x: d.x, y: d.y - c.sopraDito }; }
+      if (this.dito) { const d = puntatore(this, this.dito); this.puntoDito = { x: d.x, y: d.y - c.sopraDito }; }
       w = this.puntoDito ?? w;
       pennelloInMano = this.attrezzo === 'pennello';
       insapono = !!this.dito && pennelloInMano;
@@ -318,12 +356,23 @@ export class BarbaScene extends MicrogiocoBase {
       rado = ptr.leftButtonDown() && !insapono;
       pennelloInMano = insapono;
     }
+    // col dito, appena appoggiato: un istante in cui l'attrezzo si vede ma non lavora ancora
+    if (this.tAppoggio > 0) { this.tAppoggio -= dt; insapono = rado = false; }
     this.rasoio.setVisible(!pennelloInMano).setPosition(w.x, w.y).setAngle(rado ? -12 : 0);
     this.pennello.setVisible(pennelloInMano).setPosition(w.x, w.y).setAngle(insapono ? Math.sin(this.trascorso * 30) * 8 : 0);
     const loc = this.aLocale(w.x, w.y);
-    // velocità della passata: si misura solo mentre il rasoio è già appoggiato
-    if (rado && this.prec && this.precMondo) this.vel = lerp(this.vel, Math.hypot(w.x - this.precMondo.x, w.y - this.precMondo.y) / dt / SCALA, 0.35);
-    else this.vel = 0;
+    // Di quanto si è spostato l'attrezzo sulla faccia in questo fotogramma per merito di De Luca
+    // (ha mosso la testa) e non mio (ho mosso il mouse)? Se fa uno scatto, per un attimo quello
+    // che finisce sotto la lama non è colpa di chi rade.
+    if (this.locPrec && this.precMondo) {
+      const t = this.testa, dxw = w.x - this.precMondo.x, dyw = w.y - this.precMondo.y, cs = Math.cos(-t.rotation), sn = Math.sin(-t.rotation);
+      const mx = (dxw * cs - dyw * sn) / t.scaleX, my = (dxw * sn + dyw * cs) / t.scaleY;
+      const vTesta = Math.hypot(loc.x - this.locPrec.x - mx, loc.y - this.locPrec.y - my) / Math.max(dt, 0.001);
+      if (vTesta > c.velSussulto) { this.tSussulto = 0.25; this.tRincorsa = 0.7; }
+    }
+    this.tSussulto -= dt; this.tRincorsa -= dt;
+    this.locPrec = loc;
+    this.vel = this.misuraVel(w, rado);
     this.precMondo = { x: w.x, y: w.y };
     this.stordito -= dt; this.tSuono -= dt; this.tAvviso -= dt; this.tTaglio -= dt;
 
@@ -340,14 +389,19 @@ export class BarbaScene extends MicrogiocoBase {
       }
       this.prec = loc;
     } else if (rado && this.stordito <= 0) {
-      let tolte = 0, piena = false;
+      let tolte = 0, piena = false, delicato = false;
       this.aSecco = false;
       for (let i = 1; i <= passi; i++) {
         const x = lerp(da.x, loc.x, i / passi), y = lerp(da.y, loc.y, i / passi);
-        if (this.pericolo(x, y)) { this.ahia(); break; }
+        if (this.pericolo(x, y)) { delicato = true; break; }
         if (this.lama >= c.capienzaLama) { piena = true; break; }
         tolte += this.radi(x, y);
       }
+      // È un errore solo se sulla zona delicata il rasoio ce l'ho portato io. Se ci è finita
+      // sotto per uno scatto di De Luca la lama si alza da sola, e non conta finché non ne esco.
+      if (!delicato) this.perdonato = false;
+      else if (this.tSussulto > 0 || this.perdonato) this.perdonato = true;
+      else this.ahia();
       this.lama += tolte;
       if (tolte) {
         if (this.tSuono <= 0) {
@@ -358,7 +412,9 @@ export class BarbaScene extends MicrogiocoBase {
             this.tweens.add({ targets: pelo, y: w.y + 30 + Math.random() * 20, x: pelo.x + (Math.random() - 0.5) * 20, alpha: 0, duration: 450, onComplete: () => pelo.destroy() });
           }
         }
-        if (this.vel > (this.modoDito ? c.velMaxDito : c.velMax) && this.tTaglio <= 0) this.taglio(loc);
+        // subito dopo uno scatto della testa il limite è più largo: chi rincorre la faccia non sta "correndo"
+        const limite = (this.modoDito ? c.velMaxDito : c.velMax) * (this.tRincorsa > 0 ? c.margineRincorsa : 1);
+        if (this.vel > limite && this.tTaglio <= 0) this.taglio(loc);
       } else if (this.tAvviso <= 0 && (piena || this.aSecco)) {
         this.tAvviso = 1.3;
         Audio.sfx('tsk');
@@ -401,8 +457,14 @@ export class BarbaScene extends MicrogiocoBase {
     this.tRicrescita += dt;
     if (this.tRicrescita >= 0.25) { this.tRicrescita = 0; this.ricresci(p); }
 
-    if (this.sporcaBarba) this.ridisegnaBarba();
-    if (this.sporcaSchiuma) this.ridisegnaSchiuma();
+    // barba e schiuma si ridisegnano al massimo 30 volte al secondo: è il lavoro più pesante
+    // del microgioco, e farlo a ogni fotogramma mentre si rade faceva andare il gioco a scatti
+    this.tDisegno -= dt;
+    if ((this.sporcaBarba || this.sporcaSchiuma) && this.tDisegno <= 0) {
+      this.tDisegno = 1 / 30;
+      if (this.sporcaBarba) this.ridisegnaBarba();
+      if (this.sporcaSchiuma) this.ridisegnaSchiuma();
+    }
     const pct = this.percentuale;
     this.testoPct.setText(`RASATA: ${Math.floor(pct)}%`);
     this.testoPct.setColor(pct >= c.soglia ? '#7dff9a' : '#ffffff');
@@ -425,7 +487,7 @@ export class BarbaScene extends MicrogiocoBase {
     scuoti(this, 250, 0.012);
     this.cameras.main.flash(120, 255, 80, 80);
     scritta(this, this.testa.x, 70, 'AHIA!!', { size: 24, color: '#ff6b5a' });
-    scritta(this, 440, 50, `-${this.cfg.penalita} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
+    scritta(this, 440, 50, `-${String(this.cfg.penalita).replace('.', ',')} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
     this.tweens.add({ targets: this.spost, sy: 1.12, sx: 0.92, duration: 80, yoyo: true, repeat: 2 });
   }
 
@@ -435,13 +497,18 @@ export class BarbaScene extends MicrogiocoBase {
     this.tTaglio = 0.9;
     this.tagli++;
     this.trascorso += c.penalitaTaglio;
-    this.testa.add(im(this, loc.x - FACCIA.w / 2, loc.y - FACCIA.h / 2, 'cerotto').setAngle(Phaser.Math.Between(-50, 50)));
+    // il cerotto va sulla pelle: se il taglietto è arrivato dove la barba esce dal viso
+    // (sotto il mento, oltre le guance) si sposta verso il centro finché non ci sta
+    let k = 0;
+    while (k < 1 && !sulViso(lerp(loc.x, 48, k), lerp(loc.y, 64, k), 4)) k += 0.04;
+    const cx = lerp(loc.x, 48, k), cy = lerp(loc.y, 64, k);
+    this.testa.add(im(this, cx - FACCIA.w / 2, cy - FACCIA.h / 2, 'cerotto').setAngle(Phaser.Math.Between(-50, 50)));
     this.espressione('urlo', 0.5);
     Audio.sfx('errore');
     vibra(40);
     scuoti(this, 120, 0.006);
     scritta(this, this.testa.x, 78, 'TAGLIETTO! PIANO!', { size: 12, color: '#ff9a8a' });
-    scritta(this, 440, 50, `-${c.penalitaTaglio} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
+    scritta(this, 440, 50, `-${String(c.penalitaTaglio).replace('.', ',')} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
   }
 
   scatto() {
