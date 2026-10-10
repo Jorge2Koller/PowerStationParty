@@ -315,7 +315,7 @@ brevemente il telefono.
   fine. Vittoria con almeno 3 piatti su 5; persi tutti, finisce prima.
 - **Il Passaggiorgio** (45 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
   quasi dentro), +50 ogni volta che si mette al volante della sua A3, -20 per ogni passaggio
-  scroccato, -5 se si tira fuori il sosia incappucciato. Vittoria se guida almeno 2 volte.
+  scroccato, -5 se si tira fuori il sosia incappucciato. Vittoria se guida almeno 4 volte.
 - **Petri Tentacolari** (45 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
   la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
   terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine. Vittoria con almeno

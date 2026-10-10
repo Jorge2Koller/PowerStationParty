@@ -536,22 +536,22 @@ export const CONFIG = {
         'Occhio alle sagome di cartone e agli amici incappucciati',
         'Tocco a vuoto: la mano resta ferma per un attimo',
       ],
-      obiettivo: 'Fallo guidare almeno 2 volte!',
-      obiettivoGuidate: 2,
+      obiettivo: 'Fallo guidare almeno 4 volte!',
+      obiettivoGuidate: 4,
       // punti
       puntiFuori: 10,          // Giorgio tirato fuori da una macchina
       bonusUltimo: 5,          // ...se era già quasi dentro (oltre "quasiDentro" della finestra)
       quasiDentro: 0.66,
       puntiGuida: 50,          // Giorgio si siede al volante della sua A3
-      malusPassaggio: 20,      // riesce a chiudere la portiera: passaggio scroccato
+      malusPassaggio: 25,      // riesce a chiudere la portiera: passaggio scroccato
       malusSbagliato: 5,       // tirata fuori la persona sbagliata (l'amico incappucciato)
-      bloccoVuoto: 0.6,        // secondi di mano ferma dopo un clic a vuoto
+      bloccoVuoto: 0.85,        // secondi di mano ferma dopo un clic a vuoto
       // tempi
-      scopertoInizio: 2.6,     // secondi che Giorgio resta a terra (le chiavi vanno portate prima)
-      scopertoFine: 2.0,
+      scopertoInizio: 1.9,     // secondi che Giorgio resta a terra (le chiavi vanno portate prima)
+      scopertoFine: 1.3,
       alVolante: 2.4,          // secondi al volante prima di scendere con una scusa
       rientro: 4,              // secondi prima che torni la macchina partita con Giorgio dentro
-      raggioChiavi: 28,        // quanto vicino a Giorgio vanno lasciate le chiavi (unità)
+      raggioChiavi: 22,        // quanto vicino a Giorgio vanno lasciate le chiavi (unità)
       raggioDito: 6,           // col dito si prende un po' più largo
       // Fasi di difficoltà. "da" = secondo da cui vale la fase.
       //  vel = corsa di Giorgio (unità/s), finestra = secondi per tirarlo fuori, finta = probabilità che
@@ -559,11 +559,11 @@ export const CONFIG = {
       //  travestimento = probabilità di cappuccio e occhiali (con un sosia incappucciato), bagagliaio = probabilità
       //  che si infili nel bagagliaio, pausa = [min,max] secondi prima della corsa successiva
       fasi: [
-        { da: 0,  vel: 90,  finestra: 1.3,  finta: 0,    insieme: 1, travestimento: 0,   bagagliaio: 0,    pausa: [0.7, 1.0] },
-        { da: 10, vel: 110, finestra: 1.1,  finta: 0.25, insieme: 1, travestimento: 0,   bagagliaio: 0,    pausa: [0.5, 0.8] },
-        { da: 18, vel: 130, finestra: 1.0,  finta: 0.35, insieme: 2, travestimento: 0.3, bagagliaio: 0,    pausa: [0.4, 0.7] },
-        { da: 30, vel: 150, finestra: 0.85, finta: 0.4,  insieme: 2, travestimento: 0.3, bagagliaio: 0.35, pausa: [0.3, 0.6] },
-        { da: 38, vel: 170, finestra: 0.7,  finta: 0.45, insieme: 3, travestimento: 0.2, bagagliaio: 0.35, pausa: [0.2, 0.5] },
+        { da: 0,  vel: 115, finestra: 1.0,  finta: 0.15, insieme: 1, travestimento: 0,    bagagliaio: 0,    pausa: [0.5, 0.8] },
+        { da: 8,  vel: 135, finestra: 0.85, finta: 0.3,  insieme: 2, travestimento: 0.2,  bagagliaio: 0,    pausa: [0.4, 0.7] },
+        { da: 16, vel: 155, finestra: 0.75, finta: 0.4,  insieme: 2, travestimento: 0.3,  bagagliaio: 0.25, pausa: [0.3, 0.6] },
+        { da: 26, vel: 175, finestra: 0.65, finta: 0.45, insieme: 3, travestimento: 0.3,  bagagliaio: 0.35, pausa: [0.25, 0.5] },
+        { da: 36, vel: 195, finestra: 0.55, finta: 0.5,  insieme: 3, travestimento: 0.25, bagagliaio: 0.4,  pausa: [0.2, 0.4] },
       ],
       scuse: ['Stasera bevo io!', "Ce l'ho dal meccanico", 'Tanto passi tu da casa mia', 'Non trovo le chiavi',
         'Mi si è scaricata', 'La mia consuma troppo', 'Guido al ritorno, giuro', 'Ho appena lavato i sedili', 'Non so dove parcheggiare'],
