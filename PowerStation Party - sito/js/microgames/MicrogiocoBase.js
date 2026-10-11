@@ -20,6 +20,7 @@
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
+import { preparaGiocatore } from '../sprites.js';
 import { txt, scritta, inquadra, eTouch, pulsante } from '../fx.js';
 
 export class MicrogiocoBase extends Phaser.Scene {
@@ -33,7 +34,10 @@ export class MicrogiocoBase extends Phaser.Scene {
   get tempoRimasto() { return Math.max(0, this.durata - this.trascorso); }
 
   init() {
-    this.giocatore = Sessione.giocatore;
+    // Chi gioca, com'è dentro il microgioco: this.giocatore.id è il nome dei suoi sprite
+    // (id_normale, id_felice...). Se gioca contro se stesso è il doppione travestito.
+    this.giocatore = Sessione.inScena;
+    preparaGiocatore(this, Sessione.giocatore.id, Sessione.controSeStesso);
     this.durata = this.cfg.durata;
     this.oraVera = 0;
     this.trascorso = 0;
@@ -60,9 +64,9 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.barra = this.add.graphics().setDepth(1001);
     this.testoTempo = txt(this, 474, 22, '', { ox: 1, depth: 1001, size: 10 });
     txt(this, 6, 22, this.giocatore.nome.toUpperCase(), { ox: 0, depth: 1001, size: 10, color: this.giocatore.colore });
-    // nella sfida, chi gioca per secondo vede il punteggio da battere
-    const db = Sessione.daBattere;
-    if (db) txt(this, 6, 35, `DA BATTERE: ${db.punteggio}  (${Sessione.avversario.nome})`, { ox: 0, depth: 1001, size: 7, color: '#ffe14a' });
+    // nella sfida, chi non gioca per primo vede il record del round finora
+    const rec = Sessione.record;
+    if (rec) txt(this, 6, 35, `RECORD: ${rec.punteggio}  (${rec.giocatore.nome})`, { ox: 0, depth: 1001, size: 7, color: '#ffe14a' });
     // sul telefono non ci sono ESC e M: pulsanti a schermo, accanto al tempo
     if (eTouch()) {
       this.pulsanti = [pulsante(this, 438, 22, 'pausa', () => this.pausa()), pulsante(this, 416, 22, 'audio', () => Audio.silenzia())];

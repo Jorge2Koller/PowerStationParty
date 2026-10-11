@@ -6,7 +6,8 @@ import { RES } from './grafica/base.js';
 import { eTouch } from './dispositivo.js';
 import { MICROGIOCHI } from './microgames/index.js';
 import { BootScene, MenuScene, AllenamentoScene, ComandiScene, PausaScene } from './scenes/menu.js';
-import { IntroScene, RisultatoScene, FinaleScene } from './scenes/flusso.js';
+import { GiocatoriScene, PersonaggiScene, ModalitaScene } from './scenes/partita.js';
+import { IntroScene, RisultatoScene, ClassificaScene, FinaleScene } from './scenes/flusso.js';
 
 // i browser fanno partire l'audio solo dopo un input dell'utente; Safari (soprattutto
 // su iPhone) accetta solo alcuni eventi, quindi si ascoltano tutti quelli buoni
@@ -33,8 +34,8 @@ function avvia() {
     // a 30 fps (iPhone a risparmio energetico) con i 120 di serie il gioco andrebbe a metà
     // velocità per 4 secondi; ne bastano pochi
     fps: { panicMax: 20 },
-    scene: [BootScene, MenuScene, AllenamentoScene, ComandiScene, IntroScene,
-      ...Object.values(MICROGIOCHI), RisultatoScene, FinaleScene, PausaScene],
+    scene: [BootScene, MenuScene, GiocatoriScene, PersonaggiScene, ModalitaScene, AllenamentoScene, ComandiScene, IntroScene,
+      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, FinaleScene, PausaScene],
   });
   controllaVerso();
 }

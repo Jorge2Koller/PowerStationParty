@@ -6,21 +6,50 @@
 
 export const CONFIG = {
   titolo: 'POWERSTATION PARTY',
-  sottotitolo: 'Riccardo  VS  Giorgio',
+  sottotitolo: 'Tutti contro tutti, un turno a testa',
   // Schermo logico: tutte le coordinate di gioco sono in queste unità.
   // Il disegno vero avviene a 4x (1920x1080), vedi RES in js/grafica/base.js.
   larghezza: 480,
   altezza: 270,
 
-  // I due giocatori della sfida (id = nome dello sprite in sprites.js)
-  giocatori: [
-    { id: 'riccardo', nome: 'Riccardo', colore: '#ff6b5a' },
-    { id: 'giorgio', nome: 'Giorgio', colore: '#5ab4ff' },
+  // ---------------------------------------------------------
+  //  I GIOCATORI
+  // ---------------------------------------------------------
+  maxGiocatori: 8,          // quanti si può essere al massimo (uno alla volta, passandosi telefono o tastiera)
+
+  // I personaggi che si possono scegliere. Per aggiungerne o toglierne uno basta una riga qui:
+  //   id = il suo nome in js/grafica/personaggi.js (PERSONAGGI), nome = come compare nel gioco,
+  //   soprannome = la riga sotto il nome nella selezione, colore = il colore del giocatore
+  //   (diverso da tutti gli altri), esulta / perde = le sue frasi quando vince e quando perde.
+  // Chi non è in questo elenco (Marsupino, Beppe, lo Zio, Emilio) resta solo ospite del suo microgioco.
+  personaggiGiocabili: [
+    { id: 'riccardo', nome: 'Riccardo', soprannome: 'Mister PowerStation', colore: '#ff6b5a', esulta: 'Stasera offro io. Forse.', perde: 'Era solo riscaldamento.' },
+    { id: 'giorgio', nome: 'Giorgio', soprannome: 'Il Passaggiorgio', colore: '#5ab4ff', esulta: 'E adesso chi mi riporta a casa?', perde: 'Tanto guidava qualcun altro.' },
+    { id: 'marco', nome: "O'Sfurnacchiat", soprannome: 'Marco De Luca', colore: '#ffb02e', esulta: 'Liscio come una barba fatta bene!', perde: 'Mi sono tagliato da solo.' },
+    { id: 'greg', nome: 'ReGrorio', soprannome: 'Greg, il re della Golf', colore: '#b06aff', esulta: 'Largo, passa il re!', perde: 'Mi si è ingolfata la Golf.' },
+    { id: 'guerra', nome: 'Guerra', soprannome: 'Mani lunghe', colore: '#4ade80', esulta: 'E ora si mangia!', perde: 'A stomaco vuoto non rendo.' },
+    { id: 'sego', nome: 'Sego', soprannome: 'Franci', colore: '#ff7ac8', esulta: 'Scendo, scendo... a festeggiare!', perde: 'Io stavo ancora dormendo.' },
+    { id: 'generale', nome: 'Il Generale', soprannome: 'Torricelli', colore: '#9fb86a', esulta: 'Missione compiuta, soldati!', perde: 'Ritirata strategica.' },
+    { id: 'ingiocabile', nome: "L'Ingiocabile", soprannome: 'Il banco vince sempre', colore: '#2dd4bf', esulta: 'Il banco vince. Sempre.', perde: 'Avete barato, lo so.' },
+    { id: 'passaseo', nome: 'Passaseo', soprannome: 'Il ciclista', colore: '#ffe14a', esulta: 'In volata!', perde: 'Ho bucato.' },
+    { id: 'bota', nome: 'Il Bota', soprannome: 'Mister abbronzatura', colore: '#ff8a3a', esulta: 'Abbronzato e vincente.', perde: 'Mi sono scottato.' },
+    { id: 'petri', nome: 'Petri', soprannome: 'Il Piovra', colore: '#8fa8ff', esulta: 'Ci ho messo le mani, tutte!', perde: 'Mi sono impigliato.' },
+    { id: 'manna', nome: 'Il Manna', soprannome: 'La Calamita', colore: '#f6c63a', esulta: 'Ovviamente.', perde: 'Era bianca! BIANCA!' },
+    { id: 'pastaffi', nome: 'Pastaffi', soprannome: 'Il figlio di Emilio', colore: '#c98a4e', esulta: 'Papà, hai visto?', perde: 'Papà, non guardare.' },
   ],
+
+  // Punti classifica per posizione nel round, da tre giocatori in su (in due si contano i punti dei
+  // microgiochi, come sempre). null = alla Mario Party: in N giocatori il primo ne prende N, il
+  // secondo N-1... l'ultimo 1. Oppure una tabella per numero di giocatori, es.
+  //   puntiPosizione: { 3: [4, 2, 1], 4: [5, 3, 2, 1] }
+  // A pari punteggio, pari posizione (e stessi punti).
+  puntiPosizione: null,
+  sfidaRapida: [3, 5, 8],   // quanti microgiochi (pescati a caso) nelle sfide rapide del menu
+  alMeglioDi: [3, 5],       // le sfide "al meglio di": di 3 vince chi per primo vince 2 round, di 5 chi ne vince 3
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia'],
 
   microgiochi: {
     // ---------------------------------------------------------
@@ -725,41 +754,176 @@ export const CONFIG = {
       },
       frasiButtafuori: ['Documenti.', 'Lei non entra.', 'Favorisca.'],
     },
+
+    // ---------------------------------------------------------
+    retromarcia: {
+      titolo: 'Emilio in Retromarcia',
+      durata: 50,
+      colore: 0x6a8f3a,
+      musica: 'rock',          // l'autoradio di Emilio (traccia di audio.js)
+      ospite: { id: 'emilio', etichetta: 'AL VOLANTE:\nEMILIO' },
+      cast: ['pastaffi'],      // altri personaggi della storia: chi li sceglie qui gioca "contro se stesso"
+      comandi: [
+        'FRECCE (o WASD), oppure clic sul vialetto: muoviti',
+        'Cammina contro un cane: lo spingi via dalla zona rossa',
+        'SPAZIO (tieni e lascia) o tasto destro: lanci. Q: cambia',
+        'E, o clic sulla sua faccia: Pastaffi porta via un cane',
+        'Luci bianche e BIP BIP: la macchina sta per muoversi!',
+      ],
+      comandiTouch: [
+        'Trascina il dito sul vialetto: ti muovi',
+        'Cammina contro un cane: lo spingi via dalla zona rossa',
+        'Tocca biscotto o pallina, poi il punto dove lanciare',
+        'Tocca la faccia di Pastaffi: porta via un cane',
+        'Luci bianche e BIP BIP: la macchina sta per muoversi!',
+      ],
+      obiettivo: 'Fai uscire Emilio dal cancello senza toccare i cani!',
+      // --- vite e punti ---
+      vite: 3,                 // spaventi che ti puoi permettere (al terzo la partita finisce)
+      unitaMetro: 10,          // quante unità di schermo fanno un metro (il vialetto è lungo 25 metri)
+      puntiMetro: 4,           // punti per ogni metro fatto dalla macchina
+      bonusSalvataggio: 10,    // per ogni cane tolto dalla zona rossa all'ultimo istante
+      vicino: 28,              // "all'ultimo istante" = la coda era a meno di tante unità dal cane, con la macchina in moto o in partenza
+      attesaSalvataggio: 2.5,  // lo stesso cane non dà un altro bonus prima di tanti secondi
+      bonusVita: 20,           // per ogni vita rimasta
+      bonusChiamata: 15,       // per ogni chiamata di Pastaffi non usata (solo se Emilio esce dal cancello)
+      // --- il giocatore ---
+      velGiocatore: 104,       // velocità (unità/s)
+      raggioSpinta: 15,        // quanto vicino devi passare a un cane per spingerlo
+      velSpinta: 80,           // velocità del cane appena spinto (unità/s)...
+      durataSpinta: 0.7,       //   ...per tanti secondi, rallentando: fa una trentina di unità
+      spintaFuori: 0.45,       // un cane spinto dentro la corsia della macchina devia di tanto verso il bordo più vicino (0 = va solo dove lo spingi)
+      // --- lanci e munizioni ---
+      munizioni: { biscotto: 2, pallina: 2 },   // con quante cominci
+      maxMunizioni: 4,         // quante ne puoi tenere, per tipo
+      gittataMin: 30,          // il lancio più corto (SPAZIO appena toccato)...
+      gittataMax: 150,         //   ...e il più lungo (nemmeno col mouse o col dito si va oltre)
+      periodoForza: 1.4,       // secondi perché la forza salga e riscenda, tenendo SPAZIO
+      durataOggetto: 7,        // secondi che biscotto o pallina restano a terra se nessuno li prende
+      mangia: 2.4,             // secondi che il goloso ci mette a finire il biscotto
+      giocaPallina: 3.6,       // secondi che l'altro si tiene la pallina
+      nuoveInizio: 6,          // ogni quanti secondi compare una munizione da raccogliere, a inizio partita...
+      nuoveFine: 4.5,          //   ...e a fine partita
+      maxInGiro: 2,            // quante ce ne possono essere in giro da raccogliere
+      // --- la macchina di Emilio ---
+      primaPartenza: 2.4,      // secondi prima del primo movimento
+      velInizio: 11,           // velocità di uno scatto (unità/s), a inizio partita...
+      velFine: 21,             //   ...e a fine partita (ogni scatto varia del 20% in più o in meno)
+      scatto: [1.1, 2.2],      // quanto dura uno scatto (secondi): tra questo e questo
+      pausaInizio: 1.6,        // quanto sta ferma tra uno scatto e l'altro, a inizio partita...
+      pausaFine: 0.9,          //   ...e a fine partita
+      avvisoInizio: 1.2,       // secondi di luci bianche e "bip bip" prima che parta, a inizio partita...
+      avvisoFine: 0.9,         //   ...e a fine partita
+      accelerazione: 40,       // quanto in fretta prende velocità (unità/s²)
+      frenata: 70,             //   ...e quanto in fretta si ferma
+      arrivo: 0.82,            // Emilio conta di essere fuori a questo punto della partita (0.82 = a 41 secondi su 50)
+      curvaArrivo: 1.35,       // la sua tabella di marcia: 1 = regolare, più di 1 = piano all'inizio e forte alla fine
+      recupero: 5,             // se è in ritardo sulla tabella (uno spavento, una frenata) accelera: più è alto, più recupera in fretta
+      recuperoMax: 1.45,       //   ...ma mai più di tanto (1.45 = il 45% più svelto del normale)
+      zona: 46,                // lunghezza della zona rossa dietro la macchina (unità)
+      distrattoDa: 0.3,        // da che punto della partita (0 = inizio, 1 = fine) comincia a distrarsi
+      distratto: 0.65,         // a fine partita, quanti scatti su 1 li fa da distratto (radio, bandana, telefono)
+      distrattoVel: 1.3,       // da distratto va più forte di tanto
+      durataIncidente: 2.8,    // secondi persi quando tocca un cane (scende e si dispera)
+      // --- i cani ---
+      // personalita: 'pigro' (si sdraia dietro la ruota e si sposta solo a spinte), 'pallina' (rincorre
+      // la pallina ovunque), 'goloso' (va solo dietro ai biscotti). Si possono rinominare, togliere o
+      // aggiungere (anche due con la stessa personalità). collare: colore; taglia: 1 = normale;
+      // macchia: colore di una macchia sulla schiena (facoltativa). Si chiamano tutti Morgan:
+      // se a un cane aggiunto non metti il nome, prende da solo il numero che gli tocca (Morgan IV...).
+      cani: [
+        { nome: 'Morgan I', collare: '#e8463a', personalita: 'pigro', taglia: 1.1 },
+        { nome: 'Morgan II', collare: '#3f8ae0', personalita: 'pallina', taglia: 0.9 },
+        { nome: 'Morgan III', collare: '#f2c43a', personalita: 'goloso', macchia: '#8a5a2e' },
+      ],
+      velCane: 15,             // quanto veloci vanno a spasso (unità/s): ciondolano
+      velCorsa: 62,            // quando corrono dietro al biscotto o alla pallina
+      sosta: [0.7, 1.8],       // quanto si fermano tra una passeggiata e l'altra (secondi): tra questo e questo
+      vogliaZonaInizio: 0.16,  // quante volte su 1 scelgono di andare proprio dietro la macchina, a inizio partita...
+      vogliaZonaFine: 0.3,     //   ...e a fine partita
+      sicuroInizio: 5,         // secondi che restano nel prato (o sotto il portico) prima di tornare sul vialetto, a inizio partita...
+      sicuroFine: 3.5,         //   ...e a fine partita
+      pigroDietro: 18,         // il pigro si sdraia a tante unità dalla coda della macchina
+      pigroVel: 1.5,           // per tornare dietro la ruota va più svelto degli altri a spasso (1 = uguale): se no la macchina lo semina
+      pigroPausa: 6,           // dopo una spinta, quanto aspetta prima di tornare a sdraiarsi dietro la ruota, a inizio partita...
+      pigroPausaFine: 4,       //   ...e a fine partita
+      // --- Pastaffi, l'aiuto da casa ---
+      pastaffi: {
+        chiamate: 2,           // quante volte lo puoi chiamare (mettilo a 1 per renderlo più raro)
+        velCorsa: 135,         // quanto corre quando esce (unità/s)
+        velCarico: 52,         //   ...e quanto va piano col cane in braccio (lo Shar Pei pesa)
+        frenata: 1,            // secondi che Emilio resta inchiodato quando sente "PAPÀ, FERMO!"
+        sosta: 7,              // secondi che il cane resta nel prato dopo che ce l'ha portato
+      },
+      // --- il gatto ---
+      gatto: {
+        a: 15,                 // a tanti secondi dalla fine passa il gatto
+        vel: 24,               // quanto veloce attraversa (unità/s)
+        velCani: 15,           // quanto veloci (cioè piano) gli vanno dietro i cani
+        avanti: 42,            // passa a tante unità dalla coda della macchina
+      },
+      // --- frasi ---
+      frasi: ['Spostatevi, ragazzi!', 'Faccio tardi!', 'Ma chi li ha fatti uscire?', "Rock'n'roll!", 'Via, via, via!', 'Quanto è lungo questo vialetto?'],
+      frasiDistratto: {
+        radio: ['Questa la alzo!', 'Senti che assolo!'],
+        bandana: ['Un attimo, la bandana...', 'Mi è scesa sugli occhi!'],
+        telefono: ['Chi è che scrive?', 'Pronto? Sto uscendo!'],
+      },
+      frasiIncidente: ['NOOO! Il mio cucciolo!', 'Da dove è sbucato?!', 'Non ti avevo visto!', 'Mi viene un infarto!'],
+      frasiPastaffi: ['PAPÀ, FERMO!'],
+      frasiCarico: ['Quanto pesi!', 'Sei tutto pieghe!', 'Dai, su...'],
+    },
   },
 
-  // Frasi di sfottò per chi perde. {perdente} e {vincitore} vengono sostituiti.
+  // Frasi di sfottò della classifica finale. Vengono sostituiti: {primo} (chi ha vinto), {secondo},
+  // {ultimo} (chi è arrivato in fondo: in due è chi ha perso) e {tutti} (tutti i nomi in fila).
+  // Le frasi che nominano un personaggio non escono se quel personaggio è il primo o l'ultimo.
   sfotto: [
-    "{perdente}, pure Beppe con una mano sola faceva meglio.",
-    "{perdente}, stasera il giro lo offri tu. A tutti.",
-    "{vincitore} ti ha asfaltato peggio della Golf di ReGrorio.",
-    "{perdente}, hai i riflessi di una moka spenta.",
-    "{perdente}: tanta buona volontà, zero risultati.",
-    "Dai {perdente}, l'importante è partecipare. Dicono.",
-    "{perdente}, O'Sfurnacchiat si rade meglio da solo. Al buio.",
-    "{vincitore} vince. {perdente} porta i taralli.",
-    "{perdente}, ti ha battuto pure a mani in tasca.",
-    "{perdente}, chiedi la rivincita finché hai ancora dignità.",
-    "{perdente}, Marsupino ti ha farcito il panino col calzino.",
-    "{perdente}, non prendi al volo nemmeno un würstel.",
-    "{vincitore} fa panini gourmet, {perdente} solo pane secco.",
-    "{perdente}, con quei riflessi Guerra mangia gratis a vita.",
-    "{perdente}, Guerra ti ha svuotato i piatti e pure il frigo.",
-    "{vincitore} difende la cena, {perdente} stasera digiuna.",
-    "{perdente}, Sego è ancora in casa che ride di te.",
-    "{perdente}, con quella mira non affumichi nemmeno un salame.",
-    "{vincitore} ha stanato Sego, {perdente} solo i piccioni.",
-    "{perdente}, il Bota per colpa tua stanotte dorme in piedi.",
-    "{vincitore} abbronza, {perdente} arrostisce: chiedete al Bota.",
-    "{perdente}, spalmava meglio il gabbiano. E ti ha pure fregato il tubetto.",
-    "{perdente}, pure Giorgio stasera ha guidato più di te.",
-    "{perdente}, a te non danno un passaggio neanche gli scrocconi.",
-    "{vincitore} ha messo Giorgio al volante. {perdente} non trova neanche la freccia.",
-    "{perdente}, il Piovra ti ha battuto pure a te.",
-    "{perdente}, il Petri rimorchia più di te. Coi tentacoli.",
-    "{vincitore} libera la pista, {perdente} libera solo il guardaroba.",
-    "{perdente}, in pista ti ha notato solo il buttafuori.",
-    "{vincitore} balla, {perdente} regge il muro. E il Manna ringrazia.",
-    "{perdente}, pure la mamma del Manna aveva più ritmo di te.",
+    "{ultimo}, pure Beppe con una mano sola faceva meglio.",
+    "{ultimo}, stasera il giro lo offri tu. A tutti.",
+    "{primo} ti ha asfaltato peggio della Golf di ReGrorio.",
+    "{ultimo}, hai i riflessi di una moka spenta.",
+    "{ultimo}: tanta buona volontà, zero risultati.",
+    "Dai {ultimo}, l'importante è partecipare. Dicono.",
+    "{ultimo}, O'Sfurnacchiat si rade meglio da solo. Al buio.",
+    "{primo} vince. {ultimo} porta i taralli.",
+    "{ultimo}, ti ha battuto pure a mani in tasca.",
+    "{ultimo}, chiedi la rivincita finché hai ancora dignità.",
+    "{ultimo}, Marsupino ti ha farcito il panino col calzino.",
+    "{ultimo}, non prendi al volo nemmeno un würstel.",
+    "{primo} fa panini gourmet, {ultimo} solo pane secco.",
+    "{ultimo}, con quei riflessi Guerra mangia gratis a vita.",
+    "{ultimo}, Guerra ti ha svuotato i piatti e pure il frigo.",
+    "{primo} difende la cena, {ultimo} stasera digiuna.",
+    "{ultimo}, Sego è ancora in casa che ride di te.",
+    "{ultimo}, con quella mira non affumichi nemmeno un salame.",
+    "{primo} ha stanato Sego, {ultimo} solo i piccioni.",
+    "{ultimo}, il Bota per colpa tua stanotte dorme in piedi.",
+    "{primo} abbronza, {ultimo} arrostisce: chiedete al Bota.",
+    "{ultimo}, spalmava meglio il gabbiano. E ti ha pure fregato il tubetto.",
+    "{ultimo}, pure Giorgio stasera ha guidato più di te.",
+    "{ultimo}, a te non danno un passaggio neanche gli scrocconi.",
+    "{primo} ha messo Giorgio al volante. {ultimo} non trova neanche la freccia.",
+    "{ultimo}, il Piovra ti ha battuto pure a te.",
+    "{ultimo}, il Petri rimorchia più di te. Coi tentacoli.",
+    "{primo} libera la pista, {ultimo} libera solo il guardaroba.",
+    "{ultimo}, in pista ti ha notato solo il buttafuori.",
+    "{primo} balla, {ultimo} regge il muro. E il Manna ringrazia.",
+    "{ultimo}, pure la mamma del Manna aveva più ritmo di te.",
+    "{ultimo}, Emilio in retromarcia ci vede meglio di te in avanti.",
+    "{ultimo}, gli Shar Pei hanno meno pieghe della tua strategia.",
+    "{primo} salva i cani, {ultimo} non salva nemmeno la faccia. Rock'n'roll!",
+  ],
+  // ...e queste solo da tre giocatori in su (si aggiungono a quelle sopra)
+  sfottoTanti: [
+    "{ultimo} paga il giro al PowerStation.",
+    "{primo} sul gradino più alto, {secondo} a rosicare, {ultimo} a lavare i bicchieri.",
+    "{secondo}, c'eri quasi. Quasi. {primo} ringrazia.",
+    "{tutti}: una serata così non si vedeva da anni. Soprattutto per {ultimo}.",
+    "{ultimo}, la prossima volta porta almeno i taralli.",
+    "{primo} vince, {secondo} applaude a denti stretti, {ultimo} cerca le chiavi per andare via.",
+    "Podio per {primo} e {secondo}. Per {ultimo} c'è lo sgabello in fondo al bancone.",
+    "{ultimo}, pure la corona di {primo} ha fatto più punti di te.",
   ],
   frasiPareggio: [
     'Pareggio! Rivincita obbligatoria, paga chi perde.',

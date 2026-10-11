@@ -18,8 +18,13 @@ export class BootScene extends Phaser.Scene {
   create() {
     creaTexture(this);
     // scorciatoia per provare un microgioco al volo: index.html?prova=barba
-    const prova = new URLSearchParams(location.search).get('prova');
-    if (prova && MICROGIOCHI[prova]) { Sessione.nuovoAllenamento(prova, 0); return this.scene.start('mg_' + prova); }
+    // (con &chi=manna lo si prova con quel personaggio, se no con l'ultimo usato)
+    const pagina = new URLSearchParams(location.search), prova = pagina.get('prova'), chi = pagina.get('chi');
+    if (prova && MICROGIOCHI[prova]) {
+      if (chi) Sessione.imposta([chi]);
+      Sessione.nuovoAllenamento(prova, 0);
+      return this.scene.start('mg_' + prova);
+    }
     this.scene.start('Menu');
   }
 }
@@ -32,21 +37,22 @@ export class MenuScene extends Phaser.Scene {
     this.input.setDefaultCursor('default');
     raggi(this, 0xff9a3c, 0xffb85a);
 
-    // titolo che rimbalza (in alto e un po' più piccolo dei personaggi sotto: le teste di
-    // Riccardo e Giorgio non devono coprire la prima e l'ultima lettera)
+    // titolo che rimbalza (in alto e un po' più piccolo dei personaggi sotto: le loro teste
+    // non devono coprire la prima e l'ultima lettera)
     const titolo = txt(this, 240, 35, CONFIG.titolo, { size: 26, color: '#ffe14a', stroke: '#7a1f2a', thick: 8, wrap: 460 });
     titolo.setTint(0xffffff, 0xffffff, 0xffc04a, 0xffc04a).setScale(0);
     this.tweens.add({ targets: titolo, scale: 1, duration: 600, ease: 'Bounce.out' });
     this.tweens.add({ targets: titolo, angle: { from: -2, to: 2 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     txt(this, 240, 71, CONFIG.sottotitolo, { size: 10 });
 
-    // Riccardo e Giorgio animati
-    CONFIG.giocatori.forEach((g, i) => {
+    // ai lati, animati, i primi due dell'ultima partita (da soli: lui e un altro giocabile)
+    const primo = Sessione.giocatori[0], altro = Sessione.giocatori[1] ?? CONFIG.personaggiGiocabili.find((p) => p.id !== primo.id);
+    [primo, altro].forEach((g, i) => {
       const x = i ? 404 : 76;
       ombra(this, x, 241, 70);
       const s = im(this, x, 241, g.id + '_normale').setOrigin(0.5, 1).setScale(3.6 * SP);
       molleggia(this, s, 340 + i * 70);
-      txt(this, x, 255, g.nome.toUpperCase(), { size: 10, color: g.colore });
+      txt(this, x, 255, g.nome.toUpperCase(), { size: g.nome.length > 10 ? 8 : 10, color: g.colore });
       this.time.addEvent({ delay: 2200 + i * 900, loop: true, callback: () => {
         s.setTexture(g.id + '_felice');
         stelle(this, x, 124, 5);
@@ -54,74 +60,57 @@ export class MenuScene extends Phaser.Scene {
       } });
     });
 
-    pannello(this, 240, 151, 178, 112, { alfa: 0.55, bordo: null, raggio: 10 });
+    // GIOCA porta a: quanti siete, i personaggi, la modalità (ogni schermata ricorda l'ultima
+    // scelta: per rigiocare uguale basta premere INVIO fino in fondo)
+    pannello(this, 240, 148, 178, 72, { alfa: 0.55, bordo: null, raggio: 10 });
     menuLista(this, [
-      { label: 'SFIDA COMPLETA', azione: () => { Sessione.nuovaSfida(); this.scene.start('Intro'); } },
-      { label: 'SFIDA AL MEGLIO DI 3', azione: () => { Sessione.nuovaSfidaVeloce(3); this.scene.start('Intro'); } },
-      { label: 'SFIDA AL MEGLIO DI 5', azione: () => { Sessione.nuovaSfidaVeloce(5); this.scene.start('Intro'); } },
-      { label: 'PARTITA SINGOLA', azione: () => this.scene.start('Allenamento') },
+      { label: 'GIOCA', azione: () => this.scene.start('Giocatori') },
       { label: 'COMANDI', azione: () => this.scene.start('Comandi') },
-    ], 240, 111, 20, 9);
-    txt(this, 240, 222, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
+    ], 240, 134, 28, 12);
+    txt(this, 240, 204, `Da 1 a ${CONFIG.maxGiocatori} giocatori, sullo stesso schermo`, { size: 7.5, color: '#fff3d6' });
+    txt(this, 240, 224, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
     pulsantiAngolo(this);
   }
 }
 
-// Un solo microgioco: sfida a due (a turno) oppure allenamento da soli
+// Un solo microgioco, scelto dalla lista: da soli è l'allenamento, in più giocatori una
+// partita singola (un turno a testa, poi la classifica)
 export class AllenamentoScene extends Phaser.Scene {
   constructor() { super('Allenamento'); }
   create() {
     inquadra(this);
+    this.input.setDefaultCursor('default');
     raggi(this, 0x4a9fe8, 0x7cc0f8);
-    txt(this, 240, 26, 'PARTITA SINGOLA', { size: 18, color: '#ffe14a' });
-    const G = CONFIG.giocatori;
-    const modi = [
-      { label: `${G[0].nome.toUpperCase()}  VS  ${G[1].nome.toUpperCase()}`, chi: null },
-      { label: `Allenamento: solo ${G[0].nome}`, chi: 0 },
-      { label: `Allenamento: solo ${G[1].nome}`, chi: 1 },
-    ];
-    let m = 0;
+    const G = Sessione.giocatori, n = G.length;
+    const indietro = () => (n === 1 ? this.scene.start('Personaggi', { n: 1 }) : this.scene.start('Modalita'));
+    txt(this, 240, 26, n === 1 ? 'ALLENAMENTO' : 'PARTITA SINGOLA', { size: 18, color: '#ffe14a' });
     pannello(this, 240, 56, 240, 18, { alfa: 0.6, bordo: null, raggio: 9 });
-    const testoChi = txt(this, 240, 56, '', { size: 9 });
-    txt(this, 240, 71, perDito('SINISTRA / DESTRA per cambiare', 'Tocca < o > per cambiare'), { size: 6, color: '#fff3d6' });
-    const sprite = [0, 1].map((i) => {
+    txt(this, 240, 56, n === 1 ? `${G[0].nome}, scegli il microgioco` : `In ${n}: scegliete il microgioco`, { size: 9 });
+    // ai lati chi gioca (i primi due)
+    G.slice(0, 2).forEach((g, i) => {
       const x = i ? 420 : 60;
       ombra(this, x, 240, 60);
-      const s = im(this, x, 240, G[i].id + '_normale').setOrigin(0.5, 1).setScale(3 * SP).setFlipX(false);
-      molleggia(this, s, 360 + i * 60);
-      return s;
+      molleggia(this, im(this, x, 240, g.id + '_normale').setOrigin(0.5, 1).setScale(3 * SP), 360 + i * 60);
     });
-    const agg = () => {
-      testoChi.setText(modi[m].label);
-      sprite.forEach((s, i) => s.setAlpha(modi[m].chi === null || modi[m].chi === i ? 1 : 0.3));
-    };
-    const cambia = (d) => { m = (m + d + modi.length) % modi.length; Audio.sfx('muovi'); agg(); };
-    this.input.keyboard.on('keydown-LEFT', () => cambia(-1));
-    this.input.keyboard.on('keydown-RIGHT', () => cambia(1));
-    // frecce < e > toccabili, con una zona di tocco grande ciascuna; la scritta in mezzo va avanti
-    [-1, 1].forEach((d) => {
-      txt(this, 240 + d * 108, 56, d < 0 ? '<' : '>', { size: 12, color: '#ffe14a' });
-      this.add.rectangle(240 + d * 104, 56, 44, 26, 0x000000, 0.001).setInteractive({ useHandCursor: true }).on('pointerdown', () => cambia(d));
-    });
-    testoChi.setInteractive({ useHandCursor: true }).on('pointerdown', () => cambia(1));
-    agg();
 
     const voci = Object.keys(MICROGIOCHI).map((id) => ({
       label: CONFIG.microgiochi[id].titolo,
       azione: () => {
-        if (modi[m].chi === null) Sessione.nuovaSfida([id]); else Sessione.nuovoAllenamento(id, modi[m].chi);
+        if (n === 1) Sessione.nuovoAllenamento(id, 0); else Sessione.nuovaSfida([id]);
         this.scene.start('Intro');
       },
     }));
-    voci.push({ label: 'Indietro', azione: () => this.scene.start('Menu') });
+    voci.push({ label: 'Indietro', azione: indietro });
     // tanti microgiochi: due colonne (su e giù scorrono la prima colonna e poi la seconda), Indietro sotto
-    const n = voci.length - 1, righe = Math.ceil(n / 2), passo = Math.min(20, 100 / righe), y0 = 152 - (righe * passo) / 2;
+    const nv = voci.length - 1, righe = Math.ceil(nv / 2), passo = Math.min(20, 100 / righe), y0 = 152 - (righe * passo) / 2;
     pannello(this, 240, 154, 290, righe * passo + passo + 14, { alfa: 0.55, bordo: null, raggio: 10 });
     menuLista(this, voci, 240, y0, passo, 7.5, {
       larghezza: 140,
-      pos: (i) => (i === n ? [240, y0 + righe * passo + 6] : [i < righe ? 168 : 312, y0 + (i % righe) * passo]),
+      pos: (i) => (i === nv ? [240, y0 + righe * passo + 6] : [i < righe ? 168 : 312, y0 + (i % righe) * passo]),
     });
-    this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+    this.input.keyboard.on('keydown-ESC', indietro);
+    if (eTouch()) pulsante(this, 16, 13, 'indietro', indietro);
+    pulsantiAngolo(this);
   }
 }
 
@@ -164,8 +153,8 @@ export class ComandiScene extends Phaser.Scene {
       frecce.forEach((f, i) => f.setVisible(pagine.length > 1).setAlpha((i ? pag < pagine.length - 1 : pag > 0) ? 1 : 0.3));
     };
     mostra();
-    txt(this, 240, 244, perDito('La sfida è a turni: lo stesso microgioco, prima uno poi l\'altro.   ESC: pausa   M: audio',
-      'La sfida è a turni: lo stesso microgioco, prima uno poi l\'altro. Pausa e audio: in alto a destra'), { size: 6, color: '#fff3d6' });
+    txt(this, 240, 244, perDito('Si gioca a turni: lo stesso microgioco, uno dopo l\'altro.   ESC: pausa   M: audio',
+      'Si gioca a turni: lo stesso microgioco, uno dopo l\'altro. Pausa e audio: in alto a destra'), { size: 6, color: '#fff3d6' });
     txt(this, 240, 259, perDito(pagine.length > 1 ? 'SINISTRA/DESTRA: pagina     INVIO: torna al menu' : 'INVIO: torna al menu',
       pagine.length > 1 ? 'Tocca: pagina dopo   (dall\'ultima si torna al menu)' : 'Tocca: torna al menu'), { color: '#ffe14a' });
     const via = (e) => { if (!e?.repeat) { Audio.sfx('scegli'); this.scene.start('Menu'); } };

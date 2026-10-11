@@ -80,6 +80,11 @@ const SFX = {
   squillo: (t) => { for (const dt of [0, 0.12, 0.42, 0.54]) nota(1320, t + dt, 0.09, 'square', 0.05); },
   scatena: (t) => { for (let i = 0; i < 6; i++) nota(330 + i * 110, t + i * 0.07, 0.1, 'sawtooth', 0.07); },
   spento: (t) => nota(520, t, 0.5, 'sawtooth', 0.08, 110),
+  // Emilio in Retromarcia
+  bipRetro: (t) => nota(1560, t, 0.11, 'square', 0.055),
+  bau: (t) => { nota(190, t, 0.09, 'sawtooth', 0.12, 120); rumore(t, 0.08, 0.1, 500, 'lowpass'); },
+  cai: (t) => { nota(700, t, 0.12, 'square', 0.07, 1100); nota(900, t + 0.12, 0.16, 'square', 0.06, 500); },
+  miao: (t) => { nota(560, t, 0.16, 'triangle', 0.09, 880); nota(880, t + 0.16, 0.22, 'triangle', 0.08, 520); },
   ruggito: (t) => { nota(230, t, 0.6, 'sawtooth', 0.12, 95); nota(236, t, 0.6, 'square', 0.05, 100); rumore(t, 0.55, 0.14, 450, 'lowpass'); },
   // mani di Guerra
   schiaffo: (t) => { rumore(t, 0.09, 0.32, 3200, 'highpass'); rumore(t, 0.12, 0.2, 900); nota(1400, t, 0.06, 'square', 0.05, 500); },
@@ -176,6 +181,14 @@ const TRACCE = {
            81, 0, 76, 81, 0, 76, 84, 0, 88, 0, 86, 84, 0, 83, 84, 0, 86, 0, 84, 83, 0, 79, 81, 0, 83, 0, 84, 86, 0, 88, 0, 0],
     basso: [57, 57, 53, 55, 57, 60, 53, 55],
   },
+  // l'autoradio di Emilio (Emilio in Retromarcia): rock, con la chitarra che gratta in ottavi
+  rock: {
+    bpm: 164,
+    rock: true,
+    lead: [64, 0, 67, 64, 0, 69, 67, 0, 64, 0, 67, 69, 71, 0, 69, 67, 64, 0, 67, 64, 0, 69, 67, 0, 71, 0, 74, 71, 69, 67, 64, 0,
+           76, 0, 74, 71, 0, 74, 71, 0, 69, 0, 71, 69, 67, 0, 64, 0, 67, 0, 69, 71, 0, 74, 76, 0, 74, 71, 69, 67, 64, 0, 64, 0],
+    basso: [40, 40, 43, 45, 40, 40, 45, 47],
+  },
 };
 
 function suonaPasso(T, i, t) {
@@ -188,6 +201,15 @@ function suonaPasso(T, i, t) {
     if (i % 2 === 0) nota(120, t, 0.12, 'sine', 0.22, 45);                       // cassa
     else rumore(t, 0.05, 0.05, 8000, 'highpass');                                // charleston in levare
     if (i % 4 === 2) rumore(t, 0.09, 0.09, 1600);                                // battimani
+    return;
+  }
+  if (T.rock) {
+    // la chitarra: fondamentale e quinta in ottavi (un "power chord"); cassa sull'1 e sul 3,
+    // rullante sul 2 e sul 4, charleston in levare
+    nota(midi(fond), t, d * 0.8, 'sawtooth', 0.06); nota(midi(fond + 7), t, d * 0.8, 'square', 0.025);
+    if (i % 4 === 0) nota(110, t, 0.1, 'sine', 0.2, 45);
+    if (i % 4 === 2) rumore(t, 0.08, 0.1, 2200);
+    if (i % 2 === 1) rumore(t, 0.03, 0.03, 8000, 'highpass');
     return;
   }
   if (T.dance) {

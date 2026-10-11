@@ -197,9 +197,10 @@ export function schermoIntero(scene) {
 }
 
 // Menu a lista: frecce + INVIO, oppure mouse o dito (un tocco = scegli)
-// o.pos(i) -> [x, y]: posizione di ogni voce (per le liste a colonne); o.larghezza: zona di tocco
+// o.pos(i) -> [x, y]: posizione di ogni voce (per le liste a colonne); o.larghezza: zona di tocco;
+// o.iniziale: la voce evidenziata all'inizio; o.orizzontale: si scorre anche con SINISTRA e DESTRA
 export function menuLista(scene, voci, x, y, passo = 20, size = 8, o = {}) {
-  let sel = 0;
+  let sel = Phaser.Math.Clamp(o.iniziale ?? 0, 0, voci.length - 1);
   const evid = scene.add.graphics();
   const agg = () => {
     testi.forEach((t, i) => t.setColor(i === sel ? '#1f1430' : '#ffffff').setStroke(i === sel ? '#ffe14a' : '#1f1430', i === sel ? 0 : 3));
@@ -223,6 +224,7 @@ export function menuLista(scene, voci, x, y, passo = 20, size = 8, o = {}) {
   const kb = scene.input.keyboard;
   kb.on('keydown-UP', () => muovi(-1));
   kb.on('keydown-DOWN', () => muovi(1));
+  if (o.orizzontale) { kb.on('keydown-LEFT', () => muovi(-1)); kb.on('keydown-RIGHT', () => muovi(1)); }
   const ok = (e) => { if (e.repeat) return; Audio.sfx('scegli'); voci[sel].azione(); };
   kb.on('keydown-ENTER', ok);
   kb.on('keydown-SPACE', ok);

@@ -1,9 +1,11 @@
 # PowerStation Party
 
-Microgiochi in stile WarioWare con Phaser 3. Riccardo contro Giorgio: stesso
-microgioco, un turno a testa, vince il round chi fa più punti.
+Microgiochi in stile WarioWare con Phaser 3, da giocare in compagnia: da 1 a 8
+giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
+sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
+e vince il round chi fa più punti.
 
-I microgiochi sono quattordici:
+I microgiochi sono quindici:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -21,6 +23,7 @@ I microgiochi sono quattordici:
 | `guida` | Il Passaggiorgio | Giorgio |
 | `piovra` | Petri Tentacolari | il Petri ("il Piovra") |
 | `scapoli` | L'Incubo degli Scapoli | il Manna |
+| `retromarcia` | Emilio in Retromarcia | Emilio (con Pastaffi e gli Shar Pei) |
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -166,16 +169,77 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
 
 ## Modalità
 
-- **Sfida completa**: tutti e 13 i microgiochi. Ogni round lo giocano entrambi,
-  uno dopo l'altro; chi comincia si alterna a ogni round e il secondo vede a
-  schermo il punteggio da battere. Vince chi fa più **punti in totale** (a parità
-  di punti, chi ha vinto più round).
-- **Sfida al meglio di 3** e **al meglio di 5**: microgiochi pescati a caso, vince
-  chi ne vince prima 2 (o 3). Un round pari non conta e se ne gioca un altro;
-  se i microgiochi finissero prima, decidono i punti.
-- **Partita singola**: un solo microgioco, in sfida a due oppure in allenamento
-  da soli (SINISTRA/DESTRA per scegliere, o col dito le frecce < e >). I
-  microgiochi sono su due colonne: SU/GIÙ scorrono la prima e poi la seconda.
+Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
+
+1. **Quanti siete?** Da 1 a 8 (`maxGiocatori` in `js/config.js`): frecce e INVIO, il
+   tasto del numero, oppure un clic o un tocco sulla casella.
+2. **Scegliete il personaggio**, uno alla volta, come nei picchiaduro: una griglia di
+   ritratti, a sinistra l'anteprima in grande con nome, soprannome e motto. Un
+   personaggio già preso non si può riprendere (resta in grigio, col numero di chi
+   l'ha scelto); "A CASO" ne pesca uno libero. BACKSPACE o ESC (col dito: un tocco
+   sul giocatore nella fila in basso) toglie l'ultima scelta.
+3. **La modalità**:
+   - **Sfida completa**: tutti e 15 i microgiochi, nell'ordine di `ordineSfida`.
+   - **Sfida rapida** da 3, 5 o 8 microgiochi pescati a caso (`sfidaRapida`).
+   - **Al meglio di 3** o **di 5** (`alMeglioDi`): microgiochi pescati a caso, vince
+     chi per primo vince 2 round (o 3). Se i microgiochi finissero prima, decide la
+     classifica.
+   - **Partita singola**: un solo microgioco, scelto dalla lista (su due colonne:
+     SU/GIÙ scorrono la prima e poi la seconda).
+
+Da soli c'è solo l'**allenamento**: dopo il personaggio si sceglie il microgioco.
+
+Il gioco ricorda i personaggi dell'ultima partita (nel `localStorage` del browser, se
+c'è): la volta dopo le schermate arrivano già compilate e per rigiocare uguale basta
+premere INVIO fino in fondo.
+
+### Turni
+
+Ogni round è un microgioco, e lo giocano tutti, uno dopo l'altro; a ogni round
+comincia il giocatore dopo. Tutti trovano la stessa partita (stesso mazzo a
+blackjack, per dire). Da tre giocatori in su, tra un turno e l'altro compare
+"TOCCA A [NOME]!" col personaggio in grande: è il momento di passare la tastiera o
+il telefono, e si parte solo quando chi deve giocare preme SPAZIO (o INVIO) o
+tocca lo schermo. Nell'introduzione e durante il microgioco c'è il punteggio da
+battere e di chi è: "RECORD: 85 (Sego)".
+
+Finito il round, da tre giocatori in su ci sono due schermate: la **classifica del
+round** (tutti in fila dal primo all'ultimo, coi punti fatti e quelli guadagnati)
+e la **classifica generale**, con le barre che crescono e i sorpassi. In due resta
+la schermata di sempre: chi ha vinto il round e i totali.
+
+### Chi vince
+
+- **In due** è come è sempre stato: nella sfida completa, in quella rapida e nella
+  partita singola vince chi fa più **punti in totale** nei microgiochi (a parità,
+  chi ha vinto più round); al meglio di 3 o 5 contano i **round vinti** (un round
+  pari non conta e se ne gioca un altro; a parità, i punti).
+- **Da tre in su** contano i **punti classifica**: a ogni round, in N giocatori, il
+  primo ne prende N, il secondo N-1 e così via fino all'ultimo, che ne prende 1.
+  A pari punteggio, pari posizione e stessi punti (due primi, poi il terzo). La
+  tabella si può cambiare con `puntiPosizione` in `js/config.js`, per esempio
+  `{ 3: [4, 2, 1], 4: [5, 3, 2, 1] }`. A parità di punti classifica vince chi ha
+  vinto più round; se ancora pari, chi ha fatto più punti in tutto nei
+  microgiochi; se ancora pari, è pari merito (e la corona va a tutti i primi).
+  Al meglio di 3 o 5 contano prima i round vinti, poi i punti classifica, poi i
+  punti dei microgiochi; un round finito pari in cima lo vincono tutti i primi.
+
+Alla fine: in due la schermata di sempre, da tre in su il **podio** coi primi tre
+sui gradini e gli altri in fila sotto. Da lì: **Rivincita** (stessi giocatori e
+stessa modalità; i microgiochi a caso si ripescano), **Cambia personaggi**, **Menu**.
+Le frasi di sfottò sono in `js/config.js`: `sfotto` (con `{primo}` e `{ultimo}`) e,
+da tre giocatori in su, anche `sfottoTanti` (con `{secondo}` e `{tutti}`).
+
+### Contro se stesso
+
+Chi sceglie un personaggio che è anche l'ospite di un microgioco (il Manna
+nell'Incubo degli Scapoli, ReGrorio in "Arriva ReGrorio!"...) quel microgioco lo
+gioca lo stesso, contro la versione di sé mossa dal computer: nell'introduzione
+compare il timbro "CONTRO SE STESSO!" e, dove il giocatore si vede in scena, entra
+il suo **doppione**: lo stesso personaggio travestito con occhiali finti, nasone e
+baffi, così i due non si confondono. Il microgioco non cambia di una virgola.
+Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
+microgioco (Pastaffi in "Emilio in Retromarcia").
 
 ## Comandi
 
@@ -312,6 +376,30 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
     `curiosa` (quanto spesso le ragazze vanno da sole verso il Manna), `auraInizio`/
     `auraFine` e `attrazione` (quanto è forte la calamita), `elastico` (l'aiuto a chi
     sta perdendo)
+- Emilio in Retromarcia (fai uscire Emilio dal cancello senza che tocchi i cani):
+  - FRECCE (o WASD) per muoverti; col mouse, clic sul punto del vialetto dove andare;
+    col dito, trascina (il personaggio sta un po' sopra il polpastrello)
+  - la macchina esce in retromarcia a scatti: prima di ogni scatto si accendono le luci
+    bianche e fa "bip bip". Dietro la coda c'è la zona rossa (lampeggia durante l'avviso):
+    se la macchina arriva addosso a un cane che sta lì è uno spavento e perdi una vita
+  - spingere: cammina contro un cane e lo spingi dalla parte dove stai andando
+  - lanciare: SPAZIO tenuto carica la forza (sale e scende: il cerchio giallo mostra dove
+    cade), al rilascio lanci nella direzione in cui guardi; col mouse, tasto destro (o
+    CTRL+clic) e lanci verso il puntatore; col dito, tocca l'icona della munizione e poi
+    il punto del vialetto. Q, la rotellina o un clic sull'icona cambiano tra biscotto e
+    pallina. Il goloso corre solo dietro ai biscotti, quello della pallina solo dietro
+    alla pallina, il pigro ignora tutto e si sposta solo a spinte
+  - raccogliere: biscotti e palline nuovi compaiono in giro per il giardino (alone
+    giallo): ci si passa sopra
+  - E, o clic (o tocco) sulla faccia di Pastaffi in basso a destra: esce di casa, prende in
+    braccio il cane più vicino alla macchina e lo porta nel prato; Emilio inchioda per un
+    secondo. Due chiamate per partita (`pastaffi.chiamate` in `js/config.js`)
+  - nel prato e sotto il portico i cani sono al sicuro, ma dopo qualche secondo tornano
+    sul vialetto. A 15 secondi dalla fine passa il gatto, e tutti gli vanno dietro
+  - i cani stanno nell'array `cani` di `js/config.js` (blocco `retromarcia`): nome, colore
+    del collare, personalità (`pigro`, `pallina`, `goloso`), taglia, macchia. Si possono
+    rinominare, togliere o aggiungere; chi non ha il nome si chiama da solo Morgan, col
+    numero romano che gli tocca (Morgan IV, Morgan V...)
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -352,6 +440,11 @@ brevemente il telefono.
 - **L'Incubo degli Scapoli** (50 s): +15 per ogni ragazza che balla con te, +5 per ogni
   sabotaggio usato, +25 se alla fine ne hai conquistate più del Manna. Vittoria solo se
   ne hai conquistate più di lui.
+- **Emilio in Retromarcia** (50 s): +4 per ogni metro fatto dalla macchina (il vialetto è
+  lungo 25 metri), +10 per ogni cane tolto dalla zona rossa all'ultimo istante, +20 per
+  ogni vita rimasta (sono 3) e, se Emilio esce dal cancello, +15 per ogni chiamata di
+  Pastaffi non usata. Vittoria se la macchina esce dal cancello prima che scada il tempo
+  con almeno una vita; al terzo spavento finisce prima.
 - **Sego** (50 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
   Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
   per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
@@ -371,19 +464,23 @@ avvia.command            doppio clic su Mac
 avvia-telefono.bat       come sopra, ma il gioco si apre anche dai telefoni
 avvia-telefono.command   sulla stessa Wi-Fi
 js/
-  config.js              titolo, nomi, durate, difficoltà, frasi di sfottò
+  config.js              titolo, personaggi giocabili, modalità, durate, difficoltà,
+                         frasi di sfottò
   compat.js              aggiunte per i browser più vecchi (Safari)
   dispositivo.js         computer o telefono? (eTouch, ?touch=1)
   main.js                avvio di Phaser, scene, audio, telefono in verticale e in sottofondo
   vendor/phaser.min.js   Phaser 3.80.1
-  sessione.js            stato della partita (turni, punteggi, classifica)
+  sessione.js            stato della partita per N giocatori: chi gioca, turni, record,
+                         classifica del round e generale, "contro se stesso"
   audio.js               effetti 8-bit e musica (Web Audio API)
-  sprites.js             crea tutte le texture all'avvio
+  sprites.js             crea tutte le texture all'avvio; preparaGiocatore (calci e
+                         doppione di chi sta per giocare), ritratto (la testa di un
+                         personaggio, per selezione e classifiche)
   fx.js                  inquadratura, testi, immagini, stelline, fumo, menu,
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i quindici personaggi (col Petri e il Manna), le ragazze delle
+    personaggi.js        i diciassette personaggi (con Emilio e Pastaffi), le ragazze delle
                          due discoteche e il buttafuori: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
@@ -401,12 +498,20 @@ js/
     disco.js             la discoteca del Manna vista dall'alto (sfondo `bgPista`), la
                          palla a specchi, il DJ, gli oggetti dei sabotaggi, i bersagli
                          della sfida
+    vialetto.js          il vialetto di ghiaia con la casa, il portico, la tettoia con
+                         la moto e il cancello; la station wagon di Emilio, gli Shar
+                         Pei (uno per ogni voce dell'array `cani`), il gatto,
+                         biscotti e palline, le icone
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
                          parcheggio sotto casa di notte, pista della discoteca
-  scenes/menu.js         boot, menu, partita singola, comandi, pausa
-  scenes/flusso.js       introduzione, risultato, classifica finale
+  scenes/menu.js         boot, menu, lista dei microgiochi (allenamento e partita
+                         singola), comandi, pausa
+  scenes/partita.js      prima della partita: quanti siete, scelta dei personaggi,
+                         modalità
+  scenes/flusso.js       introduzione ("TOCCA A...!"), risultato del turno, classifica
+                         del round e generale, finale (a due, oppure il podio)
   microgames/
     MicrogiocoBase.js    interfaccia comune (timer, pausa, fine, punteggio)
     index.js             registro dei microgiochi
@@ -414,6 +519,7 @@ js/
     PaninoScene.js  ManiScene.js  SegoScene.js
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
+    RetromarciaScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -446,6 +552,10 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `anellinoNaso: colore`, `orecchini: colore` (a cerchio), `tatuaggi: colore` (sulle braccia
   scoperte), `larghi: true` (pantaloni larghi); `accessorio` (quello che si tiene in mano:
   `spritz`, `telefono`, `ventaglio`, `foto`, `cellulare`)
+- di Emilio e Pastaffi: `cappello: { tipo: 'bandana', colore, fantasia }`, `barbaColore` e
+  `baffi` (barba e baffi di un colore diverso dai capelli), `stivali: true`,
+  `catenaPortafoglio: colore`, `septum: colore` (l'anellino sotto il naso); la `statura`
+  di Emilio è 0.72: è il più basso di tutti
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -458,7 +568,8 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `camicia` (Giorgio vestito da sera), `felpa` (col cappuccio abbassato: il Petri),
   `abito` (il vestito a bretelline delle ragazze: con `pantaloni` del colore della pelle),
   `vestitino` (il vestito delle ragazze del Manna), `canottiera` (il Manna: con `catenina`,
-  `cintura` e `fibbia`),
+  `cintura` e `fibbia`), `chiodo` (il giubbotto di pelle di Emilio: `sotto` = colore della
+  maglietta, `borchie` = colore delle borchie),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
   `corti: true` per i pantaloncini, `calzettoni` per i calzettoni, `infradito: true`
@@ -468,7 +579,9 @@ Ogni personaggio ha 5 espressioni: `normale`, `felice`, `triste`, `shock`,
 `sufficienza` (texture `id_espressione`, es. `sego_felice`). In più, create in
 `js/sprites.js` solo per chi le usa: `marsupino_rabbia` (furioso) e le pose del
 palleggio `id_calcio1D`, `id_calcio2D` (gamba destra a metà e in alto; `S` per la
-sinistra) per i due giocatori e per lo Zio; `bota_abbronzato` (occhiolino e pollice
+sinistra) per lo Zio e, create al momento, per chi sta per giocare (`preparaGiocatore`,
+che fa anche il doppione `idBis_<espressione>` di chi gioca contro se stesso:
+lo stesso personaggio con `travestimento: true`); `bota_abbronzato` (occhiolino e pollice
 in su) e `bota_aragosta` (rosso a chiazze col segno degli occhiali) per il finale di
 "Spalma il Bota!"; per il Passaggiorgio `giorgioSera_<espressione>` (in camicia),
 `giorgioCuffie` e `incognito_<id>` (cappuccio e occhiali: Giorgio e i sosia); per Petri
@@ -477,7 +590,10 @@ Tentacolari `ragazza0_<espressione>` ... `ragazza4_<espressione>` (le cinque rag
 le figure del Manna (`manna_balla1`, `manna_balla2`, `manna_colpo`, `manna_occhiolino`,
 `manna_macchia`, `manna_telefono`, `manna_collana`), le sue ragazze `tipa0_<espressione>` ...
 `tipa4_<espressione>` (normale, felice, sbadiglio: sono in `TIPE`, altre da `RAGAZZE`) e
-`buttafuori`, `buttafuori_chiede`.
+`buttafuori`, `buttafuori_chiede`; per "Emilio in Retromarcia" `emilio_disperato` (le mani
+nella bandana), `pastaffi_corre` e `pastaffi_porta`, e i cani `cane0_a`, `cane0_b` (i due
+passi), `cane0_giu` (sdraiato), `cane0_felice` (lingua fuori) e così via per ogni cane,
+disegnati in `js/grafica/vialetto.js`.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
 `bgDisco` e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo `bgPista` e la
@@ -488,7 +604,41 @@ disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno r
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`, `scapoli`) apre subito quel microgioco.
+`piovra`, `scapoli`, `retromarcia`) apre subito quel microgioco, in allenamento, col
+primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per esempio
+`index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
+"contro se stesso").
+
+## Aggiungere un personaggio giocabile
+
+I personaggi che si possono scegliere sono quelli dell'elenco `personaggiGiocabili` in
+`js/config.js` (oggi tredici). Per renderne giocabile uno che c'è già tra i
+`PERSONAGGI` di `js/grafica/personaggi.js` basta **una riga**:
+
+```js
+{ id: 'beppe', nome: 'Beppe', soprannome: 'Lo spinatore', colore: '#7ad1c0',
+  esulta: 'Una media per tutti!', perde: 'È finito il fusto.' },
+```
+
+- `id`: il suo nome in `PERSONAGGI`
+- `nome`: come compare nel gioco; `soprannome`: la riga sotto il nome nella selezione
+- `colore`: il colore del giocatore (cursore, barra in classifica, scritte): meglio
+  diverso da quelli degli altri
+- `esulta` / `perde`: le sue frasi quando vince e quando perde
+
+Griglia di selezione, ritratti, classifiche, podio, calci del palleggio e doppione
+lo prendono da soli. Se è l'ospite di un microgioco, lì giocherà "contro se stesso"
+senza fare altro; se è un personaggio di contorno, va aggiunto al `cast` di quel
+microgioco. Per toglierne uno si cancella la riga (resta ospite del suo microgioco).
+
+Per un personaggio del tutto nuovo, prima lo si disegna: una voce in `PERSONAGGI`
+coi parametri descritti qui sopra (le cinque espressioni si creano da sole
+all'avvio), poi la riga in `personaggiGiocabili`.
+
+La griglia ha cinque colonne e posto per tre righe (quattordici personaggi più "A
+CASO"): se ne servono di più va rimpicciolita la cella (`CELLA` in
+`js/scenes/partita.js`). Ognuno ha un personaggio diverso, quindi non si può essere
+più dei personaggi giocabili: `maxGiocatori` va tenuto entro quel numero.
 
 ## Aggiungere un microgioco
 
@@ -507,6 +657,9 @@ export class MioGiocoScene extends MicrogiocoBase {
 
   aggiorna(dt, p) {                          // dt = secondi, p = avanzamento 0..1
     // this.cfg = la tua sezione di config.js, this.giocatore = chi gioca
+    // (this.giocatore.id + '_felice' ecc. sono i suoi sprite: usali così come sono,
+    // senza dare per scontato che sia Riccardo o Giorgio; se gioca contro se
+    // stesso sono già quelli del doppione)
     // this.termina() chiude il microgioco in anticipo
   }
 
@@ -520,7 +673,9 @@ export class MioGiocoScene extends MicrogiocoBase {
 3. Aggiungi in `js/config.js` la sezione `microgiochi.miogioco` con:
    - `titolo`, `durata` (secondi), `colore` (sfondo dell'introduzione)
    - `ospite: { id, etichetta }`: il personaggio mostrato nell'introduzione
-     (es. `{ id: 'sego', etichetta: 'OBIETTIVO:\nSEGO' }`)
+     (es. `{ id: 'sego', etichetta: 'OBIETTIVO:\nSEGO' }`); facoltativo `cast: [id, ...]`,
+     gli altri personaggi della storia: chi sceglie l'ospite o uno del cast lì
+     gioca "contro se stesso"
    - `comandi`: righe per tastiera e mouse; `comandiTouch`: le stesse righe per
      chi gioca col dito (saranno mostrate sul telefono)
    - `obiettivo` e tutti i parametri di difficoltà del tuo gioco
@@ -529,8 +684,8 @@ export class MioGiocoScene extends MicrogiocoBase {
    
    e inserisci `'miogioco'` in `ordineSfida` se deve entrare nella sfida.
 
-Partita singola, schermata comandi (a pagine), introduzione, turni, risultati e
-classifica lo prendono da soli.
+Partita singola, schermata comandi (a pagine), introduzione, turni per tutti i
+giocatori, risultati e classifiche lo prendono da soli.
 
 Pausa e audio a schermo sul telefono li mette già `MicrogiocoBase`. Per il resto:
 - `eTouch()` e `perDito(testoTastiera, testoDito)` di `fx.js` per scegliere testi e
