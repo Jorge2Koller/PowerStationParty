@@ -13,6 +13,7 @@ import { PassaseoScene } from './PassaseoScene.js';
 import { BotaScene } from './BotaScene.js';
 import { GuidaScene } from './GuidaScene.js';
 import { PiovraScene } from './PiovraScene.js';
+import { ScapoliScene } from './ScapoliScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -28,4 +29,5 @@ export const MICROGIOCHI = {
   bota: BotaScene,
   guida: GuidaScene,
   piovra: PiovraScene,
+  scapoli: ScapoliScene,
 };

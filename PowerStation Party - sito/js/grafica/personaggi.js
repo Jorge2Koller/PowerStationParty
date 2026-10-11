@@ -143,6 +143,19 @@ export const PERSONAGGI = {
     corporatura: 1.08, pancia: 2, statura: 0.88,
     vestito: { tipo: 'felpa', colore: '#25252e' }, pantaloni: '#3d5278', scarpe: '#ececf0',
   },
+  // il Manna: capelli scuri corti e mossi, spettinati, con le ciocche che cadono sulla fronte e
+  // si arricciano sopra le orecchie; mascella decisa, sopracciglia folte (una sempre alzata),
+  // labbra carnose, sorrisetto, anellino al naso e orecchini. Da discoteca: canottiera bianca
+  // aderente, collanina d'oro, braccia tatuate, cinturone con la fibbia dorata, pantaloni larghi
+  manna: {
+    pelle: '#e9ba94', capelli: '#3c2a1f', capelliLuce: '#8a6a50', occhi: '#4a3020',
+    sopra: '#261810', sopraSpess: 9.5, sopraAlzato: true, palpebra: [0.26, 0.26],
+    faccia: { top: 46, larg: 52, mascella: 47, mascellaY: 155, mento: 27, mentoY: 184 },
+    stile: 'mossi', barba: 'nessuna', naso: [9, 14], orecchie: 9.5, sorriso: 3, labbra: true, ghigno: true,
+    anellinoNaso: '#dfe3ea', orecchini: '#dfe3ea',
+    vestito: { tipo: 'canottiera', colore: '#fbfbf6', catenina: '#f6c63a', cintura: '#241c22', fibbia: '#f6c63a' },
+    tatuaggi: '#2b2d3c', pantaloni: '#39425a', larghi: true, scarpe: '#f4f4f4',
+  },
 };
 
 // Le ragazze della disco (Petri Tentacolari): personaggi generici, diversi per capelli e vestito.
@@ -163,6 +176,38 @@ export const RAGAZZE = [
   { ...RAGAZZA, pelle: '#c88a62', capelli: '#140e0c', capelliLuce: '#4a3a36', occhi: '#2a1a10', sopra: '#140e0c', rossetto: '#a8203a',
     stile: 'chignon', vestito: { tipo: 'abito', colore: '#ee3e36' }, pantaloni: '#c88a62', scarpe: '#e8c048' },
 ];
+
+// Le ragazze di "L'Incubo degli Scapoli" (TIPE: altre da quelle di Petri Tentacolari qui sopra):
+// personaggi inventati, ognuna col suo stile. accessorio = quello che ha in mano (e la posa che
+// ne segue), taglio = pettinatura (stile 'taglio'), vestito 'vestitino'.
+export const TIPE = [
+  // quella con lo spritz: lisci biondi, vestito arancione
+  { nome: 'spritz', pelle: '#f3c9a8', capelli: '#d9a94e', capelliLuce: '#f6dc98', occhi: '#3f7a5a', taglio: 'lisci', abito: '#ef7d2c', scarpe: '#f6f1e6', rossetto: '#d8475a', accessorio: 'spritz' },
+  // quella che balla solo reggaeton: coda alta scura, vestito fucsia, orecchini a cerchio, braccia in alto
+  { nome: 'reggaeton', pelle: '#c98f66', capelli: '#2a1a14', capelliLuce: '#6a4838', occhi: '#3a2414', taglio: 'coda', abito: '#e0368c', scarpe: '#f4f4f4', rossetto: '#b82a4a', orecchini: '#f6c63a', accessorio: 'balla' },
+  // quella che guarda sempre il telefono: caschetto nero con la frangetta, vestito viola
+  { nome: 'telefono', pelle: '#f0c8a6', capelli: '#1c1620', capelliLuce: '#5a5068', occhi: '#3a3a52', taglio: 'caschetto', abito: '#7a4ad8', scarpe: '#2a2430', rossetto: '#c4486a', accessorio: 'telefono', sguardo: [[0, 5], [0, 5]], sopraDavanti: true },
+  // quella con il ventaglio: chignon ramato, vestito verde smeraldo
+  { nome: 'ventaglio', pelle: '#f6d3b8', capelli: '#b0522a', capelliLuce: '#e08a52', occhi: '#4a6a3a', taglio: 'chignon', abito: '#1f9a6e', scarpe: '#f2c43a', rossetto: '#d83a3a', accessorio: 'ventaglio' },
+  // quella che fa le foto per Instagram: ricci castani, vestito azzurro, telefono alzato
+  { nome: 'foto', pelle: '#dba882', capelli: '#5a3420', capelliLuce: '#9a6a48', occhi: '#3a2414', taglio: 'ricci', abito: '#2f9ad8', scarpe: '#f4f4f4', rossetto: '#d8475a', orecchini: '#f6c63a', accessorio: 'foto' },
+].map((r) => ({
+  occhi: '#3a2414', sopra: scuro(r.capelli, 0.35), sopraSpess: 5.5, palpebra: [0.06, 0.06], ciglia: true,
+  faccia: { top: 48, larg: 50, mascella: 41, mascellaY: 154, mento: 19, mentoY: 181 },
+  stile: 'taglio', barba: 'nessuna', naso: [7, 10], orecchie: 8.5, sorriso: 5, labbra: true,
+  vestito: { tipo: 'vestitino', colore: r.abito }, pantaloni: r.abito, corti: true,
+  ...r,
+}));
+
+// il buttafuori della discoteca: armadio pelato in completo nero, occhiali scuri, braccia conserte
+export const BUTTAFUORI = {
+  pelle: '#c99a74', capelli: '#1d1511', capelliLuce: '#54423a', occhi: '#3a2414',
+  sopra: '#1d1511', sopraSpess: 9, sopraDritte: true,
+  faccia: { top: 42, larg: 60, mascella: 56, mascellaY: 150, mento: 38, mentoY: 180 },
+  stile: 'rasato', barba: 'ispida', naso: [11, 12], orecchie: 10, sorriso: -2,
+  occhiali: { montatura: '#0e0e12', lenti: '#16181e' }, corporatura: 1.28,
+  vestito: { tipo: 'giacca', colore: '#17171d', sotto: '#17171d' }, pantaloni: '#17171d', scarpe: '#0e0e12',
+};
 
 // Il Bota a fine giornata, per il finale di "Spalma il Bota!": abbronzato alla perfezione,
 // oppure rosso aragosta a chiazze col segno degli occhiali da sole
@@ -194,6 +239,14 @@ function orecchie(c, p) {
     c.fillStyle = scuro(p.pelle, 0.04); c.fill(); tratto(c, CONT, 3);
     c.beginPath(); c.ellipse(x + s * 1.5, 120, r * 0.42, r * 0.8, 0, 0, Math.PI * 2);
     tratto(c, scuro(p.pelle, 0.3), 1.6);
+  }
+}
+
+// orecchini a cerchio (si disegnano dopo i capelli, se no sparirebbero sotto)
+function orecchini(c, p) {
+  for (const s of [-1, 1]) {
+    c.beginPath(); c.arc(CX + s * (p.faccia.larg + 3), 137, 5.2, 0, Math.PI * 2);
+    tratto(c, CONT, 3.6); tratto(c, p.orecchini, 1.9);
   }
 }
 
@@ -335,6 +388,8 @@ function sopracciglio(c, p, s, espr) {
   let yi = 0, ye = 1, arco = -4; // yi = estremo verso il naso, ye = estremo esterno
   if (p.serio && (espr === 'normale' || espr === 'parla')) { yi = 4; ye = -2; arco = -1; }
   if (p.sopraDritte && (espr === 'normale' || espr === 'parla')) { yi = 1; ye = 0; arco = -1.5; }
+  // un sopracciglio sempre alzato, da uno che la sa lunga
+  if (p.sopraAlzato && (espr === 'normale' || espr === 'parla')) { if (s > 0) { yi = -8; ye = -6; arco = -6; } else { yi = 3; ye = 0; arco = -1; } }
   if (espr === 'felice' || espr === 'occhiolino') { yi = -5; ye = -3; arco = -6; }
   if (espr === 'triste' || espr === 'sbadiglio') { yi = -7; ye = 3; arco = -2; }
   if (espr === 'shock' || espr === 'sconvolto') { yi = -11; ye = -9; arco = -7; }
@@ -365,6 +420,10 @@ function naso(c, p, espr) {
   c.moveTo(CX - w, y); c.quadraticCurveTo(CX - w - 0.5, y + h * 0.64, CX, y + h * 0.64); c.quadraticCurveTo(CX + w + 0.5, y + h * 0.64, CX + w, y);
   tratto(c, scuro(p.pelle, 0.5), 2.4);
   ellisse(c, CX - 2, y - 1, w * 0.32, h * 0.3); c.fillStyle = 'rgba(255,255,255,0.4)'; c.fill();
+  if (p.anellinoNaso) {   // anellino alla narice
+    c.beginPath(); c.arc(CX - w + 0.5, y + h * 0.4, 3.6, 0.2, Math.PI * 1.35);
+    tratto(c, CONT, 3.2); tratto(c, p.anellinoNaso, 1.7);
+  }
 }
 
 function bocca(c, p, espr) {
@@ -433,6 +492,12 @@ function bocca(c, p, espr) {
       if (folta) { ellisse(c, CX, y + 3.5, 11, 4.5); c.fillStyle = '#cf8a7c'; c.fill(); }
       else if (p.rossetto) { ellisse(c, CX, y + 3, 10, 4.6); c.fillStyle = p.rossetto; c.fill(); }   // rossetto
       else if (p.labbra) { ellisse(c, CX, y + 4.5, 9.5, 4); c.fillStyle = alfa('#c9786c', 0.55); c.fill(); } // labbra carnose
+      if (p.ghigno) {
+        // sorrisetto storto, da uno sicuro di sé: un angolo della bocca sale
+        c.beginPath(); c.moveTo(CX - 13, y + 2); c.quadraticCurveTo(CX + 3, y + 5, CX + 15, y - 5); tratto(c, D, 3.4);
+        c.beginPath(); c.moveTo(CX + 13, y - 8); c.quadraticCurveTo(CX + 18, y - 5, CX + 16, y); tratto(c, alfa(scuro(p.pelle, 0.5), 0.6), 1.8);
+        break;
+      }
       c.beginPath(); c.moveTo(CX - 14, y - k * 0.35); c.quadraticCurveTo(CX, y + k * 1.5, CX + 14, y - k * 0.35); tratto(c, D, 3.4);
       if (!folta) {
         c.beginPath(); c.moveTo(CX - 6, y + 7 + k * 0.5); c.quadraticCurveTo(CX, y + 9.5 + k * 0.5, CX + 6, y + 7 + k * 0.5);
@@ -558,6 +623,167 @@ function ciocche(c, forma, n, fn) {
 function capelli(c, p, fase, o) {
   const H = p.capelli, L = p.capelliLuce;
   const sfum = (y0, y1) => gradL(c, 0, y0, 0, y1, [[0, chiaro(H, 0.16)], [0.45, H], [1, scuro(H, 0.28)]]);
+
+  if (p.stile === 'mossi') {
+    // Corti e mossi, spettinati (il Manna): corti ai lati (finiscono sopra le orecchie), un po'
+    // di volume a onde in cima; davanti una frangia di ciocche tonde che cadono sulla fronte,
+    // più alte dalla parte del sopracciglio alzato.
+    const r = casuale(fase === 'dietro' ? 83 : 89);
+    if (fase === 'dietro') {
+      const massa = () => {
+        c.beginPath(); c.moveTo(CX - 50, 112);
+        for (const [qx, qy, x, y] of [[-63, 104, -57, 90], [-68, 76, -59, 62], [-65, 44, -49, 35], [-45, 17, -24, 21], [-10, 8, 9, 17], [27, 8, 42, 25], [60, 29, 58, 50], [69, 64, 59, 78], [67, 92, 56, 102], [58, 114, 50, 112]]) c.quadraticCurveTo(CX + qx, qy, CX + x, y);
+        c.lineTo(CX + 40, 100); c.lineTo(CX - 40, 100);
+        c.closePath();
+      };
+      massa(); c.fillStyle = gradL(c, 0, 10, 0, 116, [[0, scuro(H, 0.1)], [1, scuro(H, 0.34)]]); c.fill();
+      c.globalAlpha = 0.8;
+      ciocche(c, massa, 12, (i) => { const a = Math.PI * (1.02 + (i / 11) * 0.96), x = CX + Math.cos(a) * 56, y = 76 + Math.sin(a) * 52; c.beginPath(); c.arc(x, y, 5 + r() * 3.5, r() * 6, r() * 6 + 3.3); tratto(c, L, 1.7); });
+      c.globalAlpha = 1;
+      massa(); tratto(c, CONT, 3);
+      return;
+    }
+    // ciocche della frangia, da destra a sinistra: [punta, attaccatura della successiva]
+    const punte = [[[28, 72], [17, 62]], [[6, 80], [-5, 64]], [[-16, 78], [-26, 66]], [[-36, 84], [-44, 72]]];
+    const forma = () => {
+      c.beginPath(); c.moveTo(CX - 52, 100);
+      c.bezierCurveTo(CX - 60, 86, CX - 61, 66, CX - 51, 50);
+      c.bezierCurveTo(CX - 45, 32, CX - 26, 20, CX - 8, 22);
+      c.bezierCurveTo(CX + 14, 14, CX + 40, 23, CX + 51, 46);
+      c.bezierCurveTo(CX + 61, 64, CX + 60, 86, CX + 52, 100);
+      c.quadraticCurveTo(CX + 45, 94, CX + 47, 84);                          // la basetta, corta
+      c.quadraticCurveTo(CX + 49, 74, CX + 40, 68);
+      let px = CX + 40;
+      for (const [[tx, ty], [vx, vy]] of punte) {
+        c.quadraticCurveTo(px - 3, ty + 4, CX + tx, ty);                     // la ciocca scende, tonda
+        c.quadraticCurveTo(CX + tx - 9, ty - 1, CX + vx, vy);                // e risale all'attaccatura della successiva
+        px = CX + vx;
+      }
+      c.quadraticCurveTo(CX - 49, 76, CX - 47, 86);
+      c.quadraticCurveTo(CX - 45, 95, CX - 52, 100);
+      c.closePath();
+    };
+    forma(); c.fillStyle = sfum(14, 90); c.fill();
+    c.globalAlpha = 0.8;
+    ciocche(c, forma, 24, (i) => {
+      // onde: archetti sparsi, più qualche ciocca lunga che scende verso la fronte
+      if (i % 3 === 0) { const x1 = CX - 42 + (i / 24) * 84, x0 = CX + (x1 - CX) * 0.3; c.beginPath(); c.moveTo(x0, 21 + r() * 6); c.bezierCurveTo(x0 + 9, 38, x1 - 9, 50, x1, 66 + r() * 10); tratto(c, scuro(H, 0.45), 1.6); }
+      else { const x = CX - 48 + r() * 96, y = 28 + r() * 48; c.beginPath(); c.arc(x, y, 4.5 + r() * 4, r() * 6, r() * 6 + 3.2); tratto(c, L, 1.8); }
+    });
+    c.globalAlpha = 1;
+    forma(); tratto(c, CONT, 3);
+    // ciuffi ribelli, in cima e ai lati
+    for (const [x, y, dx, dy] of [[-30, 23, -7, -7], [4, 17, 5, -8], [35, 25, 9, -5], [-56, 70, -8, 2], [57, 76, 8, 3]]) {
+      c.beginPath(); c.moveTo(CX + x, y + 5); c.quadraticCurveTo(CX + x + dx * 0.2, y - 3 + dy * 0.2, CX + x + dx, y + dy);
+      tratto(c, CONT, 5.2); tratto(c, H, 2.6);
+    }
+    return;
+  }
+
+  if (p.stile === 'taglio') {
+    // Le ragazze del Manna (TIPE), in cinque tagli. (Le ragazze di Petri Tentacolari hanno i
+    // loro stili più sotto: 'lunghi', 'caschetto', 'ricciLunghi', 'coda', 'chignon'.)
+    //   'lisci'     riga in mezzo e capelli lisci fin sotto le spalle
+    //   'ricci'     riga in mezzo, tanto volume e riccioli
+    //   'caschetto' frangetta dritta, lunghi fino alla mascella
+    //   'coda'      tirati indietro col ciuffo di lato e la coda alta
+    //   'chignon'   tirati indietro col ciuffo di lato e la crocchia in cima
+    const T = p.taglio ?? 'lisci', riga = T === 'lisci' || T === 'ricci';
+    const filo = (forma, n, fn) => { c.globalAlpha = 0.75; ciocche(c, forma, n, fn); c.globalAlpha = 1; };
+    if (fase === 'dietro') {
+      const giu = { lisci: 216, ricci: 206, caschetto: 172, coda: 0, chignon: 0 }[T], lg = T === 'ricci' ? 72 : T === 'lisci' ? 66 : 63;
+      if (T === 'coda') {
+        // la coda: parte dall'elastico in cima e ricade di lato
+        const coda = () => { c.beginPath(); c.moveTo(CX + 26, 30); c.bezierCurveTo(CX + 60, 10, CX + 92, 44, CX + 86, 96); c.bezierCurveTo(CX + 84, 124, CX + 78, 142, CX + 70, 152); c.bezierCurveTo(CX + 72, 118, CX + 70, 76, CX + 44, 52); c.closePath(); };
+        coda(); c.fillStyle = sfum(14, 152); c.fill();
+        filo(coda, 5, (i) => { c.beginPath(); c.moveTo(CX + 40 + i * 5, 30 + i * 3); c.bezierCurveTo(CX + 76 + i * 2, 50, CX + 82, 100, CX + 72 + i, 150); tratto(c, i % 2 ? scuro(H, 0.45) : L, 1.8); });
+        coda(); tratto(c, CONT, 3);
+      }
+      if (T === 'chignon') { ellisse(c, CX, 24, 22, 19); c.fillStyle = sfum(4, 44); c.fill(); tratto(c, CONT, 3); c.beginPath(); c.arc(CX, 24, 12, 0.4, 3.6); tratto(c, L, 1.8); }
+      const massa = () => {
+        c.beginPath(); c.moveTo(CX - 60, 76);
+        c.bezierCurveTo(CX - 62, 16, CX + 62, 16, CX + 60, 76);
+        if (giu) {
+          c.bezierCurveTo(CX + lg, 110, CX + lg + 5, giu - 34, CX + lg - 1, giu);
+          c.quadraticCurveTo(CX + lg - 14, giu + 9, CX + 40, giu - 5);
+          c.lineTo(CX + 38, 150); c.lineTo(CX - 38, 150); c.lineTo(CX - 40, giu - 5);
+          c.quadraticCurveTo(CX - lg + 14, giu + 9, CX - lg + 1, giu);
+          c.bezierCurveTo(CX - lg - 5, giu - 34, CX - lg, 110, CX - 60, 76);
+        } else { c.bezierCurveTo(CX + 65, 112, CX + 58, 142, CX + 44, 152); c.lineTo(CX - 44, 152); c.bezierCurveTo(CX - 58, 142, CX - 65, 112, CX - 60, 76); }
+        c.closePath();
+      };
+      if (T === 'ricci') {
+        // riccioli tutt'attorno alla massa
+        const r = casuale(31), cerchi = [];
+        for (const s of [-1, 1]) for (let i = 0; i < 9; i++) cerchi.push([CX + s * (62 + (r() - 0.5) * 8 + Math.sin(i * 0.5) * 6), 62 + i * 18 + (r() - 0.5) * 6, 11 + r() * 4]);
+        for (const [x, y, rr] of cerchi) { ellisse(c, x, y, rr + 2.6, rr + 2.6); c.fillStyle = CONT; c.fill(); }
+        for (const [x, y, rr] of cerchi) { ellisse(c, x, y, rr, rr); c.fillStyle = scuro(H, 0.18); c.fill(); c.beginPath(); c.arc(x, y, rr * 0.55, r() * 6, r() * 6 + 3.6); tratto(c, L, 1.6); }
+      }
+      massa(); c.fillStyle = gradL(c, 0, 30, 0, Math.max(160, giu), [[0, scuro(H, 0.12)], [1, scuro(H, 0.36)]]); c.fill(); tratto(c, CONT, 3);
+      return;
+    }
+    if (riga) {
+      // due tende che partono dalla riga in mezzo e scendono lungo la fronte e le guance
+      const fine = { lisci: 156, ricci: 130 }[T];
+      const tenda = (s) => () => {
+        c.beginPath(); c.moveTo(CX, 44);
+        c.bezierCurveTo(CX + s * 14, 50, CX + s * 36, 64, CX + s * 47, 92);
+        c.bezierCurveTo(CX + s * 51, 108, CX + s * 51, 122, CX + s * 49, fine);
+        if (T === 'lisci') c.lineTo(CX + s * 66, fine + 8);
+        else c.quadraticCurveTo(CX + s * 56, fine + 11, CX + s * 68, fine + 1);   // la punta gira in fuori
+        c.bezierCurveTo(CX + s * 72, 110, CX + s * 71, 60, CX + s * 46, 28);
+        c.bezierCurveTo(CX + s * 30, 15, CX + s * 12, 15, CX, 19);
+        c.closePath();
+      };
+      for (const s of [-1, 1]) {
+        const forma = tenda(s);
+        forma(); c.fillStyle = sfum(16, fine + 10); c.fill();
+        filo(forma, 6, (i) => {
+          const k = i / 5;
+          c.beginPath(); c.moveTo(CX + s * (4 + k * 10), 24 + k * 6);
+          c.bezierCurveTo(CX + s * (28 + k * 22), 40 + k * 10, CX + s * (50 + k * 14), 84, CX + s * (52 + k * 12) + (T === 'lisci' ? 0 : Math.sin(i * 2) * 4), fine + 4);
+          tratto(c, i % 2 ? scuro(H, 0.45) : L, i % 2 ? 1.5 : 2);
+        });
+        forma(); tratto(c, CONT, 3);
+        if (T === 'ricci') {
+          const r = casuale(s > 0 ? 61 : 67);
+          for (let i = 0; i < 5; i++) { const x = CX + s * (58 + (r() - 0.5) * 8), y = 70 + i * 15; ellisse(c, x, y, 9, 9); c.fillStyle = H; c.fill(); tratto(c, CONT, 2.2); c.beginPath(); c.arc(x, y, 4.6, r() * 6, r() * 6 + 3.8); tratto(c, L, 1.5); }
+        }
+      }
+      return;
+    }
+    if (T === 'caschetto') {
+      const forma = () => {
+        c.beginPath(); c.moveTo(CX - 49, 91); c.lineTo(CX + 49, 91);
+        c.bezierCurveTo(CX + 52, 118, CX + 52, 150, CX + 50, 167); c.quadraticCurveTo(CX + 60, 177, CX + 69, 166);
+        c.bezierCurveTo(CX + 73, 110, CX + 70, 40, CX + 30, 22); c.bezierCurveTo(CX + 10, 14, CX - 10, 14, CX - 30, 22);
+        c.bezierCurveTo(CX - 70, 40, CX - 73, 110, CX - 69, 166); c.quadraticCurveTo(CX - 60, 177, CX - 50, 167);
+        c.bezierCurveTo(CX - 52, 150, CX - 52, 118, CX - 49, 91);
+        c.closePath();
+      };
+      forma(); c.fillStyle = sfum(14, 176); c.fill();
+      filo(forma, 13, (i) => { const x = CX - 48 + i * 8; c.beginPath(); c.moveTo(x, 91); c.quadraticCurveTo(x + (CX - x) * 0.12, 60, x + (CX - x) * 0.35, 24); tratto(c, i % 3 ? L : scuro(H, 0.5), 1.8); });
+      c.beginPath(); c.moveTo(CX - 28, 34); c.quadraticCurveTo(CX, 22, CX + 26, 32); tratto(c, 'rgba(255,255,255,0.3)', 3);     // riflesso lucido
+      forma(); tratto(c, CONT, 3);
+      return;
+    }
+    // coda e chignon: tirati indietro, con un ciuffo che attraversa la fronte
+    const forma = () => {
+      c.beginPath(); c.moveTo(CX - 54, 104);
+      c.bezierCurveTo(CX - 56, 80, CX - 46, 62, CX - 20, 60);
+      c.bezierCurveTo(CX + 8, 60, CX + 32, 70, CX + 51, 94);
+      c.lineTo(CX + 54, 106);
+      c.bezierCurveTo(CX + 70, 80, CX + 66, 34, CX + 40, 22);
+      c.bezierCurveTo(CX + 12, 10, CX - 22, 10, CX - 44, 24);
+      c.bezierCurveTo(CX - 68, 40, CX - 70, 84, CX - 54, 104);
+      c.closePath();
+    };
+    forma(); c.fillStyle = sfum(12, 104); c.fill();
+    filo(forma, 10, (i) => { const x0 = CX - 46 + i * 10; c.beginPath(); c.moveTo(x0, 64 + Math.max(0, i - 4) * 5); c.bezierCurveTo(x0 + 4, 44, CX + 10 + i * 2, 28, CX + 18 + i * 2, 16); tratto(c, i % 3 ? L : scuro(H, 0.5), 1.9); });
+    forma(); tratto(c, CONT, 3);
+    if (T === 'coda') { rrect(c, CX + 22, 22, 14, 12, 4); c.fillStyle = p.vestito?.colore ?? '#e0368c'; c.fill(); tratto(c, CONT, 2.2); }   // l'elastico
+    return;
+  }
 
   if (p.stile === 'ricci') {
     const r = casuale(fase === 'dietro' ? 11 : 23), cerchi = [];
@@ -1367,6 +1593,7 @@ export function disegnaTesta(c, p, espr = 'normale', o = {}) {
     capelli(c, p, 'davanti', o);
     if (p.cappuccio) cappuccio(c, p, 'davanti');
     if (p.cuffie) cuffie(c, p);
+    if (p.orecchini) orecchini(c, p);
     if (p.cappello) cappello(c, p);
     // sopracciglia sopra la frangia, se no le espressioni non si vedono
     if (p.sopraDavanti) for (const s of [-1, 1]) sopracciglio(c, p, s, espr);
@@ -1389,7 +1616,55 @@ const POSE = {
   robot: [[33, 196], [54, 214], [60, 238]],    // braccia rigide e staccate dal corpo (scottato: guai a toccarsi)
   // un braccio diverso dall'altro: sx e dx; pollice = pollice in su sulla mano destra
   pollice: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [58, 208], [68, 184]], pollice: true },
+  // in discoteca: il Manna che balla (due tempi), che si sistema la collanina indicando il
+  // pubblico, che si tocca la collanina e basta, al telefono...
+  balla1: { sx: [[33, 196], [56, 200], [66, 174]], dx: [[33, 196], [48, 216], [54, 236]] },
+  balla2: { sx: [[33, 196], [48, 216], [54, 236]], dx: [[33, 196], [56, 200], [66, 174]] },
+  indica: { sx: [[33, 196], [30, 216], [5, 204]], dx: [[33, 196], [60, 196], [80, 184]] },
+  collana: { sx: [[33, 196], [30, 216], [5, 204]], dx: [[33, 196], [43, 219], [40, 241]] },
+  alTelefono: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [57, 188], [51, 152]] },
+  // ...le ragazze, ognuna con la sua cosa nella mano destra, e il buttafuori che chiede i documenti
+  spritz: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [52, 216], [58, 198]] },
+  telefono: { sx: [[33, 196], [40, 220], [16, 216]], dx: [[33, 196], [40, 220], [14, 216]] },
+  ventaglio: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [54, 210], [58, 188]] },
+  foto: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [60, 192], [66, 160]] },
+  balla: [[33, 195], [58, 187], [72, 158]],
+  chiede: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [56, 208], [72, 206]] },
 };
+
+// quello che un personaggio tiene in mano (x, y = la mano destra)
+function accessorio(c, tipo, x, y) {
+  if (tipo === 'spritz') {
+    // calice con lo spritz, la fetta d'arancia e la cannuccia
+    c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x, y - 15); tratto(c, CONT, 3.4); tratto(c, '#eaf4ff', 1.6);
+    const coppa = () => { c.beginPath(); c.moveTo(x - 10, y - 34); c.lineTo(x + 10, y - 34); c.quadraticCurveTo(x + 10, y - 16, x, y - 14); c.quadraticCurveTo(x - 10, y - 16, x - 10, y - 34); c.closePath(); };
+    coppa(); c.fillStyle = 'rgba(235,245,255,0.75)'; c.fill();
+    c.save(); coppa(); c.clip(); c.fillStyle = '#ff8a2e'; c.fillRect(x - 11, y - 29, 22, 16); c.fillStyle = 'rgba(255,255,255,0.45)'; c.fillRect(x - 7, y - 28, 3, 11); c.restore();
+    coppa(); tratto(c, CONT, 2);
+    ellisse(c, x + 8, y - 34, 5, 5); c.fillStyle = '#ffb02e'; c.fill(); tratto(c, '#c8700c', 1.4);
+    c.beginPath(); c.moveTo(x - 3, y - 20); c.lineTo(x - 8, y - 42); tratto(c, '#2f9a4a', 1.8);
+  } else if (tipo === 'telefono' || tipo === 'foto' || tipo === 'cellulare') {
+    // telefono: guardato a due mani, alzato per la foto (col flash), oppure all'orecchio
+    const [px, py, a] = tipo === 'telefono' ? [CX - 1, 207, 0] : tipo === 'foto' ? [x - 1, y - 15, 0.12] : [x + 4, y - 4, -0.3];
+    c.save(); c.translate(px, py); c.rotate(a);
+    rrect(c, -8, -13, 16, 26, 3.5); c.fillStyle = '#22242c'; c.fill(); tratto(c, CONT, 2);
+    if (tipo !== 'cellulare') { rrect(c, -6, -10.5, 12, 19, 1.5); c.fillStyle = tipo === 'telefono' ? '#bfe6ff' : '#3a3f4c'; c.fill(); }
+    if (tipo === 'foto') {
+      ellisse(c, -3, -7.5, 2.4, 2.4); c.fillStyle = '#0e0e12'; c.fill(); tratto(c, '#8a8e9a', 0.8);
+      for (let i = 0; i < 8; i++) { const an = i * 0.785; c.beginPath(); c.moveTo(4 + Math.cos(an) * 3, -8 + Math.sin(an) * 3); c.lineTo(4 + Math.cos(an) * (i % 2 ? 6.5 : 9), -8 + Math.sin(an) * (i % 2 ? 6.5 : 9)); tratto(c, '#fff8c0', 1.5); }   // il flash
+    }
+    c.restore();
+  } else if (tipo === 'ventaglio') {
+    // ventaglio aperto, con le stecche
+    const forma = () => { c.beginPath(); c.moveTo(x, y); c.arc(x, y, 30, -2.75, -0.55); c.closePath(); };
+    forma(); c.fillStyle = '#ffe2ec'; c.fill();
+    c.save(); forma(); c.clip();
+    c.beginPath(); c.arc(x, y, 22, 0, Math.PI * 2); tratto(c, '#e0527a', 5);
+    for (let i = 0; i <= 6; i++) { const a = -2.75 + i * 0.367; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * 31, y + Math.sin(a) * 31); tratto(c, '#b8926a', 1.3); }
+    c.restore();
+    forma(); tratto(c, CONT, 2.2);
+  }
+}
 
 // fantasia a fiorellini del costume, dentro un riquadro (si usa dentro un tracciato ritagliato)
 export function fiori(c, p, x0, y0, w, h, seme, k = 1) {
@@ -1419,10 +1694,22 @@ function braccio(c, p, punti, pollice) {
     const a = punti[1], b = punti[2];
     linea([lerp(a[0], b[0], 0.7), lerp(a[1], b[1], 0.7)], b); tratto(c, scuro(manica, 0.22), 13);
   }
-  if (!lunga && v.tipo !== 'costume' && v.tipo !== 'abito') {
+  if (!lunga && !['costume', 'canottiera', 'abito', 'vestitino'].includes(v.tipo)) {
     const m = [lerp(punti[0][0], punti[1][0], 0.62), lerp(punti[0][1], punti[1][1], 0.62)];
     linea(punti[0], m); tratto(c, CONT, 21);
     linea(punti[0], m); tratto(c, manica, 15);
+  }
+  if (p.tatuaggi && !lunga) {
+    // braccia tatuate: fasce tribali, zig-zag e qualche simbolo, su braccio e avambraccio
+    const T = p.tatuaggi;
+    [[punti[0], punti[1]], [punti[1], punti[2]]].forEach(([a, b], k) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+      const pt = (t, q) => [a[0] + dx * t + nx * q, a[1] + dy * t + ny * q];
+      for (const t of k ? [0.2, 0.3] : [0.3, 0.42]) { linea(pt(t, -5.4), pt(t, 5.4)); tratto(c, T, 2.2); }                        // fasce
+      c.beginPath(); [[0.5, -4], [0.57, 3.5], [0.64, -3.5], [0.71, 3.5], [0.78, -4]].forEach(([t, q], i) => (i ? c.lineTo(...pt(t, q)) : c.moveTo(...pt(t, q)))); tratto(c, T, 1.7);   // zig-zag
+      if (k === 0) { const [x, y] = pt(0.9, 0); c.beginPath(); c.moveTo(x - 3.4, y); c.lineTo(x + 3.4, y); c.moveTo(x, y - 3.4); c.lineTo(x, y + 3.4); tratto(c, T, 1.6); }   // una croce
+      else { ellisse(c, ...pt(0.9, 0), 2.6, 2.6); tratto(c, T, 1.5); }                                                           // un cerchietto
+    });
   }
   const [mx, my] = punti[2];
   if (pollice) {
@@ -1469,9 +1756,12 @@ function corpo(c, p, espr, o = {}) {
       if (p.fantasia) { c.save(); c.clip(); fiori(c, p, x - 1, 241, 21, 15, s < 0 ? 41 : 43); c.restore(); rrect(c, x - 1, 240, 21, 17, [6, 6, 3, 3]); }
       tratto(c, CONT, 3);
     } else {
-      rrect(c, x, 240, 19, 36, 6); c.fillStyle = gradL(c, 0, 240, 0, 276, [[0, p.pantaloni], [1, scuro(p.pantaloni, 0.25)]]); c.fill();
+      // (pantaloni larghi: la gamba è più ampia e si allarga in fondo, sopra la scarpa)
+      const gamba = () => (p.larghi ? poli(c, [[x - 1, 240], [x + 20, 240], [x + 23.5, 277], [x - 4.5, 277]]) : rrect(c, x, 240, 19, 36, 6));
+      gamba(); c.fillStyle = gradL(c, 0, 240, 0, 276, [[0, p.pantaloni], [1, scuro(p.pantaloni, 0.25)]]); c.fill();
       if (p.mimeticaPantaloni) { c.save(); rrect(c, x, 240, 19, 36, 6); c.clip(); mimetica(c, x - 4, 236, 27, 44, p.pantaloni, s < 0 ? 5 : 6); c.restore(); }
-      rrect(c, x, 240, 19, 36, 6); tratto(c, CONT, 3);
+      gamba(); tratto(c, CONT, 3);
+      if (p.larghi) { c.beginPath(); c.moveTo(x + 6, 252); c.lineTo(x + 4.5, 272); c.moveTo(x + 14, 256); c.lineTo(x + 16, 273); tratto(c, 'rgba(0,0,0,0.22)', 1.4); }   // pieghe
     }
     const xs = x - (s < 0 ? 7 : 1);
     if (p.infradito) {
@@ -1678,6 +1968,30 @@ function corpo(c, p, espr, o = {}) {
       poli(c, [[CX + s * 15, 180], [CX + s * 3, 181], [CX + s * 7, 196]]); c.fillStyle = '#e9efff'; c.fill(); tratto(c, CONT, 2);
       poli(c, [[CX + s * 15, 180], [CX + s * 26, 182], [CX + s * 9, 230]]); c.fillStyle = scuro(v.colore, 0.25); c.fill(); tratto(c, CONT, 2.2);
     }
+  } else if (v.tipo === 'canottiera') {
+    // canottiera aderente: scollo largo e spalle scoperte; la cintura (con la fibbia) e la collanina
+    // si disegnano dopo, sopra il contorno
+    ellisse(c, CX, 181, 16, 13); c.fillStyle = scuro(S, 0.1); c.fill(); tratto(c, scuro(v.colore, 0.2), 2.2);
+    for (const s of [-1, 1]) {
+      c.beginPath(); c.moveTo(CX + s * 24, 180); c.lineTo(CX + s * 40, 180); c.lineTo(CX + s * 40, 208); c.quadraticCurveTo(CX + s * 25, 204, CX + s * 24, 180); c.closePath();
+      c.fillStyle = S; c.fill(); tratto(c, scuro(v.colore, 0.2), 2.2);
+    }
+    for (const s of [-1, 1]) { c.beginPath(); c.moveTo(CX + s * 8, 210); c.quadraticCurveTo(CX + s * 17, 214, CX + s * 26, 208); tratto(c, 'rgba(0,0,0,0.1)', 1.6); }   // aderente: si intravedono i pettorali
+    if (p.macchia) {
+      // il drink rovesciato
+      c.fillStyle = alfa(p.macchia, 0.9);
+      ellisse(c, CX + 3, 214, 15, 12, 0.3); c.fill(); ellisse(c, CX - 11, 222, 8, 6); c.fill(); ellisse(c, CX + 14, 203, 6, 5); c.fill();
+      for (const [x, y, h] of [[CX - 4, 226, 12], [CX + 8, 224, 15], [CX - 14, 226, 7]]) { rrect(c, x - 1.8, y, 3.6, h, 1.8); c.fill(); }
+    }
+    if (v.cintura) { c.fillStyle = v.cintura; c.fillRect(CX - 42, 236, 84, 11); c.fillStyle = 'rgba(255,255,255,0.14)'; c.fillRect(CX - 42, 237.5, 84, 1.6); }
+  } else if (v.tipo === 'vestitino') {
+    // (le ragazze del Manna) vestito da sera senza maniche: scollo tondo, cinturina, qualche brillantino. La gonna è più sotto.
+    ellisse(c, CX, 181, 15, 10); c.fillStyle = scuro(S, 0.1); c.fill();
+    c.beginPath(); c.ellipse(CX, 181, 15, 10, 0, 0, Math.PI); tratto(c, chiaro(v.colore, 0.3), 2.6);
+    c.fillStyle = scuro(v.colore, 0.28); c.fillRect(CX - 42, 232, 84, 4.5);
+    const r = casuale(v.colore.charCodeAt(2) + 7);
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (let i = 0; i < 9; i++) { ellisse(c, CX - 28 + r() * 56, 194 + r() * 34, 1.1, 1.1); c.fill(); }
   } else {
     if (v.collo === 'v') { poli(c, [[CX - 13, 180], [CX + 13, 180], [CX, 203]]); c.fillStyle = scuro(S, 0.1); c.fill(); tratto(c, scuro(v.colore, 0.4), 3); }
     else {
@@ -1689,6 +2003,28 @@ function corpo(c, p, espr, o = {}) {
   }
   c.restore();
   busto(); tratto(c, CONT, 3);
+  if (v.tipo === 'vestitino') {
+    // la gonna, che si allarga sopra le gambe
+    const gonna = () => { c.beginPath(); c.moveTo(CX - 29, 235); c.lineTo(CX + 29, 235); c.quadraticCurveTo(CX + 36, 248, CX + 38, 262); c.quadraticCurveTo(CX, 268, CX - 38, 262); c.quadraticCurveTo(CX - 36, 248, CX - 29, 235); c.closePath(); };
+    gonna(); c.fillStyle = gradL(c, 0, 235, 0, 266, [[0, v.colore], [1, scuro(v.colore, 0.22)]]); c.fill();
+    for (const x of [-18, -6, 7, 19]) { c.beginPath(); c.moveTo(CX + x, 240); c.lineTo(CX + x * 1.25, 262); tratto(c, 'rgba(0,0,0,0.16)', 1.5); }
+    gonna(); tratto(c, CONT, 3);
+  }
+  if (v.tipo === 'canottiera') {
+    if (v.fibbia) {
+      // la fibbia: grossa, dorata, lucida
+      rrect(c, CX - 10.5, 232.5, 21, 16, 3.5); c.fillStyle = gradL(c, 0, 232, 0, 249, [[0, chiaro(v.fibbia, 0.55)], [0.5, v.fibbia], [1, scuro(v.fibbia, 0.3)]]); c.fill(); tratto(c, CONT, 2.2);
+      rrect(c, CX - 6, 236.5, 12, 8, 1.5); tratto(c, scuro(v.fibbia, 0.45), 1.6);
+      c.beginPath(); c.moveTo(CX - 7.5, 235); c.lineTo(CX - 2, 235); tratto(c, 'rgba(255,255,255,0.9)', 1.6);
+    }
+    if (v.catenina) {
+      // la collanina d'oro, col ciondolo
+      const giro = () => { c.beginPath(); c.moveTo(CX - 12.5, 175); c.quadraticCurveTo(CX, 207, CX + 12.5, 175); };
+      giro(); tratto(c, CONT, 5.4); giro(); tratto(c, v.catenina, 3);
+      c.setLineDash([2.2, 2.6]); giro(); tratto(c, chiaro(v.catenina, 0.6), 1.2); c.setLineDash([]);
+      ellisse(c, CX, 194, 4.6, 5); c.fillStyle = gradR(c, CX - 1.5, 192.5, 0.5, 5, [[0, chiaro(v.catenina, 0.7)], [1, v.catenina]]); c.fill(); tratto(c, CONT, 1.8);
+    }
+  }
   if (p.occhiali?.inMaglietta) {
     // occhiali da sole appesi allo scollo della maglietta
     c.save(); c.translate(CX + 3, 198); c.rotate(0.1); c.scale(0.5, 0.5); c.translate(-CX, -113);
@@ -1778,25 +2114,37 @@ function corpo(c, p, espr, o = {}) {
 
   // braccia (sp = spalle più larghe per i robusti; le mani restano dentro il disegno)
   const largo = (pt, i, s) => [pt[0] + s * (i < 2 ? sp : 0), pt[1]];
-  if (espr === 'sufficienza') {
+  // (la posa a braccia conserte dell'aria di sufficienza vale solo se non ne è stata chiesta un'altra)
+  if (espr === 'sufficienza' && !o.posa) {
     braccio(c, p, [[CX - 33, 196], [CX - 38, 223], [CX + 14, 219]].map((pt, i) => largo(pt, i, -1)));
     braccio(c, p, [[CX + 33, 196], [CX + 38, 225], [CX - 12, 227]].map((pt, i) => largo(pt, i, 1)));
-  } else {
-    const posa = POSE[o.posa ?? espr] ?? POSE.normale;
-    for (const s of [-1, 1]) {
-      const punti = Array.isArray(posa) ? posa : posa[s < 0 ? 'sx' : 'dx'];
-      braccio(c, p, punti.map(([x, y], i) => [CX + s * (x + (i < 2 ? sp : Math.min(sp, Math.max(0, 80 - x)))), y]), s > 0 && posa.pollice);
-    }
+    return null;
   }
+  const posa = POSE[o.posa ?? espr] ?? POSE.normale;
+  let destro = null;
+  for (const s of [-1, 1]) {
+    const punti = (Array.isArray(posa) ? posa : posa[s < 0 ? 'sx' : 'dx']).map(([x, y], i) => [CX + s * (x + (i < 2 ? sp : Math.min(sp, Math.max(0, 80 - x)))), y]);
+    braccio(c, p, punti, s > 0 && posa.pollice);
+    if (s > 0) destro = punti;
+  }
+  return destro;   // il braccio destro: serve a chi tiene qualcosa in mano
 }
 
-// o: opzioni del corpo (vedi corpo): la gamba che calcia, una posa delle braccia
-export function disegnaPersonaggio(c, p, espr, o) {
+// o: opzioni del corpo (vedi corpo): la gamba che calcia, una posa delle braccia (o.posa),
+// qualcosa in mano (o.accessorio, se no quello del personaggio)
+export function disegnaPersonaggio(c, p, espr, o = {}) {
   // statura < 1: più basso (tutto un po' più piccolo, coi piedi sempre a terra)
   const h = p.statura ?? 1;
   if (h !== 1) { c.save(); c.translate(CX, 284); c.scale(h, h); c.translate(-CX, -284); }
-  corpo(c, p, espr, o);
+  const destro = corpo(c, p, espr, o);
   disegnaTesta(c, p, espr);
+  // Quello che ha in mano si disegna per ultimo, e anche il braccio che lo regge: se no una
+  // mano alzata sparirebbe dietro i capelli lunghi (la testa si disegna dopo il corpo).
+  const acc = o.accessorio ?? p.accessorio;
+  if (acc && acc !== 'balla' && destro) {
+    if (acc !== 'telefono') braccio(c, p, destro);
+    accessorio(c, acc, destro[2][0], destro[2][1]);
+  }
   if (h !== 1) c.restore();
 }
 

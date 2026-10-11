@@ -2,11 +2,12 @@
 // codice su canvas ad alta risoluzione (cartella js/grafica): nessuna immagine esterna.
 import { tela } from './grafica/base.js';
 import { CONFIG } from './config.js';
-import { PERSONAGGI, RAGAZZE, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
+import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
 import { creaMarco } from './grafica/marco.js';
 import { creaOggetti } from './grafica/oggetti.js';
 import { creaSfondi } from './grafica/sfondi.js';
 import { creaBota } from './grafica/bota.js';
+import { creaPista } from './grafica/disco.js';
 
 export { RES, Q, SP } from './grafica/base.js';
 export { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from './grafica/marco.js';
@@ -27,7 +28,7 @@ export function creaTexture(scene) {
       for (const [n, angolo] of [[1, 0.5], [2, 1.12]]) {
         const o = { calcio: { lato, angolo }, posa: 'calcio' };
         personaggio(`${id}_calcio${n}${nome}`, PERSONAGGI[id], 'normale', o);
-        if (id === 'zio') personaggio(`${id}_calcio${n}${nome}_sufficienza`, PERSONAGGI[id], 'sufficienza', o);
+        if (id === 'zio') personaggio(`${id}_calcio${n}${nome}_sufficienza`, PERSONAGGI[id], 'sufficienza', { calcio: o.calcio });
       }
   // il Bota a fine giornata: abbronzato (occhiolino e pollice in su) oppure rosso aragosta
   // a chiazze, col segno degli occhiali, rigido come un robot
@@ -47,8 +48,25 @@ export function creaTexture(scene) {
   // Petri Tentacolari: le ragazze della disco (ragazza0 ... ragazza4, tutte le espressioni)
   RAGAZZE.forEach((p, i) => { for (const e of ESPRESSIONI) personaggio(`ragazza${i}_${e}`, p, e); });
   personaggio('zioDJ', { ...PERSONAGGI.zio, cuffie: true }, 'felice');   // il DJ
+  // "L'Incubo degli Scapoli". Il Manna: balla in due tempi, festeggia (si sistema la collanina e
+  // indica il pubblico), fa l'occhiolino, si dispera per la macchia, risponde alla mamma, se ne
+  // va toccandosi la collanina. Le sue ragazze (tipa0 ... tipa4, altre da quelle di Petri
+  // Tentacolari): normali, conquistate (felici), annoiate (sbadiglio). E il buttafuori.
+  const manna = PERSONAGGI.manna, macchiato = { ...manna, macchia: '#f08a2e' };
+  personaggio('manna_balla1', manna, 'normale', { posa: 'balla1' });
+  personaggio('manna_balla2', manna, 'normale', { posa: 'balla2' });
+  personaggio('manna_colpo', manna, 'occhiolino', { posa: 'indica' });
+  personaggio('manna_occhiolino', manna, 'occhiolino', { posa: 'pollice' });
+  personaggio('manna_macchia', macchiato, 'shock');
+  personaggio('manna_macchiaTriste', macchiato, 'triste');
+  personaggio('manna_telefono', manna, 'parla', { posa: 'alTelefono', accessorio: 'cellulare' });
+  personaggio('manna_collana', manna, 'triste', { posa: 'collana' });
+  TIPE.forEach((r, i) => { for (const e of ['normale', 'felice', 'sbadiglio']) personaggio(`tipa${i}_${e}`, r, e, { posa: r.accessorio }); });
+  personaggio('buttafuori', BUTTAFUORI, 'sufficienza');
+  personaggio('buttafuori_chiede', BUTTAFUORI, 'normale', { posa: 'chiede' });
   creaMarco(scene);
   creaOggetti(scene);
   creaSfondi(scene);
   creaBota(scene);
+  creaPista(scene);
 }

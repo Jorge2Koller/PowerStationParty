@@ -20,7 +20,7 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli'],
 
   microgiochi: {
     // ---------------------------------------------------------
@@ -634,6 +634,97 @@ export const CONFIG = {
       frasiShottino: ['Shottino gratis?! Arrivo!', 'Uno shottino! Mio!', 'Offre la casa?!'],
       frasiAmico: ['Ehi, io no!', 'Petri, calmati!', 'Giù le mani!', 'Fermo lì!'],
     },
+
+    // ---------------------------------------------------------
+    scapoli: {
+      titolo: "L'Incubo degli Scapoli",
+      durata: 50,
+      colore: 0x9b3fd6,
+      musica: 'pista',        // traccia di audio.js (un'altra da 'disco', che è quella di Petri Tentacolari)
+      ospite: { id: 'manna', etichetta: 'LA CALAMITA:\nIL MANNA' },
+      comandi: [
+        'FRECCE (o WASD), oppure clic sulla pista: muoviti',
+        'Fermati vicino a una ragazza: sopra di lei esce una freccia',
+        'Premi quella freccia, con calma: tre giuste e balla con te',
+        'Non farle arrivare dal Manna: la sua aura le attira',
+        'Passa sugli oggetti e usali con SPAZIO: lo saboti',
+      ],
+      comandiTouch: [
+        'Trascina il dito sulla pista: ti muovi',
+        'Fermati vicino a una ragazza: sopra di lei esce un cerchio',
+        'Tocca il cerchio, con calma: tre volte e balla con te',
+        'Non farle arrivare dal Manna: la sua aura le attira',
+        'Passa sugli oggetti e tocca SABOTAGGIO: lo saboti',
+      ],
+      obiettivo: 'Conquista più ragazze del Manna!',
+      // --- punti ---
+      puntiRagazza: 15,       // per ogni ragazza che balla con te
+      puntiSabotaggio: 5,     // per ogni sabotaggio andato a segno
+      bonusVittoria: 25,      // se a fine tempo ne hai conquistate più del Manna
+      // --- il giocatore ---
+      velGiocatore: 108,      // velocità (unità/s)
+      // --- le ragazze ---
+      maxRagazze: 3,          // quante ce ne sono in pista al massimo
+      inizio: 2,              // quante ce ne sono già quando si comincia (la prima è vicina all'aura:
+                              //   il Manna parte favorito)
+      arrivoInizio: 6.5,      // secondi tra un arrivo e l'altro, a inizio partita...
+      arrivoFine: 5,          //   ...e a fine partita
+      velRagazze: 18,         // quanto veloci girano per la pista (unità/s)
+      curiosa: 0.45,          // quante volte su 1 una ragazza, cambiando posto, passa di suo per l'aura del Manna
+                              //   (le altre volte ci gira alla larga). Più è alto, più il Manna è pericoloso
+      elastico: 0.1,          // per ogni ragazza di vantaggio che hai, "curiosa" sale di tanto (e scende se sei
+                              //   sotto): tiene la gara aperta. 0 = nessun aiuto, né a te né a lui
+      curiosaMin: 0.15,       // ...ma non scende mai sotto questo
+      curiosaMax: 0.85,       // ...e non sale mai sopra questo
+      pazienza: 30,           // dopo tanti secondi senza che nessuno la conquisti, se ne va
+      // --- l'aura del Manna ---
+      auraInizio: 34,         // raggio dell'aura a inizio partita (unità)...
+      auraFine: 50,           //   ...e a fine partita
+      attrazione: 17,         // velocità con cui tira a sé una ragazza che gli è vicinissima (unità/s);
+                              //   sul bordo dell'aura tira a un terzo
+      auraInSfida: 0.4,       // quanto resta dell'attrazione mentre stai facendo colpo su di lei
+      muro: 0.2,              // quanto ne resta se ti metti tra lei e lui (0.2 = un quinto)
+      raggioMuro: 18,         // quanto puoi stare fuori dalla linea tra lei e lui e fare ancora da muro
+      contatto: 13,           // se una ragazza gli arriva così vicina, è sua
+      velManna: 10,           // quanto veloce si sposta per la pista quando balla
+      mannaInsegue: 0.3,      // quanto si avvicina alla ragazza libera più vicina (0 = resta al centro, 1 = le va addosso)
+      // --- fare colpo ---
+      raggioColpo: 36,        // quanto vicino devi stare alla ragazza
+      attesaColpo: 0.3,       // per quanti secondi devi restarle vicino, fermo, prima che esca la freccia
+      frecce: 3,              // quante frecce escono di fila, una alla volta (poi, se serve, si ricomincia)
+      tempoFrecciaInizio: 2.4, // secondi che hai per premere ogni freccia, a inizio partita...
+      tempoFrecciaFine: 1.9,  //   ...e a fine partita
+      pausaFreccia: 0.3,      // respiro tra una freccia e la successiva
+      cuoreFreccia: 0.36,     // quanto riempie il cuore una freccia giusta (1 = è tua: ne servono tre, e avanza qualcosa)
+      cuoreErrore: 0.12,      // quanto ne toglie una freccia lasciata scadere
+      cuoreSbaglio: 0.06,     // quanto ne toglie un tasto sbagliato (la freccia resta lì: puoi riprovare)
+      resaAura: 0.5,          // se lei è dentro l'aura del Manna ogni freccia rende la metà
+      sogliaSegue: 0.3,       // col cuore pieno almeno così, se ti allontani ti viene dietro (per portarla via dall'aura)
+      velSegue: 62,           // ...a questa velocità
+      // --- sabotaggi ---
+      sabotaggioMin: 6,       // ogni quanti secondi compare un oggetto: tra questo...
+      sabotaggioMax: 8,       //   ...e questo
+      durate: { drink: 5, mamma: 6, shottino: 5, dj: 6, buttafuori: 6 },   // secondi di effetto di ogni sabotaggio
+      auraLento: 0.35,        // col lento del DJ l'aura si riduce a questa frazione
+      lentoBonus: 2,          // ...e ogni tua freccia giusta rende il doppio
+      // --- gli ultimi secondi ---
+      scatenaA: 12,           // a tanti secondi dalla fine il Manna si scatena
+      scatenaDurata: 4,       // per quanti secondi
+      scatenaAura: 1.6,       // e di quanto si moltiplica l'aura
+      // --- frasi ---
+      frasi: ['Ciao bella...', 'Lo so, lo so...', 'Non è colpa mia se sono così', 'Tutte da me stasera', 'La pista è mia', 'Piano, una alla volta'],
+      frasiPresa: ['E sono altre!', 'Ovviamente.', 'Benvenuta, tesoro', 'Te lo dicevo...'],
+      frasiNoia: ['Che noia...', 'Sbadiglio...', 'Tutto qui?', 'Mah.'],
+      frasiRisata: ['Ahahah!', 'Ma dai!', 'Simpatico!', 'Mi fai morire!'],
+      frasiSabotaggio: {
+        drink: ['LA CANOTTIERA!', 'Era bianca! BIANCA!'],
+        mamma: ['Sì mà... no mà...', 'Ho mangiato, mà!', 'Torno presto, mà...'],
+        shottino: ['Gira tutto...', 'Chi ha mosso la pista?'],
+        dj: ['Un lento?! Io?!', 'Non so dove mettere le mani...'],
+        buttafuori: ['Ma mi conosce!', 'Li ho lasciati in macchina...'],
+      },
+      frasiButtafuori: ['Documenti.', 'Lei non entra.', 'Favorisca.'],
+    },
   },
 
   // Frasi di sfottò per chi perde. {perdente} e {vincitore} vengono sostituiti.
@@ -666,6 +757,9 @@ export const CONFIG = {
     "{perdente}, il Piovra ti ha battuto pure a te.",
     "{perdente}, il Petri rimorchia più di te. Coi tentacoli.",
     "{vincitore} libera la pista, {perdente} libera solo il guardaroba.",
+    "{perdente}, in pista ti ha notato solo il buttafuori.",
+    "{vincitore} balla, {perdente} regge il muro. E il Manna ringrazia.",
+    "{perdente}, pure la mamma del Manna aveva più ritmo di te.",
   ],
   frasiPareggio: [
     'Pareggio! Rivincita obbligatoria, paga chi perde.',

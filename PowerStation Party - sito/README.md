@@ -3,7 +3,7 @@
 Microgiochi in stile WarioWare con Phaser 3. Riccardo contro Giorgio: stesso
 microgioco, un turno a testa, vince il round chi fa più punti.
 
-I microgiochi sono tredici:
+I microgiochi sono quattordici:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -20,6 +20,7 @@ I microgiochi sono tredici:
 | `bota` | Spalma il Bota! | il Bota |
 | `guida` | Il Passaggiorgio | Giorgio |
 | `piovra` | Petri Tentacolari | il Petri ("il Piovra") |
+| `scapoli` | L'Incubo degli Scapoli | il Manna |
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -283,6 +284,34 @@ resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
   - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
     vicino a lei, 1 e 2 gli aiuti (lo shottino va da solo nel punto più lontano dalle ragazze)
   - ogni tanto un tentacolo a sorpresa sbuca da sotto un tavolino o dalla consolle
+- L'Incubo degli Scapoli (in discoteca contro il Manna, la calamita):
+  - FRECCE (o WASD) per muoverti; col mouse, clic sul punto della pista dove andare;
+    col dito, trascina (il personaggio sta un po' sopra il polpastrello)
+  - fare colpo: fermati vicino a una ragazza (lei ti aspetta) e sopra di lei esce UNA
+    freccia bella grossa, con attorno un anello che si consuma piano: è il tempo che hai
+    (un paio di secondi abbondanti). Premi quella freccia sulla tastiera, oppure clicca o
+    tocca il bersaglio (sul telefono è un cerchio): non c'è ritmo da seguire. Tre giuste
+    e balla con te. Un tasto sbagliato toglie pochissimo e la freccia resta lì; se la
+    lasci scadere lei sbadiglia e il cuore scende un po'. Ne escono tre di fila, una
+    alla volta; se non bastano, resta lì e ricominciano. Per lasciar perdere col mouse
+    o col dito basta toccare la pista lontano da lei
+  - in pista ci sono al massimo tre ragazze; di solito girano alla larga dall'aura del
+    Manna, ogni tanto ci passano dentro: è lì che bisogna fermarle. Dentro l'aura ogni
+    freccia rende la metà (ma mentre fai colpo l'aura la tira molto meno). Con un po'
+    di cuore ti viene dietro: portala via
+  - fare da muro (facoltativo): se stai tra una ragazza e il Manna l'aura la tira molto
+    meno (lei ha un cerchietto verde, e dietro di te l'aura è spezzata)
+  - sabotaggi: passa sopra l'oggetto che compare in pista o davanti al bancone (ne tieni
+    uno alla volta) e usalo con SPAZIO, con un clic sull'icona in basso a sinistra, o col
+    pulsante SABOTAGGIO sul telefono. Drink rovesciato, chiamata della mamma, shottino,
+    richiesta al DJ (un lento: le tue frecce rendono il doppio), buttafuori
+  - a 12 secondi dalla fine il Manna si scatena e per qualche secondo l'aura si allarga: un
+    sabotaggio la spegne
+  - per renderlo più facile o più difficile, in `js/config.js` (blocco `scapoli`):
+    `tempoFrecciaInizio`/`tempoFrecciaFine` (secondi per ogni freccia), `maxRagazze`,
+    `curiosa` (quanto spesso le ragazze vanno da sole verso il Manna), `auraInizio`/
+    `auraFine` e `attrazione` (quanto è forte la calamita), `elastico` (l'aiuto a chi
+    sta perdendo)
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -320,6 +349,9 @@ brevemente il telefono.
   la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
   terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine. Vittoria con almeno
   10 ragazze salvate.
+- **L'Incubo degli Scapoli** (50 s): +15 per ogni ragazza che balla con te, +5 per ogni
+  sabotaggio usato, +25 se alla fine ne hai conquistate più del Manna. Vittoria solo se
+  ne hai conquistate più di lui.
 - **Sego** (50 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
   Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
   per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
@@ -351,8 +383,8 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i quattordici personaggi (col Petri) e le ragazze della disco:
-                         tratti, espressioni, vestiti
+    personaggi.js        i quindici personaggi (col Petri e il Manna), le ragazze delle
+                         due discoteche e il buttafuori: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
                          c'è pelle, la spiaggia col telo, sole, tubetto, mano,
@@ -366,6 +398,9 @@ js/
                          Giorgio), chiavi, cartello, consolle del DJ, tavolini,
                          shottino
     tentacoli.js         i tentacoli del Petri (ridisegnati a ogni fotogramma)
+    disco.js             la discoteca del Manna vista dall'alto (sfondo `bgPista`), la
+                         palla a specchi, il DJ, gli oggetti dei sabotaggi, i bersagli
+                         della sfida
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
@@ -378,7 +413,7 @@ js/
     SpinaScene.js  ReGrorioScene.js  BarbaScene.js
     PaninoScene.js  ManiScene.js  SegoScene.js
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
-    BotaScene.js  GuidaScene.js  PiovraScene.js
+    BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -395,7 +430,9 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `spuntato` (il Petri: corti, tirati su a punte), `indietro`, `corto`, `ciuffo`, `grigio`, `rasato` (Marsupino),
   `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale, l'Ingiocabile),
   `lunghiBagnati` (lo Zio); per le ragazze della disco `lunghi`, `caschetto`, `ricciLunghi`,
-  `coda`, `chignon`; con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota)
+  `coda`, `chignon`; con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota);
+  `mossi` (il Manna: corti e spettinati, con le ciocche sulla fronte); `taglio` (le ragazze
+  del Manna, con `taglio`: `lisci`, `ricci`, `caschetto`, `coda`, `chignon`)
 - `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
   naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
@@ -405,6 +442,10 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   tirata su: il travestimento del Passaggiorgio), `cuffie: true`
 - `statura` (1 = normale; il Petri 0.88: più basso, coi piedi sempre a terra), `ciglia: true`,
   `rossetto: colore`
+- del Manna: `sopraAlzato` (un sopracciglio sempre alzato), `ghigno` (il sorrisetto storto),
+  `anellinoNaso: colore`, `orecchini: colore` (a cerchio), `tatuaggi: colore` (sulle braccia
+  scoperte), `larghi: true` (pantaloni larghi); `accessorio` (quello che si tiene in mano:
+  `spritz`, `telefono`, `ventaglio`, `foto`, `cellulare`)
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -416,6 +457,8 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe),
   `camicia` (Giorgio vestito da sera), `felpa` (col cappuccio abbassato: il Petri),
   `abito` (il vestito a bretelline delle ragazze: con `pantaloni` del colore della pelle),
+  `vestitino` (il vestito delle ragazze del Manna), `canottiera` (il Manna: con `catenina`,
+  `cintura` e `fibbia`),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
   `corti: true` per i pantaloncini, `calzettoni` per i calzettoni, `infradito: true`
@@ -430,14 +473,22 @@ in su) e `bota_aragosta` (rosso a chiazze col segno degli occhiali) per il final
 "Spalma il Bota!"; per il Passaggiorgio `giorgioSera_<espressione>` (in camicia),
 `giorgioCuffie` e `incognito_<id>` (cappuccio e occhiali: Giorgio e i sosia); per Petri
 Tentacolari `ragazza0_<espressione>` ... `ragazza4_<espressione>` (le cinque ragazze, in
-`RAGAZZE`) e `zioDJ` (lo Zio alla consolle, con le cuffie).
+`RAGAZZE`) e `zioDJ` (lo Zio alla consolle, con le cuffie); per "L'Incubo degli Scapoli"
+le figure del Manna (`manna_balla1`, `manna_balla2`, `manna_colpo`, `manna_occhiolino`,
+`manna_macchia`, `manna_telefono`, `manna_collana`), le sue ragazze `tipa0_<espressione>` ...
+`tipa4_<espressione>` (normale, felice, sbadiglio: sono in `TIPE`, altre da `RAGAZZE`) e
+`buttafuori`, `buttafuori_chiede`.
+
+Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
+`bgDisco` e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo `bgPista` e la
+musica `pista`.
 
 Le icone dell'app (`icone/`) sono Riccardo e Giorgio felici sui raggi arancioni del menu,
 disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno rifatte.
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`) apre subito quel microgioco.
+`piovra`, `scapoli`) apre subito quel microgioco.
 
 ## Aggiungere un microgioco
 

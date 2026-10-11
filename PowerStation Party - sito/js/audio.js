@@ -75,6 +75,11 @@ const SFX = {
   sfrigola: (t) => rumore(t, 0.4, 0.07, 5200, 'highpass'),
   gabbiano: (t) => { for (const dt of [0, 0.15, 0.3]) nota(1500, t + dt, 0.12, 'sawtooth', 0.06, 900); },
   vento: (t) => { rumore(t, 0.7, 0.12, 700); rumore(t + 0.1, 0.5, 0.06, 2600, 'highpass'); },
+  // L'Incubo degli Scapoli
+  conquista: (t) => arp(t, [79, 83, 86, 91], 0.06, 0.12, 0.09),
+  squillo: (t) => { for (const dt of [0, 0.12, 0.42, 0.54]) nota(1320, t + dt, 0.09, 'square', 0.05); },
+  scatena: (t) => { for (let i = 0; i < 6; i++) nota(330 + i * 110, t + i * 0.07, 0.1, 'sawtooth', 0.07); },
+  spento: (t) => nota(520, t, 0.5, 'sawtooth', 0.08, 110),
   ruggito: (t) => { nota(230, t, 0.6, 'sawtooth', 0.12, 95); nota(236, t, 0.6, 'square', 0.05, 100); rumore(t, 0.55, 0.14, 450, 'lowpass'); },
   // mani di Guerra
   schiaffo: (t) => { rumore(t, 0.09, 0.32, 3200, 'highpass'); rumore(t, 0.12, 0.2, 900); nota(1400, t, 0.06, 'square', 0.05, 500); },
@@ -162,6 +167,15 @@ const TRACCE = {
            67, 76, 79, 81, 0, 77, 79, 0, 76, 0, 72, 74, 71, 0, 0, 0, 72, 0, 74, 76, 0, 79, 0, 76, 74, 0, 72, 0, 74, 0, 0, 0],
     basso: [48, 43, 48, 45, 48, 45, 53, 43],
   },
+  // la pista del Manna (L'Incubo degli Scapoli): un'altra canzone da discoteca, più svelta.
+  // Cassa in quattro, basso che rimbalza di ottava, charleston in levare
+  pista: {
+    bpm: 132,
+    dance: true,
+    lead: [81, 0, 76, 81, 0, 76, 84, 0, 83, 0, 79, 83, 0, 76, 79, 0, 81, 0, 77, 81, 0, 77, 84, 0, 86, 0, 84, 83, 0, 79, 76, 0,
+           81, 0, 76, 81, 0, 76, 84, 0, 88, 0, 86, 84, 0, 83, 84, 0, 86, 0, 84, 83, 0, 79, 81, 0, 83, 0, 84, 86, 0, 88, 0, 0],
+    basso: [57, 57, 53, 55, 57, 60, 53, 55],
+  },
 };
 
 function suonaPasso(T, i, t) {
@@ -174,6 +188,13 @@ function suonaPasso(T, i, t) {
     if (i % 2 === 0) nota(120, t, 0.12, 'sine', 0.22, 45);                       // cassa
     else rumore(t, 0.05, 0.05, 8000, 'highpass');                                // charleston in levare
     if (i % 4 === 2) rumore(t, 0.09, 0.09, 1600);                                // battimani
+    return;
+  }
+  if (T.dance) {
+    // cassa su ogni battito, basso in levare un'ottava sopra, charleston aperto in levare
+    if (i % 2 === 0) { nota(150, t, 0.12, 'sine', 0.22, 42); nota(midi(fond - 12), t, d * 0.9, 'triangle', 0.12); }
+    else { nota(midi(fond), t, d * 0.9, 'triangle', 0.1); rumore(t, 0.06, 0.05, 8000, 'highpass'); }
+    if (i % 8 === 4) rumore(t, 0.09, 0.07, 1800);   // battimani
     return;
   }
   if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.8, 'triangle', 0.14);
@@ -236,6 +257,9 @@ export const Audio = {
 
   // moltiplicatore di velocità della musica (1 = normale)
   tempo(k) { tempo = k; },
+
+  // quanto dura adesso un battito della musica (secondi): serve a chi vuole andare a tempo
+  get battito() { return 60 / ((TRACCE[traccia]?.bpm ?? 128) * tempo); },
 
   silenzia() {
     muto = !muto;
