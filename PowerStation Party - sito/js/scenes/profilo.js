@@ -11,7 +11,7 @@ import { pulsantiAngolo } from './menu.js';
 
 const SCHEDE = [['personaggi', 'PERSONAGGI'], ['trofei', 'TROFEI'], ['record', 'RECORD'], ['albo', "ALBO D'ORO"]];
 const MEDAGLIA = ['medaglia_vuota', 'medaglia_bronzo', 'medaglia_argento', 'medaglia_oro'];
-const TIPI = { completa: 'COMPLETA', rapida: 'RAPIDA', meglioDi: 'AL MEGLIO DI', singola: 'SINGOLA', lampo: 'LAMPO', squadre: 'SQUADRE', torneo: 'TORNEO' };
+const TIPI = { completa: 'COMPLETA', rapida: 'RAPIDA', meglioDi: 'AL MEGLIO DI', singola: 'SINGOLA', lampo: 'LAMPO', squadre: 'SQUADRE', torneo: 'TORNEO', beerpong: 'BEER PONG' };
 const PER_PAGINA = { trofei: 12, albo: 11 };
 const data = (ms) => { const d = new Date(ms); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(2)}`; };
 
@@ -109,15 +109,19 @@ export class ProfiloScene extends Phaser.Scene {
       ['Sfide', `${s.sfideVinte} vinte su ${s.sfide}`],
       ['Round vinti', s.roundVinti],
       ['Medaglie', `${s.ori} ori, ${s.argenti} argenti, ${s.bronzi} bronzi`],
+      // (le partite della modalità BEER PONG, per chi ne ha giocate)
+      ...(s.beerpong ? [['Beer pong', `${s.beerpong.vittorie} vinte su ${s.beerpong.partite}`]] : []),
     ] : [['Non ha ancora giocato', '']];
+    const passoRighe = righe.length > 4 ? 12 : 13;
     righe.forEach(([a, b], k) => {
-      this.t(20, 172 + k * 13, a, { size: 6.5, ox: 0, color: '#ffe14a' });
-      this.t(140, 172 + k * 13, String(b), { size: 6.5, ox: 1 });
+      this.t(20, 172 + k * passoRighe, a, { size: 6.5, ox: 0, color: '#ffe14a' });
+      this.t(140, 172 + k * passoRighe, String(b), { size: 6.5, ox: 1 });
     });
-    // la griglia dei microgiochi: 5 x 3
+    // la griglia dei microgiochi: su tre righe (5 per riga fino a 15 microgiochi, poi 6)
     this.t(310, 70, 'LA MEDAGLIA MIGLIORE', { size: 7, color: '#ffe14a' });
-    Object.keys(CONFIG.microgiochi).forEach((id, k) => {
-      const x = 200 + (k % 5) * 55, y = 100 + Math.floor(k / 5) * 46, liv = Progressi.medagliaMigliore(id, G.id);
+    const tutti = Object.keys(CONFIG.microgiochi), COL = tutti.length > 15 ? 6 : 5, largo = COL === 5 ? 55 : 46;
+    tutti.forEach((id, k) => {
+      const x = (COL === 5 ? 200 : 196) + (k % COL) * largo, y = 100 + Math.floor(k / COL) * 46, liv = Progressi.medagliaMigliore(id, G.id);
       this.i(x, y, MEDAGLIA[liv], 0.7).setAlpha(liv ? 1 : 0.6);
       this.t(x, y + 18, CONFIG.microgiochi[id].verbo ?? id, { size: 5, color: liv ? '#ffffff' : '#b8b0c8' });
     });
@@ -137,9 +141,9 @@ export class ProfiloScene extends Phaser.Scene {
 
   // --- i record di sempre, uno per microgioco ---
   record() {
-    const R = Progressi.record;
-    Object.keys(CONFIG.microgiochi).forEach((id, k) => {
-      const y = 66 + k * 11.2, r = R[id], liv = Progressi.medagliaMigliore(id);
+    const R = Progressi.record, tutti = Object.keys(CONFIG.microgiochi), passo = Math.min(11.2, 160 / tutti.length);   // (con più di 15 le righe si stringono un po')
+    tutti.forEach((id, k) => {
+      const y = 66 + k * passo, r = R[id], liv = Progressi.medagliaMigliore(id);
       this.t(22, y, CONFIG.microgiochi[id].titolo, { size: 6.5, ox: 0, color: '#ffe14a' });
       this.t(300, y, r ? String(r.punteggio) : '-', { size: 7, ox: 1 });
       if (r) this.t(312, y, r.nome, { size: 6.5, ox: 0, color: CONFIG.personaggiGiocabili.find((g) => g.id === r.chi)?.colore ?? '#ffffff' });

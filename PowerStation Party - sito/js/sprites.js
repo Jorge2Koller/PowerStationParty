@@ -3,7 +3,7 @@
 import { tela, DENS } from './grafica/base.js';
 import { DOPPIONE } from './sessione.js';
 import { Progressi } from './progressi.js';
-import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
+import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, GIUDICI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
 import { creaMarco } from './grafica/marco.js';
 import { creaOggetti } from './grafica/oggetti.js';
 import { creaSfondi } from './grafica/sfondi.js';
@@ -12,6 +12,8 @@ import { creaPista } from './grafica/disco.js';
 import { creaPalco } from './grafica/palco.js';
 import { creaMedaglie } from './grafica/medaglie.js';
 import { creaVialetto } from './grafica/vialetto.js';
+import { creaPallaio, manoPong, MANO_IMG } from './grafica/pallaio.js';
+import { creaProvino } from './grafica/provino.js';
 
 export { RES, Q, SP } from './grafica/base.js';
 export { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from './grafica/marco.js';
@@ -39,6 +41,27 @@ export function vestiPersonaggio(scene, id) {
   const [p, o] = vestito(id);
   for (const e of ESPRESSIONI) figura(scene, `${id}_${e}`, p, e, o);
   for (const k of ['calcio1D', 'calcio2D', 'calcio1S', 'calcio2S']) if (scene.textures.exists(`${id}_${k}`)) scene.textures.remove(`${id}_${k}`);
+  // (e le facce del beer pong: vedi preparaBevitore)
+  for (const k of FACCE_PONG) if (scene.textures.exists(`${id}_${k}`)) scene.textures.remove(`${id}_${k}`);
+}
+
+// Le facce da beer pong di un personaggio, create la prima volta che servono (per chi gioca, per
+// gli avversari e per il pubblico): le tre della sbronza che sale, cioè allegro (guance rosse e
+// sorriso ebete), brillo (palpebre a mezz'asta e naso rosso), sbronzo (occhi incrociati); e per
+// il finale: dorme (a bocca aperta) e canta (stonato). In più la sua mano con la pallina
+// (manoPong_<id>). L'id può essere quello di un doppione.
+const FACCE_PONG = ['allegro', 'brillo', 'sbronzo', 'dorme', 'canta'];
+export const FACCE_SBRONZA = ['normale', 'allegro', 'brillo', 'sbronzo'];   // dal livello 0 (lucido) al 3
+export function preparaBevitore(scene, id) {
+  const base = id.replace(DOPPIONE, '');
+  if (!PERSONAGGI[base] || scene.textures.exists(`${id}_sbronzo`)) return;
+  const [p0, o] = vestito(base), p = id === base ? p0 : { ...p0, travestimento: true };
+  figura(scene, `${id}_allegro`, { ...p, gote: 0.6, sorrisone: true }, 'normale', o);
+  figura(scene, `${id}_brillo`, { ...p, gote: 0.85, nasoRosso: 0.45, sorrisone: true, palpebra: [0.44, 0.3] }, 'normale', o);
+  figura(scene, `${id}_sbronzo`, { ...p, gote: 1, nasoRosso: 0.8, sorrisone: true, palpebra: [0.56, 0.38], sguardo: [[5, 2], [-5.5, 3]] }, 'normale', o);
+  figura(scene, `${id}_dorme`, { ...p, gote: 1, nasoRosso: 0.8 }, 'sbadiglio', o);
+  figura(scene, `${id}_canta`, { ...p, gote: 0.9, nasoRosso: 0.6 }, 'urlo', o);
+  if (!scene.textures.exists(`manoPong_${base}`)) tela(scene, `manoPong_${base}`, MANO_IMG.w, MANO_IMG.h, (c) => manoPong(c, p.pelle), 6);
 }
 
 // Le pose in più di chi sta per giocare, create la prima volta che servono (farle per tutti i
@@ -120,6 +143,29 @@ export function creaTexture(scene) {
   personaggio('emilio_disperato', PERSONAGGI.emilio, 'shock', { posa: 'maniInTesta', maniSopra: true });
   personaggio('pastaffi_corre', PERSONAGGI.pastaffi, 'urlo', { posa: 'shock' });
   personaggio('pastaffi_porta', PERSONAGGI.pastaffi, 'shock', { posa: 'porta' });
+  // "Provini a X-Fattore". I due cantanti sul palco, col microfono: in attesa, mentre cantano (a
+  // occhi chiusi e bocca aperta), gasati, sulla nota stonata (sconvolti), mentre guardano malissimo
+  // chi li accompagna, sull'acuto (braccia al cielo) e mentre gli danno la colpa ("ti indico")
+  for (const id of ['tini', 'oli']) {
+    const p = PERSONAGGI[id], mic = { posa: 'microfono', accessorio: 'microfono' };
+    personaggio(`${id}_palco`, p, 'normale', mic);
+    personaggio(`${id}_canta`, p, 'canta', mic);
+    personaggio(`${id}_gasato`, p, 'felice', mic);
+    personaggio(`${id}_stona`, p, 'sconvolto', mic);
+    personaggio(`${id}_male`, p, 'sufficienza', mic);
+    personaggio(`${id}_acuto`, p, 'urlo', { posa: 'felice', accessorio: 'microfono' });
+    personaggio(`${id}_indica`, p, 'rabbia', { posa: 'tiIndico' });
+  }
+  // ...e i quattro giudici (inventati): come stanno di solito (il produttore a braccia conserte,
+  // il commosso con la lacrima), quando gli piace, con le mani sulle orecchie, quando è no
+  GIUDICI.forEach((g, i) => {
+    const mano = g.accessorio ? { posa: g.accessorio } : {};
+    const commosso = g.nome === 'commosso';
+    personaggio(`giudice${i}_normale`, g, g.nome === 'produttore' ? 'sufficienza' : commosso ? 'triste' : 'normale', mano);
+    personaggio(`giudice${i}_felice`, g, commosso ? 'triste' : 'felice', commosso ? { posa: 'felice' } : mano);
+    personaggio(`giudice${i}_orecchie`, g, 'shock', { posa: 'orecchie', maniSopra: true, accessorio: 'niente' });
+    personaggio(`giudice${i}_no`, g, 'sufficienza');
+  });
   creaMarco(scene);
   creaOggetti(scene);
   creaSfondi(scene);
@@ -128,4 +174,6 @@ export function creaTexture(scene) {
   creaPalco(scene);
   creaMedaglie(scene);
   creaVialetto(scene);
+  creaPallaio(scene);
+  creaProvino(scene);
 }

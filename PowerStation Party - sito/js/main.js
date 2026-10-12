@@ -15,6 +15,7 @@ import { ProfiloScene } from './scenes/profilo.js';
 import { LivelliScene } from './scenes/livelli.js';
 import { FineSolitarioScene } from './scenes/modalita.js';
 import { TorneoScene, FineGiornoScene } from './scenes/torneo.js';
+import { BeerPongSquadreScene, BeerPongScene, BeerPongFineScene } from './scenes/beerpong.js';
 import { ImpostazioniScene } from './scenes/impostazioni.js';
 
 // i browser fanno partire l'audio solo dopo un input dell'utente; Safari (soprattutto
@@ -50,7 +51,8 @@ function avvia() {
     // velocità per 4 secondi; ne bastano pochi
     fps: { panicMax: 20 },
     scene: [BootScene, MenuScene, GiocatoriScene, PersonaggiScene, ModalitaScene, AllenamentoScene, ComandiScene, IntroScene,
-      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene, PausaScene],
+      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene,
+      BeerPongSquadreScene, BeerPongScene, BeerPongFineScene, PausaScene],
   });
   controllaVerso();
 }
@@ -68,7 +70,8 @@ font.then(() => {
 }, () => {});
 
 // --- telefono ---
-const microgiocoInCorso = () => gioco?.scene?.getScenes(true).find((s) => s.scene.key.startsWith('mg_') && s.inCorso);
+// (anche la partita della modalità BEER PONG, che non è un microgioco ma si mette in pausa uguale)
+const microgiocoInCorso = () => gioco?.scene?.getScenes(true).find((s) => (s.scene.key.startsWith('mg_') || s.scene.key === 'BeerPong') && s.inCorso);
 
 // in verticale: schermata "Gira il telefono" (in index.html) e microgioco in pausa
 function controllaVerso() {

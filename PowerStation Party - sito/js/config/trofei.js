@@ -10,7 +10,7 @@ export default {
     { id: 'primoArgento', nome: 'Argenteria', descrizione: "Prendi una medaglia d'argento" },
     { id: 'primoOro', nome: 'Oro colato', descrizione: "Prendi una medaglia d'oro" },
     { id: 'filotto', nome: 'Filotto', descrizione: "Tre medaglie d'oro di fila" },
-    { id: 'tuttiGiocati', nome: 'Il giro completo', descrizione: 'Gioca tutti i 15 microgiochi' },
+    { id: 'tuttiGiocati', nome: 'Il giro completo', descrizione: 'Gioca tutti i 17 microgiochi' },
     { id: 'tuttiBronzo', nome: 'Tuttofare', descrizione: 'Almeno il bronzo in tutti i microgiochi' },
     { id: 'tuttiArgento', nome: 'Il collezionista', descrizione: "Almeno l'argento in tutti i microgiochi" },
     { id: 'tuttiOro', nome: 'Leggenda del PowerStation', descrizione: "L'oro in tutti i microgiochi" },
@@ -27,6 +27,7 @@ export default {
     { id: 'primoAcquisto', nome: 'Cliente affezionato', descrizione: 'Compra qualcosa al Bancone' },
     { id: 'guardaroba', nome: 'Guardaroba', descrizione: 'Metti un costume a un personaggio' },
     { id: 'abitudinario', nome: 'Abitudinario', descrizione: 'La sfida del giorno per 3 giorni di fila' },
+    { id: 'rePallaio', nome: 'Re del Pallaio', descrizione: 'Vinci 5 partite a beer pong con lo stesso personaggio' },
   ],
   // i trofei "Oro a <microgioco>": nome e descrizione ({titolo} = il titolo del microgioco)
   oro: { nome: 'Oro: {titolo}', descrizione: "Prendi l'oro a {titolo}" },

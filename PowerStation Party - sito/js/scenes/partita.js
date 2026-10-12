@@ -65,7 +65,8 @@ export class GiocatoriScene extends Phaser.Scene {
 //  ritratti (chi è già preso resta spento, con la sigla di chi l'ha scelto) e la casella
 //  "A CASO"; sotto, i giocatori già fatti. dati.n = quanti giocatori.
 // ------------------------------------------------------------
-const COL = 5, CELLA = { w: 56, h: 49, x0: 220, y0: 68 };
+// (sei colonne per tre righe: c'è posto per diciassette personaggi più "A CASO")
+const COL = 6, CELLA = { w: 46, h: 49, x0: 215, y0: 68 };
 
 export class PersonaggiScene extends Phaser.Scene {
   constructor() { super('Personaggi'); }
@@ -96,7 +97,7 @@ export class PersonaggiScene extends Phaser.Scene {
     const g = this.add.graphics(), cursore = this.add.graphics().setDepth(6);
     const caselle = celle.map((c, i) => {
       const [x, y] = posto(i);
-      const cosa = { x, y, sigla: txt(this, x + 18, y - 15, '', { size: 6, depth: 5 }) };
+      const cosa = { x, y, sigla: txt(this, x + 14, y - 15, '', { size: 6, depth: 5 }) };
       if (c.caso) { cosa.img = txt(this, x, y - 5, '?', { size: 22, color: '#ffe14a' }); cosa.nome = txt(this, x, y + 16, 'A CASO', { size: 4.8 }); }
       else { cosa.img = ritratto(this, x, y - 5, c.p.id, 30); cosa.nome = txt(this, x, y + 16, c.p.nome, { size: c.p.nome.length > 11 ? 4.2 : 4.8, color: c.p.colore }); }
       this.add.rectangle(x, y, CELLA.w - 2, CELLA.h - 2, 0x000000, 0.001).setInteractive({ useHandCursor: true })
@@ -251,12 +252,16 @@ export class ModalitaScene extends Phaser.Scene {
       delBancone('lampo', `LAMPO: ${MO.lampo.microgiochi} microgiochi da ${MO.lampo.durata} secondi`, () => S.nuovoLampo()),
       ...(n >= MO.squadre.minimo ? [{ label: `SQUADRE: ${MO.squadre.nomi[0]} (1°, 3°...) contro ${MO.squadre.nomi[1]} (2°, 4°...)`, azione: via(() => S.nuoveSquadre()) }] : []),
       ...(n >= MO.torneo.minimo ? [{ label: 'TORNEO: tabellone a eliminazione, sfide a due', azione: via(() => S.nuovoTorneo()) }] : []),
+      // il beer pong vero, a tiri alternati (da 2 a 6: con 3 o 5 l'ultimo scelto fa l'arbitro)
+      n >= MO.beerpong.minimo && n <= MO.beerpong.massimo
+        ? { label: `BEER PONG: ${Math.floor(n / 2)} contro ${Math.floor(n / 2)}` + (n % 2 ? ' e un arbitro' : '') + ', la partita vera', azione: () => { S.nuovoBeerPong(); this.scene.start('BeerPongSquadre'); } }
+        : { label: `(BEER PONG: da ${MO.beerpong.minimo} a ${MO.beerpong.massimo} giocatori)`, azione: () => Audio.sfx('vuoto') },
       ...(n < MO.squadre.minimo ? [{ label: `(da ${MO.squadre.minimo} giocatori: SQUADRE e TORNEO)`, azione: () => Audio.sfx('vuoto') }] : []),
       indietro,
     ];
     else voci = [
       { label: 'SFIDE: completa, rapida, al meglio di...', azione: apri('sfide') },
-      { label: n >= MO.squadre.minimo ? 'PARTY: Lampo, Squadre, Torneo' : 'PARTY: Lampo', azione: apri('party') },
+      { label: n >= MO.squadre.minimo ? 'PARTY: Lampo, Squadre, Torneo, Beer Pong' : 'PARTY: Lampo, Beer Pong', azione: apri('party') },
       { label: 'PARTITA SINGOLA: un microgioco a scelta', azione: () => this.scene.start('Allenamento') },
       { label: `LIVELLI: ${livelliInBreve(G)}`, azione: () => this.scene.start('Livelli') },
       { label: 'Cambia personaggi', azione: () => this.scene.start('Personaggi', { n }) },

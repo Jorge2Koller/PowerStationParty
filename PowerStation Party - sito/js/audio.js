@@ -7,6 +7,10 @@ let contaPassi = 0;   // passi (ottavi) della musica pianificati dall'inizio del
 let busMusica = null, busEffetti = null, uscita = null, volMusica = 0.8, volEffetti = 0.8;
 let traccia = null, timer = null, passo = 0, prossimo = 0, tempo = 1;
 let pour = null;
+// "Provini a X-Fattore": la melodia guida (la dà il microgioco: passo -> { midi, passi } o niente)
+// e le voci continue dei cantanti (una per nome)
+let guida = null;
+const voci = {};
 
 const midi = (n) => 440 * 2 ** ((n - 69) / 12);
 
@@ -90,6 +94,15 @@ const SFX = {
   cai: (t) => { nota(700, t, 0.12, 'square', 0.07, 1100); nota(900, t + 0.12, 0.16, 'square', 0.06, 500); },
   miao: (t) => { nota(560, t, 0.16, 'triangle', 0.09, 880); nota(880, t + 0.16, 0.22, 'triangle', 0.08, 520); },
   ruggito: (t) => { nota(230, t, 0.6, 'sawtooth', 0.12, 95); nota(236, t, 0.6, 'square', 0.05, 100); rumore(t, 0.55, 0.14, 450, 'lowpass'); },
+  // Beer Pong al Pallaio: il singhiozzo, la pallina che gira sul bordo, il rullo di tamburi dell'ultimo bicchiere
+  hic: (t) => { nota(480, t, 0.07, 'square', 0.08, 1150); nota(930, t + 0.09, 0.06, 'triangle', 0.06, 520); },
+  bordo: (t) => { for (let i = 0; i < 9; i++) nota(980 + (i % 2) * 170 - i * 30, t + i * 0.085, 0.07, 'triangle', 0.06); },
+  rullo: (t) => { for (let i = 0; i < 26; i++) rumore(t + i * 0.055, 0.045, 0.05 + i * 0.004, 1700 + i * 35); },
+  stonato: (t) => { nota(392, t, 0.28, 'triangle', 0.07, 372); nota(466, t + 0.28, 0.4, 'triangle', 0.07, 530); },   // i perdenti che cantano
+  // Provini a X-Fattore: il colpo di tamburo dei voti, i fischi del pubblico, l'applauso
+  tamburo: (t) => { nota(150, t, 0.24, 'sine', 0.3, 48); rumore(t, 0.13, 0.2, 500, 'lowpass'); },
+  buu: (t) => { nota(196, t, 0.5, 'sawtooth', 0.055, 118); nota(204, t, 0.5, 'square', 0.03, 122); rumore(t, 0.4, 0.05, 700); },
+  applauso: (t) => { for (let i = 0; i < 8; i++) rumore(t + i * 0.045 + Math.random() * 0.02, 0.05, 0.065, 1400 + Math.random() * 1000); },
   // mani di Guerra
   schiaffo: (t) => { rumore(t, 0.09, 0.32, 3200, 'highpass'); rumore(t, 0.12, 0.2, 900); nota(1400, t, 0.06, 'square', 0.05, 500); },
   tonfo: (t) => { rumore(t, 0.12, 0.22, 300, 'lowpass'); nota(140, t, 0.14, 'triangle', 0.12, 60); },
@@ -217,13 +230,36 @@ const TRACCE = {
            76, 0, 74, 71, 0, 74, 71, 0, 69, 0, 71, 69, 67, 0, 64, 0, 67, 0, 69, 71, 0, 74, 76, 0, 74, 71, 69, 67, 64, 0, 64, 0],
     basso: [40, 40, 43, 45, 40, 40, 45, 47],
   },
+  // la base di "Provini a X-Fattore": batteria e accordi in Fa maggiore (Fa, Do, Re minore, Si
+  // bemolle: una battuta ciascuno). Niente melodia fissa: quella, piano, la dà il microgioco
+  // (Audio.guida), e sopra ci cantano le voci (Audio.voce)
+  provino: {
+    bpm: 120,
+    provino: true,
+    lead: new Array(64).fill(0),
+    basso: [41, 36, 38, 34],
+    accordi: [[53, 57, 60], [52, 55, 60], [53, 57, 62], [53, 58, 62]],
+  },
 };
 
-function suonaPasso(T, i, t) {
+function suonaPasso(T, i, t, conta = 0) {
   const d = 60 / (T.bpm * tempo) / 2;
   const n = T.lead[i];
   if (n) nota(midi(n), t, d * 1.6, 'square', 0.045);
   const fond = T.basso[Math.floor(i / 8) % T.basso.length];
+  if (T.provino) {
+    // basso che cammina, accordo a ogni mezza battuta, cassa sull'1 e sul 3, rullante sul 2 e sul 4
+    const k = i % 8;
+    if (k === 0 || k === 3 || k === 6) nota(midi(fond), t, d * 1.4, 'triangle', 0.13);
+    if (k === 0 || k === 4) for (const m of T.accordi[Math.floor(i / 8) % T.accordi.length]) nota(midi(m), t, d * 3.2, 'triangle', 0.028);
+    if (k % 4 === 0) nota(120, t, 0.11, 'sine', 0.2, 45);
+    if (k % 4 === 2) rumore(t, 0.08, 0.085, 2000);
+    rumore(t, 0.025, k % 2 ? 0.03 : 0.018, 8000, 'highpass');
+    // la melodia giusta, piano, come guida: chi è intonato la copre, chi stona la sente sotto
+    const g = guida?.(conta);
+    if (g) nota(midi(g.midi), t, Math.max(0.1, g.passi * d * 0.92), 'triangle', 0.032);
+    return;
+  }
   if (T.disco) {
     nota(midi(fond - (i % 2 ? 0 : 12)), t, d * 0.9, 'triangle', 0.14);           // basso a ottave
     if (i % 2 === 0) nota(120, t, 0.12, 'sine', 0.22, 45);                       // cassa
@@ -279,7 +315,7 @@ function pianifica() {
   const T = TRACCE[traccia];
   uscita = busMusica;
   while (prossimo < ac.currentTime + 0.15) {
-    suonaPasso(T, passo, prossimo);
+    suonaPasso(T, passo, prossimo, contaPassi);
     prossimo += 60 / (T.bpm * tempo) / 2;
     passo = (passo + 1) % T.lead.length;
     contaPassi++;
@@ -366,6 +402,64 @@ export const Audio = {
     if (master) master.gain.value = muto ? 0 : 0.8;
     window.dispatchEvent(new Event('audio-cambiato')); // per l'icona dell'audio sullo schermo
     return muto;
+  },
+
+  // --- "Provini a X-Fattore" ---
+  // la melodia guida: fn(passo) ritorna { midi, passi } quando in quel passo (ottavo) comincia
+  // una nota, se no niente. null per toglierla.
+  guida(fn) { guida = fn; },
+
+  // Porta la musica in un punto preciso (in passi, anche a metà di un passo): la usa il provino per
+  // tenere la base agganciata alla partita, all'inizio e dopo una pausa.
+  vaiA(pos) {
+    if (!ac || !traccia) return;
+    const T = TRACCE[traccia], n = Math.max(0, Math.ceil(pos)), dur = 60 / (T.bpm * tempo) / 2;
+    passo = n % T.lead.length;
+    contaPassi = n;
+    prossimo = ac.currentTime + 0.03 + (n - pos) * dur;
+  },
+
+  // Una voce continua (un cantante): v = { freq, vol (0..1), vibrato (in cent), vibratoHz, crepa
+  // (0..1: la voce che si incrina, il volume trema), tipo (forma d'onda), taglio (Hz del filtro) }.
+  // Si chiama a ogni fotogramma; con v = null la voce tace.
+  voce(nome, v) {
+    if (!ac) return;
+    let x = voci[nome];
+    const t = ac.currentTime;
+    if (!v) {
+      if (x) { x.g.gain.setTargetAtTime(0, t, 0.02); x.cg.gain.setTargetAtTime(0, t, 0.02); }
+      return;
+    }
+    if (!x) {
+      const o = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain();
+      const lfo = ac.createOscillator(), lg = ac.createGain(), cr = ac.createOscillator(), cg = ac.createGain();
+      o.type = v.tipo ?? 'square';
+      o.frequency.value = v.freq;
+      f.type = 'lowpass'; f.frequency.value = v.taglio ?? 2400;
+      g.gain.value = 0;
+      lfo.frequency.value = 5.5; lg.gain.value = 0; lfo.connect(lg); lg.connect(o.frequency);        // il vibrato
+      cr.type = 'square'; cr.frequency.value = 27; cg.gain.value = 0; cr.connect(cg); cg.connect(g.gain);   // la crepa
+      o.connect(f); f.connect(g); g.connect(busEffetti);
+      o.start(); lfo.start(); cr.start();
+      x = voci[nome] = { o, g, lfo, lg, cr, cg };
+    }
+    const vol = 0.075 * (v.vol ?? 1);
+    x.o.frequency.setTargetAtTime(v.freq, t, 0.012);
+    x.g.gain.setTargetAtTime(vol, t, 0.02);
+    x.lfo.frequency.setTargetAtTime(v.vibratoHz ?? 5.5, t, 0.05);
+    x.lg.gain.setTargetAtTime(v.freq * (v.vibrato ?? 0) * 0.00057779, t, 0.05);   // da cent a Hz
+    x.cg.gain.setTargetAtTime(vol * (v.crepa ?? 0), t, 0.02);
+  },
+
+  // spegne e butta via tutte le voci (fine del microgioco, pausa)
+  vociZitte() {
+    for (const [nome, x] of Object.entries(voci)) {
+      try {
+        if (ac) { x.g.gain.setTargetAtTime(0, ac.currentTime, 0.01); x.cg.gain.setTargetAtTime(0, ac.currentTime, 0.01); }
+        for (const o of [x.o, x.lfo, x.cr]) o.stop(ac.currentTime + 0.08);
+      } catch (e) { /* niente */ }
+      delete voci[nome];
+    }
   },
 
   // Suono continuo della spillatura: il tono sale con il livello

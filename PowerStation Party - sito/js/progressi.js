@@ -86,6 +86,7 @@ function condizione(id, ev) {
     case 'primoAcquisto': return Object.values(sblocchi()).some((v) => Array.isArray(v) && v.length > 0);
     case 'guardaroba': return Object.keys(sblocchi().vestiti).length > 0;
     case 'abitudinario': return (s.serieGiorni ?? 0) >= 3;
+    case 'rePallaio': return Object.values(s.personaggi).some((p) => (p.beerpong?.vittorie ?? 0) >= 5);
     default:
       if (id.startsWith('oro_')) return (G[id.slice(4)]?.medaglia ?? 0) >= 3;
       return false;
@@ -167,6 +168,30 @@ export const Progressi = {
     const trofei = controlla({ sfida: { cappotto } });
     Salvataggio.segna();
     return { pinte, trofei, vincitore };
+  },
+
+  // A fine partita di BEER PONG (la modalità). e = { giocatori: chi ha tirato, vincitori: quelli
+  // della squadra che ha vinto, arbitro: chi faceva l'arbitro (o null), squadra: il nome della
+  // squadra vincente }. Conta come una sfida (albo d'oro, sfide e sfide vinte dei personaggi) e in
+  // più tiene le partite e le vittorie a beer pong di ognuno (personaggi[id].beerpong).
+  dopoBeerPong(e) {
+    const s = st(), tutti = [...e.giocatori, ...(e.arbitro ? [e.arbitro] : [])];
+    s.sfide++;
+    s.maxGiocatori = Math.max(s.maxGiocatori, tutti.length);
+    for (const g of e.giocatori) {
+      const p = personaggio(g.id), vince = e.vincitori.includes(g);
+      if (!p.beerpong) p.beerpong = { partite: 0, vittorie: 0 };
+      p.sfide++; p.beerpong.partite++;
+      if (vince) { p.sfideVinte++; p.beerpong.vittorie++; }
+    }
+    const solo = e.vincitori.length === 1 ? e.vincitori[0] : null;
+    s.albo.unshift({ giorno: Date.now(), tipo: 'beerpong', n: tutti.length, giocatori: tutti.map((g) => g.id), vincitore: solo?.id ?? null, ...(solo ? {} : { squadra: e.squadra }) });
+    if (s.albo.length > ALBO_MAX) s.albo.length = ALBO_MAX;
+    const pinte = CONFIG.bancone.pinte.beerpong ?? 0;
+    guadagna(pinte);
+    const trofei = controlla({ sfida: { cappotto: false } });
+    Salvataggio.segna();
+    return { pinte, trofei };
   },
 
   // la sfida del giorno finita: il migliore del giorno, i giorni di fila, le Pinte (la prima volta)

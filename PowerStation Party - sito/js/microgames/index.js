@@ -15,6 +15,8 @@ import { GuidaScene } from './GuidaScene.js';
 import { PiovraScene } from './PiovraScene.js';
 import { ScapoliScene } from './ScapoliScene.js';
 import { RetromarciaScene } from './RetromarciaScene.js';
+import { BeerpongScene } from './BeerpongScene.js';
+import { XfactorScene } from './XfactorScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -32,4 +34,6 @@ export const MICROGIOCHI = {
   piovra: PiovraScene,
   scapoli: ScapoliScene,
   retromarcia: RetromarciaScene,
+  beerpong: BeerpongScene,
+  xfactor: XfactorScene,
 };

@@ -21,6 +21,9 @@ import guida from './config/microgiochi/guida.js';
 import piovra from './config/microgiochi/piovra.js';
 import scapoli from './config/microgiochi/scapoli.js';
 import retromarcia from './config/microgiochi/retromarcia.js';
+import beerpongMicro from './config/microgiochi/beerpong.js';
+import xfactor from './config/microgiochi/xfactor.js';
+import beerpong from './config/beerpong.js';
 import { sfotto, sfottoTanti, frasiPareggio } from './config/frasi.js';
 import premi from './config/premi.js';
 import novita from './config/novita.js';
@@ -60,6 +63,9 @@ export const CONFIG = {
     { id: 'petri', nome: 'Petri', soprannome: 'Il Piovra', colore: '#8fa8ff', esulta: 'Ci ho messo le mani, tutte!', perde: 'Mi sono impigliato.' },
     { id: 'manna', nome: 'Il Manna', soprannome: 'La Calamita', colore: '#f6c63a', esulta: 'Ovviamente.', perde: 'Era bianca! BIANCA!' },
     { id: 'pastaffi', nome: 'Pastaffi', soprannome: 'Il figlio di Emilio', colore: '#c98a4e', esulta: 'Papà, hai visto?', perde: 'Papà, non guardare.' },
+    // i due cantanti di "Provini a X-Fattore"
+    { id: 'tini', nome: 'Tini', soprannome: 'Social Tedio', colore: '#b6f23c', esulta: 'Questa finisce nel disco.', perde: 'Il pubblico non era pronto.' },
+    { id: 'oli', nome: 'Oli', soprannome: 'Vanz', colore: '#4d7cff', esulta: 'Sold out, ragazzi!', perde: 'Avevo il microfono spento.' },
   ],
 
   // Punti classifica per posizione nel round, da tre giocatori in su (in due si contano i punti dei
@@ -73,10 +79,14 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor'],
 
   // un file per microgioco, nell'ordine della raccolta (vedi js/config/microgiochi/)
-  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia },
+  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor },
+
+  // il beer pong: il tiro, la sbronza, le gag e le reazioni, in comune tra il microgioco qui sopra
+  // e la modalità BEER PONG (js/config/beerpong.js)
+  beerpong,
 
   // frasi di sfottò e di pareggio della classifica finale (js/config/frasi.js)
   sfotto, sfottoTanti, frasiPareggio,

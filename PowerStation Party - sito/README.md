@@ -5,7 +5,7 @@ giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
 sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
 e vince il round chi fa più punti.
 
-I microgiochi sono quindici:
+I microgiochi sono diciassette:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -24,6 +24,11 @@ I microgiochi sono quindici:
 | `piovra` | Petri Tentacolari | il Petri ("il Piovra") |
 | `scapoli` | L'Incubo degli Scapoli | il Manna |
 | `retromarcia` | Emilio in Retromarcia | Emilio (con Pastaffi e gli Shar Pei) |
+| `beerpong` | Beer Pong al Pallaio | i veterani del Pallaio (lo Zio e Marsupino) |
+| `xfactor` | Provini a X-Fattore | i cantanti, Tini e Oli |
+
+Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
+"Modalità" e "Beer pong" qui sotto.
 
 Si gioca su computer (tastiera, mouse, trackpad) e sul telefono (iPhone e Android,
 in orizzontale, col dito): vedi "Dal telefono" qui sotto.
@@ -188,7 +193,7 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
    sul giocatore nella fila in basso) toglie l'ultima scelta.
 3. **La modalità**, in gruppi:
    - **SFIDE**
-     - **Sfida completa**: tutti e 15 i microgiochi, nell'ordine di `ordineSfida`.
+     - **Sfida completa**: tutti e 16 i microgiochi, nell'ordine di `ordineSfida`.
      - **Sfida rapida** da 3, 5 o 8 microgiochi pescati a caso (`sfidaRapida`).
      - **Al meglio di 3** o **di 5** (`alMeglioDi`): microgiochi pescati a caso, vince
        chi per primo vince 2 round (o 3). Se i microgiochi finissero prima, decide la
@@ -204,6 +209,8 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
        una sfida a due su un microgioco a caso; chi fa più punti passa (pari: si rigioca
        con un altro microgioco). Se non si è 4 o 8, al primo turno qualcuno passa senza
        giocare. Dopo ogni partita si vede il tabellone.
+     - **Beer Pong** (da 2 a 6 giocatori, gratis): la partita vera al tavolo del Pallaio, a tiri
+       alternati, ROSSI contro BLU (vedi "Beer pong" qui sotto).
    - **Partita singola**: un solo microgioco, scelto dalla lista (su due colonne:
      SU/GIÙ scorrono la prima e poi la seconda).
    - **Livelli**: il livello di ogni giocatore (vedi "Livelli" qui sotto).
@@ -218,7 +225,7 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
      il punteggio migliore del giorno; la prima volta valgono 5 Pinte, e si contano i giorni
      di fila.
 
-   Numeri e regole di Lampo, Da solo, Squadre, Torneo e Sfida del giorno sono in
+   Numeri e regole di Lampo, Da solo, Squadre, Torneo, Sfida del giorno e Beer Pong sono in
    `js/config/modalita.js`.
 
 Il gioco ricorda i personaggi dell'ultima partita (nel salvataggio, vedi sotto): la volta
@@ -298,7 +305,8 @@ Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più 
 ### Pinte, Bancone, Profilo e trofei
 
 - **Pinte**: si guadagnano giocando (1 per un bronzo, 2 per un argento, 3 per un oro; a fine
-  sfida 3 più una per ogni round; 5 per ogni trofeo; 5 per la prima sfida del giorno) e si vedono in alto a sinistra nel menu.
+  sfida 3 più una per ogni round; 5 per ogni trofeo; 5 per la prima sfida del giorno; 4 per una
+  partita di beer pong) e si vedono in alto a sinistra nel menu.
   Sono una per telefono o computer, non per giocatore. Le quantità sono in
   `js/config/bancone.js`.
 - **BANCONE** (dal menu): Beppe vende con le Pinte
@@ -308,11 +316,11 @@ Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più 
   - **temi**: il disegno dello sfondo delle schermate (raggi, pois, scacchi, strisce, cielo
     stellato), sempre coi colori di ogni schermata;
   - **frasi**: pacchetti di sfottò in più per la classifica finale;
-  - **modalità**: Lampo e Da solo (Squadre, Torneo e Sfida del giorno sono gratis).
+  - **modalità**: Lampo e Da solo (Squadre, Torneo, Beer Pong e Sfida del giorno sono gratis).
   I personaggi giocabili sono tutti disponibili da subito: non si comprano.
 - **PROFILO** (dal menu), quattro schede: i **personaggi** (microgiochi giocati, sfide e round
-  vinti, medaglie, e la medaglia migliore in ogni microgioco), i **trofei** (37: ventidue
-  generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
+  vinti, medaglie, le partite vinte a beer pong, e la medaglia migliore in ogni microgioco), i
+  **trofei** (40: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
   (punteggio, chi e quando) e l'**albo d'oro** delle ultime sfide (chi ha vinto).
 - Dopo ogni turno: le Pinte guadagnate accanto alla medaglia e, se è il caso, NUOVO RECORD!;
   i trofei appena presi scendono dall'alto. Tutto sta nel salvataggio (e quindi si esporta e
@@ -372,7 +380,65 @@ compare il timbro "CONTRO SE STESSO!" e, dove il giocatore si vede in scena, ent
 il suo **doppione**: lo stesso personaggio travestito con occhiali finti, nasone e
 baffi, così i due non si confondono. Il microgioco non cambia di una virgola.
 Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
-microgioco (Pastaffi in "Emilio in Retromarcia").
+microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Fattore").
+
+### Beer pong
+
+Il beer pong c'è in due forme, che usano lo stesso motore (`js/beerpong/`), così non divergono:
+il **microgioco** "Beer Pong al Pallaio" (contro i veterani, come gli altri) e la
+**modalità** BEER PONG del gruppo PARTY (la partita vera tra di voi).
+
+**Il tiro.** Si guarda il tavolo da dietro le spalle di chi tira: i propri bicchieri davanti, quelli
+avversari in fondo, a triangolo. Col mouse si preme, si tira indietro e si lascia (come una
+fionda); col dito si dà una fiondata verso i bicchieri. Il verso del gesto è la mira, la lunghezza
+la forza; mentre si mira si vede solo il primo tratto della traiettoria, tratteggiato. Da tastiera:
+FRECCE per mirare, SPAZIO tenuto per la forza (sale e scende), al rilascio parte. La pallina può
+entrare (SPLASH), rimbalzare sul tavolo e poi entrare (RIMBALZO!, vale doppio), girare sul bordo e
+uscire, fermarsi contro la rete o uscire dal tavolo.
+
+**La sbronza.** Ogni bicchiere che ti centrano lo bevi, e si sale di livello: LUCIDO, ALLEGRO
+(guance rosse, e ogni tanto un HIC! che fa sobbalzare la mira), BRILLO (la mira oscilla piano e
+ogni tanto la vista si sdoppia), SBRONZO (tutta la visuale ondeggia come una barca, i bicchieri si
+vedono doppi: quello vero sta fermo, il fantasma gira piano ed è un po' più trasparente; fumetti con
+le parole storpiate). L'ondeggiamento dello schermo c'è solo se nelle Impostazioni "Schermo che
+trema" è acceso. Per lasciare possibile la rimonta c'è la **fortuna dell'ubriaco**: più si è
+bevuto, più il bordo perdona. Soglie, forza degli effetti e fortuna sono in `sbronza`, in
+`js/config/beerpong.js`.
+
+**Le gag.** Quando la pallina esce dal tavolo, ogni tanto parte una gag a caso: colpisce in fronte
+uno che guarda, finisce nel bicchiere di chi beveva in disparte, fa dondolare la lampadina, se la
+prende al volo Morgan (ed Emilio lo insegue), vola fuori dalla finestra ("AHIA!"). L'elenco è
+`gag.lista` in `js/config/beerpong.js` (quanto spesso, con che frasi); per aggiungerne una: una riga
+lì e la sua funzione, con lo stesso `id`, in `js/beerpong/gag.js`.
+
+**Le reazioni.** A ogni centro chi tira esulta con la sua frase e il pubblico fa il tifo; con due
+centri di fila si va IN FIAMME! (solo un effetto); l'ultimo bicchiere arriva al rallentatore, con lo
+zoom sulla pallina e il rullo di tamburi.
+
+**La modalità** (da 2 a 6 giocatori, gratis: GIOCA, poi PARTY, poi BEER PONG):
+- 2 giocatori = 1 contro 1, 4 = 2 contro 2, 6 = 3 contro 3; con 3 o 5 l'ultimo scelto fa
+  l'**arbitro** (sta a bordo tavolo e commenta). Squadre ROSSI e BLU in ordine di scelta, come in
+  Squadre; prima di cominciare c'è la schermata delle squadre.
+- 6 bicchieri a testa nell'1 contro 1, 10 a squadra negli altri.
+- Si tira a turno, alternando le squadre e, dentro una squadra, i giocatori. Prima di ogni tiro
+  "TOCCA A [NOME]!": la visuale passa dietro di lui e si parte quando prende i comandi (SPAZIO, un
+  clic o un tocco). Ognuno tira al suo livello (FACILE, NORMALE, DIFFICILE: l'handicap).
+- Di rimbalzo vale doppio: se ne va anche il bicchiere più vicino.
+- Vince chi toglie per primo tutti i bicchieri avversari. C'è un tempo massimo (4 minuti di gioco:
+  il passaggio di mano non conta): allo scadere si finisce il giro e vince chi ha più bicchieri in
+  piedi; se sono pari, un tiro a testa a oltranza.
+- La sbronza vale per tutta la squadra che perde il bicchiere.
+- Alla fine i vincitori fanno il giro del tavolo coi coriandoli e il bicchiere alzato; i perdenti,
+  se sono SBRONZI, dormono con la faccia sul tavolo sotto una giacca, se no cantano stonati
+  abbracciati all'arbitro. Poi la frase di sfottò e Rivincita, Cambia personaggi, Menu.
+- Nel salvataggio conta come le altre: Pinte (`pinte.beerpong` in `js/config/bancone.js`), albo
+  d'oro, sfide e vittorie dei personaggi (nel Profilo c'è anche la riga "Beer pong"), e il trofeo
+  "Re del Pallaio" (5 vittorie con lo stesso personaggio).
+
+Dove si cambiano i numeri: il tiro, la sbronza, le gag e le reazioni in `js/config/beerpong.js`
+(valgono per tutte e due le forme); i veterani, i punti e le medaglie del microgioco in
+`js/config/microgiochi/beerpong.js`; squadre, bicchieri, tempo, frasi dell'arbitro e di sfottò della
+modalità nel blocco `beerpong` di `js/config/modalita.js`.
 
 ## Comandi
 
@@ -544,6 +610,41 @@ microgioco (Pastaffi in "Emilio in Retromarcia").
     del collare, personalità (`pigro`, `pallina`, `goloso`), taglia, macchia. Si possono
     rinominare, togliere o aggiungere; chi non ha il nome si chiama da solo Morgan, col
     numero romano che gli tocca (Morgan IV, Morgan V...)
+- Beer Pong al Pallaio (TIRA!: contro i veterani, lo Zio e Marsupino):
+  - mouse: premi, tira indietro come una fionda e lascia; dito: una fiondata verso i bicchieri.
+    Il verso del gesto è la mira, la lunghezza la forza (il rilascio vale anche fuori dal gioco)
+  - tastiera: FRECCE SINISTRA/DESTRA per mirare, SPAZIO tenuto per la forza (sale e scende),
+    rilascia per tirare
+  - si può mirare mentre la pallina di prima è ancora per aria: si tira appena torna in mano
+  - centra i 10 bicchieri dei veterani (finiti quelli ne rimettono 6, con un bonus); di rimbalzo
+    vale doppio. Intanto loro tirano ai tuoi 6: ogni bicchiere che ti centrano lo bevi e la
+    sbronza sale (vedi "Beer pong" più su). Senza più bicchieri, finisce prima
+  - anche i veterani bevono quelli che gli centri: più bevono, meno centrano
+  - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
+    ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
+- Provini a X-Fattore (INTONA!: sei alla pianola e dai la nota ai cantanti, Tini e Oli):
+  - la melodia scorre sul pentagramma da destra verso sinistra, colorata come chi la canta; il
+    tuo cursore sta fermo a sinistra e si sposta solo su e giù, tra 7 note
+  - tastiera: SU / GIÙ (o W / S), una nota a colpo; tenendo premuto si scorre
+  - mouse: il cursore va all'altezza del puntatore, agganciandosi alla nota più vicina
+  - dito: trascina su e giù nella metà destra dello schermo, sotto i pulsanti (conta di quanto
+    ti sposti, non dove tocchi, così il dito non copre le note)
+  - i cantanti cantano la nota dove sta il cursore: giusta, voce piena e un po' di vibrato;
+    sbagliata, calante e incrinata; a metà strada, un glissando. Si gioca anche senza audio: la
+    nota tenuta bene si accende, quella sbagliata diventa rossa
+  - le note con la stella valgono doppio, se le tieni dall'inizio alla fine senza stonare; ogni
+    3 secondi intonati di fila il moltiplicatore sale di 0,5 (fino a x3), e alla prima stonatura
+    torna a x1
+  - tre atti: LA STROFA (note lunghe, a turno); dal 12° secondo IL RITORNELLO (più corte, salti
+    più grandi, i due si alternano più in fretta); dal 24° L'ACUTO!, e negli ultimi secondi la
+    nota più alta da tenere fino in fondo, coi suoi tremoli da seguire
+  - alla fine votano i quattro giudici (inventati), ognuno con la sua soglia di intonazione: con
+    almeno 3 SÌ si passa. Il verdetto si salta con un tocco o con INVIO. Le lucine sul loro
+    tavolo dicono già durante la canzone come la stanno pensando
+  - la melodia esce dal seme del round: è la stessa per tutti i giocatori
+  - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `tolleranza`,
+    `grazia` e `graziaSalto` (quanto tempo c'è per arrivare sulla nota nuova), `calamita`,
+    `scorrimento`, `atti` (durata delle note, salti, stelle) e le `soglia` dei `giudici`
 - ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -595,6 +696,18 @@ brevemente il telefono.
   istante; se Emilio esce dal cancello, +40 e +20 per ogni vita rimasta (sono 3). Vittoria
   se la macchina esce dal cancello prima che scada il tempo con almeno una vita; al terzo
   spavento finisce prima.
+- **Beer Pong al Pallaio** (35 s): +10 per ogni bicchiere centrato, +20 se di rimbalzo, +5 in più
+  quando si è IN FIAMME (dal secondo centro di fila), +25 per ogni triangolo finito, e alla fine
+  +5 per ogni bicchiere tuo ancora in piedi. Vittoria se hai tolto più bicchieri di quanti te ne
+  hanno tolti; se li perdi tutti, finisce prima.
+- **Provini a X-Fattore** (35 s): 10 punti per ogni secondo intonato (si contano anche le
+  frazioni), per il moltiplicatore della serie (+0,5 ogni 3 secondi di fila intonati, fino a x3;
+  alla prima stonatura torna a x1); le note con la stella valgono doppio se tenute senza
+  stonare; +40 per l'acuto finale tenuto fino in fondo; +50 per ogni SÌ dei giudici. Ogni giudice
+  dice SÌ se sei stato intonato almeno per la sua soglia (la percentuale del tempo cantato: 30%
+  il Commosso, 45% la Diva, 55% MC Catena, 78% il Produttore). Vittoria con almeno 3 SÌ su 4:
+  chi passa prende almeno l'argento. In Lampo (15 secondi) l'acuto non c'è e le soglie, che sono
+  percentuali, restano quelle.
 - **Sego** (35 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
   Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
   per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
@@ -615,6 +728,13 @@ giocatori automatici (`test/bot.py`, per tarare le medaglie) e alla prova delle 
 (`test/prestazioni.py`, con la CPU rallentata come un telefono). Le prove da fare a mano sono
 in `note/test-manuali.md`.
 La cartella `test/` non fa parte del gioco: non va caricata sul sito.
+(Il beer pong, microgioco e modalità, è arrivato dopo e in quelle prove non c'è ancora: va
+aggiunto alle prove di ogni microgioco, a quelle delle modalità e ai giocatori automatici di
+`test/bot.py`. Per chi li scrive: il tiro si può dare anche dal codice, `scena.T.tira(m, p)`, e
+`gestoPer(x, y, tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere.
+Lo stesso vale per "Provini a X-Fattore" e per i due personaggi nuovi, Tini e Oli. Per chi scrive
+il suo giocatore automatico: la melodia è in `scena.note` (`da` e `a` in ottavi, `pos` da 0 a 6),
+il tempo in `scena.pos`, e il cursore si sposta con `scena.diUnaNota(+1 o -1)`.)
 
 ## Struttura
 
@@ -639,7 +759,14 @@ js/
   config/novita.js       la schermata Novità: versione e voci
   config/trofei.js       nomi e descrizioni dei trofei
   config/bancone.js      Pinte (quante se ne guadagnano) e cosa vende il Bancone
-  config/modalita.js     Lampo, Da solo, Squadre, Torneo, Sfida del giorno
+  config/modalita.js     Lampo, Da solo, Squadre, Torneo, Sfida del giorno, Beer Pong
+  config/beerpong.js     il beer pong: tiro, sbronza, gag, reazioni (per il microgioco e per
+                         la modalità)
+  beerpong/              il motore del beer pong, in comune tra microgioco e modalità
+    motore.js            prospettiva del tavolo, triangoli, volo della pallina, esiti
+    tavolo.js            il tavolo in scena: gesto e mira, pallina, sbronza, reazioni
+    gag.js               le gag dei tiri sbagliati
+    partita.js           le regole della modalità: squadre, turni, tempo, oltranza
   salvataggio.js         tutto quello che il gioco ricorda (impostazioni, registro dei
                          punteggi...): versione, esporta/importa come codice, azzera
   punteggi.js            medaglie e punti sfida (punteggio da 0 a 100 per microgioco)
@@ -654,7 +781,8 @@ js/
   vendor/phaser.min.js   Phaser 3.80.1
   sessione.js            stato della partita per N giocatori: chi gioca, turni, record,
                          classifica del round e generale, "contro se stesso"
-  audio.js               effetti 8-bit e musica (Web Audio API)
+  audio.js               effetti 8-bit e musica (Web Audio API); per il provino anche la
+                         melodia guida e le voci continue dei cantanti (guida, vaiA, voce)
   sprites.js             crea tutte le texture all'avvio; preparaGiocatore (calci e
                          doppione di chi sta per giocare), ritratto (la testa di un
                          personaggio, per selezione e classifiche)
@@ -662,8 +790,9 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i diciassette personaggi (con Emilio e Pastaffi), le ragazze delle
-                         due discoteche e il buttafuori: tratti, espressioni, vestiti
+    personaggi.js        i diciannove personaggi (con Emilio, Pastaffi e i cantanti Tini e
+                         Oli), le ragazze delle due discoteche, il buttafuori e i quattro
+                         giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
                          c'è pelle, la spiaggia col telo, sole, tubetto, mano,
@@ -687,6 +816,12 @@ js/
                          la moto e il cancello; la station wagon di Emilio, gli Shar
                          Pei (uno per ogni voce dell'array `cani`), il gatto,
                          biscotti e palline, le icone
+    pallaio.js           il Pallaio visto da dietro le spalle di chi tira, il tavolo da
+                         ping pong in prospettiva, la rete, i bicchieri di plastica pieni
+                         di birra, la pallina, la mano, la lampadina, la giacca
+    provino.js           il palco del talent (inventato) di "Provini a X-Fattore": la grande
+                         X luminosa, i fari, il tavolo dei giudici, il pubblico con gli
+                         accendini, la pianola, la chiave di violino e la nota del cursore
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
@@ -703,6 +838,7 @@ js/
   scenes/modalita.js     la fine della partita Da solo
   scenes/torneo.js       il tabellone del Torneo, la fine della Sfida del giorno, le
                          classifiche a Squadre
+  scenes/beerpong.js     la modalità BEER PONG: le squadre, la partita, la fine
   scenes/flusso.js       introduzione ("TOCCA A...!", prova lampo), risultato del turno
                          con la medaglia, classifica del round e generale, premi buffi,
                          finale (a due, oppure il podio)
@@ -713,7 +849,7 @@ js/
     PaninoScene.js  ManiScene.js  SegoScene.js
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
-    RetromarciaScene.js
+    RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -732,7 +868,8 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `lunghiBagnati` (lo Zio); per le ragazze della disco `lunghi`, `caschetto`, `ricciLunghi`,
   `coda`, `chignon`; con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota);
   `mossi` (il Manna: corti e spettinati, con le ciocche sulla fronte); `taglio` (le ragazze
-  del Manna, con `taglio`: `lisci`, `ricci`, `caschetto`, `coda`, `chignon`)
+  del Manna, con `taglio`: `lisci`, `ricci`, `caschetto`, `coda`, `chignon`); `rasta` (Tini: i
+  rasta lunghi sulle spalle) e `ricciLunghetti` (Oli: ricci scuri fino al collo)
 - `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
   naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
@@ -750,6 +887,11 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `baffi` (barba e baffi di un colore diverso dai capelli), `stivali: true`,
   `catenaPortafoglio: colore`, `septum: colore` (l'anellino sotto il naso); la `statura`
   di Emilio è 0.72: è il più basso di tutti
+- dei cantanti: `cappello: { tipo: 'berretto', colore, stemma }` (Tini: il berretto con la
+  visiera di traverso e una stella inventata), `collana: colore`, e nel `vestito`: `stampa:
+  'fulmine'` (con `stampaColore`) sulla maglietta, `collo: 'v'` e `spalle: colore` (le maniche
+  di un altro colore: Oli), `tartan: colore` (i quadri sui pantaloni), `strappi: true` (i
+  jeans strappati al ginocchio)
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -787,7 +929,17 @@ le figure del Manna (`manna_balla1`, `manna_balla2`, `manna_colpo`, `manna_occhi
 `buttafuori`, `buttafuori_chiede`; per "Emilio in Retromarcia" `emilio_disperato` (le mani
 nella bandana), `pastaffi_corre` e `pastaffi_porta`, e i cani `cane0_a`, `cane0_b` (i due
 passi), `cane0_giu` (sdraiato), `cane0_felice` (lingua fuori) e così via per ogni cane,
-disegnati in `js/grafica/vialetto.js`.
+disegnati in `js/grafica/vialetto.js`; per il beer pong, create al momento per chi gioca, per gli
+avversari e per il pubblico (`preparaBevitore` in `js/sprites.js`), le facce della sbronza che
+sale `id_allegro`, `id_brillo`, `id_sbronzo` (guance rosse con `gote`, naso rosso con `nasoRosso`,
+da 0 a 1; palpebre a mezz'asta e occhi incrociati con `palpebra` e `sguardo`), quelle del finale
+`id_dorme` e `id_canta`, e la mano con la pallina `manoPong_<id>` (del colore della sua pelle);
+per "Provini a X-Fattore" le pose sul palco di Tini e Oli, col microfono in mano (`tini_palco`,
+`tini_canta` a bocca aperta, `tini_gasato`, `tini_stona` sconvolto, `tini_male`, `tini_acuto`
+con le braccia al cielo, `tini_indica` col dito puntato, e lo stesso per `oli_`), e i quattro
+giudici inventati `giudice0_normale` ... `giudice3_normale` (anche `_felice`, `_orecchie` con le
+mani sulle orecchie e `_no`): sono in `GIUDICI`, in fondo a `js/grafica/personaggi.js`. Le pose
+nuove (`microfono`, `tiIndico`, `orecchie`) e l'espressione `canta` si possono dare a chiunque.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
 `bgDisco` (vista dall'alto) e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo
@@ -798,15 +950,15 @@ disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno r
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`, `scapoli`, `retromarcia`) apre subito quel microgioco, in allenamento, col
-primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per esempio
-`index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
+`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`) apre subito quel microgioco, in
+allenamento, col primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per
+esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
 "contro se stesso").
 
 ## Aggiungere un personaggio giocabile
 
 I personaggi che si possono scegliere sono quelli dell'elenco `personaggiGiocabili` in
-`js/config.js` (oggi tredici). Per renderne giocabile uno che c'è già tra i
+`js/config.js` (oggi quindici). Per renderne giocabile uno che c'è già tra i
 `PERSONAGGI` di `js/grafica/personaggi.js` basta **una riga**:
 
 ```js
@@ -829,9 +981,9 @@ Per un personaggio del tutto nuovo, prima lo si disegna: una voce in `PERSONAGGI
 coi parametri descritti qui sopra (le cinque espressioni si creano da sole
 all'avvio), poi la riga in `personaggiGiocabili`.
 
-La griglia ha cinque colonne e posto per tre righe (quattordici personaggi più "A
-CASO"): se ne servono di più va rimpicciolita la cella (`CELLA` in
-`js/scenes/partita.js`). Ognuno ha un personaggio diverso, quindi non si può essere
+La griglia ha sei colonne e posto per tre righe (diciassette personaggi più "A
+CASO"): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
+`js/scenes/partita.js`). Al Bancone la fila dei personaggi si stringe da sola. Ognuno ha un personaggio diverso, quindi non si può essere
 più dei personaggi giocabili: `maxGiocatori` va tenuto entro quel numero.
 
 ## Aggiungere un microgioco

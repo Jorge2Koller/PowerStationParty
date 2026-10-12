@@ -2,16 +2,16 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.10',
+  versione: '2026.10-xfattore',
   titolo: 'NOVITÀ',
   voci: [
-    'Tutti i 15 microgiochi rifatti: 35 secondi, 3 righe di comandi e tre atti',
-    'L\'Incubo degli Scapoli ora è una sfida di ballo a ritmo!',
-    'Medaglie, Pinte, trofei e il PROFILO con record e albo d\'oro',
-    'Il BANCONE: costumi per i personaggi, temi, frasi e modalità',
-    'Livelli FACILE, NORMALE, DIFFICILE: ognuno sceglie il suo',
-    'Nuove modalità: Lampo, Squadre, Torneo, Da solo e Sfida del giorno',
-    'In due: la classifica dopo ogni microgioco',
-    'Prova lampo, premi buffi a fine sfida e la schermata Impostazioni',
+    'PROVINI A X-FATTORE: il diciassettesimo microgioco, a tempo di musica',
+    'Sposti la nota sul pentagramma: i cantanti cantano quella che dai tu',
+    'Nota giusta, voce piena; nota sbagliata... si sente, eccome',
+    'Tre atti: LA STROFA, IL RITORNELLO e L\'ACUTO da tenere fino in fondo',
+    'Alla fine votano i quattro giudici: con 3 SÌ sei ai Bootcamp',
+    'Due personaggi nuovi, i cantanti: TINI (Social Tedio) e OLI (Vanz)',
+    'La griglia dei personaggi ora ha sei colonne: ci stanno tutti',
+    'E sempre: beer pong, medaglie, Pinte, Bancone, livelli, Lampo, Torneo',
   ],
 };

@@ -9,6 +9,7 @@ export default {
     sfida: 3,                                      // a fine sfida...
     round: 1,                                      // ...più una per ogni round giocato
     giorno: 5,                                     // la prima sfida del giorno finita, ogni giorno
+    beerpong: 4,                                   // una partita di BEER PONG (la modalità) finita
   },
   // costumi: si comprano una volta e si mettono a qualunque personaggio giocabile (uno a testa).
   // "aspetto" sono le proprietà del disegno del personaggio (js/grafica/personaggi.js) che cambiano

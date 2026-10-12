@@ -178,13 +178,14 @@ export class BanconeScene extends Phaser.Scene {
 
   disegnaFila() {
     for (const o of this.oggettiFila ?? []) o.destroy();
-    const G = CONFIG.personaggiGiocabili, costume = this.voci[this.sel].id, y = 188, passo = 25, x0 = X_LISTA - ((G.length - 1) * passo) / 2;
+    // (con tanti personaggi la fila si stringe, per restare dentro al riquadro)
+    const G = CONFIG.personaggiGiocabili, costume = this.voci[this.sel].id, y = 188, passo = Math.min(25, 322 / Math.max(1, G.length - 1)), x0 = X_LISTA - ((G.length - 1) * passo) / 2;
     const fondo = pannello(this, X_LISTA, y, 352, 40, { alfa: 0.9, raggio: 10, colore: 0x3a2050 });
     this.oggettiFila = [fondo];
     G.forEach((g, i) => {
       const x = x0 + i * passo, su = i === this.fila, indossa = Progressi.costume(g.id) === costume;
       if (su) { const h = this.add.graphics(); h.lineStyle(1.6, 0xffe14a, 1).strokeRoundedRect(x - 12, y - 16, 24, 30, 5); this.oggettiFila.push(h); }
-      const r = ritratto(this, x, y - 2, g.id, 22).setAlpha(indossa || su ? 1 : 0.75);
+      const r = ritratto(this, x, y - 2, g.id, Math.min(22, passo - 2)).setAlpha(indossa || su ? 1 : 0.75);
       const zona = this.add.rectangle(x, y, passo, 34, 0xffffff, 0.001).setInteractive({ useHandCursor: true })
         .on('pointerdown', (_p, _x, _y, ev) => { ev?.stopPropagation(); this.fila = i; this.indossa(); });
       this.oggettiFila.push(r, zona);

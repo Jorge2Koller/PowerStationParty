@@ -113,6 +113,9 @@ export const Sessione = {
     this.giorno = giorno;
   },
   nuovoLampo() { this.avvia('sfida', 'lampo', mescola([...CONFIG.ordineSfida]).slice(0, CONFIG.modalita.lampo.microgiochi)); },
+  // Beer pong: la partita vera a tiri alternati. Non usa i microgiochi: lo stato della partita è
+  // in js/beerpong/partita.js, le schermate in js/scenes/beerpong.js
+  nuovoBeerPong() { this.avvia('beerpong', 'beerpong', []); },
   // Da solo: microgiochi a caso, l'ultimo è il boss
   nuovoSolitario(giocatore = 0) { this.avvia('solitario', 'solitario', mescola([...CONFIG.ordineSfida]).slice(0, CONFIG.modalita.solitario.microgiochi + 1), Math.min(giocatore, this.n - 1)); },
   // stessi giocatori e stessa modalità (i microgiochi a caso si ripescano)
@@ -121,6 +124,7 @@ export const Sessione = {
     if (!u) return this.nuovaSfida();
     if (u.tipo === 'rapida') this.nuovaSfidaRapida(u.lista.length);
     else if (u.tipo === 'lampo') this.nuovoLampo();
+    else if (u.tipo === 'beerpong') this.nuovoBeerPong();
     else if (u.tipo === 'squadre') this.nuoveSquadre();
     else if (u.tipo === 'torneo') this.nuovoTorneo();
     else if (u.tipo === 'giorno') this.nuovaSfidaDelGiorno(u.solo);
