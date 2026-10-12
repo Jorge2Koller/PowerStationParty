@@ -15,11 +15,14 @@
 //  pausa con ESC (sul telefono: pulsanti pausa e audio in alto a destra), musica che
 //  accelera, passaggio alla schermata dei risultati.
 //  Per chiudere in anticipo il microgioco basta chiamare this.termina().
+//  Prova lampo (Sessione.prova): dura CONFIG.provaLampo secondi, non conta e torna all'Intro.
 //  Le coordinate sono in unità logiche: lo schermo è 480x270.
 // ============================================================
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
+import { Salvataggio } from '../salvataggio.js';
+import { livellato } from '../livelli.js';
 import { preparaGiocatore } from '../sprites.js';
 import { txt, scritta, inquadra, eTouch, pulsante } from '../fx.js';
 
@@ -29,7 +32,8 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.id = id;
   }
 
-  get cfg() { return CONFIG.microgiochi[this.id]; }
+  // la configurazione al livello di chi gioca (FACILE, NORMALE, DIFFICILE: js/livelli.js)
+  get cfg() { return this._cfg ?? CONFIG.microgiochi[this.id]; }
   get progresso() { return Phaser.Math.Clamp(this.trascorso / this.durata, 0, 1); }
   get tempoRimasto() { return Math.max(0, this.durata - this.trascorso); }
 
@@ -37,8 +41,12 @@ export class MicrogiocoBase extends Phaser.Scene {
     // Chi gioca, com'è dentro il microgioco: this.giocatore.id è il nome dei suoi sprite
     // (id_normale, id_felice...). Se gioca contro se stesso è il doppione travestito.
     this.giocatore = Sessione.inScena;
+    this.livello = Sessione.livello;
+    this._cfg = livellato(CONFIG.microgiochi[this.id], this.livello);
     preparaGiocatore(this, Sessione.giocatore.id, Sessione.controSeStesso);
-    this.durata = this.cfg.durata;
+    this.prova = !!Sessione.prova;
+    Sessione.prova = false;   // (vale per questa partita sola)
+    this.durata = this.prova ? CONFIG.provaLampo : Sessione.tipo === 'lampo' ? CONFIG.modalita.lampo.durata : this.cfg.durata;
     this.oraVera = 0;
     this.trascorso = 0;
     this.inCorso = false;
@@ -58,6 +66,7 @@ export class MicrogiocoBase extends Phaser.Scene {
     Audio.musica(this.cfg.musica ?? 'gioco');   // (Petri Tentacolari ha la sua musica da disco)
     this.cameras.main.fadeIn(150);
     this.inCorso = true;
+    if (this.prova) scritta(this, 240, 135, 'PROVA LAMPO!\nNON CONTA', { size: 20, color: '#ff9ac4', durata: 1300 });
   }
 
   creaHud() {
@@ -78,7 +87,7 @@ export class MicrogiocoBase extends Phaser.Scene {
     const r = this.tempoRimasto, g = this.barra, w = 468 * (r / this.durata);
     g.clear();
     g.fillStyle(0x1f1430, 0.9); g.fillRoundedRect(4, 3, 472, 9, 4.5);
-    g.fillStyle(r < 10 ? 0xf87171 : r < 20 ? 0xfacc15 : 0x4ade80);
+    g.fillStyle(this.prova ? 0xff9ac4 : r < 10 ? 0xf87171 : r < 20 ? 0xfacc15 : 0x4ade80);
     if (w > 1) g.fillRoundedRect(6, 5, w, 5, Math.min(2.5, w / 2));
     this.testoTempo.setText(Math.ceil(r) + 's');
   }
@@ -92,7 +101,8 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.trascorso += dt;
     this.aggiorna(dt, this.progresso);
     this.disegnaBarra();
-    Audio.tempo(1 + this.progresso * 0.3);
+    // la musica accelera verso la fine; un microgioco a ritmo può deciderlo lui (tempoMusica)
+    Audio.tempo(this.tempoMusica ? this.tempoMusica() : 1 + this.progresso * 0.3);
     if (this.trascorso >= this.durata) this.termina();
   }
 
@@ -109,6 +119,13 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.inCorso = false;
     this.pulsanti?.forEach((b) => b.setVisible(false));
     Audio.versaFine();
+    if (this.prova) {
+      // fine della prova: niente risultato, si torna all'Intro per la partita vera
+      Audio.sfx('tempo');
+      scritta(this, 240, 120, 'FINE PROVA!', { size: 28, durata: 900, color: '#ff9ac4' });
+      this.time.delayedCall(1100, () => this.scene.start('Intro'));
+      return;
+    }
     const ris = this.risultato();
     const fatto = () => this.scene.start('Risultato', { risultato: ris });
     if (this.finale) this.finale(ris, fatto);

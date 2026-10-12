@@ -1,13 +1,17 @@
-// Microgioco 5: "Guerra, via quelle mani!" - difendi i tuoi piatti a suon di schiaffi.
+// Microgioco 5: "Guerra, via quelle mani!" - difendi i tuoi piatti a suon di schiaffi. SCIAF!
 //
 //  Le mani di Guerra (con braccia che si allungano) partono da lui, da sotto la
 //  tovaglia e dai lati verso i piatti. Clic/tocco sulla mano = schiaffo: si ritira.
 //  Se una mano arriva al piatto lo trascina via piano: colpiscila per salvarlo.
 //  Finte: la mano si ferma e torna indietro. Guanto da forno: due schiaffi.
 //  Schiaffo a vuoto: la tua mano resta dolorante per un attimo (niente clic a caso).
+//  Con la tastiera: i tasti da 1 a 5 danno lo schiaffo alla mano che punta quel piatto.
+//  Le mani arrivano uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch } from '../fx.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
+import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch, eTouch } from '../fx.js';
 
 const PIATTI = [
   { cibo: 'spaghetti', x: 84, y: 214 },
@@ -33,6 +37,8 @@ export class ManiScene extends MicrogiocoBase {
   constructor() { super('mani'); }
 
   prepara() {
+    this.rnd = casuale(Sessione.seme);
+    this.nFase = 0;
     this.punti = 0;
     this.schiaffi = 0;
     this.rubati = [];
@@ -41,6 +47,7 @@ export class ManiScene extends MicrogiocoBase {
     this.tFrase = 3;
     this.tEspr = 0;
     this.bloccata = 0;
+    this.tTasto = 0;
     this.hud = null;   // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
     this.dopo = null;
 
@@ -61,6 +68,12 @@ export class ManiScene extends MicrogiocoBase {
     this.input.setDefaultCursor('none');
     multiTouch(this);   // si possono colpire due mani insieme
     this.input.on('pointerdown', (p) => this.schiaffo(p));
+    // tastiera: 1-5 = schiaffo alla mano che punta quel piatto (il numero è scritto sotto)
+    this.input.keyboard.on('keydown', (e) => {
+      const i = ['1', '2', '3', '4', '5'].indexOf(e.key);
+      if (i >= 0 && !e.repeat) this.schiaffoTasto(i);
+    });
+    if (!eTouch()) this.piatti.forEach((P, i) => txt(this, P.x, P.y + 17, String(i + 1), { size: 7, color: '#ffe14a', depth: 31 }));
   }
 
   pulisci() { this.input.setDefaultCursor('default'); }
@@ -72,12 +85,16 @@ export class ManiScene extends MicrogiocoBase {
   }
 
   aggiorna(dt) {
-    const c = this.cfg, f = this.fase;
+    const c = this.cfg, f = this.fase, n = c.fasi.indexOf(f);
+    if (n !== this.nFase) {
+      this.nFase = n;
+      if (f.nome) { Audio.sfx('bonus'); scritta(this, 240, 150, f.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 950 }); }
+    }
     // --- nuove mani ---
     this.tMano -= dt;
     const attive = this.mani.filter((m) => m.stato !== 'colpita' && m.stato !== 'ritira').length;
     if (this.tMano <= 0 && attive < f.maxMani) {
-      this.tMano = Phaser.Math.FloatBetween(f.intervallo[0], f.intervallo[1]);
+      this.tMano = f.intervallo[0] + this.rnd() * (f.intervallo[1] - f.intervallo[0]);
       this.nuovaMano(f);
     }
     // --- mani in movimento ---
@@ -89,8 +106,9 @@ export class ManiScene extends MicrogiocoBase {
     });
     // --- la mia mano ---
     this.bloccata -= dt;
+    this.tTasto -= dt;
     const p = this.input.activePointer;
-    if (!p.wasTouch) {
+    if (!p.wasTouch && this.tTasto <= 0) {      // (dopo uno schiaffo coi tasti la mano resta lì un attimo)
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       this.manoMia.setPosition(w.x, w.y).setVisible(true);
     }
@@ -110,16 +128,17 @@ export class ManiScene extends MicrogiocoBase {
   nuovaMano(f) {
     const liberi = this.piatti.filter((p) => p.stato === 'tavola');
     if (!liberi.length) return;
+    const r = this.rnd, pesca = (a) => a[Math.floor(r() * a.length)];
     const puntati = new Set(this.mani.filter((m) => m.stato === 'arriva').map((m) => m.piatto));
-    const piatto = caso(liberi.filter((p) => !puntati.has(p)).length ? liberi.filter((p) => !puntati.has(p)) : liberi);
+    const piatto = pesca(liberi.filter((p) => !puntati.has(p)).length ? liberi.filter((p) => !puntati.has(p)) : liberi);
     const usate = new Set(this.mani.map((m) => m.o));
     const lontane = ORIGINI.filter((o) => Math.hypot(o.x - piatto.x, o.y - piatto.y) > 110);
-    const o = caso(lontane.filter((x) => !usate.has(x)).length ? lontane.filter((x) => !usate.has(x)) : lontane);
+    const o = pesca(lontane.filter((x) => !usate.has(x)).length ? lontane.filter((x) => !usate.has(x)) : lontane);
     const L = Math.hypot(piatto.x - o.x, piatto.y - o.y), dir = { x: (piatto.x - o.x) / L, y: (piatto.y - o.y) / L };
-    const guanto = Math.random() < f.guanto;
+    const guanto = r() < f.guanto;
     const m = {
-      o, piatto, dir, x: o.x, y: o.y, stato: 'arriva', vel: f.vel * Phaser.Math.FloatBetween(0.9, 1.1),
-      finta: Math.random() < f.finta ? Phaser.Math.FloatBetween(0.45, 0.7) : null, guanto, attesa: 0,
+      o, piatto, dir, x: o.x, y: o.y, stato: 'arriva', vel: f.vel * (0.9 + r() * 0.2),
+      finta: r() < f.finta ? 0.45 + r() * 0.25 : null, guanto, attesa: 0,
       braccio: this.add.tileSprite(o.x, o.y, PX_MANICA, 1, 'manicaGuerra').setOrigin(0.5, 0).setScale(MANICA / PX_MANICA).setDepth(40),
       img: im(this, o.x, o.y, guanto ? 'manoGuerra_guanto' : 'manoGuerra_aperta', TAGLIA_MANO).setOrigin(0.5, 1).setDepth(45),
     };
@@ -208,6 +227,22 @@ export class ManiScene extends MicrogiocoBase {
     }
     if (mira) this.colpisci(mira);
     else this.aVuoto(w);
+  }
+
+  // tastiera: schiaffo alla mano che punta il piatto i (prima quella che lo sta già trascinando,
+  // poi la più vicina); se non c'è nessuna mano, è a vuoto
+  schiaffoTasto(i) {
+    if (!this.inCorso) return;
+    const P = this.piatti[i];
+    this.tTasto = 0.35;
+    this.manoMia.setPosition(P.x, P.y - 20).setVisible(true).setAlpha(1).setAngle(-25);
+    this.tweens.killTweensOf(this.manoMia);
+    this.tweens.add({ targets: this.manoMia, angle: 0, scale: { from: this.manoMia.scala * 1.25, to: this.manoMia.scala }, duration: 140, ease: 'Quad.out' });
+    if (this.bloccata > 0) return;
+    const sue = this.mani.filter((m) => m.piatto === P && (m.stato === 'arriva' || m.stato === 'tira'));
+    sue.sort((a, b) => (b.stato === 'tira') - (a.stato === 'tira') || Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
+    if (sue.length) { this.manoMia.setPosition(sue[0].x, sue[0].y); this.colpisci(sue[0]); }
+    else this.aVuoto({ x: P.x, y: P.y - 20 });
   }
 
   colpisci(m) {

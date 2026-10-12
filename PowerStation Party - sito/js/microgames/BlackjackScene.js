@@ -3,6 +3,9 @@
 //  Blackjack classico: si punta (10, 25 o 50), poi carta, stai o raddoppia.
 //  Il banco tira fino a 17, il blackjack paga 3 a 2. Il sabot ha due mazzi
 //  mescolati con il seme del round: nella sfida tutti e due trovano le stesse carte.
+//  Si decide in fretta: TEMPO DI DECISIONE secondi per puntare e per ogni scelta (se scade, il
+//  banco punta il minimo per te, o si sta). E conta saper giocare: ogni scelta uguale a quella
+//  della strategia di base (la tabella dei giocatori bravi) vale un bonus: MOSSA DA PRO.
 //  Quando vince il banco, l'Ingiocabile allunga il braccio piegato a 90 gradi e
 //  spazzola via le fiches con un fischio, poi commenta: «Come le leggo!»
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -38,6 +41,9 @@ export class BlackjackScene extends MicrogiocoBase {
     this.mani = 0;
     this.vinte = 0;
     this.blackjack = 0;
+    this.mosseGiuste = 0;
+    this.tDecidi = 0;
+    this.barraTempo = this.add.graphics().setDepth(700);
     this.stato = 'attesa';
     this.mia = [];
     this.banco = [];
@@ -69,9 +75,9 @@ export class BlackjackScene extends MicrogiocoBase {
     this.bottoniPunta = c.puntate.map((v, i) => this.bottone(200 + i * 40, 252, 30, String(v), null, () => this.punta(v), 'fiche_' + v));
     this.etichettaPunta = txt(this, 176, 252, perDito('PUNTA\n(1, 2, 3)', 'PUNTA'), { size: 6, ox: 1, spacing: 0, depth: 700 });
     this.bottoniGioco = [
-      this.bottone(160, 254, 70, perDito('CARTA (C)', 'CARTA'), 0x2e9a4a, () => this.carta()),
-      this.bottone(240, 254, 70, perDito('STAI (S)', 'STAI'), 0xc0392b, () => this.stai()),
-      this.bottone(332, 254, 96, perDito('RADDOPPIA (D)', 'RADDOPPIA'), 0xc89018, () => this.raddoppia()),
+      this.bottone(160, 254, 70, perDito('CARTA (C)', 'CARTA'), 0x2e9a4a, () => this.scegli('carta')),
+      this.bottone(240, 254, 70, perDito('STAI (S)', 'STAI'), 0xc0392b, () => this.scegli('stai')),
+      this.bottone(332, 254, 96, perDito('RADDOPPIA (D)', 'RADDOPPIA'), 0xc89018, () => this.scegli('raddoppia')),
     ];
     this.mostra('nessuno');
 
@@ -79,9 +85,9 @@ export class BlackjackScene extends MicrogiocoBase {
       if (e.repeat) return;
       const k = e.key.toLowerCase();
       if (['1', '2', '3'].includes(k)) this.punta(c.puntate[Number(k) - 1]);
-      else if (k === 'c' || k === ' ') this.carta();
-      else if (k === 's' || k === 'enter') this.stai();
-      else if (k === 'd') this.raddoppia();
+      else if (k === 'c' || k === ' ') this.scegli('carta');
+      else if (k === 's' || k === 'enter') this.scegli('stai');
+      else if (k === 'd') this.scegli('raddoppia');
     });
 
     this.dopo(500, () => this.nuovaMano());
@@ -195,6 +201,7 @@ export class BlackjackScene extends MicrogiocoBase {
     this.stato = 'punta';
     this.espr('normale');
     this.mostra('punta');
+    this.tDecidi = this.atto.tempo;
     if (this.mani % 2 === 0 && !this.fum?.active) this.parla(caso(this.cfg.frasi), 1100);
   }
 
@@ -227,6 +234,47 @@ export class BlackjackScene extends MicrogiocoBase {
     }
     this.stato = 'gioca';
     this.mostra('gioco');
+    this.tDecidi = this.atto.tempo;
+  }
+
+  // la mossa della strategia di base per la mia mano contro la carta scoperta del banco
+  consiglio() {
+    const { tot, morbido } = conta(this.mia), up = valoreCarta(this.banco[0].r);   // (l'asso del banco vale 11)
+    const puoRaddoppiare = this.mia.length === 2 && this.fiches >= this.puntata;
+    const tra = (a, b) => up >= a && up <= b;
+    let m;
+    if (morbido) {
+      if (tot >= 19) m = 'stai';
+      else if (tot === 18) m = tra(3, 6) ? 'raddoppia' : tra(2, 8) ? 'stai' : 'carta';
+      else if (tot === 17) m = tra(3, 6) ? 'raddoppia' : 'carta';
+      else if (tot >= 15) m = tra(4, 6) ? 'raddoppia' : 'carta';
+      else m = tra(5, 6) ? 'raddoppia' : 'carta';
+      if (m === 'raddoppia' && !puoRaddoppiare) m = tot === 18 ? 'stai' : 'carta';
+    } else {
+      if (tot >= 17) m = 'stai';
+      else if (tot >= 13) m = tra(2, 6) ? 'stai' : 'carta';
+      else if (tot === 12) m = tra(4, 6) ? 'stai' : 'carta';
+      else if (tot === 11) m = up <= 10 ? 'raddoppia' : 'carta';
+      else if (tot === 10) m = tra(2, 9) ? 'raddoppia' : 'carta';
+      else if (tot === 9) m = tra(3, 6) ? 'raddoppia' : 'carta';
+      else m = 'carta';
+      if (m === 'raddoppia' && !puoRaddoppiare) m = 'carta';
+    }
+    return m;
+  }
+
+  // una scelta del giocatore: se è quella della strategia di base, bonus
+  scegli(mossa) {
+    if (!this.inCorso || this.stato !== 'gioca') return;
+    if (mossa === 'raddoppia' && (this.mia.length !== 2 || this.fiches < this.puntata)) return Audio.sfx('vuoto');
+    if (mossa === this.consiglio()) {
+      const c = this.cfg;
+      this.fiches += this.atto.bonus;
+      this.mosseGiuste++;
+      this.aggiornaBanca();
+      scritta(this, BANCA.x, BANCA.y - 26, `MOSSA DA PRO +${this.atto.bonus}`, { size: 7, color: '#7dff9a', durata: 450 }).setAngle(0);
+    }
+    this[mossa]();
   }
 
   carta() {
@@ -237,6 +285,7 @@ export class BlackjackScene extends MicrogiocoBase {
     this.mostra('gioco');
     if (t > 21) { this.stato = 'esito'; this.mostra('nessuno'); this.dopo(450, () => { this.scopri(this.banco[1]); this.scrivi(); this.dopo(350, () => this.esito('sballato')); }); }
     else if (t === 21) this.stai();
+    else this.tDecidi = this.atto.tempo;
   }
 
   raddoppia() {
@@ -376,7 +425,29 @@ export class BlackjackScene extends MicrogiocoBase {
     this.dopo(380, () => this.nuovaMano());
   }
 
-  aggiorna() {}
+  // il tempo per decidere: una barra che si accorcia sopra i pulsanti; se finisce, il banco
+  // punta il minimo per te (o si sta)
+  // l'atto in corso: tempo per decidere e bonus della mossa da pro
+  get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
+
+  aggiorna(dt) {
+    const c = this.cfg, g = this.barraTempo, A = this.atto, n = c.atti.indexOf(A);
+    if (n !== this.nAtto) {
+      if (this.nAtto != null && A.nome) { Audio.sfx('bonus'); scritta(this, 240, 120, A.nome, { size: 13, color: '#ffe14a', durata: 900 }).setAngle(0); }
+      this.nAtto = n;
+    }
+    g.clear();
+    if (this.stato !== 'punta' && this.stato !== 'gioca') return;
+    this.tDecidi -= dt;
+    const k = Phaser.Math.Clamp(this.tDecidi / A.tempo, 0, 1), W = 160;
+    g.fillStyle(0x1f1430, 0.85).fillRoundedRect(240 - W / 2 - 1, 233, W + 2, 6, 3);
+    g.fillStyle(k > 0.35 ? 0x7dff9a : 0xff6b5a, 1).fillRoundedRect(240 - W / 2, 234, W * k, 4, 2);
+    if (this.tDecidi > 0) return;
+    scritta(this, 240, 186, 'IL BANCO NON ASPETTA!', { size: 10, color: '#ffe14a', durata: 500 }).setAngle(0);
+    Audio.sfx('tsk');
+    if (this.stato === 'punta') this.punta(Math.min(...c.puntate));
+    else this.stai();
+  }
 
   risultato() {
     // a tempo scaduto, una mano a metà si annulla: la puntata torna indietro
@@ -384,7 +455,7 @@ export class BlackjackScene extends MicrogiocoBase {
     return {
       punteggio: fiches,
       vittoria: fiches > this.cfg.fiches,
-      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.mosseGiuste ? `, ${quanti(this.mosseGiuste, 'mossa da pro', 'mosse da pro')}` : '') + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }

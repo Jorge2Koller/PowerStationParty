@@ -1,10 +1,20 @@
-// Microgioco 2: "Arriva ReGrorio!" - schiva la Golf bianca del Re.
+// Microgioco 2: "Arriva ReGrorio!" - schiva la Golf bianca del Re. SCHIVA!
+//
+//  Tre corsie: un "!" lampeggiante dice dove sta per passare la Golf; si cambia corsia o si salta.
+//  Oltre a sopravvivere si raccolgono le MONETE che rotolano sulla strada (a volte proprio nella
+//  corsia della Golf) e la CORONA che il Re perde davanti alla macchina: per prenderla bisogna
+//  restare davanti alla Golf fino all'ultimo (il rischio, che vale tanto).
+//  Le fasi si annunciano: ARRIVA DA DIETRO!, FA LE FINTE!, IL RE SI ARRABBIA!
+//  Monete, corone e Golf arrivano nello stesso ordine per tutti i giocatori del round (seme).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, scuoti, caso, colpetto, eTouch, vibra, multiTouch } from '../fx.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
+import { txt, im, scritta, stelle, fumo, scuoti, caso, colpetto, eTouch, vibra, multiTouch } from '../fx.js';
 
 const CORSIE = [180, 240, 300];
 const PY = 252; // piedi del giocatore
+const Y_PRESA = PY - 20; // dove si prendono monete e corone
 const TAGLIA = 2 / 3;
 const ZONE = [160, 320];  // col dito: sinistra | salta | destra
 
@@ -13,17 +23,23 @@ export class ReGrorioScene extends MicrogiocoBase {
 
   prepara() {
     const c = this.cfg;
+    this.rnd = casuale(Sessione.seme);
     this.vite = c.vite;
     this.bonus = 0;
+    this.monete = 0;           // monete prese
+    this.corone = 0;           // corone prese
     this.corsia = 1;
     this.auto = [];
+    this.tesori = [];          // monete e corone sulla strada
     this.tLancio = 1.2;
+    this.tMonete = c.primeMonete;
     this.salto = 0;        // secondi di salto rimasti
     this.ricarica = 0;     // pausa tra un salto e l'altro
     this.colpito = false;
     this.invulnerabile = false;
     this.ko = false;
     this.ultimoCambio = { da: -1, t: -9 };
+    this.nFase = 0;
 
     im(this, 0, 0, 'bgStrada').setOrigin(0);
     this.ombra = this.add.ellipse(CORSIE[1], PY - 2, 38, 10, 0x000000, 0.3).setDepth(4);
@@ -68,7 +84,18 @@ export class ReGrorioScene extends MicrogiocoBase {
   }
 
   aggiorna(dt) {
-    const c = this.cfg, S = this.scala;
+    const c = this.cfg, S = this.scala, F = this.fase;
+
+    // --- le fasi si annunciano ---
+    const n = c.fasi.indexOf(F);
+    if (n !== this.nFase) {
+      this.nFase = n;
+      if (F.nome) {
+        Audio.sfx('clacson');
+        scritta(this, 240, 120, F.nome, { size: 14, color: '#ffe14a', durata: 900 });
+        if (F.arrabbiato) scuoti(this, 300, 0.01);
+      }
+    }
 
     // --- movimento (tasti o tocchi arrivati da un fotogramma all'altro) ---
     const T = this.tocco, sx = T.sx, dx = T.dx, salta = T.salta;
@@ -99,15 +126,24 @@ export class ReGrorioScene extends MicrogiocoBase {
     // --- arrivi di ReGrorio ---
     this.tLancio -= dt;
     if (this.tLancio <= 0) {
-      const f = this.fase;
-      this.tLancio = Phaser.Math.FloatBetween(f.intervallo[0], f.intervallo[1]);
-      const corsia = Math.random() < 0.6 ? this.corsia : Phaser.Math.Between(0, 2);
-      const dalBasso = Math.random() < f.dalBasso;
-      this.annuncia(corsia, dalBasso, f);
-      if (Math.random() < f.doppia) {
-        const altra = caso([0, 1, 2].filter((x) => x !== corsia));
-        this.annuncia(altra, dalBasso, f, true);
+      const r = this.rnd;
+      this.tLancio = F.intervallo[0] + r() * (F.intervallo[1] - F.intervallo[0]);
+      const corsia = r() < 0.6 ? this.corsia : Math.floor(r() * 3);
+      const dalBasso = r() < F.dalBasso;
+      this.annuncia(corsia, dalBasso, F);
+      if (r() < F.doppia) {
+        const altre = [0, 1, 2].filter((x) => x !== corsia);
+        this.annuncia(altre[Math.floor(r() * altre.length)], dalBasso, F, true);
       }
+    }
+
+    // --- monete che rotolano giù, a file ---
+    this.tMonete -= dt;
+    if (this.tMonete <= 0) {
+      const r = this.rnd;
+      this.tMonete = c.ogniMonete[0] + r() * (c.ogniMonete[1] - c.ogniMonete[0]);
+      const corsia = Math.floor(r() * 3), quante = c.filaMonete[0] + Math.floor(r() * (c.filaMonete[1] - c.filaMonete[0] + 1));
+      for (let i = 0; i < quante; i++) this.tesoro('moneta', CORSIE[corsia], -14 - i * c.passoMonete, c.velMonete);
     }
 
     // --- auto in movimento ---
@@ -118,10 +154,11 @@ export class ReGrorioScene extends MicrogiocoBase {
       a.tFumo -= dt;
       if (a.tFumo <= 0) { a.tFumo = 0.08; fumo(this, a.img.x, a.img.y - a.dir * 42, 1, 19, 0xd8dce6); }
 
-      // finta: sterza all'ultimo in un'altra corsia
+      // finta: sterza all'ultimo in un'altra corsia (la corona, se c'è, resta dov'è)
       if (a.finta != null && a.img.y > 60) {
         a.corsia = a.finta;
         a.finta = null;
+        if (a.corona) a.corona.vel = c.velMonete;
         Audio.sfx('sgommata');
         this.tweens.add({ targets: a.img, x: CORSIE[a.corsia], duration: 170, ease: 'Quad.inOut' });
         this.tweens.add({ targets: a.img, angle: a.img.x < CORSIE[a.corsia] ? -14 : 14, duration: 85, yoyo: true });
@@ -150,7 +187,42 @@ export class ReGrorioScene extends MicrogiocoBase {
       return !fuori;
     });
 
+    // --- monete e corone: rotolano e si prendono passandoci sopra (anche saltando) ---
+    for (const t of this.tesori) {
+      t.img.y += t.vel * dt;
+      t.giro += dt;
+      if (t.tipo === 'moneta') t.img.scaleX = t.s0 * Math.max(0.25, Math.abs(Math.cos(t.giro * 7)));
+      else t.img.setAngle(Math.sin(t.giro * 9) * 12);
+      if (!t.presa && !this.colpito && Math.abs(t.img.y - Y_PRESA) < 16 && Math.abs(t.img.x - this.io.x) < 22) this.prendi(t);
+    }
+    this.tesori = this.tesori.filter((t) => {
+      const via = t.presa || t.img.y > 290;
+      if (via && !t.presa) t.img.destroy();
+      return !via;
+    });
+
     this.testoPunti.setText('PUNTI: ' + this.punti);
+  }
+
+  tesoro(tipo, x, y, vel) {
+    const img = im(this, x, y, tipo === 'moneta' ? 'monetaRe' : 'coronaRe').setDepth(tipo === 'moneta' ? 15 : 21);
+    const t = { tipo, img, vel, giro: Math.random() * 3, s0: img.scaleX, presa: false };
+    this.tesori.push(t);
+    return t;
+  }
+
+  prendi(t) {
+    const c = this.cfg, corona = t.tipo === 'corona', v = corona ? c.puntiCorona : c.puntiMoneta;
+    t.presa = true;
+    if (corona) this.corone++; else this.monete++;
+    this.bonus += v;
+    Audio.sfx(corona ? 'bonus' : 'ding');
+    if (corona) {
+      scritta(this, this.io.x, PY - 96, `LA CORONA! +${v}`, { size: 10, color: '#ffe14a' });
+      stelle(this, this.io.x, PY - 50, 8);
+    }
+    colpetto(this, this.testoPunti, 1.15, 1.15);
+    this.tweens.add({ targets: t.img, y: t.img.y - 26, alpha: 0, scale: t.s0 * 1.6, duration: 220, onComplete: () => t.img.destroy() });
   }
 
   // la zona toccata si illumina un attimo
@@ -163,9 +235,12 @@ export class ReGrorioScene extends MicrogiocoBase {
 
   get punti() { return Math.floor(Math.min(this.trascorso, this.durata)) + this.bonus; }
 
-  // clacson + "!" lampeggiante sulla corsia, poi parte la Golf
+  // clacson + "!" lampeggiante sulla corsia, poi parte la Golf (a volte con la corona davanti)
   annuncia(corsia, dalBasso, f, muta = false) {
-    const x = CORSIE[corsia];
+    const x = CORSIE[corsia], r = this.rnd;
+    const altre = [corsia - 1, corsia + 1].filter((k) => k >= 0 && k <= 2);
+    const finta = !dalBasso && r() < f.finta ? altre[Math.floor(r() * altre.length)] : null;
+    const corona = !dalBasso && r() < f.corona;
     if (!muta) Audio.sfx('clacson');
     const striscia = this.add.rectangle(x, 135, 56, 270, 0xff3b3b, 0.18).setDepth(3);
     const segno = txt(this, x, dalBasso ? 204 : 46, '!', { size: 30, color: '#ffe14a', stroke: '#c81e1e', thick: 7, depth: 60 });
@@ -177,11 +252,10 @@ export class ReGrorioScene extends MicrogiocoBase {
       striscia.destroy(); segno.destroy(); freccia.destroy();
       if (!this.inCorso) return;
       const img = im(this, x, dalBasso ? 332 : -54, dalBasso ? 'golfSu0' : 'golfGiu0').setDepth(dalBasso ? 45 : 20);
-      const altre = [corsia - 1, corsia + 1].filter((k) => k >= 0 && k <= 2);
-      this.auto.push({
-        img, corsia, dir: dalBasso ? -1 : 1, vel: f.vel, tFumo: 0,
-        finta: !dalBasso && Math.random() < f.finta ? caso(altre) : null,
-      });
+      const a = { img, corsia, dir: dalBasso ? -1 : 1, vel: f.vel, tFumo: 0, finta };
+      // la corona rotola davanti al muso della Golf, alla sua stessa velocità
+      if (corona) a.corona = this.tesoro('corona', x, img.y + this.cfg.anticipoCorona, f.vel);
+      this.auto.push(a);
     });
   }
 
@@ -219,10 +293,11 @@ export class ReGrorioScene extends MicrogiocoBase {
 
   risultato() {
     const sec = Math.floor(Math.min(this.trascorso, this.durata));
+    const tesori = this.monete * this.cfg.puntiMoneta + this.corone * this.cfg.puntiCorona;
     return {
       punteggio: sec + this.bonus,
       vittoria: !this.ko,
-      riepilogo: `${sec}s sopravvissuti + ${this.bonus} bonus`,
+      riepilogo: `${sec}s vivo + ${tesori} di monete e corone (${this.corone} corone) + ${this.bonus - tesori} di schivate`,
       titoloFine: this.ko ? 'K.O.!' : 'SALVO!',
     };
   }

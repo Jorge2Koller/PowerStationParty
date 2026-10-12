@@ -1,15 +1,18 @@
 // Aiutanti condivisi: telecamera, testi, immagini, stelline, fumo, scritte che rimbalzano, menu.
 import { Audio } from './audio.js';
+import { Progressi } from './progressi.js';
 import { CONFIG } from './config.js';
 import { RES, DENS } from './grafica/base.js';
 import { eTouch } from './dispositivo.js';
+import { Salvataggio } from './salvataggio.js';
 
 // --- tastiera e mouse, oppure dito ---
 // eTouch(): true sul telefono/tablet (o con ?touch=1). Decide testi e comandi da mostrare.
 export { eTouch };
 export const perDito = (tastiera, dito) => (eTouch() ? dito : tastiera);
 // vibrazione breve per colpi ed errori (Android; su iPhone non c'è e non succede niente)
-export const vibra = (ms = 40) => { if (eTouch()) try { navigator.vibrate?.(ms); } catch (e) { /* niente */ } };
+// (si può spegnere dalle Impostazioni)
+export const vibra = (ms = 40) => { if (eTouch() && Salvataggio.impostazioni.vibrazione) try { navigator.vibrate?.(ms); } catch (e) { /* niente */ } };
 // fino a tre dita insieme (ogni scena che lo chiama; i puntatori si aggiungono una volta sola)
 export function multiTouch(scene, dita = 3) {
   const m = scene.input.manager;
@@ -24,8 +27,10 @@ export const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
 
 // Ogni scena lavora in unità logiche (480x270): la telecamera ingrandisce di RES
 // volte, così si disegna a 1920x1080 senza cambiare le coordinate di gioco.
-export function inquadra(scene) {
+export function inquadra(scene, o = {}) {
   scene.cameras.main.setZoom(RES).centerOn(CONFIG.larghezza / 2, CONFIG.altezza / 2);
+  // ogni schermata entra con una dissolvenza veloce (la pausa no: sta sopra al gioco fermo)
+  if (o.dissolvenza !== false) scene.cameras.main.fadeIn(170, 31, 20, 48);
 }
 
 // immagine a grandezza naturale (le texture sono più dense dello schermo logico)
@@ -33,7 +38,11 @@ export const scalaDi = (key, scala = 1) => scala / DENS[key];
 export const im = (scene, x, y, key, scala = 1) => scene.add.image(x, y, key).setScale(scalaDi(key, scala));
 
 // tremolio dello schermo: forza = frazione della larghezza (0.01 = 1%)
-export const scuoti = (scene, ms, forza) => scene.cameras.main.shake(ms, forza / (RES * RES));
+// (si può spegnere dalle Impostazioni: "Schermo che trema")
+export const scuoti = (scene, ms, forza) => { if (Salvataggio.impostazioni.tremolio) scene.cameras.main.shake(ms, forza / (RES * RES)); };
+
+// quanto restano a schermo scritte e fumetti (Impostazioni: velocità dei testi)
+export const ritmoTesti = () => ({ lenta: 1.5, normale: 1, veloce: 0.7 })[Salvataggio.impostazioni.velocitaTesti] ?? 1;
 
 // Posizione del mouse (o di un dito, p) in unità logiche. Non si usa getWorldPoint della
 // telecamera perché quello segue anche il tremolio di scuoti(): a mouse fermo il punto ballerebbe
@@ -99,7 +108,7 @@ export function scritta(scene, x, y, s, o = {}) {
   const t = txt(scene, x, y, s, { size: o.size ?? 16, color: o.color ?? '#ffe14a', depth: o.depth ?? 950 });
   t.setScale(0.2).setAngle((Math.random() - 0.5) * 14);
   scene.tweens.add({ targets: t, scale: 1, duration: 320, ease: 'Back.out' });
-  scene.tweens.add({ targets: t, y: y - 14, alpha: 0, delay: o.durata ?? 700, duration: 300, onComplete: () => t.destroy() });
+  scene.tweens.add({ targets: t, y: y - 14, alpha: 0, delay: (o.durata ?? 700) * ritmoTesti(), duration: 300, onComplete: () => t.destroy() });
   return t;
 }
 
@@ -112,7 +121,7 @@ export function fumetto(scene, x, y, s, ms = 1200, depth = 900) {
   g.fillStyle(0xffffff, 1); g.fillRoundedRect(-w / 2, -h / 2, w, h, 5); g.fillTriangle(-4, h / 2 - 0.5, 3, h / 2 - 0.5, -3, h / 2 + 4.5);
   const b = scene.add.container(x, y, [g, t]).setDepth(depth).setScale(0.3);
   scene.tweens.add({ targets: b, scale: 1, duration: 140, ease: 'Back.out' });
-  scene.time.delayedCall(ms, () => b.destroy());
+  scene.time.delayedCall(ms * ritmoTesti(), () => b.destroy());
   return b;
 }
 
@@ -130,6 +139,9 @@ export function colpetto(scene, obj, sx = 1.25, sy = 0.8) {
 
 // Sfondo a raggi rotanti con vignettatura
 export function raggi(scene, c1, c2) {
+  // il tema comprato al Bancone (i colori restano quelli della schermata)
+  const tema = Progressi.tema;
+  if (tema !== 'raggi') return motivo(scene, tema, c1, c2);
   const g = scene.add.graphics().setPosition(240, 135);
   const n = 18, r = 420;
   for (let i = 0; i < n; i++) {
@@ -140,6 +152,37 @@ export function raggi(scene, c1, c2) {
   scene.tweens.add({ targets: g, angle: 360, duration: 50000, repeat: -1 });
   scene.add.image(240, 135, 'vignetta').setDisplaySize(480, 270);
   return g;
+}
+
+// gli altri sfondi (temi del Bancone): pois, scacchi, strisce, cielo stellato. Scorrono piano
+function motivo(scene, tema, c1, c2) {
+  const g = scene.add.graphics(), P = tema === 'scacchi' ? 30 : tema === 'strisce' ? 40 : 24;
+  g.fillStyle(tema === 'stelle' ? scuroInt(c1) : c2, 1).fillRect(-P, -P, 480 + 2 * P, 270 + 2 * P);
+  g.fillStyle(c1, 1);
+  if (tema === 'pois') { for (let y = -P, r = 0; y < 270 + P; y += P, r++) for (let x = -P + (r % 2) * P / 2; x < 480 + P; x += P) g.fillCircle(x, y, 6.5); }
+  else if (tema === 'scacchi') { for (let y = -P, r = 0; y < 270 + P; y += P, r++) for (let x = -P, k = 0; x < 480 + P; x += P, k++) if ((r + k) % 2) g.fillRect(x, y, P, P); }
+  else if (tema === 'strisce') { for (let x = -300; x < 480 + P; x += P) g.fillPoints([{ x, y: -P }, { x: x + P / 2, y: -P }, { x: x + P / 2 + 330, y: 270 + P }, { x: x + 330, y: 270 + P }], true); }
+  else if (tema === 'stelle') {
+    let s = 7;
+    const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 90; i++) { g.fillStyle(i % 3 ? 0xffffff : c2, 0.4 + r() * 0.6); g.fillCircle(-P + r() * (480 + 2 * P), -P + r() * (270 + 2 * P), 0.6 + r() * 1.4); }
+  }
+  scene.tweens.add({ targets: g, x: tema === 'stelle' ? -P : P, y: tema === 'strisce' || tema === 'stelle' ? 0 : P, duration: tema === 'stelle' ? 30000 : 4000, repeat: -1 });
+  scene.add.image(240, 135, 'vignetta').setDisplaySize(480, 270);
+  return g;
+}
+const scuroInt = (col) => { const c = Phaser.Display.Color.IntegerToColor(col); return Phaser.Display.Color.GetColor(c.red * 0.25, c.green * 0.25, c.blue * 0.35); };
+
+// trofei appena sbloccati: una striscia che scende dall'alto per ciascuno, uno dopo l'altro
+export function annunciaTrofei(scene, trofei = [], ritardo = 0) {
+  trofei.forEach((t, k) => scene.time.delayedCall(ritardo + k * 1900, () => {
+    const c = scene.add.container(240, -24).setDepth(5000);
+    c.add([pannello(scene, 0, 0, 250, 32, { alfa: 0.95, raggio: 10, colore: 0x3a2050 }), im(scene, -108, 0, 'coppa', 0.75),
+      txt(scene, -90, -7, 'TROFEO: ' + t.nome, { size: 8.5, ox: 0, color: '#ffe14a' }),
+      txt(scene, -90, 6, `${t.descrizione}   +${CONFIG.trofei.pinte} PINTE`, { size: 5.5, ox: 0, color: '#fff3d6' })]);
+    Audio.sfx('bonus');
+    scene.tweens.add({ targets: c, y: 26, duration: 300, ease: 'Back.out', hold: 1300, yoyo: true, onComplete: () => c.destroy() });
+  }));
 }
 
 // ombra a terra sotto un personaggio

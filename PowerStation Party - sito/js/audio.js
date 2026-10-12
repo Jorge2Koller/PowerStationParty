@@ -1,6 +1,10 @@
 // Suoni 8-bit e musichetta, tutto generato con la Web Audio API.
 
 let ac = null, master = null, muto = false;
+let contaPassi = 0;   // passi (ottavi) della musica pianificati dall'inizio del brano
+// due canali, ognuno col suo volume (Impostazioni): la musica e gli effetti. "uscita" è dove
+// suonano nota() e rumore() in quel momento: gli effetti, tranne mentre si pianifica la musica.
+let busMusica = null, busEffetti = null, uscita = null, volMusica = 0.8, volEffetti = 0.8;
 let traccia = null, timer = null, passo = 0, prossimo = 0, tempo = 1;
 let pour = null;
 
@@ -13,7 +17,7 @@ function nota(f, t, d, tipo = 'square', v = 0.08, f2 = 0) {
   if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
   g.gain.setValueAtTime(v, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + d);
-  o.connect(g); g.connect(master); // separati: sui Safari vecchi connect() non restituisce il nodo
+  o.connect(g); g.connect(uscita); // separati: sui Safari vecchi connect() non restituisce il nodo
   o.start(t);
   o.stop(t + d + 0.02);
 }
@@ -31,7 +35,7 @@ function rumore(t, d, v = 0.15, freq = 2000, tipo = 'bandpass') {
   f.frequency.value = freq;
   g.gain.setValueAtTime(v, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + d);
-  s.connect(f); f.connect(g); g.connect(master);
+  s.connect(f); f.connect(g); g.connect(uscita);
   s.start(t, Math.random() * 0.5, d + 0.02);
 }
 
@@ -145,7 +149,7 @@ const SFX = {
     g.gain.exponentialRampToValueAtTime(0.13, t + 0.06);
     g.gain.setValueAtTime(0.13, t + d - 0.12);
     g.gain.exponentialRampToValueAtTime(0.001, t + d);
-    o.connect(g); g.connect(master);
+    o.connect(g); g.connect(busEffetti);
     o.start(t); lfo.start(t); o.stop(t + d + 0.02); lfo.stop(t + d + 0.02);
     rumore(t, d, 0.02, 3200);
   },
@@ -181,6 +185,30 @@ const TRACCE = {
            81, 0, 76, 81, 0, 76, 84, 0, 88, 0, 86, 84, 0, 83, 84, 0, 86, 0, 84, 83, 0, 79, 81, 0, 83, 0, 84, 86, 0, 88, 0, 0],
     basso: [57, 57, 53, 55, 57, 60, 53, 55],
   },
+  // la marcia del Generale (TorRONDAcelli): rullante in ottavi, basso "um-pa"
+  marcia: {
+    bpm: 116,
+    marcia: true,
+    lead: [72, 0, 72, 74, 76, 0, 72, 0, 79, 0, 0, 0, 76, 0, 0, 0, 77, 0, 77, 76, 74, 0, 71, 0, 72, 0, 0, 0, 67, 0, 0, 0,
+           72, 0, 72, 74, 76, 0, 79, 0, 81, 0, 79, 0, 77, 0, 76, 0, 74, 0, 76, 77, 79, 0, 74, 0, 72, 0, 0, 0, 0, 0, 0, 0],
+    basso: [48, 43, 48, 43, 50, 43, 48, 48],
+  },
+  // in strada (Arriva ReGrorio!, Passa di qua): svelta, basso che pompa in ottavi
+  corsa: {
+    bpm: 168,
+    corsa: true,
+    lead: [69, 0, 72, 0, 76, 0, 72, 74, 76, 0, 74, 72, 71, 0, 67, 0, 69, 0, 72, 0, 76, 0, 79, 77, 76, 0, 74, 0, 72, 0, 71, 0,
+           72, 0, 76, 0, 79, 0, 76, 79, 81, 0, 79, 76, 74, 0, 72, 0, 71, 0, 72, 74, 76, 0, 74, 72, 69, 0, 0, 0, 69, 0, 0, 0],
+    basso: [45, 45, 41, 43, 45, 41, 43, 45],
+  },
+  // la festa (premi buffi e classifica finale): allegra, coi battimani
+  festa: {
+    bpm: 120,
+    festa: true,
+    lead: [77, 0, 81, 0, 84, 0, 81, 0, 82, 0, 79, 0, 77, 0, 0, 0, 74, 0, 77, 0, 81, 0, 79, 77, 76, 0, 79, 0, 72, 0, 0, 0,
+           77, 0, 81, 0, 84, 0, 86, 0, 84, 0, 82, 81, 79, 0, 77, 0, 76, 0, 77, 79, 81, 0, 79, 76, 77, 0, 0, 0, 77, 0, 0, 0],
+    basso: [53, 53, 50, 48, 53, 46, 48, 53],
+  },
   // l'autoradio di Emilio (Emilio in Retromarcia): rock, con la chitarra che gratta in ottavi
   rock: {
     bpm: 164,
@@ -212,6 +240,28 @@ function suonaPasso(T, i, t) {
     if (i % 2 === 1) rumore(t, 0.03, 0.03, 8000, 'highpass');
     return;
   }
+  if (T.marcia) {
+    // um-pa del basso, cassa sull'1 e sul 3, rullante in ottavi (più forte sui battiti) e un rullo a fine battuta
+    if (i % 4 === 0) { nota(midi(fond - 12), t, d * 1.2, 'triangle', 0.15); nota(110, t, 0.1, 'sine', 0.18, 45); }
+    if (i % 4 === 2) nota(midi(fond - 5), t, d * 1.2, 'triangle', 0.11);
+    rumore(t, 0.04, i % 2 ? 0.035 : 0.07, 2600);
+    if (i % 8 === 7) rumore(t + d / 2, 0.03, 0.05, 2600);
+    return;
+  }
+  if (T.corsa) {
+    // basso a ottave in ottavi, cassa sull'1 e sul 3, rullante sul 2 e sul 4, charleston sempre
+    nota(midi(fond - (i % 2 ? 0 : 12)), t, d * 0.85, 'triangle', 0.12);
+    if (i % 4 === 0) nota(120, t, 0.1, 'sine', 0.2, 45);
+    if (i % 4 === 2) rumore(t, 0.08, 0.09, 2000);
+    rumore(t, 0.025, 0.025, 8000, 'highpass');
+    return;
+  }
+  if (T.festa) {
+    if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.8, 'triangle', 0.14);
+    if (i % 4 === 2) { nota(midi(fond - 5), t, d * 1.5, 'triangle', 0.11); rumore(t, 0.09, 0.08, 1700); }   // battimani
+    if (i % 2 === 1) rumore(t, 0.03, 0.025, 7000, 'highpass');
+    return;
+  }
   if (T.dance) {
     // cassa su ogni battito, basso in levare un'ottava sopra, charleston aperto in levare
     if (i % 2 === 0) { nota(150, t, 0.12, 'sine', 0.22, 42); nota(midi(fond - 12), t, d * 0.9, 'triangle', 0.12); }
@@ -227,11 +277,14 @@ function suonaPasso(T, i, t) {
 function pianifica() {
   if (!ac || !traccia) return;
   const T = TRACCE[traccia];
+  uscita = busMusica;
   while (prossimo < ac.currentTime + 0.15) {
     suonaPasso(T, passo, prossimo);
     prossimo += 60 / (T.bpm * tempo) / 2;
     passo = (passo + 1) % T.lead.length;
+    contaPassi++;
   }
+  uscita = busEffetti;
 }
 
 export const Audio = {
@@ -244,6 +297,10 @@ export const Audio = {
       master = ac.createGain();
       master.gain.value = muto ? 0 : 0.8;
       master.connect(ac.destination);
+      // (il volume 0.8 di prima è il "normale": i canali lo moltiplicano, 1 = come prima)
+      busMusica = ac.createGain(); busMusica.gain.value = volMusica / 0.8; busMusica.connect(master);
+      busEffetti = ac.createGain(); busEffetti.gain.value = volEffetti / 0.8; busEffetti.connect(master);
+      uscita = busEffetti;
       prossimo = ac.currentTime + 0.05;
       timer = setInterval(pianifica, 40);
       // iPhone vecchi: l'audio si sblocca davvero solo se dentro il tocco parte un suono (anche muto)
@@ -273,6 +330,7 @@ export const Audio = {
     if (traccia === nome) return;
     traccia = nome;
     passo = 0;
+    contaPassi = 0;
     tempo = 1;
     if (ac) prossimo = ac.currentTime + 0.05;
   },
@@ -280,8 +338,28 @@ export const Audio = {
   // moltiplicatore di velocità della musica (1 = normale)
   tempo(k) { tempo = k; },
 
+  // dove siamo nel brano, in passi (ottavi) dall'inizio, contati sull'orologio dell'audio: serve
+  // ai giochi a ritmo. null se l'audio non suona (non ancora sbloccato, o sospeso).
+  get posizione() {
+    if (!ac || !traccia || ac.state !== 'running') return null;
+    const dur = 60 / (TRACCE[traccia].bpm * tempo) / 2;
+    return contaPassi - (prossimo - ac.currentTime) / dur;
+  },
+
   // quanto dura adesso un battito della musica (secondi): serve a chi vuole andare a tempo
   get battito() { return 60 / ((TRACCE[traccia]?.bpm ?? 128) * tempo); },
+
+  // volumi dalle Impostazioni (0..1)
+  volumi(musica, effetti) {
+    volMusica = musica; volEffetti = effetti;
+    if (busMusica) { busMusica.gain.value = musica / 0.8; busEffetti.gain.value = effetti / 0.8; }
+  },
+
+  // audio acceso o spento (dalle Impostazioni); il tasto M e il pulsante usano silenzia()
+  accendi(acceso) {
+    if (muto === !acceso) return;
+    this.silenzia();
+  },
 
   silenzia() {
     muto = !muto;
@@ -297,7 +375,7 @@ export const Audio = {
     o.type = 'triangle';
     o.frequency.value = 180;
     g.gain.value = 0.09;
-    o.connect(g); g.connect(master);
+    o.connect(g); g.connect(busEffetti);
     o.start();
     pour = { o, g };
   },

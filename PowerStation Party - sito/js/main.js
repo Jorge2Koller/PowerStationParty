@@ -2,12 +2,20 @@
 import './compat.js'; // per primo: completa i browser più vecchi (Safari)
 import { CONFIG } from './config.js';
 import { Audio } from './audio.js';
+import { Salvataggio } from './salvataggio.js';
 import { RES } from './grafica/base.js';
 import { eTouch } from './dispositivo.js';
 import { MICROGIOCHI } from './microgames/index.js';
 import { BootScene, MenuScene, AllenamentoScene, ComandiScene, PausaScene } from './scenes/menu.js';
 import { GiocatoriScene, PersonaggiScene, ModalitaScene } from './scenes/partita.js';
-import { IntroScene, RisultatoScene, ClassificaScene, FinaleScene } from './scenes/flusso.js';
+import { IntroScene, RisultatoScene, ClassificaScene, PremiScene, FinaleScene } from './scenes/flusso.js';
+import { NovitaScene } from './scenes/novita.js';
+import { BanconeScene } from './scenes/bancone.js';
+import { ProfiloScene } from './scenes/profilo.js';
+import { LivelliScene } from './scenes/livelli.js';
+import { FineSolitarioScene } from './scenes/modalita.js';
+import { TorneoScene, FineGiornoScene } from './scenes/torneo.js';
+import { ImpostazioniScene } from './scenes/impostazioni.js';
 
 // i browser fanno partire l'audio solo dopo un input dell'utente; Safari (soprattutto
 // su iPhone) accetta solo alcuni eventi, quindi si ascoltano tutti quelli buoni
@@ -15,6 +23,13 @@ for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchstart', 'touchend
   window.addEventListener(ev, () => Audio.sblocca(), { capture: true, passive: true });
 }
 window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') Audio.silenzia(); });
+
+// le impostazioni (js/salvataggio.js): all'avvio e ogni volta che cambiano
+const applica = () => { const I = Salvataggio.impostazioni; Audio.volumi(I.volumeMusica, I.volumeEffetti); Audio.accendi(I.audio); };
+applica();
+window.addEventListener('impostazioni-cambiate', applica);
+// il tasto M e il pulsante dell'audio cambiano anche l'impostazione salvata
+window.addEventListener('audio-cambiato', () => { if (Salvataggio.impostazioni.audio === Audio.eMuto) Salvataggio.imposta('audio', !Audio.eMuto); });
 
 let gioco = null;
 function avvia() {
@@ -35,7 +50,7 @@ function avvia() {
     // velocità per 4 secondi; ne bastano pochi
     fps: { panicMax: 20 },
     scene: [BootScene, MenuScene, GiocatoriScene, PersonaggiScene, ModalitaScene, AllenamentoScene, ComandiScene, IntroScene,
-      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, FinaleScene, PausaScene],
+      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene, PausaScene],
   });
   controllaVerso();
 }
@@ -77,7 +92,9 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     navigator.serviceWorker.register('sw.js')
       .then(() => navigator.serviceWorker.ready)
       // già alla prima visita: gli si passano tutti i file scaricati finora (codice, Phaser, font, icone)
-      .then((reg) => reg.active?.postMessage({ salva: [new URL('index.html', location.href).href, ...performance.getEntriesByType('resource').map((r) => r.name)] }))
+      // (più la copertina e le icone, che a quel punto potrebbero non essere ancora arrivate)
+      .then((reg) => reg.active?.postMessage({ salva: [...['index.html', 'icone/copertina.webp', 'icone/icona-192.png', 'icone/icona-512.png', 'manifest.json'].map((f) => new URL(f, location.href).href),
+        ...performance.getEntriesByType('resource').map((r) => r.name)] }))
       .catch(() => {});
   });
 }

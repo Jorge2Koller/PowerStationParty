@@ -144,6 +144,14 @@ Il gioco è fatto solo di file, quindi si può pubblicare gratis come sito:
 In alternativa, senza git: trascina la cartella del gioco su
 https://app.netlify.com/drop (serve un account gratuito per tenerlo online).
 
+**Il nostro repository** è `Jorge2Koller/PowerStationParty`, e il gioco sta nella cartella
+**`PowerStation Party - sito`** (il nome non va cambiato: il link del sito dipende da lui).
+Per aggiornarlo dal sito di GitHub, senza git: apri quella cartella, **Add file → Upload
+files**, e trascina il *contenuto* di questa cartella (non la cartella stessa): `index.html`,
+`manifest.json`, `sw.js`, `README.md`, `server.py`, gli `avvia*`, e le cartelle `icone/` e
+`js/`. **Non** caricare `test/` e `note/` (prove automatiche e appunti: non fanno parte del
+gioco). Poi **Commit changes**. I file con lo stesso nome vengono sostituiti.
+
 ### Come un'app: schermata Home e gioco offline
 
 - **iPhone (Safari)**: Condividi → **Aggiungi alla schermata Home**.
@@ -178,20 +186,138 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
    personaggio già preso non si può riprendere (resta in grigio, col numero di chi
    l'ha scelto); "A CASO" ne pesca uno libero. BACKSPACE o ESC (col dito: un tocco
    sul giocatore nella fila in basso) toglie l'ultima scelta.
-3. **La modalità**:
-   - **Sfida completa**: tutti e 15 i microgiochi, nell'ordine di `ordineSfida`.
-   - **Sfida rapida** da 3, 5 o 8 microgiochi pescati a caso (`sfidaRapida`).
-   - **Al meglio di 3** o **di 5** (`alMeglioDi`): microgiochi pescati a caso, vince
-     chi per primo vince 2 round (o 3). Se i microgiochi finissero prima, decide la
-     classifica.
+3. **La modalità**, in gruppi:
+   - **SFIDE**
+     - **Sfida completa**: tutti e 15 i microgiochi, nell'ordine di `ordineSfida`.
+     - **Sfida rapida** da 3, 5 o 8 microgiochi pescati a caso (`sfidaRapida`).
+     - **Al meglio di 3** o **di 5** (`alMeglioDi`): microgiochi pescati a caso, vince
+       chi per primo vince 2 round (o 3). Se i microgiochi finissero prima, decide la
+       classifica.
+   - **PARTY**
+     - **Lampo** (si compra al Bancone): 6 microgiochi da 15 secondi, e si parte subito
+       (niente 3-2-1). I punti, più corti, non contano per medaglie e record.
+     - **Squadre** (da 4 giocatori): ROSSI contro BLU, in ordine di scelta (il 1°, il 3°,
+       il 5°... sono rossi; il 2°, il 4°... blu). A ogni round conta la media dei punti
+       sfida della squadra, così vale anche con squadre dispari. Vince la squadra con più
+       punti; nel profilo la sfida vale per tutti i suoi giocatori.
+     - **Torneo** (da 4 a 8 giocatori): tabellone a eliminazione diretta. Ogni partita è
+       una sfida a due su un microgioco a caso; chi fa più punti passa (pari: si rigioca
+       con un altro microgioco). Se non si è 4 o 8, al primo turno qualcuno passa senza
+       giocare. Dopo ogni partita si vede il tabellone.
    - **Partita singola**: un solo microgioco, scelto dalla lista (su due colonne:
      SU/GIÙ scorrono la prima e poi la seconda).
+   - **Livelli**: il livello di ogni giocatore (vedi "Livelli" qui sotto).
 
-Da soli c'è solo l'**allenamento**: dopo il personaggio si sceglie il microgioco.
+   Da soli:
+   - **Allenamento**: un microgioco a scelta, da rigiocare quanto si vuole.
+   - **Da solo** (si compra al Bancone): 7 microgiochi a caso e il **boss**, con 4 vite.
+     Senza una medaglia si perde una vita; il boss è un microgioco a DIFFICILE e per
+     batterlo serve almeno l'argento (10 Pinte in premio). Alla fine il conto e il record.
+   - **Sfida del giorno**: ogni giorno 5 microgiochi, uguali per tutti quel giorno (stessi
+     microgiochi, stesso mazzo, stesse Golf...), a livello NORMALE. Si può rigiocare: resta
+     il punteggio migliore del giorno; la prima volta valgono 5 Pinte, e si contano i giorni
+     di fila.
 
-Il gioco ricorda i personaggi dell'ultima partita (nel `localStorage` del browser, se
-c'è): la volta dopo le schermate arrivano già compilate e per rigiocare uguale basta
-premere INVIO fino in fondo.
+   Numeri e regole di Lampo, Da solo, Squadre, Torneo e Sfida del giorno sono in
+   `js/config/modalita.js`.
+
+Il gioco ricorda i personaggi dell'ultima partita (nel salvataggio, vedi sotto): la volta
+dopo le schermate arrivano già compilate e per rigiocare uguale basta premere INVIO fino
+in fondo.
+
+### Impostazioni e salvataggio
+
+Dal menu (e dalla pausa) **IMPOSTAZIONI**: volume della **musica** e degli **effetti**,
+**audio** sì/no, **vibrazione** sì/no (dove il telefono la ha: Android), **difficoltà di
+partenza**, **prova lampo** prima dei microgiochi nuovi, **velocità dei testi** (quanto
+restano a schermo scritte e fumetti) e **schermo che trema** sì/no. Si cambiano con le
+frecce (SU/GIÙ la riga, SINISTRA/DESTRA il valore) o toccando direttamente i comandi, e si
+salvano da sole. La **difficoltà di partenza** è il livello di chi non ne ha scelto uno
+(vedi "Livelli" qui sotto).
+
+**Prova lampo** (acceso di serie): la prima volta che si incontra un microgioco, su quel
+telefono o computer, prima della partita vera si giocano 6 secondi di prova che non contano
+(la barra del tempo è rosa, in alto c'è scritto PROVA LAMPO). In una sfida la prova la fanno
+tutti i giocatori di quel round, così nessuno parte avvantaggiato. I secondi sono
+`provaLampo` in `js/config.js`.
+
+Tutto quello che il gioco ricorda sta in un **salvataggio** unico (`js/salvataggio.js`, nel
+`localStorage` del browser): impostazioni, personaggi dell'ultima partita, un registro degli
+ultimi punteggi di ogni microgioco (serve a ritarare le medaglie) e, più avanti, statistiche,
+record, trofei e Pinte. Ha un numero di versione: quando la forma dei dati cambierà, i
+salvataggi vecchi verranno aggiornati da soli. In navigazione privata, o se il browser non
+lascia salvare, il gioco funziona lo stesso ma non ricorda niente.
+
+Sempre dalle Impostazioni, alla riga **Salvataggio**:
+- **ESPORTA**: il salvataggio diventa un codice di testo (comincia con `PSP1-`) da copiare e
+  mandarsi, per esempio su WhatsApp;
+- **IMPORTA**: sull'altro telefono si incolla il codice e si ritrova tutto (sostituisce
+  quello che c'era; un codice tagliato o modificato viene rifiutato);
+- **AZZERA**: si ricomincia da capo. Serve una doppia conferma (il pulsante diventa
+  "SICURO?", poi una finestra con "AZZERA TUTTO").
+
+### Prima e dopo i microgiochi
+
+- **Menu**: lo sfondo è la copertina del gioco (`icone/copertina.webp`, l'unica immagine non
+  disegnata col codice; se non si carica, il menu si disegna come prima). La copertina è anche
+  l'icona dell'app (`icone/icona-*.png`) e l'anteprima quando si condivide il link
+  (`icone/copertina-og.jpg`: per WhatsApp e simili funziona meglio quando il gioco è su
+  GitHub Pages).
+- **NOVITÀ**: dopo un aggiornamento, all'avvio si apre da sola la schermata con le novità
+  (testi in `js/config/novita.js`: per un aggiornamento nuovo si cambia `versione`); si
+  rivede dal menu.
+- **Il comando in una parola**: ogni microgioco ha il suo verbo (SPILLA!, SCHIVA!, BALLA!...,
+  `verbo` nel suo file di configurazione): si vede sotto il titolo e chiude il conto alla
+  rovescia al posto di VIA!.
+- **Risultati**: il punteggio sale con un ticchettio, poi arriva la **medaglia** (bronzo,
+  argento o oro) col timbro; accanto, quanto manca alla prossima.
+- **Premi buffi**: a fine sfida, prima della classifica finale, fino a tre premi ("Lo
+  specialista", "Mani di burro", "L'eterno secondo", "Il diesel"...), calcolati dai punti
+  sfida dei round (`js/premi.js`, titoli e frasi in `js/config/premi.js`).
+- **Musiche**: oltre a quelle di prima, la marcia del Generale (TorRONDAcelli), la corsa in
+  strada (Arriva ReGrorio!, Passa di qua) e la festa dei premi e della classifica finale
+  (tutte in `js/audio.js`, a 8 bit).
+- Le schermate entrano con una dissolvenza veloce.
+
+### Livelli: FACILE, NORMALE, DIFFICILE (e l'handicap)
+
+Ogni microgioco ha tre livelli. NORMALE è quello di sempre; FACILE e DIFFICILE cambiano
+qualche valore (zona verde più larga o più stretta, mani e Golf più lente o più veloci, più o
+meno tempo per decidere...): sono in `livelli` in fondo al file di configurazione di ogni
+microgioco (`js/config/microgiochi/<id>.js`, spiegati in `js/livelli.js`).
+
+Il livello è **di ogni giocatore**: così in una sfida chi è più forte può giocare a DIFFICILE e
+chi comincia a FACILE (l'handicap). Si sceglie da **GIOCA**, nella schermata della modalità, con
+la voce **LIVELLI** (SU/GIÙ il giocatore, SINISTRA/DESTRA il livello, o toccandolo); da soli,
+nella lista dei microgiochi, con L (o toccando la scritta in basso). Il livello di ogni
+personaggio si ricorda; chi non l'ha mai scelto usa la difficoltà di partenza delle
+Impostazioni. Nell'introduzione, sotto al nome di chi gioca, c'è il suo livello.
+Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più facilmente:
+è l'handicap).
+
+### Pinte, Bancone, Profilo e trofei
+
+- **Pinte**: si guadagnano giocando (1 per un bronzo, 2 per un argento, 3 per un oro; a fine
+  sfida 3 più una per ogni round; 5 per ogni trofeo; 5 per la prima sfida del giorno) e si vedono in alto a sinistra nel menu.
+  Sono una per telefono o computer, non per giocatore. Le quantità sono in
+  `js/config/bancone.js`.
+- **BANCONE** (dal menu): Beppe vende con le Pinte
+  - **costumi** (occhiali da sole, cuffie da DJ, bandana, basco, occhiali rosa, cappuccio,
+    corona): si comprano una volta e si mettono a qualunque personaggio (uno a testa; dalla fila
+    dei personaggi si mettono e si tolgono). Il personaggio lo porta in tutto il gioco;
+  - **temi**: il disegno dello sfondo delle schermate (raggi, pois, scacchi, strisce, cielo
+    stellato), sempre coi colori di ogni schermata;
+  - **frasi**: pacchetti di sfottò in più per la classifica finale;
+  - **modalità**: Lampo e Da solo (Squadre, Torneo e Sfida del giorno sono gratis).
+  I personaggi giocabili sono tutti disponibili da subito: non si comprano.
+- **PROFILO** (dal menu), quattro schede: i **personaggi** (microgiochi giocati, sfide e round
+  vinti, medaglie, e la medaglia migliore in ogni microgioco), i **trofei** (37: ventidue
+  generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
+  (punteggio, chi e quando) e l'**albo d'oro** delle ultime sfide (chi ha vinto).
+- Dopo ogni turno: le Pinte guadagnate accanto alla medaglia e, se è il caso, NUOVO RECORD!;
+  i trofei appena presi scendono dall'alto. Tutto sta nel salvataggio (e quindi si esporta e
+  si importa con lui). La logica è in `js/progressi.js`; nomi e descrizioni dei trofei in
+  `js/config/trofei.js`.
 
 ### Turni
 
@@ -205,15 +331,22 @@ battere e di chi è: "RECORD: 85 (Sego)".
 
 Finito il round, da tre giocatori in su ci sono due schermate: la **classifica del
 round** (tutti in fila dal primo all'ultimo, coi punti fatti e quelli guadagnati)
-e la **classifica generale**, con le barre che crescono e i sorpassi. In due resta
-la schermata di sempre: chi ha vinto il round e i totali.
+e la **classifica generale**, con le barre che crescono e i sorpassi. In due, dopo il
+risultato del round (chi l'ha vinto e il totale dei punti sfida) arriva anche la classifica
+generale con le barre, così si vede come si mette prima della fine.
 
 ### Chi vince
 
-- **In due** è come è sempre stato: nella sfida completa, in quella rapida e nella
-  partita singola vince chi fa più **punti in totale** nei microgiochi (a parità,
-  chi ha vinto più round); al meglio di 3 o 5 contano i **round vinti** (un round
-  pari non conta e se ne gioca un altro; a parità, i punti).
+- **In due**: nella sfida completa, in quella rapida e nella partita singola vince chi fa
+  più **punti sfida** (a parità, chi ha vinto più round); al meglio di 3 o 5 contano i
+  **round vinti** (un round pari non conta e se ne gioca un altro; a parità, i punti sfida).
+- **Punti sfida**: ogni microgioco ha la sua scala (la Spina conta i punti delle birre, un centinaio;
+  il blackjack le fiches, centinaia). Per sommarli senza che quelli "ricchi" pesino di più,
+  ogni punteggio diventa un numero da 0 a 100 grazie alle tre **medaglie** del microgioco
+  (`medaglie: { bronzo, argento, oro }` nel suo file di configurazione): bronzo = 40,
+  argento = 70, oro = 90, e in mezzo in proporzione (`js/punteggi.js`). A schermo, durante il
+  gioco e nei risultati, si vede sempre il punteggio vero del microgioco. Dove anche chi non
+  fa niente prende punti c'è `zero` (al blackjack si parte con 100 fiches: fino a 100 vale 0).
 - **Da tre in su** contano i **punti classifica**: a ogni round, in N giocatori, il
   primo ne prende N, il secondo N-1 e così via fino all'ultimo, che ne prende 1.
   A pari punteggio, pari posizione e stessi punti (due primi, poi il terzo). La
@@ -227,7 +360,7 @@ la schermata di sempre: chi ha vinto il round e i totali.
 Alla fine: in due la schermata di sempre, da tre in su il **podio** coi primi tre
 sui gradini e gli altri in fila sotto. Da lì: **Rivincita** (stessi giocatori e
 stessa modalità; i microgiochi a caso si ripescano), **Cambia personaggi**, **Menu**.
-Le frasi di sfottò sono in `js/config.js`: `sfotto` (con `{primo}` e `{ultimo}`) e,
+Le frasi di sfottò sono in `js/config/frasi.js`: `sfotto` (con `{primo}` e `{ultimo}`) e,
 da tre giocatori in su, anche `sfottoTanti` (con `{secondo}` e `{tutti}`).
 
 ### Contro se stesso
@@ -244,30 +377,36 @@ microgioco (Pastaffi in "Emilio in Retromarcia").
 ## Comandi
 
 - Menu: frecce + INVIO, oppure il mouse, oppure il dito (un tocco = scegli)
-- La Spina del PowerStation: tieni premuto SPAZIO, rilascia nella zona verde.
-  Col dito (o col mouse): tieni il dito in qualunque punto dello schermo e alzalo
-  nella zona verde (il pulsante SPILLA in basso è solo un promemoria)
-- Arriva ReGrorio!: frecce SINISTRA/DESTRA per cambiare corsia, SPAZIO per saltare.
+- La Spina del PowerStation (SPILLA!): tieni premuto SPAZIO, rilascia nella zona verde
+  (al centro, la striscia gialla: PERFETTA). Col dito (o col mouse): tieni il dito in
+  qualunque punto dello schermo e alzalo nella zona verde (il pulsante SPILLA in basso è
+  solo un promemoria)
+  - i clienti ordinano pinte, boccali (grandi: si riempiono piano) e calici (zona verde
+    strettissima); dal 12° secondo l'ORA DI PUNTA, dal 24° Beppe FA I DISPETTI: urta il
+    bancone e la zona verde balla
+- Arriva ReGrorio! (SCHIVA!): frecce SINISTRA/DESTRA per cambiare corsia, SPAZIO per saltare.
   Col dito: tocca nel terzo di sinistra o di destra dello schermo per cambiare
   corsia, in mezzo per saltare (con due dita insieme si salta e si cambia corsia)
+  - passa sulle monete per prenderle; la corona rotola davanti al muso della Golf: per
+    prenderla bisogna restare nella corsia fino all'ultimo (o saltare la Golf)
+  - le fasi si annunciano: ARRIVA DA DIETRO!, FA LE FINTE!, IL RE SI ARRABBIA!
 - La Barba di O'Sfurnacchiat (mouse o trackpad):
   - tasto destro: stendi la schiuma (dopo qualche secondo si secca).
     Sul trackpad del Mac: clic a due dita, oppure tieni premuto CTRL e clicca.
     Si può premere o lasciare CTRL anche a metà passata per cambiare attrezzo
   - tasto sinistro: radi, solo dove c'è schiuma e senza correre (se vai veloce, taglietto)
-  - quando la lama è piena, portala sulla bacinella per sciacquarla
   - la barba copre guance, baffi e mento ed esce appena dal viso; quella tagliata resta
-    tagliata (la ricrescita è spenta: `ricrescitaInizio` e `ricrescitaFine` in `config.js`)
+    tagliata (la ricrescita è spenta: `ricrescitaInizio` e `ricrescitaFine` in `js/config/microgiochi/barba.js`)
   - niente rasoio su naso, labbra, occhi, orecchie e nei (nei e cerotti stanno sempre
     sulla pelle del viso)
   - contano solo gli errori di chi rade: la velocità è quella della mano (misurata sugli
     ultimi due decimi di secondo), e se è De Luca a muoversi di scatto o ad aprire la bocca
-    sotto la lama non è un errore (`velSussulto` e `margineRincorsa` in `config.js`)
+    sotto la lama non è un errore (`velSussulto` e `margineRincorsa` in `barba.js`)
   - col dito: l'interruttore in basso a sinistra sceglie PENNELLO o RASOIO (si può
     cambiare anche a metà passata con un altro dito); l'attrezzo sta un po' sopra
     il dito, così si vede la lama; col dito si può andare un po' più veloci
-    (`velMaxDito` in `config.js`)
-- Il Panino di Marsupino:
+    (`velMaxDito` in `barba.js`)
+- Il Panino di Marsupino (IMPILA!):
   - FRECCE SINISTRA/DESTRA (o A/D) oppure il mouse: il pane si sposta (stessa
     velocità massima per tutti, col mouse non si teletrasporta)
   - col dito: trascina in basso dove vuoi, il pane si sposta della stessa misura
@@ -277,55 +416,72 @@ microgioco (Pastaffi in "Emilio in Retromarcia").
     si chiude e ne parte un altro. Calzini, lische, ghiaccio e ciabatte lo rovinano
     (e Marsupino va su tutte le furie: diventa paonazzo, salta, fuma dalle orecchie e urla)
   - si prende in cima alla pila: più è alta, più ondeggia quando ti muovi
-- Guerra, via quelle mani! (mouse o dito, niente tastiera):
+  - Marsupino lancia la roba buona lontano dal pane: bisogna correre (chi sta fermo non
+    prende niente)
+  - tre atti: dal 12° secondo DOPPIO LANCIO; dal 24° MARSUPINO SI ARRABBIA e le schifezze
+    te le tira addosso
+- Guerra, via quelle mani! (SCIAF!):
   - clic o tocco sulla mano = schiaffo; col dito si possono colpire due mani insieme
+  - tastiera: i tasti da 1 a 5 (il numero è scritto sotto ogni piatto) danno lo schiaffo
+    alla mano che punta quel piatto
+  - tre atti: dal 12° secondo IL GUANTO DA FORNO; dal 24° GUERRA HA FAME (più mani insieme)
   - se una mano ha già preso un piatto, colpiscila per riportarlo indietro
   - col guanto da forno servono due schiaffi; le finte tornano indietro da sole
   - schiaffo a vuoto: la tua mano resta dolorante per un attimo
-- Sego, sono sotto casa!:
-  - mouse: punta, tieni premuto (la forza sale e scende da sola), rilascia
-  - tastiera: FRECCE per mirare, SPAZIO tenuto per la forza, rilascia per lanciare
-  - dito: appoggia, tira indietro come una fionda, lascia
+- Sego, sono sotto casa! (LANCIA!):
+  - mouse e dito: appoggia, tira indietro come una fionda, lascia (tiri più giù = più in alto)
+  - tastiera: FRECCE per mirare, SPAZIO tenuto per la forza (sale e scende), rilascia per lanciare
+  - tre atti: dal 12° secondo TIRA VENTO (le finestre sbattono più spesso); dal 24° FRANCI
+    CHIUDE TUTTO
   - la traiettoria tratteggiata e il mirino dicono dove arriva: verde = finestra
     aperta, rosso = persiane chiuse, grigio = muro
-- TorRONDAcelli:
+- TorRONDAcelli (SPARA!):
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
   - la palla ci mette di più ad arrivare lontano: mira un po' avanti alla bagnarola
   - gommone 1 colpo, pedalò 2, galeone 3. Se toccano riva si prendono un
     ombrellone: affondali mentre scappano e l'ombrellone torna
-  - munizioni: la cassa che lancia il Generale (clic, tocco o R); un colpo torna
-    anche da solo ogni tanto
+  - munizioni: poche (i pallini in alto). Il Generale lancia una cassa ogni tanto, che
+    atterra da sola sul cannone; un colpo torna anche da solo ogni tanto
+  - tre atti: gommoni e pedalò; dal 12° secondo ARRIVA IL GALEONE; dal 24° ARREMBAGGIO
 - L'Ingiocabile (blackjack):
   - 1, 2, 3 o clic/tocco sulle fiches: punti 10, 25 o 50
   - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
   - il banco sta su 17, il blackjack paga 3 a 2; nella sfida tutti e due trovano
     lo stesso mazzo
-- MaraZio (palleggi):
+  - poco tempo per decidere (la barra sotto le carte: 3 secondi, poi 2,3 dal 12° secondo,
+    2 dal 24°): poi il banco punta il minimo per te, o ti fa stare
+  - MOSSA DA PRO: ogni scelta uguale alla strategia di base vale 5 fiches in più (10 negli
+    ultimi 11 secondi)
+- MaraZio (PALLEGGIA!):
   - FRECCE SINISTRA/DESTRA (o A/D) o il mouse per muoversi, SPAZIO o clic per calciare;
     col dito: trascina sul prato per muoverti e tocca CALCIA
   - calcia quando il pallone arriva al piede: perfetto = sale dritto, buono =
     scappa un po', scarso = scappa tanto; se cade, la serie riparte
+  - più palleggi di fila, più valgono: x1,5 ogni 5, fino a x3
+  - tre atti: calma; dal 12° secondo TIRA VENTO (il pallone deriva di lato, le righe
+    bianche sul prato dicono da che parte); dal 24° lo Zio calcia il PALLONE D'ORO:
+    colpiscilo per 25 punti (se cade non succede niente, ma il tuo pallone intanto scende)
   - a ogni colpo la gamba dalla parte del pallone si alza (anche quella dello Zio)
-- Passa di qua:
+- Passa di qua (SCHIZZA!):
   - FRECCE SINISTRA/DESTRA (o A/D), il mouse o il dito trascinato per sterzare
-  - passa nella pozzanghera proprio mentre affianchi un Passaseo in bici: SPLASH
-  - non toccare i ciclisti (si frena e si perdono punti), occhio a trattori e Vespe
-- Spalma il Bota! (mouse o trackpad):
-  - tasto destro: spremi una goccia di crema dove punti (sul trackpad del Mac: clic a
-    due dita, oppure CTRL + clic). Tenendo premuto ne escono altre
-  - tasto sinistro tenuto: spalmi. La mano porta via la crema in più e la lascia dove
-    manca; le zone spalmate bene luccicano, i mucchietti bianchi sono chiazze da stendere
-  - la pelle scoperta diventa rosa, poi rossa (da lì è scottata per sempre), poi rosso
-    aragosta. A metà partita il Bota si gira: il davanti resta com'era
-  - tubetto vuoto: tasto R, oppure clic sul tubetto in basso a destra, per scuoterlo
-    (tornano due gocce, ma si perde tempo)
-  - disturbi: il Bota si sposta, un'onda lava una gamba, il vento porta la sabbia (va
-    ripassata con la mano), un gabbiano viene a rubare il tubetto (cliccalo per cacciarlo)
-  - niente crema su occhi e bocca; se è lui a muoversi sotto la mano non conta
-  - col dito: l'interruttore in basso a sinistra sceglie TUBETTO o MANO, l'attrezzo sta
-    un po' sopra il dito; tubetto e gabbiano si toccano
-- Il Passaggiorgio (stasera guida Giorgio, per forza):
+  - passa nella pozzanghera proprio mentre affianchi un Passaseo in bici: SPLASH. Le piccole
+    vanno prese stando attaccati al ciclista; il gruppetto (tre in fila) si bagna uno dopo
+    l'altro; il fango rallenta la Panda
+  - SPAZIO (o tasto destro; sul telefono il pulsante CLACSON) suona il clacson, con la
+    ricarica: i Passaseo davanti sbandano verso la pozzanghera e non fanno in tempo ad aprire
+    l'ombrello (quelli col "!" lo aprono, e l'ombrello para lo schizzo)
+  - non toccare i ciclisti (si frena e si perdono punti); contromano arrivano Vespe e la Golf
+  - a metà l'acquazzone: piove, la strada è scura e la Panda scivola
+- Spalma il Bota! (SPALMA!, col mouse o col dito):
+  - tieni premuto e passa la mano sul Bota: la crema si stende dove passi (il tubetto non
+    finisce mai)
+  - il sole accende le zone calde (cerchi rossi) una dopo l'altra: dentro, la pelle senza crema
+    si scotta in pochi secondi. Coprila tutta prima e la zona si spegne (+10)
+  - la crema dura qualche secondo e il Bota non sta fermo (ondeggia, si stiracchia, prende il
+    telefono o una birra; a metà partita si gira): le zone vanno inseguite
+  - niente crema su occhi e bocca; se ci finiscono sotto la mano perché si è mosso lui, non conta
+- Il Passaggiorgio (ACCHIAPPA!: stasera guida Giorgio, per forza):
   - Giorgio corre verso le macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV
     di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
     e vola in mezzo al parcheggio. Se la chiude, la macchina parte con lui dentro e torna
@@ -337,7 +493,8 @@ microgioco (Pastaffi in "Emilio in Retromarcia").
   - più avanti: finte, sagome di cartone di Giorgio nelle altre portiere, Giorgio col
     cappuccio e gli occhiali con un sosia incappucciato (da non tirare fuori), il bagagliaio
   - clic a vuoto (o sul cartone): la mano resta ferma per un attimo
-- Petri Tentacolari (scappa dal Piovra):
+  - tre atti: dal 12° secondo GIORGIO SI TRAVESTE; dal 24° ANCHE NEL BAGAGLIAIO
+- Petri Tentacolari (SALVALE!: scappa dal Piovra):
   - tocca (o clicca) una ragazza e trascina: le disegni la strada, lei la segue. Se arriva al
     tavolo delle amiche, a destra, è salva
   - i tentacoli del Petri puntano la ragazza più vicina: se la prendono resta agganciata a
@@ -347,56 +504,43 @@ microgioco (Pastaffi in "Emilio in Retromarcia").
     fionda e molla tutto) e AMICO IN MEZZO (un personaggio del gioco blocca i tentacoli)
   - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
     vicino a lei, 1 e 2 gli aiuti (lo shottino va da solo nel punto più lontano dalle ragazze)
-  - ogni tanto un tentacolo a sorpresa sbuca da sotto un tavolino o dalla consolle
-- L'Incubo degli Scapoli (in discoteca contro il Manna, la calamita):
-  - FRECCE (o WASD) per muoverti; col mouse, clic sul punto della pista dove andare;
-    col dito, trascina (il personaggio sta un po' sopra il polpastrello)
-  - fare colpo: fermati vicino a una ragazza (lei ti aspetta) e sopra di lei esce UNA
-    freccia bella grossa, con attorno un anello che si consuma piano: è il tempo che hai
-    (un paio di secondi abbondanti). Premi quella freccia sulla tastiera, oppure clicca o
-    tocca il bersaglio (sul telefono è un cerchio): non c'è ritmo da seguire. Tre giuste
-    e balla con te. Un tasto sbagliato toglie pochissimo e la freccia resta lì; se la
-    lasci scadere lei sbadiglia e il cuore scende un po'. Ne escono tre di fila, una
-    alla volta; se non bastano, resta lì e ricominciano. Per lasciar perdere col mouse
-    o col dito basta toccare la pista lontano da lei
-  - in pista ci sono al massimo tre ragazze; di solito girano alla larga dall'aura del
-    Manna, ogni tanto ci passano dentro: è lì che bisogna fermarle. Dentro l'aura ogni
-    freccia rende la metà (ma mentre fai colpo l'aura la tira molto meno). Con un po'
-    di cuore ti viene dietro: portala via
-  - fare da muro (facoltativo): se stai tra una ragazza e il Manna l'aura la tira molto
-    meno (lei ha un cerchietto verde, e dietro di te l'aura è spezzata)
-  - sabotaggi: passa sopra l'oggetto che compare in pista o davanti al bancone (ne tieni
-    uno alla volta) e usalo con SPAZIO, con un clic sull'icona in basso a sinistra, o col
-    pulsante SABOTAGGIO sul telefono. Drink rovesciato, chiamata della mamma, shottino,
-    richiesta al DJ (un lento: le tue frecce rendono il doppio), buttafuori
-  - a 12 secondi dalla fine il Manna si scatena e per qualche secondo l'aura si allarga: un
-    sabotaggio la spegne
-  - per renderlo più facile o più difficile, in `js/config.js` (blocco `scapoli`):
-    `tempoFrecciaInizio`/`tempoFrecciaFine` (secondi per ogni freccia), `maxRagazze`,
-    `curiosa` (quanto spesso le ragazze vanno da sole verso il Manna), `auraInizio`/
-    `auraFine` e `attrazione` (quanto è forte la calamita), `elastico` (l'aiuto a chi
-    sta perdendo)
-- Emilio in Retromarcia (fai uscire Emilio dal cancello senza che tocchi i cani):
+  - tre atti: dal 12° secondo IL PETRI SI MUOVE; dal 24° TENTACOLI A SORPRESA (sbucano da
+    sotto un tavolino o dalla consolle)
+- L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna):
+  - le frecce salgono al centro a tempo di musica: premi quella giusta quando arriva sul
+    bersaglio, con le FRECCE o WASD; col dito (o col mouse) tocca il quarto di schermo della
+    freccia: da sinistra, sinistra / giù / su / destra. Le doppie si prendono con due dita
+  - perfetto o buono: la pista pende verso di te e le ragazze passano dalla tua parte; mancata
+    o premuta a vuoto: tornano dal Manna, che intanto tira sempre un po'
+  - le frecce d'oro valgono il doppio ma vanno prese precise; ogni 10 di fila il moltiplicatore
+    sale di 0,5 (fino a x3)
+  - a metà arrivano le frecce doppie; alla fine il Manna si scatena e la musica accelera
+  - le frecce sono le stesse per tutti i giocatori del round
+  - per renderlo più facile o più difficile, in `js/config/microgiochi/scapoli.js`: `finestre`
+    (quanto si può sbagliare il tempo), `atti` (ogni quanto arrivano le frecce, doppie, d'oro,
+    raffiche), `pressione` (quanto tira il Manna), `tempoFinale`
+- Emilio in Retromarcia (SPINGI!: fai uscire Emilio dal cancello senza che tocchi i cani):
   - FRECCE (o WASD) per muoverti; col mouse, clic sul punto del vialetto dove andare;
     col dito, trascina (il personaggio sta un po' sopra il polpastrello)
   - la macchina esce in retromarcia a scatti: prima di ogni scatto si accendono le luci
     bianche e fa "bip bip". Dietro la coda c'è la zona rossa (lampeggia durante l'avviso):
     se la macchina arriva addosso a un cane che sta lì è uno spavento e perdi una vita
   - spingere: cammina contro un cane e lo spingi dalla parte dove stai andando
-  - lanciare: SPAZIO tenuto carica la forza (sale e scende: il cerchio giallo mostra dove
-    cade), al rilascio lanci nella direzione in cui guardi; col mouse, tasto destro (o
-    CTRL+clic) e lanci verso il puntatore; col dito, tocca l'icona della munizione e poi
-    il punto del vialetto. Q, la rotellina o un clic sull'icona cambiano tra biscotto e
-    pallina. Il goloso corre solo dietro ai biscotti, quello della pallina solo dietro
-    alla pallina, il pigro ignora tutto e si sposta solo a spinte
+  - lanciare: SPAZIO lancia in avanti, nella direzione in cui guardi; col mouse, tasto destro
+    (o CTRL+clic) e lanci verso il puntatore; col dito, tocca l'icona del biscotto o della
+    pallina e poi il punto del vialetto. Con tastiera e mouse il gioco sceglie da solo cosa
+    lanciare: quello che piace al cane più vicino alla zona rossa. Il goloso corre solo
+    dietro ai biscotti, quello della pallina solo dietro alla pallina, il pigro ignora tutto
+    e si sposta solo a spinte
   - raccogliere: biscotti e palline nuovi compaiono in giro per il giardino (alone
     giallo): ci si passa sopra
-  - E, o clic (o tocco) sulla faccia di Pastaffi in basso a destra: esce di casa, prende in
-    braccio il cane più vicino alla macchina e lo porta nel prato; Emilio inchioda per un
-    secondo. Due chiamate per partita (`pastaffi.chiamate` in `js/config.js`)
   - nel prato e sotto il portico i cani sono al sicuro, ma dopo qualche secondo tornano
-    sul vialetto. A 15 secondi dalla fine passa il gatto, e tutti gli vanno dietro
-  - i cani stanno nell'array `cani` di `js/config.js` (blocco `retromarcia`): nome, colore
+    sul vialetto
+  - tre atti: tranquillo; dal 12° secondo EMILIO SI DISTRAE (radio, bandana, telefono: va
+    più forte); a 12 secondi dalla fine PASSA IL GATTO e tutti i cani gli vanno dietro.
+    Allora Pastaffi esce di casa, prende in braccio il cane più vicino alla macchina e lo
+    porta nel prato (ed Emilio inchioda per un secondo)
+  - i cani stanno nell'array `cani` di `js/config/microgiochi/retromarcia.js`: nome, colore
     del collare, personalità (`pigro`, `pallina`, `goloso`), taglia, macchia. Si possono
     rinominare, togliere o aggiungere; chi non ha il nome si chiama da solo Morgan, col
     numero romano che gli tocca (Morgan IV, Morgan V...)
@@ -407,49 +551,70 @@ brevemente il telefono.
 
 ## Punteggi dei microgiochi nuovi
 
-- **TorRONDAcelli** (45 s): +10 per ogni bagnarola affondata (+5 se lontana dalla
+- **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana dalla
   riva), +5 per ogni ombrellone ripreso, +15 per ogni ombrellone ancora piantato
   alla fine. Vittoria con almeno 3 ombrelloni su 5; persi tutti, finisce prima.
-- **L'Ingiocabile** (60 s): si parte con 100 fiches, il punteggio sono le fiches
-  alla fine (una mano a metà si annulla). Vittoria con più di 100; al verde,
+- **L'Ingiocabile** (35 s): si parte con 100 fiches, il punteggio sono le fiches
+  alla fine (una mano a metà si annulla). Ogni scelta uguale a quella della strategia di
+  base (la "MOSSA DA PRO") vale 5 fiches in più, 10 negli ultimi 11 secondi. Vittoria con più di 100; al verde,
   finisce prima.
-- **MaraZio** (45 s): +10 per ogni palleggio (+5 se perfetto), +5 per ogni palleggio
-  della serie migliore. Vittoria con una serie di almeno 12.
-- **Passa di qua** (45 s): SPLASH +10, +20, +30, +40 se fatti di fila (si riparte
-  da +10 dopo un tocco), +1 per una pozzanghera presa senza nessuno accanto,
-  -10 per un ciclista sfiorato, -5 per trattori e Vespe. Vittoria con almeno 12 schizzi.
-- **Spalma il Bota!** (45 s): punti = percentuale di pelle protetta, meno 1 per ogni
-  punto percentuale di pelle scottata e di chiazze di troppa crema, più fino a 20 se
-  nel tubetto avanza crema. Vittoria con meno del 15% di pelle scottata. Le percentuali
+- **MaraZio** (35 s): +10 per ogni palleggio, per il moltiplicatore della serie (x1,5 ogni 5
+  di fila, fino a x3), +5 se perfetto, +25 per ogni pallone d'oro, e a fine partita +5 per
+  ogni palleggio della serie migliore. Vittoria con una serie di almeno 12.
+- **Passa di qua** (35 s): SPLASH +10, +20, +30... fino a +50 se fatti di fila (si riparte da
+  +10 dopo un tocco o se lasci passare un Passaseo asciutto accanto alla sua pozzanghera), +1
+  per una pozzanghera presa senza nessuno accanto, -10 per un ciclista o un mezzo toccato.
+  Vittoria con almeno 10 schizzi.
+- **Spalma il Bota!** (35 s): +10 per ogni zona calda spenta, più 2 per ogni punto di pelle
+  sana sotto il 40% di scottatura. Vittoria con meno del 15% di pelle scottata. Le percentuali
   contano la pelle che ha preso il sole: solo il davanti fino al giro, poi tutto.
+- **La Spina del PowerStation** (35 s): pinta 5, boccale 8, calice 9, +3 se PERFETTA (al centro
+  della zona verde). Beppe fa 6 punti per ogni sua pinta. Vittoria se fai più punti di Beppe.
+- **Arriva ReGrorio!** (35 s): 1 punto per ogni secondo vivo, 1 per ogni moneta, 6 per la
+  corona, 2 per ogni schivata all'ultimo. 3 vite. Vittoria se arrivi in fondo.
 
-- **Panino** (45 s): +10 per ogni ingrediente che mancava, +3 per i doppioni,
+- **Panino** (35 s): +10 per ogni ingrediente che mancava, +3 per i doppioni,
   +30 per ogni panino completo (+10 se fatto in meno di 8 s), -10 per ogni
-  schifezza. Vittoria con almeno 3 panini.
-- **Mani** (45 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava
+  schifezza (il totale non va sotto zero). Vittoria con almeno 3 panini.
+- **Mani** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava
   trascinando via un piatto (è un recupero, vale meno: se no converrebbe lasciarli
   prendere apposta), +2 per il guanto tolto, +15 per ogni piatto ancora tuo alla
   fine. Vittoria con almeno 3 piatti su 5; persi tutti, finisce prima.
-- **Il Passaggiorgio** (45 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
-  quasi dentro), +50 ogni volta che si mette al volante della sua A3, -20 per ogni passaggio
-  scroccato, -5 se si tira fuori il sosia incappucciato. Vittoria se guida almeno 4 volte.
-- **Petri Tentacolari** (45 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
+- **Il Passaggiorgio** (35 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
+  quasi dentro), +50 ogni volta che si mette al volante della sua A3, -25 per ogni passaggio
+  scroccato, -5 se si tira fuori il sosia incappucciato (i punti non vanno mai sotto zero).
+  Vittoria se guida almeno 4 volte.
+- **Petri Tentacolari** (35 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
   la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
-  terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine. Vittoria con almeno
-  10 ragazze salvate.
-- **L'Incubo degli Scapoli** (50 s): +15 per ogni ragazza che balla con te, +5 per ogni
-  sabotaggio usato, +25 se alla fine ne hai conquistate più del Manna. Vittoria solo se
-  ne hai conquistate più di lui.
-- **Emilio in Retromarcia** (50 s): +4 per ogni metro fatto dalla macchina (il vialetto è
-  lungo 25 metri), +10 per ogni cane tolto dalla zona rossa all'ultimo istante, +20 per
-  ogni vita rimasta (sono 3) e, se Emilio esce dal cancello, +15 per ogni chiamata di
-  Pastaffi non usata. Vittoria se la macchina esce dal cancello prima che scada il tempo
-  con almeno una vita; al terzo spavento finisce prima.
-- **Sego** (50 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
+  terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine (il totale non va
+  sotto zero). Vittoria con almeno 8 ragazze salvate.
+- **L'Incubo degli Scapoli** (35 s): ogni freccia perfetta 10, buona 5 (d'oro il doppio), per
+  il moltiplicatore della serie; +25 per ogni ragazza dalla tua parte alla fine. Vittoria con
+  almeno 3 ragazze su 5.
+- **Emilio in Retromarcia** (35 s): +10 per ogni cane tolto dalla zona rossa all'ultimo
+  istante; se Emilio esce dal cancello, +40 e +20 per ogni vita rimasta (sono 3). Vittoria
+  se la macchina esce dal cancello prima che scada il tempo con almeno una vita; al terzo
+  spavento finisce prima.
+- **Sego** (35 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
   Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
   per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
 
-Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono in `js/config.js`.
+Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono nei file di configurazione:
+`js/config/microgiochi/<id>.js`, uno per microgioco.
+
+## Prove automatiche
+
+Nella cartella `test/` ci sono le prove automatiche (Python + Playwright): aprono ogni
+microgioco, lo giocano con input a caso fino ai risultati e fanno una sfida rapida dal menu al
+podio in 2 e in 4 giocatori, da computer e da telefono, controllando che non ci siano errori.
+Controllano anche impostazioni e salvataggio, Bancone, livelli e tutte le modalità (Da solo,
+Lampo, Torneo, Squadre, Sfida del giorno).
+Si lanciano con un doppio clic su `test/fumo.command` (o `./test/fumo.command` dal Terminale);
+la prima volta preparano da sole l'ambiente. Dettagli e opzioni in `test/README.md`, insieme ai
+giocatori automatici (`test/bot.py`, per tarare le medaglie) e alla prova delle prestazioni
+(`test/prestazioni.py`, con la CPU rallentata come un telefono). Le prove da fare a mano sono
+in `note/test-manuali.md`.
+La cartella `test/` non fa parte del gioco: non va caricata sul sito.
 
 ## Struttura
 
@@ -457,15 +622,32 @@ Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono in `js/conf
 index.html               pagina del gioco (telefono: zona sicura, "Gira il telefono")
 manifest.json            nome, icone e orientamento per la schermata Home
 sw.js                    service worker: il gioco offline dopo la prima visita
-icone/                   icone per la schermata Home (disegnate col codice del gioco)
+icone/                   la copertina (sfondo del menu, copertina.webp), le icone per la
+                         schermata Home ricavate da lei e l'anteprima dei link (copertina-og.jpg)
 server.py                server locale senza cache (Windows, Mac, Linux; --rete)
 avvia.bat                doppio clic su Windows
 avvia.command            doppio clic su Mac
 avvia-telefono.bat       come sopra, ma il gioco si apre anche dai telefoni
 avvia-telefono.command   sulla stessa Wi-Fi
 js/
-  config.js              titolo, personaggi giocabili, modalità, durate, difficoltà,
-                         frasi di sfottò
+  config.js              configurazione generale: titolo, giocatori, personaggi giocabili,
+                         modalità; mette insieme i file qui sotto in CONFIG
+  config/microgiochi/    un file per microgioco (spina.js, regrorio.js...): durata,
+                         comandi, obiettivo, punti, difficoltà, frasi
+  config/frasi.js        frasi di sfottò e di pareggio della classifica finale
+  config/premi.js        titoli e frasi dei premi buffi di fine sfida
+  config/novita.js       la schermata Novità: versione e voci
+  config/trofei.js       nomi e descrizioni dei trofei
+  config/bancone.js      Pinte (quante se ne guadagnano) e cosa vende il Bancone
+  config/modalita.js     Lampo, Da solo, Squadre, Torneo, Sfida del giorno
+  salvataggio.js         tutto quello che il gioco ricorda (impostazioni, registro dei
+                         punteggi...): versione, esporta/importa come codice, azzera
+  punteggi.js            medaglie e punti sfida (punteggio da 0 a 100 per microgioco)
+  premi.js               i premi buffi di fine sfida (chi li vince)
+  livelli.js             i livelli dei microgiochi: la configurazione a FACILE e DIFFICILE
+  torneo.js              il tabellone del Torneo (eliminazione diretta)
+  progressi.js           statistiche, record, albo d'oro, trofei, Pinte, acquisti e costumi
+  dialogo.js             finestra HTML sopra al gioco (codice del salvataggio, conferme)
   compat.js              aggiunte per i browser più vecchi (Safari)
   dispositivo.js         computer o telefono? (eTouch, ?touch=1)
   main.js                avvio di Phaser, scene, audio, telefono in verticale e in sottofondo
@@ -498,6 +680,9 @@ js/
     disco.js             la discoteca del Manna vista dall'alto (sfondo `bgPista`), la
                          palla a specchi, il DJ, gli oggetti dei sabotaggi, i bersagli
                          della sfida
+    medaglie.js          le medaglie di bronzo, argento e oro, la coppa dei trofei, la pinta
+    palco.js             la pista del Manna vista di fronte (sfida di ballo dell'Incubo degli
+                         Scapoli): parete coi LED, consolle, frecce e bersagli
     vialetto.js          il vialetto di ghiaia con la casa, il portico, la tettoia con
                          la moto e il cancello; la station wagon di Emilio, gli Shar
                          Pei (uno per ogni voce dell'array `cani`), il gatto,
@@ -510,8 +695,17 @@ js/
                          singola), comandi, pausa
   scenes/partita.js      prima della partita: quanti siete, scelta dei personaggi,
                          modalità
-  scenes/flusso.js       introduzione ("TOCCA A...!"), risultato del turno, classifica
-                         del round e generale, finale (a due, oppure il podio)
+  scenes/impostazioni.js la schermata Impostazioni (dal menu e dalla pausa)
+  scenes/novita.js       la schermata Novità (dopo un aggiornamento, e dal menu)
+  scenes/bancone.js      il Bancone (negozio delle Pinte)
+  scenes/profilo.js      il Profilo: personaggi, trofei, record, albo d'oro
+  scenes/livelli.js      i livelli di ogni giocatore (l'handicap)
+  scenes/modalita.js     la fine della partita Da solo
+  scenes/torneo.js       il tabellone del Torneo, la fine della Sfida del giorno, le
+                         classifiche a Squadre
+  scenes/flusso.js       introduzione ("TOCCA A...!", prova lampo), risultato del turno
+                         con la medaglia, classifica del round e generale, premi buffi,
+                         finale (a due, oppure il podio)
   microgames/
     MicrogiocoBase.js    interfaccia comune (timer, pausa, fine, punteggio)
     index.js             registro dei microgiochi
@@ -596,8 +790,8 @@ passi), `cane0_giu` (sdraiato), `cane0_felice` (lingua fuori) e così via per og
 disegnati in `js/grafica/vialetto.js`.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
-`bgDisco` e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo `bgPista` e la
-musica `pista`.
+`bgDisco` (vista dall'alto) e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo
+`bgPalco` (vista di fronte, `js/grafica/palco.js`) e la musica `pista`.
 
 Le icone dell'app (`icone/`) sono Riccardo e Giorgio felici sui raggi arancioni del menu,
 disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno rifatte.
@@ -649,14 +843,14 @@ import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { im, txt } from '../fx.js';
 
 export class MioGiocoScene extends MicrogiocoBase {
-  constructor() { super('miogioco'); }      // id usato in config.js
+  constructor() { super('miogioco'); }      // id del microgioco (anche il nome del suo file di configurazione)
 
   prepara() {                                // sfondo, sprite, input
     this.punti = 0;
   }
 
   aggiorna(dt, p) {                          // dt = secondi, p = avanzamento 0..1
-    // this.cfg = la tua sezione di config.js, this.giocatore = chi gioca
+    // this.cfg = la tua configurazione (js/config/microgiochi/miogioco.js), this.giocatore = chi gioca
     // (this.giocatore.id + '_felice' ecc. sono i suoi sprite: usali così come sono,
     // senza dare per scontato che sia Riccardo o Giorgio; se gioca contro se
     // stesso sono già quelli del doppione)
@@ -670,7 +864,8 @@ export class MioGiocoScene extends MicrogiocoBase {
 ```
 
 2. Registralo in `js/microgames/index.js`: `miogioco: MioGiocoScene`.
-3. Aggiungi in `js/config.js` la sezione `microgiochi.miogioco` con:
+3. Crea la sua configurazione, `js/config/microgiochi/miogioco.js` (`export default { ... }`,
+   copia la forma da un altro file della stessa cartella), con:
    - `titolo`, `durata` (secondi), `colore` (sfondo dell'introduzione)
    - `ospite: { id, etichetta }`: il personaggio mostrato nell'introduzione
      (es. `{ id: 'sego', etichetta: 'OBIETTIVO:\nSEGO' }`); facoltativo `cast: [id, ...]`,
@@ -682,14 +877,16 @@ export class MioGiocoScene extends MicrogiocoBase {
    - facoltativo: `musica`, il nome di una traccia di `audio.js` (se no `gioco`; Petri
      Tentacolari usa `disco`)
    
-   e inserisci `'miogioco'` in `ordineSfida` se deve entrare nella sfida.
+   Poi in `js/config.js` importalo (`import miogioco from './config/microgiochi/miogioco.js';`),
+   aggiungilo a `microgiochi: { ... }` e inserisci `'miogioco'` in `ordineSfida` se deve entrare
+   nella sfida.
 
 Partita singola, schermata comandi (a pagine), introduzione, turni per tutti i
 giocatori, risultati e classifiche lo prendono da soli.
 
 Pausa e audio a schermo sul telefono li mette già `MicrogiocoBase`. Per il resto:
 - `eTouch()` e `perDito(testoTastiera, testoDito)` di `fx.js` per scegliere testi e
-  comandi; `comandiTouch` in `config.js` per l'introduzione e la schermata Comandi
+  comandi; `comandiTouch` nel file di configurazione per l'introduzione e la schermata Comandi
 - `multiTouch(this)` (usa `this.input.addPointer`) se servono più dita insieme;
   `pointer.wasTouch` dice se l'input arriva da un dito
 - `pulsante(scene, x, y, icona, azione)` per un pulsantino a schermo: il suo tocco

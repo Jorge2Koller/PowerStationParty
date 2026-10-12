@@ -1,4 +1,4 @@
-// Microgioco 12: "Il Passaggiorgio" - stasera guida Giorgio. Per forza.
+// Microgioco 12: "Il Passaggiorgio" - stasera guida Giorgio. Per forza. ACCHIAPPA!
 //
 //  Sabato sera, parcheggio sotto casa. Giorgio non prende mai la macchina: corre verso le
 //  macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV di Sego), apre una
@@ -9,8 +9,12 @@
 //  Più avanti: finte, sagome di cartone nelle altre portiere, travestimento col cappuccio
 //  (con un sosia incappucciato da non tirare fuori) e, alla fine, anche il bagagliaio.
 //  Clic a vuoto: la mano resta ferma per un attimo.
+//  I punti non scendono mai sotto zero (un passaggio scroccato toglie solo quello che hai).
+//  Le corse di Giorgio sono uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { MODELLI, COLORI_AUTO, porteAuto } from '../grafica/oggetti.js';
 import { PARCHEGGIO } from '../grafica/sfondi.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, vibra, multiTouch } from '../fx.js';
@@ -32,7 +36,17 @@ const COLORI = { ...COLORI_AUTO, a3: '#d8d4c8' };   // l'A3 è bianca, ma impolv
 export class GuidaScene extends MicrogiocoBase {
   constructor() { super('guida'); }
 
+  pesca(a) { return a[Math.floor(this.rnd() * a.length)]; }
+
+  mescola(a) {
+    const b = [...a];
+    for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(this.rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+    return b;
+  }
+
   prepara() {
+    this.rnd = casuale(Sessione.seme);
+    this.nFase = 0;
     this.punti = 0;
     this.guidate = 0;
     this.fuori = 0;
@@ -158,7 +172,11 @@ export class GuidaScene extends MicrogiocoBase {
   //  GIOCO
   // ------------------------------------------------------------
   aggiorna(dt) {
-    const f = this.fase;
+    const f = this.fase, n = this.cfg.fasi.indexOf(f);
+    if (n !== this.nFase) {
+      this.nFase = n;
+      if (f.nome) { Audio.sfx('bonus'); scritta(this, 240, 110, f.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 950 }); }
+    }
     this.bloccata -= dt;
     this.muoviGiorgio(dt, f);
     if (this.sosia) this.muoviSosia(dt);
@@ -229,8 +247,8 @@ export class GuidaScene extends MicrogiocoBase {
   sceltaPorta(f, evita) {
     const libere = this.auto.filter((a) => a.casa && !a.ap && a !== evita && !(this.sosia?.meta?.auto === a));
     if (!libere.length) return null;
-    const auto = caso(libere);
-    const porta = Math.random() < f.bagagliaio ? 'bag' : caso(['ant', 'post']);
+    const auto = this.pesca(libere);
+    const porta = this.rnd() < f.bagagliaio ? 'bag' : this.pesca(['ant', 'post']);
     return { auto, porta };
   }
 
@@ -245,13 +263,13 @@ export class GuidaScene extends MicrogiocoBase {
   nuovaCorsa(f) {
     const G = this.G, meta = this.sceltaPorta(f);
     if (!meta) { G.t = 0.3; return; }
-    G.travestito = Math.random() < f.travestimento;
+    G.travestito = this.rnd() < f.travestimento;
     G.key = (e) => (G.travestito ? (e === 'shock' ? 'incognito_giorgio_shock' : 'incognito_giorgio') : 'giorgioSera_' + e);
     G.img.setTexture(G.key('normale')).setVisible(true);
     G.vel = f.vel;
     G.stato = 'corre';
     this.punta(G, meta);
-    G.finta = Math.random() < f.finta ? Phaser.Math.FloatBetween(0.5, 0.75) : null;
+    G.finta = this.rnd() < f.finta ? 0.5 + this.rnd() * 0.25 : null;
     if (G.travestito) {
       this.scritta(G, 'IN INCOGNITO...', '#c8c8ff');
       this.nuovoSosia(f);
@@ -265,8 +283,8 @@ export class GuidaScene extends MicrogiocoBase {
     if (this.sosia) return;
     const meta = this.sceltaPorta(f, this.G.meta.auto);
     if (!meta) return;
-    const id = caso(SOSIA), da = Math.random() < 0.5 ? -20 : 500;
-    const S = { id, x: da, y: 230 + Math.random() * 20, vel: f.vel * 0.95, stato: 'corre' };
+    const id = this.pesca(SOSIA), da = this.rnd() < 0.5 ? -20 : 500;
+    const S = { id, x: da, y: 230 + this.rnd() * 20, vel: f.vel * 0.95, stato: 'corre' };
     S.img = im(this, S.x, S.y, `incognito_${id}`, TAGLIA).setOrigin(0.5, 1);
     this.punta(S, meta);
     this.sosia = S;
@@ -307,9 +325,9 @@ export class GuidaScene extends MicrogiocoBase {
       fumetto(this, auto.cont.x, auto.cont.y - auto.M.tetto - 12, caso(this.cfg.scuse), Math.max(900, f.finestra * 1000), 860);
       // più portiere insieme: nelle altre macchine spunta un Giorgio di cartone
       const altre = this.auto.filter((a) => a !== auto && a.casa && !a.ap);
-      Phaser.Utils.Array.Shuffle(altre).slice(0, f.insieme - 1).forEach((a) => {
+      this.mescola(altre).slice(0, f.insieme - 1).forEach((a) => {
         fumo(this, a.cont.x, a.cont.y - 20, 3, a.cont.depth + 2);
-        this.entra(a, caso(['ant', 'post']), 'cartone');
+        this.entra(a, this.pesca(['ant', 'post']), 'cartone');
       });
     }
   }
@@ -337,7 +355,7 @@ export class GuidaScene extends MicrogiocoBase {
 
   scrocca(auto) {
     const c = this.cfg, G = this.G;
-    this.punti -= c.malusPassaggio;
+    this.punti = Math.max(0, this.punti - c.malusPassaggio);
     this.scrocchi++;
     G.stato = 'via';
     vibra(60);
@@ -435,7 +453,7 @@ export class GuidaScene extends MicrogiocoBase {
     scritta(this, x0, y0 - 66, ultimo ? `ALL'ULTIMO! +${pt}` : `FUORI! +${pt}`, { size: 9, color: '#7dff9a', durata: 500 });
     if (Math.random() < 0.5) fumetto(this, a.cont.x + 24, a.cont.y - a.M.tetto - 12, caso(c.frasiAutisti), 800, 860);
     // vola in mezzo al parcheggio, a gambe all'aria
-    const tx = Phaser.Math.Between(170, 330), ty = Phaser.Math.Between(226, 246);
+    const tx = 170 + Math.round(this.rnd() * 160), ty = 226 + Math.round(this.rnd() * 20);
     G.stato = 'vola';
     G.x = tx; G.y = ty;
     G.img.setVisible(true).setTexture(G.key('shock')).setPosition(x0, y0).setDepth(860).setFlipX(tx < x0);
@@ -462,7 +480,7 @@ export class GuidaScene extends MicrogiocoBase {
 
   sbagliato(a) {
     const c = this.cfg, g = this.geometria(a, a.ap.porta), x = a.cont.x + g.x, y = a.cont.y - 40, id = this.sosia?.id;
-    this.punti -= c.malusSbagliato;
+    this.punti = Math.max(0, this.punti - c.malusSbagliato);
     this.bloccata = c.bloccoVuoto;
     Audio.sfx('errore');
     vibra(50);

@@ -1,16 +1,19 @@
-// Microgioco 6: "Sego, sono sotto casa!" - fai uscire Franci di casa coi fumogeni colorati.
+// Microgioco 6: "Sego, sono sotto casa!" - fai uscire Franci di casa coi fumogeni colorati. LANCIA!
 //
 //  Si mira e si lancia ad arco: il fumogeno vola verso la facciata e la tocca nel
 //  punto mirato. Da una finestra aperta entra e la stanza si riempie di fumo, che
 //  passa piano alle stanze accanto e si dirada col tempo. Sul muro o sulle persiane
 //  chiuse rimbalza nel cortile: fumo sprecato che copre la vista per un po'.
 //  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (soglia in config.js).
-//  Comandi: mouse (punta, tieni premuto: la forza sale e scende, rilascia),
-//  tastiera (frecce + SPAZIO tenuto), dito (fionda: tira indietro e lascia).
+//  Comandi: mouse e dito (fionda: appoggia, tira indietro e lascia), tastiera (frecce per
+//  mirare + SPAZIO tenuto: la forza sale e scende, si lancia al rilascio).
+//  Tre atti: all'inizio calma; poi TIRA VENTO (le finestre sbattono più spesso); alla fine
+//  FRANCI CHIUDE TUTTO. Finestre e giri di Franci sono uguali per tutti (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
 import { CASA } from '../grafica/sfondi.js';
-import { RES } from '../grafica/base.js';
+import { RES, casuale } from '../grafica/base.js';
 import { txt, im, scalaDi, scritta, fumo, pannello, lerp, caso, colpetto, fumetto, vibra, eTouch } from '../fx.js';
 
 const MANO = { x: 240, y: 240 };          // da dove parte il fumogeno
@@ -23,8 +26,22 @@ const CROP_FRANCI = 82.5;                  // unità del personaggio mostrate (d
 export class SegoScene extends MicrogiocoBase {
   constructor() { super('sego'); }
 
+  get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
+
+  // mescola con il seme del round (uguale per tutti)
+  mescola(a) {
+    const r = this.rnd, b = [...a];
+    for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+    return b;
+  }
+
+  pesca(a) { return a[Math.floor(this.rnd() * a.length)]; }
+
   prepara() {
     const c = this.cfg;
+    this.rnd = casuale(Sessione.seme);
+    this.nAtto = 0;
+    this.tastiera = false;  // la guida tratteggiata si vede solo a chi mira con le frecce
     this.punti = 0;
     this.lanciate = 0;
     this.centrate = 0;
@@ -34,15 +51,15 @@ export class SegoScene extends MicrogiocoBase {
     this.carica = null;     // mouse/tastiera: { t0 } da quando si tiene premuto
     this.fionda = null;     // dito: { id, ax, ay, x, y }
     this.tRicarica = 0;
-    this.tVento = c.ventoInizio;
-    this.tChiude = c.franciInizio;
+    this.tVento = c.atti[0].vento;
+    this.tChiude = c.atti[0].franci;
     this.tMuovi = 2.5;
     this.tFrase = 3;
     this.hud = null;        // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
 
     im(this, 0, 0, 'bgCortile').setOrigin(0);
     // le 12 stanze: interno, Franci, fumo, finestra con le persiane
-    const aperte = new Set(Phaser.Utils.Array.Shuffle([...Array(12).keys()]).slice(0, c.aperteInizio));
+    const aperte = new Set(this.mescola([...Array(12).keys()]).slice(0, c.aperteInizio));
     this.stanze = [];
     CASA.righe.forEach((y, r) => CASA.colonne.forEach((x, k) => {
       const s = {
@@ -79,22 +96,20 @@ export class SegoScene extends MicrogiocoBase {
 
     // comandi
     this.tasti = this.input.keyboard.addKeys({ sx: 'LEFT', dx: 'RIGHT' });
-    this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) this.inizia(); });
+    this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) { this.tastiera = true; this.inizia(); } });
     this.input.keyboard.on('keyup-SPACE', () => this.rilascia());
     const mondo = (p) => this.cameras.main.getWorldPoint(p.x, p.y);
-    const limita = (x) => Phaser.Math.Clamp(x, X_MIN, X_MAX);
+    // mouse e dito: la fionda (appoggia, tira indietro, lascia)
     this.input.on('pointerdown', (p) => {
       const w = mondo(p);
-      if (p.wasTouch) { if (!this.fionda) this.fionda = { id: p.id, ax: w.x, ay: w.y, x: w.x, y: w.y }; }
-      else if (p.leftButtonDown()) { this.mira = limita(w.x); this.inizia(); }
+      if (!p.wasTouch && !p.leftButtonDown()) return;
+      if (!this.fionda) { this.fionda = { id: p.id, ax: w.x, ay: w.y, x: w.x, y: w.y }; this.tastiera = false; }
     });
     this.input.on('pointermove', (p) => {
       const w = mondo(p);
-      if (!p.wasTouch) this.mira = limita(w.x);
-      else if (this.fionda?.id === p.id) Object.assign(this.fionda, { x: w.x, y: w.y });
+      if (this.fionda?.id === p.id) Object.assign(this.fionda, { x: w.x, y: w.y });
     });
     this.input.on('pointerup', (p) => {
-      if (!p.wasTouch) return this.rilascia();
       if (this.fionda?.id !== p.id) return;
       const t = this.tiroFionda(this.fionda);
       this.fionda = null;
@@ -133,7 +148,7 @@ export class SegoScene extends MicrogiocoBase {
 
   // gira per casa: va nella stanza con meno fumo tra alcune a caso
   sposta() {
-    const scelte = Phaser.Utils.Array.Shuffle(this.stanze.filter((s) => s !== this.franci.stanza)).slice(0, 4);
+    const scelte = this.mescola(this.stanze.filter((s) => s !== this.franci.stanza)).slice(0, 4);
     this.franci.stanza = scelte.sort((a, b) => a.fumo - b.fumo)[0];
     this.mostraFranci(this.franci.stanza.fumo > 0.3 ? 'triste' : caso(['normale', 'normale', 'felice', 'sufficienza']));
   }
@@ -194,7 +209,13 @@ export class SegoScene extends MicrogiocoBase {
     const c = this.cfg;
     // mirino da tastiera
     const dir = (this.tasti.dx.isDown ? 1 : 0) - (this.tasti.sx.isDown ? 1 : 0);
-    if (dir) this.mira = Phaser.Math.Clamp(this.mira + dir * c.velMira * dt, X_MIN, X_MAX);
+    if (dir) { this.tastiera = true; this.mira = Phaser.Math.Clamp(this.mira + dir * c.velMira * dt, X_MIN, X_MAX); }
+    // gli atti si annunciano
+    const A = this.atto, n = c.atti.indexOf(A);
+    if (n !== this.nAtto) {
+      this.nAtto = n;
+      if (A.nome) { Audio.sfx('bonus'); scritta(this, 240, 150, A.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 950 }); }
+    }
     // fumogeno successivo
     if (this.tRicarica > 0) {
       this.tRicarica -= dt;
@@ -284,7 +305,7 @@ export class SegoScene extends MicrogiocoBase {
 
   // il fumo passa alle stanze vicine, si dirada (di più con la finestra aperta) ed esce a sbuffi
   fumoInCasa(dt, p) {
-    const c = this.cfg, k = lerp(c.diradaInizio, c.diradaFine, p);
+    const c = this.cfg, k = this.atto.dirada;
     const nuovo = this.stanze.map((s) => s.fumo);
     for (const s of this.stanze) for (const n of this.vicine[s.i]) if (n.i > s.i) {
       const flusso = (s.fumo - n.fumo) * c.passaggio * dt;
@@ -309,16 +330,16 @@ export class SegoScene extends MicrogiocoBase {
     const c = this.cfg, F = this.franci;
     this.tVento -= dt;
     if (this.tVento <= 0) {
-      this.tVento = lerp(c.ventoInizio, c.ventoFine, p) * Phaser.Math.FloatBetween(0.8, 1.2);
+      this.tVento = this.atto.vento * (0.8 + this.rnd() * 0.4);
       const aperte = this.stanze.filter((s) => s.aperta), chiuse = this.stanze.filter((s) => !s.aperta);
-      if (aperte.length > 4 && (Math.random() < 0.5 || !chiuse.length)) this.apri(caso(aperte), false);
-      else if (chiuse.length) this.apri(caso(chiuse), true);
+      if (aperte.length > 4 && (this.rnd() < 0.5 || !chiuse.length)) this.apri(this.pesca(aperte), false);
+      else if (chiuse.length) this.apri(this.pesca(chiuse), true);
     }
     this.tMuovi -= dt;
-    if (this.tMuovi <= 0 && !F.tosse) { this.tMuovi = Phaser.Math.FloatBetween(2.2, 3.8); this.sposta(); }
+    if (this.tMuovi <= 0 && !F.tosse) { this.tMuovi = 2.2 + this.rnd() * 1.6; this.sposta(); }
     this.tChiude -= dt;
     if (this.tChiude <= 0 && !F.tosse) {
-      this.tChiude = lerp(c.franciInizio, c.franciFine, p) * Phaser.Math.FloatBetween(0.8, 1.2);
+      this.tChiude = this.atto.franci * (0.8 + this.rnd() * 0.4);
       const aperte = this.stanze.filter((s) => s.aperta);
       const bersaglio = aperte.sort((a, b) => b.fumo - a.fumo)[0];
       if (bersaglio && aperte.length > 3) {
@@ -343,7 +364,7 @@ export class SegoScene extends MicrogiocoBase {
     g.clear();
     const t = this.fionda ? this.tiroFionda(this.fionda) : this.carica ? { x: this.mira, forza: this.forza() } : null;
     if (!t) {
-      if (eTouch()) return;   // col dito si mira con la fionda: la guida del mouse non serve
+      if (!this.tastiera) return;   // col mouse e col dito si mira con la fionda: la guida serve solo alla tastiera
       g.fillStyle(0xffffff, 0.4);
       for (let y = Y_ALTO; y < Y_BASSO; y += 9) g.fillRect(this.mira - 0.5, y, 1, 4);
       return;

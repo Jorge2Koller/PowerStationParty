@@ -2,12 +2,15 @@
 // codice su canvas ad alta risoluzione (cartella js/grafica): nessuna immagine esterna.
 import { tela, DENS } from './grafica/base.js';
 import { DOPPIONE } from './sessione.js';
+import { Progressi } from './progressi.js';
 import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
 import { creaMarco } from './grafica/marco.js';
 import { creaOggetti } from './grafica/oggetti.js';
 import { creaSfondi } from './grafica/sfondi.js';
 import { creaBota } from './grafica/bota.js';
 import { creaPista } from './grafica/disco.js';
+import { creaPalco } from './grafica/palco.js';
+import { creaMedaglie } from './grafica/medaglie.js';
 import { creaVialetto } from './grafica/vialetto.js';
 
 export { RES, Q, SP } from './grafica/base.js';
@@ -18,10 +21,24 @@ export { CORPO, GW, GH, PELLE, zonaVietata } from './grafica/bota.js';
 const figura = (scene, key, p, e, o) => tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, p, e, o); });
 
 // il palleggio col piede: la gamba che si alza in due tempi (1 = a metà, 2 = sul pallone),
-// a destra (D) e a sinistra (S)
-function calci(scene, id, p, lati = [[1, 'D'], [-1, 'S']]) {
+// a destra (D) e a sinistra (S). extra = altre opzioni del disegno (la corona del costume)
+function calci(scene, id, p, lati = [[1, 'D'], [-1, 'S']], extra = {}) {
   for (const [lato, nome] of lati)
-    for (const [n, angolo] of [[1, 0.5], [2, 1.12]]) figura(scene, `${id}_calcio${n}${nome}`, p, 'normale', { calcio: { lato, angolo }, posa: 'calcio' });
+    for (const [n, angolo] of [[1, 0.5], [2, 1.12]]) figura(scene, `${id}_calcio${n}${nome}`, p, 'normale', { ...extra, calcio: { lato, angolo }, posa: 'calcio' });
+}
+
+// un personaggio col suo costume del Bancone, se ne ha uno: [aspetto, opzioni del disegno]
+function vestito(id) {
+  const v = Progressi.aspetto(id);
+  return [{ ...PERSONAGGI[id], ...v.aspetto }, v.opzioni];
+}
+
+// rifà le texture di un personaggio dopo un cambio di costume (le pose dei calci si rifanno
+// da sole la prossima volta che servono)
+export function vestiPersonaggio(scene, id) {
+  const [p, o] = vestito(id);
+  for (const e of ESPRESSIONI) figura(scene, `${id}_${e}`, p, e, o);
+  for (const k of ['calcio1D', 'calcio2D', 'calcio1S', 'calcio2S']) if (scene.textures.exists(`${id}_${k}`)) scene.textures.remove(`${id}_${k}`);
 }
 
 // Le pose in più di chi sta per giocare, create la prima volta che servono (farle per tutti i
@@ -29,9 +46,9 @@ function calci(scene, id, p, lati = [[1, 'D'], [-1, 'S']]) {
 // del palleggio e, se gioca contro se stesso, il "doppione" travestito in tutte le espressioni.
 // La chiama MicrogiocoBase prima di ogni microgioco, e l'intro.
 export function preparaGiocatore(scene, id, doppione = false) {
-  const p = PERSONAGGI[id];
-  if (!p) return;
-  if (!scene.textures.exists(`${id}_calcio1D`)) calci(scene, id, p);
+  if (!PERSONAGGI[id]) return;
+  const [p, o] = vestito(id);
+  if (!scene.textures.exists(`${id}_calcio1D`)) calci(scene, id, p, undefined, o);
   const bis = id + DOPPIONE;
   if (doppione && !scene.textures.exists(`${bis}_normale`)) {
     const finto = { ...p, travestimento: true };
@@ -52,8 +69,11 @@ export function ritratto(scene, x, y, id, lato = 30, espr = 'normale') {
 export function creaTexture(scene) {
   // personaggi: una texture per espressione
   const personaggio = (key, p, e, o) => figura(scene, key, p, e, o);
-  for (const [id, p] of Object.entries(PERSONAGGI))
-    for (const e of ESPRESSIONI) personaggio(`${id}_${e}`, p, e);
+  // (col costume del Bancone, se ne hanno uno)
+  for (const id of Object.keys(PERSONAGGI)) {
+    const [p, o] = vestito(id);
+    for (const e of ESPRESSIONI) personaggio(`${id}_${e}`, p, e, o);
+  }
   // Marsupino furioso (il panino rovinato)
   personaggio('marsupino_rabbia', PERSONAGGI.marsupino, 'rabbia');
   // il palleggio col piede dello Zio (calcia sempre di destro, anche con l'aria di sufficienza:
@@ -105,5 +125,7 @@ export function creaTexture(scene) {
   creaSfondi(scene);
   creaBota(scene);
   creaPista(scene);
+  creaPalco(scene);
+  creaMedaglie(scene);
   creaVialetto(scene);
 }

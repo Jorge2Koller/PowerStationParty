@@ -1,13 +1,17 @@
-// Microgioco 7: "TorRONDAcelli" - il Generale difende la spiaggia dai pirati.
+// Microgioco 7: "TorRONDAcelli" - il Generale difende la spiaggia dai pirati. SPARA!
 //
 //  Dal largo arrivano le bagnarole dei pirati (gommone, pedalò, galeone gonfiabile):
 //  vogliono gli ombrelloni. Il cannone spara dove miri; le palle volano in arco
 //  e ci mettono di più ad arrivare lontano. Quelle affondate lasciano i pirati a
 //  nuoto con la ciambella. Se una bagnarola tocca riva si prende un ombrellone e
 //  scappa: affondala prima che sparisca all'orizzonte e l'ombrellone torna.
-//  Le munizioni le lancia il Generale: una cassa ogni tanto, da prendere al volo.
+//  Le munizioni le lancia il Generale: una cassa ogni tanto, che atterra da sola sul cannone
+//  (i colpi sono pochi: sprecarli costa). Tre atti: prima gommoni e pedalò, poi ARRIVA IL
+//  GALEONE, alla fine l'ARREMBAGGIO. Le bagnarole arrivano uguali per tutti (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, fumetto, vibra } from '../fx.js';
 import { SPIAGGIA } from '../grafica/sfondi.js';
 
@@ -22,7 +26,11 @@ const PIRATI = { gommone: 2, pedalo: 2, galeone: 3 };
 export class RondaScene extends MicrogiocoBase {
   constructor() { super('ronda'); }
 
+  get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
+
   prepara() {
+    this.rnd = casuale(Sessione.seme);
+    this.nAtto = 0;
     this.punti = 0;
     this.affondate = 0;
     this.ripresi = 0;
@@ -64,13 +72,11 @@ export class RondaScene extends MicrogiocoBase {
     // comandi
     this.tasti = this.input.keyboard.addKeys({ sx: 'LEFT', dx: 'RIGHT', su: 'UP', giu: 'DOWN', a: 'A', d: 'D', w: 'W', s: 'S' });
     this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) this.spara(); });
-    this.input.keyboard.on('keydown-R', () => this.prendiCassa());
     const mondo = (p) => this.cameras.main.getWorldPoint(p.x, p.y);
     this.input.on('pointermove', (p) => { if (!p.wasTouch) this.punta(mondo(p)); });
     this.input.on('pointerdown', (p) => {
       if (!this.inCorso || (!p.wasTouch && !p.leftButtonDown())) return;
       const w = mondo(p);
-      if (this.cassa?.pronta && Math.hypot(w.x - this.cassa.img.x, w.y - this.cassa.img.y) < 18) return this.prendiCassa();
       if (w.y > RIVA + 16) return;
       this.punta(w);
       this.spara();
@@ -171,16 +177,16 @@ export class RondaScene extends MicrogiocoBase {
   }
 
   // --- bagnarole ---
-  nuovaBarca(f) {
-    const r = Math.random();
-    const tipo = r < f.galeone ? 'galeone' : r < f.galeone + f.pedalo ? 'pedalo' : 'gommone';
-    const vivi = this.ombrelloni.filter((o) => o.stato === 'su');
-    const bersaglio = vivi.length ? caso(vivi).x : caso(X_OMBR);
+  nuovaBarca(f, tipoVoluto) {
+    const rnd = this.rnd, r = rnd();
+    const tipo = tipoVoluto ?? (r < f.galeone ? 'galeone' : r < f.galeone + f.pedalo ? 'pedalo' : 'gommone');
+    // punta a un ombrellone (scelto col seme fra i cinque posti: se quello non c'è più, al più vicino)
+    const xb = X_OMBR[Math.floor(rnd() * X_OMBR.length)] + Math.round(rnd() * 20 - 10);
     const y = O + 4;
     const b = {
       tipo, hp: this.cfg.hp[tipo], stato: 'arriva', inclina: 0, y,
-      xa: Phaser.Math.Between(40, 440), xb: bersaglio + Phaser.Math.Between(-10, 10),
-      fase: Math.random() * 6.28, zig: f.zigzag * (0.5 + Math.random() * 0.5), vel: f.vel * this.cfg.passo[tipo], bottino: null,
+      xa: 40 + Math.round(rnd() * 400), xb,
+      fase: rnd() * 6.28, zig: f.zigzag * (0.5 + rnd() * 0.5), vel: f.vel * this.cfg.passo[tipo], bottino: null,
       img: im(this, 0, y, 'barca_' + tipo, 0.1).setOrigin(0.5, 1),
     };
     this.barche.push(b);
@@ -229,13 +235,13 @@ export class RondaScene extends MicrogiocoBase {
   // --- munizioni del Generale ---
   lanciaCassa() {
     const img = im(this, GEN.x + 14, 196, 'cassaMunizioni', 1).setDepth(64);
-    const x = Phaser.Math.Between(118, 196), y = Phaser.Math.Between(240, 258);
+    const x = PERNO.x - 26, y = PERNO.y + 6;
     this.cassa = { img, pronta: false };
     this.espr('felice', 0.8);
     this.parla(caso(this.cfg.frasiCassa), 900);
     Audio.sfx('lancio');
     this.tweens.add({ targets: img, x, duration: 520 });
-    this.tweens.add({ targets: img, y: 168, duration: 260, ease: 'Quad.out', yoyo: false, onComplete: () => this.tweens.add({ targets: img, y, duration: 260, ease: 'Quad.in', onComplete: () => { this.cassa.pronta = true; Audio.sfx('tonfo'); } }) });
+    this.tweens.add({ targets: img, y: 168, duration: 260, ease: 'Quad.out', yoyo: false, onComplete: () => this.tweens.add({ targets: img, y, duration: 260, ease: 'Quad.in', onComplete: () => { this.cassa.pronta = true; Audio.sfx('tonfo'); this.prendiCassa(); } }) });
     this.tweens.add({ targets: img, angle: 360, duration: 520 });
   }
 
@@ -251,9 +257,17 @@ export class RondaScene extends MicrogiocoBase {
     this.tweens.add({ targets: img, x: PERNO.x, y: PERNO.y + 8, scale: img.scale * 0.4, alpha: 0, duration: 260, onComplete: () => img.destroy() });
   }
 
-  aggiorna(dt, p) {
-    const c = this.cfg, f = {};
-    for (const k in c.inizio) f[k] = lerp(c.inizio[k], c.fine[k], p);
+  aggiorna(dt) {
+    const c = this.cfg, f = this.atto, n = c.atti.indexOf(f);
+    if (n !== this.nAtto) {
+      this.nAtto = n;
+      if (f.nome) {
+        Audio.sfx('fischietto');
+        scritta(this, 240, 110, f.nome, { size: 14, color: '#ffe14a', durata: 900, depth: 950 });
+        this.parla(f.nome === 'ARREMBAGGIO!' ? 'Tutti ai posti!' : 'Il galeone! Tre colpi!', 1200);
+      }
+      if (f.subito) { this.nuovaBarca(f, f.subito); this.tBarca = f.intervallo; }
+    }
 
     // mira con la tastiera
     const t = this.tasti, vx = (t.dx.isDown || t.d.isDown) - (t.sx.isDown || t.a.isDown), vy = (t.giu.isDown || t.s.isDown) - (t.su.isDown || t.w.isDown);
@@ -282,7 +296,7 @@ export class RondaScene extends MicrogiocoBase {
     // nuove bagnarole
     this.tBarca -= dt;
     const inArrivo = this.barche.filter((b) => b.stato === 'arriva').length;
-    if (this.tBarca <= 0 && inArrivo < Math.round(f.maxBarche)) { this.nuovaBarca(f); this.tBarca = f.intervallo * (0.8 + Math.random() * 0.4); }
+    if (this.tBarca <= 0 && inArrivo < f.maxBarche) { this.nuovaBarca(f); this.tBarca = f.intervallo * (0.8 + this.rnd() * 0.4); }
 
     for (const b of this.barche) {
       if (b.stato === 'giu') continue;

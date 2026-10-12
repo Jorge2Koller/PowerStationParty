@@ -1,27 +1,48 @@
-// Microgioco 1: "La Spina del PowerStation" - sfida di spillatura contro Beppe.
+// Microgioco 1: "La Spina del PowerStation" - sfida di spillatura contro Beppe. SPILLA!
+//
+//  Si tiene premuto (SPAZIO, il mouse o il dito) per spillare e si rilascia quando la birra è
+//  nella ZONA VERDE. Al centro della zona: PERFETTA, punti in più.
+//  I clienti ordinano tre bicchieri diversi: la pinta, il boccale (grande, si riempie piano,
+//  vale di più) e il calice (zona strettissima, vale tanto: il rischio). Tre atti: si comincia
+//  con le pinte, poi l'ORA DI PUNTA (arrivano boccali e calici, Beppe accelera), alla fine
+//  Beppe FA I DISPETTI (urta il bancone e la zona verde balla mentre spilli).
+//  Beppe intanto spilla pinte a ritmo fisso: per vincere bisogna fare più punti di lui.
+//  I bicchieri arrivano nello stesso ordine per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, colpetto, eTouch, vibra } from '../fx.js';
 
 const Y_BANCONE = 181;            // dove appoggia il bicchiere
 const Y_BECCO = 137;              // da dove esce la birra
 const X_MIO = 160, X_BEPPE = 320;
 const CAVO = 43;                  // altezza interna del bicchiere (unità)
+const NOMI = { pinta: 'PINTA', boccale: 'BOCCALE', calice: 'CALICE' };
 
 export class SpinaScene extends MicrogiocoBase {
   constructor() { super('spina'); }
 
+  get fase() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
+
   prepara() {
-    this.pinte = 0;
+    const c = this.cfg;
+    this.rnd = casuale(Sessione.seme);
+    this.punti = 0;
+    this.pinte = 0;            // bicchieri buoni (di qualunque tipo)
+    this.perfette = 0;
     this.pinteBeppe = 0;
     this.tBeppe = 0;
     this.tOcchiata = 5;
     this.tChiacchiere = 1.5;
+    this.tDispetto = 0;
+    this.urto = 0;             // il bancone balla (dispetto di Beppe): la zona verde si sposta
+    this.atto = 0;
 
     im(this, 0, 0, 'bgPub').setOrigin(0);
     txt(this, 240, 42, 'POWERSTATION', { size: 9, color: '#f6d36b', thick: 0 });
     txt(this, 240, 69, 'OGGI ALLA SPINA', { size: 8, color: '#ffe9a0', thick: 0 });
-    txt(this, 240, 92, 'Bionda ......... 5\nRossa .......... 6\nTaralli gratis', { size: 7, color: '#eef2e4', thick: 0, spacing: 0 });
+    txt(this, 240, 92, 'Pinta .......... 5\nBoccale ........ 8\nCalice ......... 9', { size: 7, color: '#eef2e4', thick: 0, spacing: 0 });
 
     // baristi dietro al bancone
     this.io = im(this, 84, 200, this.giocatore.id + '_normale').setOrigin(0.5, 1);
@@ -40,9 +61,10 @@ export class SpinaScene extends MicrogiocoBase {
       return s;
     });
 
-    // contatore
-    pannello(this, 240, 22, 176, 18, { depth: 1000 });
-    this.contatore = txt(this, 240, 22, '', { size: 13, depth: 1001, thick: 3 });
+    // contatore: i miei punti contro quelli di Beppe
+    pannello(this, 240, 22, 196, 18, { depth: 1000 });
+    this.contatore = txt(this, 240, 22, '', { size: 12, depth: 1001, thick: 3 });
+    this.ordine = txt(this, X_MIO, 118, '', { size: 7, depth: 30, color: '#ffe14a' });
 
     this.spazio = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     // dito (o mouse) tenuto premuto in qualunque punto = SPAZIO tenuto
@@ -50,7 +72,6 @@ export class SpinaScene extends MicrogiocoBase {
     this.input.on('pointerdown', (p) => this.premuti.add(p.id));
     for (const ev of ['pointerup', 'pointerupoutside']) this.input.on(ev, (p) => this.premuti.delete(p.id));
     if (eTouch()) {
-      // un grosso pulsante "SPILLA" come promemoria (funziona tutto lo schermo)
       this.spilla = this.add.container(56, 232).setDepth(1000);
       const g = this.add.graphics();
       g.fillStyle(0x000000, 0.3); g.fillCircle(1.5, 2.5, 25);
@@ -58,28 +79,37 @@ export class SpinaScene extends MicrogiocoBase {
       g.lineStyle(2.5, 0xffe14a, 1); g.strokeCircle(0, 0, 25);
       this.spilla.add([g, txt(this, 0, -4, 'SPILLA', { size: 8, color: '#ffe14a' }), txt(this, 0, 7, 'tieni premuto', { size: 4.6, color: '#fff3d6' })]);
     }
-    this.bicchiereBeppe = this.creaBicchiere(X_BEPPE);
+    this.bicchiereBeppe = this.creaBicchiere(X_BEPPE, 'pinta');
     this.nuovoBicchiere();
+    this.aggiornaContatore();
   }
 
   // dopo una pausa nessun dito risulta più appoggiato (se no la spina resterebbe aperta)
   alRientro() { this.premuti.clear(); }
 
-  // bicchiere = contenitore con birra (ritagliata in base al livello), schiuma, zona verde e vetro
-  creaBicchiere(x, zona) {
+  // bicchiere = contenitore con birra (ritagliata in base al livello), schiuma, zona verde e vetro;
+  // il tipo cambia la forma (boccale largo, calice stretto)
+  creaBicchiere(x, tipo, zona) {
     const birra = im(this, 0, 1, 'pintaBirra').setOrigin(0.5, 1).setVisible(false);
     const schiuma = im(this, 0, 0, 'pintaSchiuma').setOrigin(0.5, 0).setVisible(false);
     const segni = this.add.graphics();
-    if (zona) {
-      const y1 = -3 - zona[1] * CAVO, y0 = -3 - zona[0] * CAVO;
-      segni.fillStyle(0x3bff6a, 0.38); segni.fillRect(-10.5, y1, 21, y0 - y1);
-      segni.fillStyle(0x3bff6a, 1);
-      for (const y of [y1, y0]) { segni.fillRect(-10.5, y - 0.4, 21, 0.8); segni.fillTriangle(-19, y - 2.5, -19, y + 2.5, -14, y); segni.fillTriangle(19, y - 2.5, 19, y + 2.5, 14, y); }
-    }
     const vetro = im(this, 0, 1, 'pintaVetro').setOrigin(0.5, 1);
     const b = this.add.container(x, Y_BANCONE, [birra, schiuma, segni, vetro]).setDepth(13);
-    Object.assign(b, { birra, schiuma, segni });
+    const forma = this.cfg.bicchieri[tipo];
+    b.setScale(forma.largo, forma.alto);
+    Object.assign(b, { birra, schiuma, segni, tipo });
+    if (zona) this.disegnaZona(b, zona, 0);
     return b;
+  }
+
+  // la zona verde (spostata di "dy" se Beppe ha urtato il bancone) e il suo centro, per la PERFETTA
+  disegnaZona(b, zona, dy) {
+    const g = b.segni, y1 = -3 - (zona[1] + dy) * CAVO, y0 = -3 - (zona[0] + dy) * CAVO, mezzo = (y0 + y1) / 2, perf = (y0 - y1) * this.cfg.perfetta / 2;
+    g.clear();
+    g.fillStyle(0x3bff6a, 0.32); g.fillRect(-10.5, y1, 21, y0 - y1);
+    g.fillStyle(0xfff36a, 0.45); g.fillRect(-10.5, mezzo - perf, 21, perf * 2);
+    g.fillStyle(0x3bff6a, 1);
+    for (const y of [y1, y0]) { g.fillRect(-10.5, y - 0.4, 21, 0.8); g.fillTriangle(-19, y - 2.5, -19, y + 2.5, -14, y); g.fillTriangle(19, y - 2.5, 19, y + 2.5, 14, y); }
   }
 
   riempi(b, livello) {
@@ -89,28 +119,70 @@ export class SpinaScene extends MicrogiocoBase {
   }
 
   nuovoBicchiere() {
+    const c = this.cfg, F = this.fase;
     this.bicchiere?.destroy();
-    const amp = lerp(this.cfg.zonaInizio, this.cfg.zonaFine, this.progresso);
-    const centro = 0.68 + Math.random() * 0.16;
+    const r = this.rnd(), tipo = r < F.calice ? 'calice' : r < F.calice + F.boccale ? 'boccale' : 'pinta';
+    const forma = c.bicchieri[tipo];
+    const amp = lerp(c.zonaInizio, c.zonaFine, this.progresso) * forma.zona;
+    const centro = 0.66 + this.rnd() * 0.16;
     this.zona = [centro - amp / 2, centro + amp / 2];
+    this.tipo = tipo;
     this.livello = 0;
     this.stato = 'pronto';
     this.armato = false; // bisogna rilasciare SPAZIO prima di ricominciare
-    this.bicchiere = this.creaBicchiere(X_MIO - 40, this.zona);
+    this.bicchiere = this.creaBicchiere(X_MIO - 40, tipo, this.zona);
     this.bicchiere.alpha = 0;
     this.tweens.add({ targets: this.bicchiere, x: X_MIO, alpha: 1, duration: 120, ease: 'Quad.out' });
+    this.ordine.setText(`${NOMI[tipo]}  +${forma.punti}`).setColor(tipo === 'calice' ? '#ff9ad8' : tipo === 'boccale' ? '#ffe14a' : '#ffffff');
+    colpetto(this, this.ordine, 1.2, 1.2);
+  }
+
+  aggiornaContatore() {
+    const beppe = this.pinteBeppe * this.cfg.puntiBeppe;
+    this.contatore.setText(`TU: ${this.punti}  -  BEPPE: ${beppe}`);
+    this.contatore.setColor(this.punti > beppe ? '#7dff9a' : this.punti < beppe ? '#ff9a8a' : '#ffffff');
   }
 
   aggiorna(dt, p) {
-    const c = this.cfg, giu = this.spazio.isDown || this.premuti.size > 0;
+    const c = this.cfg, F = this.fase, giu = this.spazio.isDown || this.premuti.size > 0;
     this.spilla?.setScale(giu ? 0.9 : 1).setAlpha(giu ? 1 : 0.85);
+
+    // gli atti
+    const atto = c.atti.indexOf(F);
+    if (atto !== this.atto) {
+      this.atto = atto;
+      Audio.sfx('bonus');
+      scritta(this, 240, 128, F.nome, { size: 14, color: '#ffe14a', durata: 900 });
+    }
+
+    // i dispetti di Beppe: urta il bancone, e la zona verde balla per un po'
+    if (F.dispetti) {
+      this.tDispetto -= dt;
+      if (this.tDispetto <= 0) {
+        this.tDispetto = c.dispettoOgni * (0.8 + this.rnd() * 0.4);
+        this.urto = c.durataUrto;
+        Audio.sfx('sbam');
+        scuoti(this, 160, 0.006);
+        this.beppe.setTexture('beppe_sufficienza');
+        this.fumetto(this.beppe.x - 56, 92, caso(c.frasiDispetto), 900);
+        this.time.delayedCall(900, () => this.beppe.setTexture('beppe_normale'));
+      }
+    }
+    let dy = 0;
+    if (this.urto > 0) {
+      this.urto = Math.max(0, this.urto - dt);
+      dy = Math.sin(this.urto * 14) * c.ballaZona * (this.urto / c.durataUrto);
+      this.bicchiere?.setX(X_MIO + Math.sin(this.urto * 30) * 1.2);
+    }
+    this.dyZona = dy;
+    if (this.bicchiere && this.stato !== 'attesa') this.disegnaZona(this.bicchiere, this.zona, dy);
 
     // --- il mio bicchiere ---
     if (this.stato === 'pronto') {
       if (!giu) this.armato = true;
       else if (this.armato) { this.stato = 'versa'; Audio.versaInizio(); }
     } else if (this.stato === 'versa') {
-      this.livello += lerp(c.velInizio, c.velFine, p) * dt;
+      this.livello += lerp(c.velInizio, c.velFine, p) * c.bicchieri[this.tipo].vel * dt;
       Audio.versaLivello(this.livello);
       if (this.livello >= 1) this.valuta(true);
       else if (!giu) this.valuta(false);
@@ -118,14 +190,14 @@ export class SpinaScene extends MicrogiocoBase {
     const verso = this.stato === 'versa';
     this.getto.setVisible(verso);
     if (verso) {
-      this.getto.setSize(3, Math.max(1, Y_BANCONE - 3 - this.livello * CAVO - Y_BECCO));
+      const alto = c.bicchieri[this.tipo].alto;
+      this.getto.setSize(3, Math.max(1, Y_BANCONE - 3 - this.livello * CAVO * alto - Y_BECCO));
       this.riempi(this.bicchiere, this.livello);
     }
 
     // --- Beppe, metronomo umano ---
-    const interv = this.tempoRimasto <= c.beppeSprint ? c.beppeIntervalloFinale : c.beppeIntervallo;
     this.tBeppe += dt;
-    const f = this.tBeppe / interv;
+    const f = this.tBeppe / F.beppe;
     const livB = Math.min(0.82, f * 1.05);
     this.riempi(this.bicchiereBeppe, livB);
     this.gettoBeppe.setVisible(livB < 0.82 && f > 0.05);
@@ -134,13 +206,14 @@ export class SpinaScene extends MicrogiocoBase {
       this.tBeppe = 0;
       this.pinteBeppe++;
       const g = this.bicchiereBeppe;
-      this.bicchiereBeppe = this.creaBicchiere(X_BEPPE);
+      this.bicchiereBeppe = this.creaBicchiere(X_BEPPE, 'pinta');
       this.servi(g, 270, false);
+      this.aggiornaContatore();
     }
 
     // occhiata di sufficienza
     this.tOcchiata -= dt;
-    if (this.tOcchiata <= 0) {
+    if (this.tOcchiata <= 0 && !F.dispetti) {
       this.tOcchiata = 6 + Math.random() * 5;
       this.beppe.setTexture('beppe_sufficienza');
       Audio.sfx('tsk');
@@ -157,13 +230,10 @@ export class SpinaScene extends MicrogiocoBase {
       this.fumetto(s.x + 8, 190, caso(c.frasiClienti), 1000);
       this.time.delayedCall(700, () => s.setTexture(`cliente${s.idx}_0`));
     }
-
-    this.contatore.setText(`TU: ${this.pinte}  -  BEPPE: ${this.pinteBeppe}`);
-    this.contatore.setColor(this.pinte > this.pinteBeppe ? '#7dff9a' : this.pinte < this.pinteBeppe ? '#ff9a8a' : '#ffffff');
   }
 
   valuta(traboccata) {
-    const c = this.cfg, [a, b] = this.zona, g = this.bicchiere;
+    const c = this.cfg, dy = this.dyZona ?? 0, a = this.zona[0] + dy, b = this.zona[1] + dy, g = this.bicchiere, forma = c.bicchieri[this.tipo];
     Audio.versaFine();
     this.getto.setVisible(false);
     this.riempi(g, this.livello);
@@ -171,16 +241,22 @@ export class SpinaScene extends MicrogiocoBase {
     this.bicchiere = null;
 
     if (!traboccata && this.livello >= a && this.livello <= b) {
-      // pinta perfetta: scivola fino al cliente
+      // buona: scivola fino al cliente. Al centro della zona: PERFETTA
+      const perfetta = Math.abs(this.livello - (a + b) / 2) <= ((b - a) / 2) * c.perfetta;
+      const guadagno = forma.punti + (perfetta ? c.bonusPerfetta : 0);
       this.stato = 'attesa';
       this.pinte++;
+      if (perfetta) this.perfette++;
+      this.punti += guadagno;
       Audio.sfx('scivola');
-      this.time.delayedCall(260, () => Audio.sfx('ding'));
-      scritta(this, X_MIO, 112, 'PERFETTA!', { size: 10, color: '#7dff9a', durata: 400 });
+      this.time.delayedCall(260, () => Audio.sfx(perfetta ? 'bonus' : 'ding'));
+      scritta(this, X_MIO, 112, perfetta ? `PERFETTA! +${guadagno}` : `BUONA +${guadagno}`, { size: 10, color: perfetta ? '#ffe14a' : '#7dff9a', durata: 400 });
+      if (perfetta) stelle(this, X_MIO, Y_BANCONE - 40, 6, 15);
       this.faccia('felice', 500);
       colpetto(this, this.contatore, 1.15, 1.15);
+      this.aggiornaContatore();
       this.servi(g, 210, true);
-      this.time.delayedCall(c.pausaPerfetta * 1000, () => this.nuovoBicchiere());
+      this.time.delayedCall(this.fase.pausa * 1000, () => this.nuovoBicchiere());
       return;
     }
 
@@ -237,10 +313,11 @@ export class SpinaScene extends MicrogiocoBase {
   }
 
   risultato() {
+    const beppe = this.pinteBeppe * this.cfg.puntiBeppe;
     return {
-      punteggio: this.pinte,
-      vittoria: this.pinte > this.pinteBeppe,
-      riepilogo: `Pinte: tu ${this.pinte} - Beppe ${this.pinteBeppe}`,
+      punteggio: this.punti,
+      vittoria: this.punti > beppe,
+      riepilogo: `${this.pinte} bicchieri (${this.perfette} perfetti): tu ${this.punti} - Beppe ${beppe}`,
     };
   }
 }

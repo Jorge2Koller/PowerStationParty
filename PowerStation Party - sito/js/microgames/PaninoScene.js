@@ -1,12 +1,18 @@
-// Microgioco 4: "Il Panino di Marsupino" - prendi al volo quello che lancia Marsupino.
+// Microgioco 4: "Il Panino di Marsupino" - prendi al volo quello che lancia Marsupino. IMPILA!
 //
 //  Il pane scorre a destra e sinistra sul bancone. Quello che prendi si impila
 //  davvero: si prende in cima alla pila, e più la pila è alta più ondeggia.
 //  Ricetta: prosciutto, würstel, sottiletta, ketchup e maionese (gli ultimi due
 //  arrivano come schizzi dai tubetti in alto). Calzini, lische, ghiaccio e
 //  ciabatte rovinano il panino.
+//  Marsupino lancia la roba buona LONTANO dal pane (bisogna correre: chi sta fermo non prende
+//  niente). Tre atti: si comincia piano; poi il DOPPIO LANCIO (due cose insieme); alla fine
+//  MARSUPINO SI ARRABBIA e le schifezze te le tira addosso.
+//  Cosa lancia e dove (rispetto al pane) è uguale per tutti i giocatori del round (seme).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, colpetto, fumetto, vibra } from '../fx.js';
 
 const Y_PANE = 250;                     // dove appoggia il pane sul bancone
@@ -22,7 +28,11 @@ const SPESSORE = { prosciutto: 4, wurstel: 5.5, sottiletta: 3, ketchup: 3, maion
 export class PaninoScene extends MicrogiocoBase {
   constructor() { super('panino'); }
 
+  get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
+
   prepara() {
+    this.rnd = casuale(Sessione.seme);
+    this.nAtto = 0;
     this.punti = 0;
     this.panini = 0;
     this.presi = 0;
@@ -124,6 +134,15 @@ export class PaninoScene extends MicrogiocoBase {
   }
 
   aggiorna(dt, p) {
+    const A = this.atto, n = this.cfg.atti.indexOf(A);
+    if (n !== this.nAtto) {
+      this.nAtto = n;
+      if (A.nome) {
+        Audio.sfx('bonus');
+        scritta(this, 240, 110, A.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 1005 });
+        if (A.mira) this.espressione('rabbia', 1);
+      }
+    }
     this.muoviPane(dt);
     this.ondeggia(dt);
     this.lanci(dt, p);
@@ -166,25 +185,40 @@ export class PaninoScene extends MicrogiocoBase {
 
   // --- Marsupino lancia ---
   lanci(dt, p) {
-    const c = this.cfg;
+    const c = this.cfg, A = this.atto, r = this.rnd;
     this.tLancio -= dt;
     if (this.tLancio > 0) return;
-    this.tLancio = lerp(c.lancioInizio, c.lancioFine, p) * Phaser.Math.FloatBetween(0.85, 1.15);
-    const x1 = Phaser.Math.Between(48, 432);
-    this.lancia(this.scegli(p), x1);
-    if (p >= c.doppioDa && Math.random() < c.probDoppio) {
-      let x2;
-      do x2 = Phaser.Math.Between(48, 432); while (Math.abs(x2 - x1) < 100);
-      this.lancia(this.scegli(p), x2);
+    this.tLancio = A.lancio * (0.85 + r() * 0.3);
+    const t1 = this.scegli(), x1 = this.dove(t1);
+    this.lancia(t1, x1);
+    if (r() < A.doppio) {
+      const t2 = this.scegli();
+      let x2 = this.dove(t2);
+      for (let prove = 0; prove < 6 && Math.abs(x2 - x1) < 100; prove++) x2 = this.dove(t2);
+      this.lancia(t2, x2);
     }
   }
 
+  // la roba buona cade lontano dal pane (bisogna correre); le schifezze a caso, o addosso
+  // al pane quando Marsupino è arrabbiato
+  dove(tipo) {
+    const c = this.cfg, r = this.rnd, A = this.atto;
+    if (SBAGLIATI.includes(tipo) && r() < (A.mira ?? 0)) return Phaser.Math.Clamp(Math.round(this.x + (r() - 0.5) * 16), 48, 432);
+    if (SBAGLIATI.includes(tipo)) return 48 + Math.round(r() * 384);
+    // a una distanza tra lontanoMin e lontanoMax dal pane, dalla parte dove c'è posto
+    const d = c.lontanoMin + r() * (c.lontanoMax - c.lontanoMin);
+    let verso = r() < 0.5 ? -1 : 1;
+    if (this.x + verso * d < 48 || this.x + verso * d > 432) verso = -verso;
+    return Phaser.Math.Clamp(Math.round(this.x + verso * d), 48, 432);
+  }
+
   // preferisce gli ingredienti che mancano, così il panino si può sempre finire
-  scegli(p) {
-    const c = this.cfg;
-    if (Math.random() < lerp(c.sbagliatiInizio, c.sbagliatiFine, p)) return caso(SBAGLIATI);
+  scegli() {
+    const r = this.rnd;
+    if (r() < this.atto.sbagliati) return SBAGLIATI[Math.floor(r() * SBAGLIATI.length)];
     const mancano = LANCIABILI.filter((k) => !this.ricetta[k]);
-    return mancano.length && Math.random() < 0.65 ? caso(mancano) : caso(LANCIABILI);
+    const da = mancano.length && r() < 0.65 ? mancano : LANCIABILI;
+    return da[Math.floor(r() * da.length)];
   }
 
   // dalle mani di Marsupino in su, fuori dallo schermo; poi ricade dritto su x
@@ -341,10 +375,12 @@ export class PaninoScene extends MicrogiocoBase {
     const c = this.cfg;
     this.tTubetto -= dt;
     if (this.tTubetto > 0) return;
-    this.tTubetto = lerp(c.tubettoInizio, c.tubettoFine, p) * Phaser.Math.FloatBetween(0.85, 1.15);
+    const r = this.rnd;
+    this.tTubetto = lerp(c.tubettoInizio, c.tubettoFine, p) * (0.85 + r() * 0.3);
     const mancano = SALSE.filter((s) => !this.ricetta[s]);
-    const salsa = mancano.length && Math.random() < 0.8 ? caso(mancano) : caso(SALSE);
-    const da = Math.random() < 0.5 ? -1 : 1, xSpruzzo = Phaser.Math.Between(70, 410), y = 66;
+    const da0 = mancano.length && r() < 0.8 ? mancano : SALSE, salsa = da0[Math.floor(r() * da0.length)];
+    // spruzza lontano dal pane anche lui (ma si vede arrivare)
+    const da = r() < 0.5 ? -1 : 1, xSpruzzo = Phaser.Math.Clamp(this.dove(salsa), 70, 410), y = 66;
     const img = im(this, da < 0 ? -20 : 500, y, 'tubetto_' + salsa).setDepth(25);
     this.tubi.add(img);
     this.tweens.add({

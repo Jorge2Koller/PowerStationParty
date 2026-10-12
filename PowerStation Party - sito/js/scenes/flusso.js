@@ -4,9 +4,16 @@
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
+import { Salvataggio } from '../salvataggio.js';
+import { medaglia, MEDAGLIE } from '../punteggi.js';
+import { premiBuffi } from '../premi.js';
+import { Progressi } from '../progressi.js';
+import { NOMI_LIVELLI, COLORI_LIVELLI } from '../livelli.js';
 import { SP, ritratto, preparaGiocatore } from '../sprites.js';
-import { txt, im, inquadra, raggi, pannello, ombra, molleggia, stelle, scritta, scuoti, caso, eTouch, perDito, pulsante, menuLista } from '../fx.js';
+import { txt, im, inquadra, raggi, pannello, ombra, molleggia, stelle, scritta, scuoti, caso, eTouch, perDito, pulsante, menuLista, annunciaTrofei } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
+import { generaleSquadre as classificaSquadre, finaleSquadre } from './torneo.js';
+import { nomeTurno } from '../torneo.js';
 
 const scurisci = (col, k = 0.72) => {
   const c = Phaser.Display.Color.IntegerToColor(col);
@@ -26,6 +33,10 @@ function attendiInvio(scene, fn, tasti = ['ENTER']) {
 
 const lampeggia = (scene, t) => scene.tweens.add({ targets: t, alpha: 0.25, duration: 400, yoyo: true, repeat: -1 });
 
+// a fine sfida: prima i premi buffi (se ce ne sono), poi la classifica finale
+const alFinale = (scene) => scene.scene.start(premiBuffi(Sessione).length ? 'Premi' : 'Finale');
+const NOMI_MEDAGLIE = { bronzo: 'BRONZO', argento: 'ARGENTO', oro: 'ORO' };
+
 // "1°", "2°"... coi colori del podio
 const COLORI_POS = ['#ffe14a', '#dfe6ee', '#e8a264'];
 const posto = (pos) => `${pos}°`;
@@ -35,7 +46,7 @@ function sfotto(G, ordine) {
   const primo = G[ordine[0]], secondo = G[ordine[1]], ultimo = G[ordine[ordine.length - 1]];
   const parola = (g) => g.nome.replace(/^(il |lo |la |l')/i, '').toLowerCase();
   const vietate = [parola(primo), parola(ultimo)];
-  const tutte = [...CONFIG.sfotto, ...(G.length >= 3 ? CONFIG.sfottoTanti : [])];
+  const tutte = [...CONFIG.sfotto, ...(G.length >= 3 ? CONFIG.sfottoTanti : []), ...Progressi.frasiExtra()];   // (più quelle comprate al Bancone)
   const buone = tutte.filter((f) => { const nuda = f.replace(/\{\w+\}/g, '').toLowerCase(); return !vietate.some((v) => nuda.includes(v)); });
   return caso(buone.length ? buone : tutte)
     .replaceAll('{primo}', primo.nome).replaceAll('{secondo}', secondo.nome).replaceAll('{ultimo}', ultimo.nome)
@@ -58,14 +69,32 @@ export class IntroScene extends Phaser.Scene {
     raggi(this, m.colore, scurisci(m.colore));
 
     const vinti = S.classifica().round;
-    const round = S.modo !== 'sfida' ? 'ALLENAMENTO'
+    const round = S.tipo === 'torneo' ? `TORNEO: ${nomeTurno(S.torneo)}`
+      : S.tipo === 'giorno' ? `SFIDA DEL GIORNO: ${S.indice + 1} DI ${S.lista.length}`
+      : S.tipo === 'squadre' ? `SQUADRE, ROUND ${S.indice + 1} DI ${S.lista.length}: ${g.nome} gioca per i ${CONFIG.modalita.squadre.nomi[g.i % 2]}`
+      : S.solitario ? `DA SOLO: ${S.indice + 1} DI ${S.lista.length}` + (S.boss ? '  -  IL BOSS!' : '')
+      : S.tipo === 'lampo' ? `LAMPO: ${S.indice + 1} DI ${S.lista.length}`
+      : S.modo !== 'sfida' ? 'ALLENAMENTO'
       : S.meglioDi ? `AL MEGLIO DI ${S.meglioDi}: ROUND ${S.indice + 1}` + (n === 2 ? `  (${vinti[0]} - ${vinti[1]})` : '')
       : S.lista.length > 1 ? `ROUND ${S.indice + 1} DI ${S.lista.length}` : n === 2 ? 'SFIDA A DUE' : 'PARTITA SINGOLA';
-    txt(this, 240, 14, `${round}  -  ${S.modo === 'sfida' ? `turno ${S.passo + 1} di ${n}` : g.nome}` + (cambio ? `  -  ${m.titolo}` : ''), { size: 7 });
+    txt(this, 240, 14, `${round}  -  ${S.modo === 'sfida' ? `turno ${S.passo + 1} di ${S.turni}` : g.nome}` + (cambio ? `  -  ${m.titolo}` : ''), { size: 7 });
+    // da solo: le vite in alto a destra
+    if (S.solitario) for (let k = 0; k < CONFIG.modalita.solitario.vite; k++) im(this, 400 + k * 16, 14, 'cuore', 1).setAlpha(k < S.solitario.vite ? 1 : 0.25);
     const titolo = txt(this, 240, cambio ? 37 : 40, cambio ? `TOCCA A ${g.nome.toUpperCase()}!` : m.titolo, { size: cambio ? 21 : 19, color: cambio ? g.colore : '#ffe14a', wrap: 460 });
     titolo.setScale(0);
     this.tweens.add({ targets: titolo, scale: 1, duration: 450, ease: 'Back.out' });
     if (cambio) txt(this, 240, 57, perDito(`Passa la tastiera a ${g.nome}`, `Passa il telefono a ${g.nome}`), { size: 7.5, color: '#fff3d6' });
+    else if (m.verbo) {
+      // il comando in una parola
+      const v = txt(this, 240, 58, m.verbo, { size: 11, color: '#ffffff', stroke: '#1f1430', thick: 4 }).setAlpha(0);
+      this.tweens.add({ targets: v, alpha: 1, delay: 350, duration: 200 });
+      this.tweens.add({ targets: v, scale: 1.12, delay: 550, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    }
+
+    // prova lampo: la prima volta che si incontra questo microgioco (su questo telefono o computer)
+    // si gioca prima qualche secondo di prova; in una sfida la fanno tutti i giocatori del round
+    const chiaveTurno = `${S.seme}:${S.passo}`;
+    const prova = Salvataggio.impostazioni.provaLampo && S.provaFatta !== chiaveTurno && (!Salvataggio.dati.visti[id] || S.provaRound === S.seme);
 
     // chi gioca (travestito, se gioca contro se stesso)
     ombra(this, 60, 224, 62);
@@ -73,6 +102,7 @@ export class IntroScene extends Phaser.Scene {
     molleggia(this, s);
     txt(this, 60, 236, 'TOCCA A', { size: 7 });
     txt(this, 60, 249, g.nome.toUpperCase(), { size: g.nome.length > 11 ? 9 : 11, color: g.colore });
+    txt(this, 60, 261, NOMI_LIVELLI[S.livello], { size: 6, color: COLORI_LIVELLI[S.livello] });
 
     // l'ospite del microgioco
     if (m.ospite) {
@@ -93,7 +123,8 @@ export class IntroScene extends Phaser.Scene {
     txt(this, 240, cima + 11, 'COMANDI', { size: 9, color: '#ffe14a', depth: 2 });
     const tc = txt(this, 240, cima + 18, (eTouch() && m.comandiTouch ? m.comandiTouch : m.comandi).join('\n'), { size: 7, oy: 0, spacing: 0, wrap: 246, depth: 2 });
     const to = txt(this, 240, tc.y + tc.height + 1, m.obiettivo, { size: 8, oy: 0, color: '#7dff9a', wrap: 246, depth: 2 });
-    const td = txt(this, 240, to.y + to.height - 2, `Durata: ${m.durata} secondi`, { size: 6.5, oy: 0, color: '#fff3d6', depth: 2 });
+    let td = txt(this, 240, to.y + to.height - 2, `Durata: ${m.durata} secondi`, { size: 6.5, oy: 0, color: '#fff3d6', depth: 2 });
+    if (prova) td = txt(this, 240, td.y + td.height - 1, `PROVA LAMPO: prima ${CONFIG.provaLampo} secondi per provare (non contano)`, { size: 6.5, oy: 0, color: '#ff9ac4', wrap: 246, depth: 2 });
     const alt = td.y + td.height + 3 - cima;
     pannello(this, 240, cima + alt / 2, 256, alt, { depth: 1 });
 
@@ -118,15 +149,22 @@ export class IntroScene extends Phaser.Scene {
     attendiInvio(this, () => {
       pronto.destroy();
       // conto alla rovescia 3-2-1-VIA
-      ['3', '2', '1', 'VIA!'].forEach((num, i) => this.time.delayedCall(i * 650, () => {
+      // (l'ultimo è il comando in una parola: SPILLA!, SCHIVA!...)
+      // in Lampo si parte subito: solo il comando
+      const conto = S.tipo === 'lampo' ? [m.verbo ?? 'VIA!'] : ['3', '2', '1', m.verbo ?? 'VIA!'];
+      conto.forEach((num, k) => this.time.delayedCall(k * 650, () => {
+        const i = k + 4 - conto.length;   // (0, 1, 2 = i numeri; 3 = il comando)
         Audio.sfx(i < 3 ? 'bip' : 'via');
-        const t = txt(this, 240, 135, num, { size: i < 3 ? 70 : 56, color: i < 3 ? '#ffffff' : '#7dff9a', thick: 10, depth: 100 });
+        const t = txt(this, 240, 135, num, { size: i < 3 ? 70 : num.length > 8 ? 46 : 56, color: i < 3 ? '#ffffff' : '#7dff9a', thick: 10, depth: 100 });
         t.setScale(2.5).setAlpha(0);
         this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 220, ease: 'Back.out' });
         this.tweens.add({ targets: t, alpha: 0, scale: 0.6, delay: 480, duration: 150, onComplete: () => t.destroy() });
         scuoti(this, 80, 0.004);
       }));
-      this.time.delayedCall(4 * 650, () => this.scene.start('mg_' + id));
+      this.time.delayedCall(conto.length * 650, () => {
+        if (prova) Object.assign(S, { prova: true, provaRound: S.seme, provaFatta: chiaveTurno });
+        this.scene.start('mg_' + id);
+      });
     }, ['SPACE', 'ENTER']);
   }
 }
@@ -138,6 +176,14 @@ export class RisultatoScene extends Phaser.Scene {
     inquadra(this);
     const r = dati.risultato, S = Sessione, g = S.giocatore, m = CONFIG.microgiochi[S.idCorrente], G = S.giocatori, n = S.n;
     S.registra(r);
+    Salvataggio.dati.visti[S.idCorrente] = true;       // niente più prova lampo per questo microgioco
+    // (in Lampo i microgiochi durano meno: i punti non si confrontano con le medaglie)
+    const intero = S.tipo !== 'lampo';
+    if (intero) {
+      Salvataggio.registra(S.idCorrente, r.punteggio, S.livello);   // il registro locale dei punteggi (per ritarare le medaglie)
+      // statistiche, record, Pinte e trofei (js/progressi.js)
+      this.progressi = Progressi.dopoTurno({ id: S.idCorrente, punteggio: r.punteggio, giocatore: g, controSeStesso: S.controSeStesso });
+    } else this.progressi = null;
     Audio.musica('menu');
     this.input.setDefaultCursor('default');
     raggi(this, r.vittoria ? 0x3fae74 : 0x8a5a9a, r.vittoria ? 0x62cf96 : 0xa878b8);
@@ -161,12 +207,42 @@ export class RisultatoScene extends Phaser.Scene {
     pannello(this, 330, 116, 240, 86, { alfa: 0.6, bordo: null, raggio: 10 });
     txt(this, 330, 88, r.riepilogo, { size: 8, wrap: 230 });
     txt(this, 330, 106, 'PUNTEGGIO', { size: 9, color: '#ffe14a' });
-    const pt = txt(this, 330, 134, String(r.punteggio), { size: 32 });
+    const pt = txt(this, 330, 134, '0', { size: 32 });
     pt.setScale(0);
     this.tweens.add({ targets: pt, scale: 1, delay: 300, duration: 400, ease: 'Bounce.out' });
+    // il punteggio sale (col ticchettio), poi arriva la medaglia col timbro
+    const conta = { v: 0 };
+    let tic = 0;
+    this.tweens.add({
+      targets: conta, v: r.punteggio, delay: 300, duration: Math.min(900, 250 + Math.abs(r.punteggio) * 4), ease: 'Quad.out',
+      onUpdate: () => { pt.setText(String(Math.round(conta.v))); if (this.time.now - tic > 70) { tic = this.time.now; Audio.sfx('muovi'); } },
+      onComplete: () => { pt.setText(String(r.punteggio)); if (intero) this.medaglia(r.punteggio); },
+    });
 
     let prompt, avanti;
-    if (S.modo === 'allenamento') {
+    if (S.solitario) {
+      // da solo: con una medaglia si va avanti, senza si perde una vita (il boss vuole di più)
+      const R = S.solitario, C = CONFIG.modalita.solitario, boss = S.boss, serve = boss ? C.medagliaBoss : 'bronzo';
+      const superato = MEDAGLIE.indexOf(medaglia(S.idCorrente, r.punteggio)) >= MEDAGLIE.indexOf(serve);
+      if (!R.contati[S.indice]) {
+        R.contati[S.indice] = true;
+        if (superato) R.superati++; else R.vite--;
+        if (boss) R.boss = superato ? 'vinto' : 'perso';
+      }
+      pannello(this, 330, 186, 240, 34, { colore: superato ? 0x2e7a4a : 0x7a1f2a, raggio: 9 });
+      for (let k = 0; k < C.vite; k++) im(this, 330 - (C.vite - 1) * 8 + k * 16, 179, 'cuore', 1).setAlpha(k < R.vite ? 1 : 0.25);
+      txt(this, 330, 194, superato ? (boss ? 'BOSS BATTUTO!' : 'SUPERATO!') : boss ? `PER IL BOSS SERVIVA ${serve.toUpperCase()}` : 'NIENTE MEDAGLIA: VITA PERSA!', { size: 8, color: superato ? '#7dff9a' : '#ffb0a4' });
+      const fine = boss || R.vite <= 0;
+      prompt = perDito(fine ? 'INVIO: com\'è andata' : 'INVIO: prossimo microgioco', fine ? 'Tocca: com\'è andata' : 'Tocca: prossimo microgioco');
+      avanti = () => { if (fine) return this.scene.start('FineSolitario'); S.indice++; S.passo = 0; this.scene.start('Intro'); };
+    } else if (S.modo === 'giorno') {
+      // la sfida del giorno: uno dopo l'altro, poi il totale
+      const fine = S.indice >= S.lista.length - 1;
+      pannello(this, 330, 186, 240, 30, { colore: 0x7a5a1a, raggio: 9 });
+      txt(this, 330, 186, `SFIDA DEL GIORNO: ${S.indice + 1} di ${S.lista.length}`, { size: 9, color: '#ffe14a' });
+      prompt = perDito(fine ? 'INVIO: com\'è andata' : 'INVIO: prossimo microgioco', fine ? 'Tocca: com\'è andata' : 'Tocca: prossimo microgioco');
+      avanti = () => { if (fine) return this.scene.start('FineGiorno'); S.indice++; S.passo = 0; this.scene.start('Intro'); };
+    } else if (S.modo === 'allenamento') {
       prompt = perDito('INVIO: riprova     ESC: menu', 'Tocca: riprova');
       avanti = () => { S.nuovoAllenamento(S.idCorrente, S.turno); this.scene.start('Intro'); };
       this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
@@ -176,9 +252,16 @@ export class RisultatoScene extends Phaser.Scene {
       const p = S.prossimo, rec = S.record;
       pannello(this, 330, 186, 240, 30, { colore: 0x7a1f2a, raggio: 9 });
       txt(this, 330, 180, `Ora tocca a ${p.nome.toUpperCase()}`, { size: 10, color: '#ffe14a' });
-      txt(this, 330, 193, n === 2 ? `stesso gioco: da battere ${r.punteggio} punti` : `record del round: ${rec.punteggio} punti (${rec.giocatore.nome})`, { size: 7 });
+      txt(this, 330, 193, n === 2 || S.tipo === 'torneo' ? `stesso gioco: da battere ${r.punteggio} punti` : `record del round: ${rec.punteggio} punti (${rec.giocatore.nome})`, { size: 7 });
       prompt = perDito(`Passa i comandi a ${p.nome} e premi INVIO`, `Passa il telefono a ${p.nome} e tocca lo schermo`);
       avanti = () => { S.passo++; this.scene.start('Intro'); };
+    } else if (S.tipo === 'torneo') {
+      // la partita è finita: il risultato, poi il tabellone
+      const [a, b] = S.chiGioca(S.indice), R = S.risultati[S.indice];
+      pannello(this, 330, 186, 240, 30, { colore: 0x2f4f9a, raggio: 9 });
+      txt(this, 330, 186, `${a.nome} ${R[a.i].punteggio}  -  ${R[b.i].punteggio} ${b.nome}`, { size: 8.5 });
+      prompt = perDito('INVIO: il tabellone del torneo', 'Tocca: il tabellone del torneo');
+      avanti = () => this.scene.start('Torneo');
     } else if (n === 2) {
       // entrambi hanno giocato: chi ha vinto il round?
       const [a, b] = S.risultati[S.indice], v = S.vincitoreRound(S.indice);
@@ -187,18 +270,13 @@ export class RisultatoScene extends Phaser.Scene {
       const esito = v < 0 ? 'ROUND PARI!' : `ROUND A ${G[v].nome.toUpperCase()}!`;
       // (dritta: è larga, e con l'inclinazione a caso di scritta() finiva sopra la riga dei punteggi)
       this.time.delayedCall(700, () => { scritta(this, 330, 197, esito, { size: 14, color: v < 0 ? '#ffffff' : G[v].colore, durata: 999999 }).setAngle(0); Audio.sfx('ok'); });
-      const ultimo = S.finita;
-      if (S.meglioDi) {
-        const vr = S.classifica().round;
-        txt(this, 330, 221, `AL MEGLIO DI ${S.meglioDi}:  ${G[0].nome} ${vr[0]} - ${vr[1]} ${G[1].nome}`, { size: 7, color: '#7dff9a' });   // sotto il riquadro, non sul bordo
-      }
-      prompt = perDito(ultimo ? 'INVIO: classifica finale' : 'INVIO: prossimo round', ultimo ? 'Tocca: classifica finale' : 'Tocca: prossimo round');
-      avanti = () => {
-        if (ultimo) return this.scene.start('Finale');
-        S.indice++;
-        S.passo = 0;
-        this.scene.start('Intro');
-      };
+      const ultimo = S.finita, cl = S.classifica();
+      // (sotto il riquadro, non sul bordo) il totale finora: round vinti o punti sfida
+      txt(this, 330, 221, S.meglioDi ? `AL MEGLIO DI ${S.meglioDi}:  ${G[0].nome} ${cl.round[0]} - ${cl.round[1]} ${G[1].nome}`
+        : `TOTALE PUNTI SFIDA:  ${G[0].nome} ${cl.punti[0]} - ${cl.punti[1]} ${G[1].nome}`, { size: 7, color: '#7dff9a' });
+      // dopo ogni round (tranne l'ultimo) la classifica generale, come da tre giocatori in su
+      prompt = perDito(ultimo ? 'INVIO: classifica finale' : 'INVIO: classifica', ultimo ? 'Tocca: classifica finale' : 'Tocca: classifica');
+      avanti = () => (ultimo ? alFinale(this) : this.scene.start('Classifica', { fase: 2 }));
     } else {
       // hanno giocato tutti: si va alla classifica del round
       pannello(this, 330, 186, 240, 30, { colore: 0x7a1f2a, raggio: 9 });
@@ -210,6 +288,29 @@ export class RisultatoScene extends Phaser.Scene {
     }
     lampeggia(this, txt(this, 240, 253, prompt, { size: 9, color: '#ffe14a' }));
     attendiInvio(this, () => { Audio.sfx('scegli'); avanti(); });
+  }
+
+  // la medaglia presa (col timbro) e, accanto, quanto manca alla prossima
+  medaglia(punteggio) {
+    const id = Sessione.idCorrente, soglie = CONFIG.microgiochi[id].medaglie, tipo = medaglia(id, punteggio);
+    if (!soglie) return;
+    if (tipo) {
+      const img = im(this, 262, 132, 'medaglia_' + tipo, 1.3).setAngle(-10), s0 = img.scaleX;
+      img.setScale(s0 * 3).setAlpha(0);
+      this.tweens.add({ targets: img, scale: s0, alpha: 1, duration: 200, ease: 'Quad.in', onComplete: () => {
+        Audio.sfx(tipo === 'oro' ? 'bonus' : 'sbam');
+        scuoti(this, 90, 0.004);
+        stelle(this, 262, 132, tipo === 'oro' ? 9 : 5);
+        this.tweens.add({ targets: img, angle: 10, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      } });
+      txt(this, 262, 154, NOMI_MEDAGLIE[tipo], { size: 6, color: '#ffe14a' });
+    }
+    const P = this.progressi;
+    if (P?.pinte) { im(this, 395, 152, 'iconaPinta', 0.42); txt(this, 401, 152, `+${P.pinte} PINTE`, { size: 6, ox: 0, color: '#ffe14a' }); }
+    if (P?.record) { scritta(this, 330, 72, 'NUOVO RECORD!', { size: 12, color: '#7dff9a', durata: 1600 }).setAngle(0); Audio.sfx('bonus'); }
+    annunciaTrofei(this, P?.trofei, 300);
+    const prossima = MEDAGLIE.find((k) => punteggio < soglie[k]);
+    txt(this, 404, 134, prossima ? `${NOMI_MEDAGLIE[prossima]}\na ${soglie[prossima]}` : 'TUTTE LE\nMEDAGLIE!', { size: 6.5, color: '#fff3d6', spacing: -1 });
   }
 }
 
@@ -228,7 +329,7 @@ export class ClassificaScene extends Phaser.Scene {
   }
 
   delRound() {
-    const S = Sessione, n = S.n, c = S.classificaRound(S.indice), m = CONFIG.microgiochi[S.idCorrente];
+    const S = Sessione, c = S.classificaRound(S.indice), n = c.length, m = CONFIG.microgiochi[S.idCorrente];
     raggi(this, 0x7a4ac8, 0x9a6ae0);
     txt(this, 240, 17, 'CLASSIFICA DEL ROUND', { size: 15, color: '#ffe14a' });
     txt(this, 240, 34, m.titolo, { size: 8 });
@@ -251,34 +352,44 @@ export class ClassificaScene extends Phaser.Scene {
     stelle(this, 240 - ((n - 1) / 2) * passo, Y - alto / 2, 8);
     const ultimo = S.finita;
     lampeggia(this, txt(this, 240, 260, perDito(ultimo ? 'INVIO: classifica finale' : 'INVIO: classifica generale', ultimo ? 'Tocca: classifica finale' : 'Tocca: classifica generale'), { size: 8.5, color: '#ffe14a' }));
-    attendiInvio(this, () => { Audio.sfx('scegli'); if (ultimo) this.scene.start('Finale'); else this.scene.restart({ fase: 2 }); });
+    attendiInvio(this, () => { Audio.sfx('scegli'); if (ultimo) alFinale(this); else this.scene.restart({ fase: 2 }); });
+  }
+
+  // squadre: due barre, ROSSI e BLU (js/scenes/torneo.js)
+  squadre() {
+    const S = Sessione;
+    classificaSquadre(this, () => {});
+    lampeggia(this, txt(this, 240, 260, perDito('INVIO: prossimo round', 'Tocca: prossimo round'), { size: 8.5, color: '#ffe14a' }));
+    attendiInvio(this, () => { Audio.sfx('scegli'); S.indice++; S.passo = 0; this.scene.start('Intro'); });
   }
 
   generale() {
+    if (Sessione.tipo === 'squadre') return this.squadre();
     const S = Sessione, G = S.giocatori, n = S.n;
-    const prima = S.classifica(S.indice), dopo = S.classifica(S.indice + 1), cosa = S.meglioDi ? 'round vinti' : 'punti';
+    const prima = S.classifica(S.indice), dopo = S.classifica(S.indice + 1), cosa = S.meglioDi ? 'round vinti' : n <= 2 ? 'punti sfida' : 'punti';
     raggi(this, 0x2f7fb0, 0x4a9fd0);
     txt(this, 240, 17, 'CLASSIFICA GENERALE', { size: 15, color: '#ffe14a' });
     txt(this, 240, 34, S.meglioDi ? `round vinti: al meglio di ${S.meglioDi} vince chi arriva a ${S.serve}` : `${cosa} dopo il round ${S.indice + 1} di ${S.lista.length}`, { size: 7.5 });
     // una riga per giocatore: ritratto, nome, barra, numero. Si parte dall'ordine di prima.
-    const alt = Math.min(26, 196 / n), y0 = 50 + alt / 2, X0 = 176, LARGA = 236, massimo = Math.max(1, ...dopo.conta);
-    pannello(this, 240, 48 + (n * alt) / 2, 420, n * alt + 8, { alfa: 0.55, bordo: null, raggio: 8 });
+    // (in due: righe grandi, al centro dello schermo)
+    const grande = n <= 2, alt = grande ? 46 : Math.min(26, 196 / n), y0 = grande ? 135 - alt / 2 : 50 + alt / 2, X0 = 176, LARGA = 236, massimo = Math.max(1, ...dopo.conta);
+    pannello(this, 240, y0 - alt / 2 - 2 + (n * alt) / 2, 420, n * alt + 8, { alfa: 0.55, bordo: null, raggio: 8 });
     const barre = this.add.graphics();
     const righe = G.map((g) => {
       const riga = { g, k: prima.ordine.indexOf(g.i), val: prima.conta[g.i], y: 0 };
       riga.y = y0 + riga.k * alt;
       riga.cose = this.add.container(0, riga.y, [
-        ritratto(this, 44, 0, g.id, Math.min(22, alt - 3)),
-        txt(this, 60, 0, g.nome, { size: alt < 20 ? 6.5 : 7.5, color: g.colore, ox: 0 }),
+        ritratto(this, grande ? 50 : 44, 0, g.id, grande ? 38 : Math.min(22, alt - 3)),
+        txt(this, grande ? 74 : 60, 0, g.nome, { size: grande ? 10 : alt < 20 ? 6.5 : 7.5, color: g.colore, ox: 0 }),
       ]);
-      riga.numero = txt(this, 0, riga.y, '', { size: alt < 20 ? 7.5 : 9, ox: 0 });
+      riga.numero = txt(this, 0, riga.y, '', { size: grande ? 13 : alt < 20 ? 7.5 : 9, ox: 0 });
       riga.freccia = txt(this, 30, riga.y, '', { size: 8, color: '#7dff9a' });
       return riga;
     });
     const disegna = () => {
       barre.clear();
       for (const r of righe) {
-        const w = Math.max(2, (LARGA * r.val) / massimo), h = Math.min(13, alt - 8);
+        const w = Math.max(2, (LARGA * r.val) / massimo), h = grande ? 20 : Math.min(13, alt - 8);
         barre.fillStyle(0x000000, 0.3); barre.fillRoundedRect(X0, r.y - h / 2 + 1.5, LARGA, h, h / 2);
         barre.fillStyle(colore(r.g.colore), 1); barre.fillRoundedRect(X0, r.y - h / 2, w, h, Math.min(h / 2, w / 2));
         r.numero.setPosition(X0 + w + 5, r.y).setText(String(Math.round(r.val)));
@@ -302,6 +413,10 @@ export class ClassificaScene extends Phaser.Scene {
         this.tweens.add({ targets: r, y: y0 + k2 * alt, duration: 500, ease: 'Back.out', onUpdate: disegna });
       }
       if (sorpassi) { Audio.sfx('ok'); scritta(this, 240, 44, sorpassi === 1 ? 'SORPASSO!' : 'SORPASSI!', { size: 12, color: '#7dff9a', durata: 900 }); }
+      if (grande) {
+        const [p0, p1] = dopo.ordine, d = Math.round(dopo.conta[p0] - dopo.conta[p1]), cosa2 = S.meglioDi ? 'round' : 'punti';
+        scritta(this, 240, 214, d === 0 ? 'PARI!' : `${G[p0].nome.toUpperCase()} AVANTI DI ${d} ${cosa2.toUpperCase()}`, { size: 12, color: d === 0 ? '#ffffff' : G[p0].colore, durata: 99999 }).setAngle(0);
+      }
     });
     lampeggia(this, txt(this, 240, 260, perDito('INVIO: prossimo round', 'Tocca: prossimo round'), { size: 8.5, color: '#ffe14a' }));
     attendiInvio(this, () => { Audio.sfx('scegli'); S.indice++; S.passo = 0; this.scene.start('Intro'); });
@@ -309,15 +424,52 @@ export class ClassificaScene extends Phaser.Scene {
 }
 
 // ------------------------------------------------------------
+// ------------------------------------------------------------
+//  I premi buffi della serata (js/premi.js), prima della classifica finale
+export class PremiScene extends Phaser.Scene {
+  constructor() { super('Premi'); }
+  create() {
+    inquadra(this);
+    this.input.setDefaultCursor('default');
+    Audio.musica('festa');
+    raggi(this, 0xb06aff, 0xd09aff);
+    const premi = premiBuffi(Sessione);
+    const t = txt(this, 240, 22, 'I PREMI DELLA SERATA', { size: 18, color: '#ffe14a' }).setScale(0);
+    this.tweens.add({ targets: t, scale: 1, duration: 450, ease: 'Back.out' });
+    premi.forEach((p, k) => this.time.delayedCall(500 + k * 750, () => {
+      const y = 135 + (k - (premi.length - 1) / 2) * 58, riga = this.add.container(0, 0);
+      riga.add([
+        pannello(this, 240, y, 400, 50, { alfa: 0.72, raggio: 10 }),
+        ritratto(this, 76, y, p.g.id, 40, 'felice'),
+        txt(this, 112, y - 12, p.titolo, { size: 12, color: '#ffe14a', ox: 0 }),
+        txt(this, 112, y + 4, p.g.nome.toUpperCase(), { size: 9, color: p.g.colore, ox: 0 }),
+        txt(this, 112, y + 16, p.frase, { size: 6.5, color: '#fff3d6', ox: 0, wrap: 320 }),
+      ]);
+      riga.setAlpha(0).setX(-40);
+      this.tweens.add({ targets: riga, alpha: 1, x: 0, duration: 260, ease: 'Back.out' });
+      Audio.sfx('sbam');
+      stelle(this, 76, y, 5);
+    }));
+    this.time.delayedCall(500 + premi.length * 750, () => lampeggia(this, txt(this, 240, 253, perDito('INVIO: classifica finale', 'Tocca: classifica finale'), { size: 9, color: '#ffe14a' })));
+    attendiInvio(this, () => { Audio.sfx('scegli'); this.scene.start('Finale'); });
+    pulsantiAngolo(this);
+  }
+}
+
 export class FinaleScene extends Phaser.Scene {
   constructor() { super('Finale'); }
   create() {
     inquadra(this);
     this.input.setDefaultCursor('default');
-    Audio.musica('menu');
+    Audio.musica('festa');
     raggi(this, 0xe09a28, 0xf2c14a);
     Audio.sfx('vittoria');
-    if (Sessione.n >= 3) this.podio(); else this.aDue();
+    // l'albo d'oro, le statistiche, le Pinte della serata e i trofei (una volta sola per sfida)
+    const P = Progressi.dopoSfida(Sessione);
+    if (P.pinte) this.time.delayedCall(1800, () => scritta(this, 240, 132, `+${P.pinte} PINTE`, { size: 14, color: '#ffe14a', durata: 1200, depth: 4000 }));
+    annunciaTrofei(this, P.trofei, 2600);
+    if (Sessione.tipo === 'squadre') { finaleSquadre(this); this.pulsanti((i) => [[152, 240, 328][i], 258], { larghezza: 84 }); }
+    else if (Sessione.n >= 3) this.podio(); else this.aDue();
     pulsantiAngolo(this);
   }
 
@@ -365,9 +517,9 @@ export class FinaleScene extends Phaser.Scene {
     // quello che decide la sfida va per primo: i minigiochi vinti nella veloce, i punti nella completa
     const riep = S.meglioDi
       ? `MINIGIOCHI VINTI: ${cl.round[0]} - ${cl.round[1]}      punti: ${cl.punti[0]} - ${cl.punti[1]}`
-      : `PUNTI TOTALI: ${cl.punti[0]} - ${cl.punti[1]}      round vinti: ${cl.round[0]} - ${cl.round[1]}`;
+      : `PUNTI SFIDA: ${cl.punti[0]} - ${cl.punti[1]}      round vinti: ${cl.round[0]} - ${cl.round[1]}`;
     txt(this, 240, yRiep, riep, { size: 7.5, color: '#7dff9a' });
-    txt(this, 240, yRiep + (fitto ? 9 : 11), `${G[0].nome}  -  ${G[1].nome}`, { size: 6.5, color: '#fff3d6' });
+    txt(this, 240, yRiep + (fitto ? 9 : 11), `${G[0].nome}  -  ${G[1].nome}` + (S.meglioDi ? '' : '   (ogni microgioco vale da 0 a 100 punti sfida)'), { size: 6.5, color: '#fff3d6' });
 
     // (col tabellone lungo la scritta PAREGGIO! scende sotto il riquadro, e la frase con lei)
     const XV = 62, XP = 418, Y = 232, yPari = Math.max(172, 36 + alt + 14);
@@ -413,7 +565,7 @@ export class FinaleScene extends Phaser.Scene {
   // --- da tre in su: il podio, gli altri in fila sotto, l'ultimo disperato ---
   podio() {
     const S = Sessione, G = S.giocatori, n = S.n, cl = S.classifica(), o = cl.ordine;
-    const cosa = S.meglioDi ? 'round' : 'punti', pari = cl.vincitore < 0;
+    const cosa = S.tipo === 'torneo' ? 'vittorie' : S.meglioDi ? 'round' : 'punti', pari = cl.vincitore < 0;
     txt(this, 240, 16, 'CLASSIFICA FINALE', { size: 16, color: '#ffe14a' });
     this.coriandoli(150, 330);
 

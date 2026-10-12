@@ -734,7 +734,30 @@ function vespa(c) {
   ellisse(c, 6, 10.5, 2.6, 2.6); c.fillStyle = '#f4f4f4'; c.fill(); tratto(c, CONT, 0.6);  // casco
 }
 
+// pozzanghera di fango (Passa di qua: rallenta la Panda)
+function fango(c) {
+  c.beginPath(); c.moveTo(4, 9);
+  c.bezierCurveTo(2, 3, 12, 1, 18, 2.5); c.bezierCurveTo(26, 0.5, 34, 4, 32, 9); c.bezierCurveTo(33, 14, 22, 16, 15, 14.5); c.bezierCurveTo(8, 16, 2, 13, 4, 9);
+  c.closePath(); c.fillStyle = gradL(c, 0, 1, 0, 15, [[0, '#8a6a3a'], [1, '#5a4224']]); c.fill(); tratto(c, 'rgba(40,30,20,0.6)', 0.8);
+  for (const [x, y, r] of [[11, 7, 1.6], [22, 10, 2], [27, 6, 1.2]]) { ellisse(c, x, y, r, r * 0.7); c.fillStyle = 'rgba(40,28,14,0.5)'; c.fill(); }
+  c.beginPath(); c.moveTo(9, 6); c.quadraticCurveTo(15, 4, 21, 5.5); tratto(c, 'rgba(255,230,190,0.35)', 0.9);
+}
+
+// l'ombrello aperto del ciclista, visto dall'alto
+function ombrelloBici(c) {
+  ellisse(c, 13, 14, 11.5, 11); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fill();
+  for (let k = 0; k < 8; k++) {
+    const a0 = (k / 8) * Math.PI * 2, a1 = ((k + 1) / 8) * Math.PI * 2;
+    c.beginPath(); c.moveTo(12, 12); c.arc(12, 12, 11, a0, a1); c.closePath();
+    c.fillStyle = k % 2 ? '#2f5fc0' : '#f2c43a'; c.fill();
+  }
+  ellisse(c, 12, 12, 11, 11); tratto(c, CONT, 1);
+  ellisse(c, 12, 12, 1.6, 1.6); c.fillStyle = '#2a2a30'; c.fill();
+}
+
 function creaPassaseo(scene) {
+  tela(scene, 'fango', 36, 17, fango, 6);
+  tela(scene, 'ombrelloBici', 24, 24, ombrelloBici, 6);
   tela(scene, 'panda', 32, 52, (c) => panda(c, false), 6);
   tela(scene, 'pandaFreni', 32, 52, (c) => panda(c, true), 6);
   tela(scene, 'ciclista', 18, 36, (c) => ciclista(c, false), 6);
@@ -972,11 +995,30 @@ function creaDisco(scene) {
   tela(scene, 'icoAmico', 17, 16, icoAmico, 8);
 }
 
+// le monete che rotolano sulla strada di ReGrorio, e la corona che il Re perde davanti alla Golf
+function monetaRe(c) {
+  ellisse(c, 7, 7, 6.2, 6.2); c.fillStyle = gradR(c, 5, 5, 0.5, 7, [[0, '#fff3a8'], [0.6, '#ffcc2e'], [1, '#d79a10']]); c.fill(); tratto(c, '#8a5a00', 0.9);
+  ellisse(c, 7, 7, 4.2, 4.2); tratto(c, 'rgba(138,90,0,0.6)', 0.7);
+  poli(c, [[4.6, 8.6], [4.6, 5.4], [5.9, 6.8], [7, 5], [8.1, 6.8], [9.4, 5.4], [9.4, 8.6]]); c.fillStyle = '#c98a0a'; c.fill();
+  ellisse(c, 4.6, 4.2, 1.6, 0.9, -0.6); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fill();
+}
+
+function coronaRe(c) {
+  poli(c, [[2, 15], [2, 5], [6.5, 9], [11, 2], [15.5, 9], [20, 5], [20, 15]]);
+  c.fillStyle = gradL(c, 0, 2, 0, 15, [[0, '#fff3a8'], [0.5, '#ffcc2e'], [1, '#c98a0a']]); c.fill(); tratto(c, '#7a4a00', 1);
+  rrect(c, 2, 12.2, 18, 3.6, 1); c.fillStyle = '#e0a418'; c.fill(); tratto(c, '#7a4a00', 0.8);
+  for (const [x, y, col] of [[6.5, 13.9, '#e2324a'], [11, 13.9, '#2f7fe0'], [15.5, 13.9, '#e2324a']]) { ellisse(c, x, y, 1.3, 1.1); c.fillStyle = col; c.fill(); }
+  for (const [x, y] of [[2, 5], [11, 2], [20, 5]]) { ellisse(c, x, y, 1.5, 1.5); c.fillStyle = '#fffbe0'; c.fill(); tratto(c, '#7a4a00', 0.6); }
+  poli(c, [[4, 11], [4, 7.5], [6, 9.6]]); c.fillStyle = 'rgba(255,255,255,0.55)'; c.fill();
+}
+
 export function creaOggetti(scene) {
   [-0.1, 0.07].forEach((v, f) => {
     tela(scene, `golfGiu${f}`, 60, 104, (c) => golf(c, false, v), 6);
     tela(scene, `golfSu${f}`, 60, 104, (c) => golf(c, true, v), 6);
   });
+  tela(scene, 'monetaRe', 14, 14, monetaRe, 8);
+  tela(scene, 'coronaRe', 22, 18, coronaRe, 8);
   pinta(scene);
   tela(scene, 'spina', 36, 64, spina, 6);
   for (let i = 0; i < 4; i++) for (const f of [0, 1]) tela(scene, `cliente${i}_${f}`, 58, 78, (c) => cliente(c, i, f), 5);

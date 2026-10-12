@@ -23,6 +23,7 @@ export class BarbaScene extends MicrogiocoBase {
   constructor() { super('barba'); }
 
   prepara() {
+    this.nAtto = 0;
     const c = this.cfg;
     im(this, 0, 0, 'bgBarbiere').setOrigin(0);
     txt(this, 388, 35, 'BARBERIA', { size: 9, color: '#fff3d6', thick: 0 });
@@ -326,6 +327,14 @@ export class BarbaScene extends MicrogiocoBase {
   aggiorna(dt, p) {
     const c = this.cfg, ptr = this.input.activePointer;
     let w = puntatore(this);
+
+    // --- gli atti: annunci (l'agitazione intanto cresce da sola, vedi sotto) ---
+    const atto = c.atti.filter((x) => this.trascorso >= x.da).length - 1;
+    if (atto !== (this.nAtto ?? 0)) {
+      this.nAtto = atto;
+      Audio.sfx('bonus');
+      scritta(this, 240, 40, c.atti[atto].nome, { size: 13, color: '#ffe14a', durata: 1000, depth: 960 });
+    }
 
     // --- De Luca non sta fermo ---
     const amp = lerp(c.agitazioneInizio, c.agitazioneFine, p);

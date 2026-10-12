@@ -1,4 +1,4 @@
-// Microgioco 13: "Petri Tentacolari" - scappa dal Piovra!
+// Microgioco 13: "Petri Tentacolari" - scappa dal Piovra! SALVALE!
 //
 //  Pista della disco vista dall'alto. Il Petri sta in mezzo e allunga i tentacoli verso le
 //  ragazze per attaccare bottone. Le ragazze entrano dall'ingresso e ballano: tocca una ragazza
@@ -8,8 +8,12 @@
 //  tutto) e un amico che si mette in mezzo e blocca i tentacoli. Ogni tanto un tentacolo a
 //  sorpresa sbuca da sotto un tavolino o dalla consolle.
 //  Multi-touch: un dito disegna la strada, un altro dà gli schiaffi.
+//  Tre atti annunciati: IL PETRI SI MUOVE, poi i TENTACOLI A SORPRESA. Le ragazze arrivano uguali
+//  per tutti i giocatori del round (seme del round). Il punteggio non va sotto zero.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { RAGAZZE } from '../grafica/personaggi.js';
 import { DISCO } from '../grafica/sfondi.js';
 import { curvaTentacolo, disegnaTentacolo } from '../grafica/tentacoli.js';
@@ -32,6 +36,8 @@ export class PiovraScene extends MicrogiocoBase {
 
   prepara() {
     const c = this.cfg;
+    this.rnd = casuale(Sessione.seme);
+    this.nFase = 0;
     this.punti = 0;
     this.salvate = 0;
     this.serie = 0;
@@ -114,13 +120,17 @@ export class PiovraScene extends MicrogiocoBase {
 
   // ------------------------------------------------------------
   aggiorna(dt, p) {
-    const f = this.fase, c = this.cfg;
+    const f = this.fase, c = this.cfg, n = c.fasi.indexOf(f);
+    if (n !== this.nFase) {
+      this.nFase = n;
+      if (f.nome) { Audio.sfx('bonus'); scritta(this, 240, 100, f.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 960 }); }
+    }
     this.luciDisco(dt, p);
 
     // ragazze nuove dall'ingresso
     this.tNuova -= dt;
     if (this.tNuova <= 0 && this.ragazze.filter((r) => r.stato !== 'salva').length < f.max) {
-      this.tNuova = f.ogni * Phaser.Math.FloatBetween(0.8, 1.2);
+      this.tNuova = f.ogni * (0.8 + this.rnd() * 0.4);
       this.nuovaRagazza();
     }
     for (const r of [...this.ragazze]) this.muoviRagazza(r, dt);
@@ -130,7 +140,7 @@ export class PiovraScene extends MicrogiocoBase {
     // tentacoli a sorpresa
     this.tSorpresa -= dt;
     if (this.trascorso >= c.sorpresaDa && this.tSorpresa <= 0) {
-      this.tSorpresa = Phaser.Math.FloatBetween(...c.sorpresaOgni);
+      this.tSorpresa = c.sorpresaOgni[0] + this.rnd() * (c.sorpresaOgni[1] - c.sorpresaOgni[0]);
       this.sorpresa();
     }
     for (const t of this.sorprese) this.muoviTentacolo(t, dt, f);
@@ -197,10 +207,10 @@ export class PiovraScene extends MicrogiocoBase {
     let v = Phaser.Math.Between(0, RAGAZZE.length - 1);
     if (v === this.ultima) v = (v + 1) % RAGAZZE.length;
     this.ultima = v;
-    const y = DISCO.ingressoY + Phaser.Math.Between(-14, 14);
+    const r0 = this.rnd, y = DISCO.ingressoY + Math.round(r0() * 28 - 14);
     const r = {
       v, x: -12, y, stato: 'entra', perc: [], fase: Math.random() * 6, espr: '', tEspr: 0, colore: col(RAGAZZE[v].vestito.colore),
-      meta: { x: Phaser.Math.Between(70, 150), y: Phaser.Math.Between(PISTA.y0 + 20, PISTA.y1 - 20) }, tMeta: 0,
+      meta: { x: 70 + Math.round(r0() * 80), y: Math.round(PISTA.y0 + 20 + r0() * (PISTA.y1 - PISTA.y0 - 40)) }, tMeta: 0,
       img: im(this, -12, y, `ragazza${v}_felice`, TAGLIA).setOrigin(0.5, 1),
     };
     this.ragazze.push(r);
@@ -377,7 +387,7 @@ export class PiovraScene extends MicrogiocoBase {
       t.len = Math.max(riposo, t.len - (t.tRosso > 0 ? 40 : 230) * dt);
       if (t.len <= riposo + 0.5) {
         if (t.tipo === 'sorpresa') t.stato = 'via';
-        else { t.stato = 'riposo'; t.cool = Phaser.Math.FloatBetween(...f.reazione) + (t.dopoSchiaffo ? 0.6 : 0); t.dopoSchiaffo = false; }
+        else { t.stato = 'riposo'; t.cool = f.reazione[0] + this.rnd() * (f.reazione[1] - f.reazione[0]) + (t.dopoSchiaffo ? 0.6 : 0); t.dopoSchiaffo = false; }
       }
     }
   }
@@ -409,7 +419,7 @@ export class PiovraScene extends MicrogiocoBase {
   }
 
   sorpresa() {
-    const o = caso(ORIGINI_SORPRESA);
+    const o = ORIGINI_SORPRESA[Math.floor(this.rnd() * ORIGINI_SORPRESA.length)];
     const t = { tipo: 'sorpresa', ox: o.x, oy: o.y, stato: 'riposo', len: 0, dir: Math.PI / 2, ang: Math.PI / 2, cool: 0, fase: Math.random() * 6, piega: 16, punti: null };
     const r = this.scegliBersaglio(o, 230);
     if (!r) return;
@@ -658,7 +668,7 @@ export class PiovraScene extends MicrogiocoBase {
   risultato() {
     const c = this.cfg, prese = this.ragazze.filter((r) => r.stato === 'presa').length;
     return {
-      punteggio: this.punti - prese * c.malusAgganciata,
+      punteggio: Math.max(0, this.punti - prese * c.malusAgganciata),   // (mai sotto zero)
       vittoria: this.salvate >= c.obiettivoSalvate,
       riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}, agganciate ${prese} (-${prese * c.malusAgganciata})`,
       titoloFine: this.salvate >= c.obiettivoSalvate ? 'TEMPO!' : 'IL PIOVRA HA VINTO!',

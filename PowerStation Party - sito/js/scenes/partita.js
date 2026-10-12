@@ -2,9 +2,11 @@
 // Ogni schermata parte dall'ultima scelta fatta: per rigiocare uguale basta premere INVIO.
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
+import { LIVELLI, NOMI_LIVELLI } from '../livelli.js';
+import { Progressi } from '../progressi.js';
 import { Sessione } from '../sessione.js';
 import { SP, ritratto } from '../sprites.js';
-import { txt, im, inquadra, raggi, pannello, ombra, menuLista, molleggia, stelle, caso, eTouch, perDito, pulsante } from '../fx.js';
+import { txt, im, inquadra, raggi, pannello, ombra, menuLista, molleggia, stelle, caso, eTouch, perDito, pulsante, scritta } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
 
 const colore = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
@@ -174,7 +176,7 @@ export class PersonaggiScene extends Phaser.Scene {
       Audio.sfx('scegli');
       Sessione.imposta(scelti);
       Sessione.salva();
-      this.scene.start(n === 1 ? 'Allenamento' : 'Modalita');
+      this.scene.start('Modalita');
     };
     const muovi = (dx, dy) => {
       let c = cur % COL, r = Math.floor(cur / COL);
@@ -200,12 +202,19 @@ export class PersonaggiScene extends Phaser.Scene {
   }
 }
 
+// i livelli dei giocatori in breve: "tutti NORMALE" o "2 FACILE, 1 DIFFICILE..."
+function livelliInBreve(G) {
+  const l = G.map((g) => Sessione.livelloDi(g.id));
+  if (l.every((x) => x === l[0])) return `tutti ${NOMI_LIVELLI[l[0]]}`;
+  return LIVELLI.filter((x) => l.includes(x)).map((x) => `${l.filter((y) => y === x).length} ${NOMI_LIVELLI[x]}`).join(', ');
+}
+
 // ------------------------------------------------------------
 //  3. COME SI GIOCA? (da due giocatori in su; da soli c'è solo l'allenamento)
 // ------------------------------------------------------------
 export class ModalitaScene extends Phaser.Scene {
   constructor() { super('Modalita'); }
-  create() {
+  create(dati) {
     inquadra(this);
     this.input.setDefaultCursor('default');
     raggi(this, 0x3fae74, 0x62cf96);
@@ -219,19 +228,46 @@ export class ModalitaScene extends Phaser.Scene {
       txt(this, x, 67, g.nome, { size: n > 6 || g.nome.length > 10 ? 4.6 : 5.6, color: g.colore });
     });
     const via = (fn) => () => { fn(); this.scene.start('Intro'); };
-    const voci = [
+    // le modalità del Bancone: se non sono ancora tue, si dice dove comprarle
+    const delBancone = (id, label, fn) => Progressi.comprato('modalita', id) ? { label, azione: via(fn) }
+      : { label: `${label.split(':')[0]}  (al Bancone)`, azione: () => { Audio.sfx('vuoto'); scritta(this, 240, 238, 'SI COMPRA AL BANCONE, CON LE PINTE!', { size: 9, color: '#ffe14a', durata: 900 }).setAngle(0); } };
+    const MO = CONFIG.modalita, gruppo = dati?.gruppo ?? null, apri = (g) => () => this.scene.restart({ gruppo: g });
+    const indietro = { label: 'Indietro', azione: apri(null) };
+    let voci;
+    if (n === 1) voci = [
+      { label: 'ALLENAMENTO: un microgioco a scelta', azione: () => this.scene.start('Allenamento') },
+      delBancone('solitario', `DA SOLO: ${MO.solitario.vite} vite, ${MO.solitario.microgiochi} microgiochi e il boss`, () => S.nuovoSolitario(0)),
+      { label: `SFIDA DEL GIORNO: ${MO.giorno.microgiochi} microgiochi, uguali per tutti oggi`, azione: via(() => S.nuovaSfidaDelGiorno(0)) },
+      { label: `LIVELLO: ${livelliInBreve(G).replace('tutti ', '')}`, azione: () => this.scene.start('Livelli') },
+      { label: 'Cambia personaggio', azione: () => this.scene.start('Personaggi', { n }) },
+    ];
+    else if (gruppo === 'sfide') voci = [
       { label: `SFIDA COMPLETA: tutti i ${tutti} microgiochi`, azione: via(() => S.nuovaSfida()) },
       ...CONFIG.sfidaRapida.filter((k) => k < tutti).map((k) => ({ label: `SFIDA RAPIDA: ${k} microgiochi a caso`, azione: via(() => S.nuovaSfidaRapida(k)) })),
       ...CONFIG.alMeglioDi.map((m) => ({ label: `AL MEGLIO DI ${m}: vince chi arriva a ${Math.ceil(m / 2)} round`, azione: via(() => S.nuovaSfidaVeloce(m)) })),
+      indietro,
+    ];
+    else if (gruppo === 'party') voci = [
+      delBancone('lampo', `LAMPO: ${MO.lampo.microgiochi} microgiochi da ${MO.lampo.durata} secondi`, () => S.nuovoLampo()),
+      ...(n >= MO.squadre.minimo ? [{ label: `SQUADRE: ${MO.squadre.nomi[0]} (1°, 3°...) contro ${MO.squadre.nomi[1]} (2°, 4°...)`, azione: via(() => S.nuoveSquadre()) }] : []),
+      ...(n >= MO.torneo.minimo ? [{ label: 'TORNEO: tabellone a eliminazione, sfide a due', azione: via(() => S.nuovoTorneo()) }] : []),
+      ...(n < MO.squadre.minimo ? [{ label: `(da ${MO.squadre.minimo} giocatori: SQUADRE e TORNEO)`, azione: () => Audio.sfx('vuoto') }] : []),
+      indietro,
+    ];
+    else voci = [
+      { label: 'SFIDE: completa, rapida, al meglio di...', azione: apri('sfide') },
+      { label: n >= MO.squadre.minimo ? 'PARTY: Lampo, Squadre, Torneo' : 'PARTY: Lampo', azione: apri('party') },
       { label: 'PARTITA SINGOLA: un microgioco a scelta', azione: () => this.scene.start('Allenamento') },
+      { label: `LIVELLI: ${livelliInBreve(G)}`, azione: () => this.scene.start('Livelli') },
       { label: 'Cambia personaggi', azione: () => this.scene.start('Personaggi', { n }) },
     ];
     const altezza = 150, pv = Math.min(19, altezza / voci.length), y0 = 84 + (altezza - (voci.length - 1) * pv) / 2;
     pannello(this, 240, 84 + altezza / 2, 300, altezza + 14, { alfa: 0.55, bordo: null, raggio: 10 });
     menuLista(this, voci, 240, y0, pv, 7.5, { larghezza: 280 });
     txt(this, 240, 252, perDito('Frecce + INVIO, oppure il mouse      ESC: cambia personaggi', 'Tocca per scegliere'), { size: 6.5, color: '#fff3d6' });
-    this.input.keyboard.on('keydown-ESC', () => this.scene.start('Personaggi', { n }));
-    if (eTouch()) pulsante(this, 16, 13, 'indietro', () => this.scene.start('Personaggi', { n }));
+    const esci = () => (gruppo ? this.scene.restart({ gruppo: null }) : this.scene.start('Personaggi', { n }));
+    this.input.keyboard.on('keydown-ESC', esci);
+    if (eTouch()) pulsante(this, 16, 13, 'indietro', esci);
     pulsantiAngolo(this);
   }
 }

@@ -1,4 +1,4 @@
-// Microgioco 15: "Emilio in Retromarcia" - fai uscire Emilio dal cancello senza che tocchi i cani.
+// Microgioco 15: "Emilio in Retromarcia" - fai uscire Emilio dal cancello senza che tocchi i cani. SPINGI!
 //
 //  Il vialetto è visto dall'alto: la casa col portico a sinistra, il cancello a destra, prato
 //  sopra e sotto. I personaggi stanno in piedi e chi è più in basso copre chi è dietro.
@@ -8,11 +8,13 @@
 //  salta di lato) e si perde una vita.
 //  I CANI (array "cani" in config.js) hanno ognuno la sua fissa: il pigro si sdraia dietro la
 //  ruota, quello della pallina la rincorre, il goloso va dietro ai biscotti.
-//  IL GIOCATORE: li SPINGE camminandoci contro, LANCIA biscotti e palline (la mira e la forza
-//  con SPAZIO sono quelle di SegoScene: sale e scende, si lancia al rilascio), RACCOGLIE le
-//  munizioni che compaiono in giro, e può CHIAMARE PASTAFFI, che esce di casa, prende in
-//  braccio il cane più vicino alla macchina e lo porta nel prato (ed Emilio inchioda un attimo).
-//  Negli ultimi secondi passa il gatto e tutti i cani gli vanno dietro, nella zona rossa.
+//  IL GIOCATORE: li SPINGE camminandoci contro, LANCIA biscotti e palline (SPAZIO: un tiro in
+//  avanti; tasto destro: lì dove punti; il gioco sceglie da solo quello che serve: il biscotto
+//  per il goloso, la pallina per l'altro) e RACCOGLIE quelli che compaiono in giro.
+//  Tre atti: all'inizio tranquillo; da 12 secondi EMILIO SI DISTRAE (radio, bandana, telefono:
+//  va più forte); negli ultimi 12 PASSA IL GATTO e tutti i cani gli vanno dietro, nella zona
+//  rossa: Pastaffi esce di casa, ne prende in braccio uno e lo porta nel prato (ed Emilio
+//  inchioda un attimo).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { VIALETTO as V, CANE } from '../grafica/vialetto.js';
@@ -26,7 +28,7 @@ const SCALA_CANE = 0.7;
 const LUNGA = A.coda * SCALA_AUTO;          // dalla coda al muso, a terra
 const CENTRO = K.y - K.prof / 2;            // il centro della corsia
 const R_CANE = 8;                           // mezzo cane
-const ICONE = { biscotto: { x: 30, y: 247 }, pallina: { x: 62, y: 247 }, pastaffi: { x: 428, y: 244 } };
+const ICONE = { biscotto: { x: 30, y: 247 }, pallina: { x: 62, y: 247 } };
 const NOMI = { biscotto: 'BISCOTTO', pallina: 'PALLINA' };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const limita = Phaser.Math.Clamp;
@@ -49,11 +51,10 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.gMira = this.add.graphics().setDepth(940);
 
     this.vite = c.vite;
-    this.chiamate = c.pastaffi.chiamate;
+    this.distrattoDetto = false;   // annuncio del secondo atto fatto
     this.salvataggi = 0;      // cani tolti dalla zona rossa all'ultimo istante
     this.uscita = false;      // la macchina ha passato il cancello
     this.muni = { ...c.munizioni };
-    this.scelta = 'biscotto'; // la munizione in mano
     this.armato = null;       // col dito: l'icona toccata, in attesa del punto dove lanciare
     this.oggetti = [];        // biscotti e palline a terra
     this.voli = [];           // ...e in volo
@@ -64,7 +65,6 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.gattoFatto = false;
     this.meta = null;         // dove sto andando (clic o dito)
     this.dito = null;
-    this.carica = null;       // SPAZIO tenuto: { t0 }
     this.tAvviso = 0;
     this.tFrase = 3.5;
     this.tNota = 0.6;
@@ -100,7 +100,7 @@ export class RetromarciaScene extends MicrogiocoBase {
         etichetta: txt(this, x, y - 25, '', { size: 5, depth: 930 }) };
     });
 
-    // --- in alto: metri e vite; in basso: munizioni e Pastaffi ---
+    // --- in alto: metri e vite; in basso: biscotti e palline ---
     this.testoMetri = txt(this, 218, 22, '', { size: 10, depth: 1001, thick: 3 });
     this.zampe = [...Array(c.vite).keys()].map((i) => im(this, 290 + i * 14, 22, 'zampa', 0.95).setDepth(1001));
     this.hudV = [pannello(this, 240, 22, 200, 18, { depth: 1000 }), this.testoMetri, ...this.zampe];
@@ -110,31 +110,21 @@ export class RetromarciaScene extends MicrogiocoBase {
       this.slot[tipo] = { g: this.add.graphics().setDepth(1000), ico: im(this, P.x, P.y - 2, tipo, tipo === 'biscotto' ? 1.15 : 1.5).setDepth(1001), n: txt(this, P.x + 9, P.y + 8, '', { size: 7, depth: 1002 }) };
       this.hudV.push(...Object.values(this.slot[tipo]));
     }
-    const PP = ICONE.pastaffi;
-    this.gPasta = this.add.graphics().setDepth(1000);
-    this.icoPasta = im(this, PP.x, PP.y, 'icoPastaffi', 0.92).setDepth(1001);
-    this.nPasta = txt(this, PP.x + 13, PP.y + 10, '', { size: 8, depth: 1002, color: '#ffe14a' });
-    this.testoAiuto = txt(this, PP.x, PP.y + 21, eTouch() ? 'PASTAFFI' : 'PASTAFFI (E)', { size: 4.6, depth: 1001 });
-    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti    SPAZIO: lancia (tieni premuto)    Q: cambia    tasto destro: lancia lì', { ox: 0, size: 5.2, depth: 1001 });
-    this.hudV.push(this.gPasta, this.icoPasta, this.nPasta, this.testoAiuto, this.testoSotto);
+    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti    SPAZIO: lancia avanti    tasto destro: lancia lì', { ox: 0, size: 5.2, depth: 1001 });
+    this.hudV.push(this.testoSotto);
     this.aggiornaHud(true);
     this.piazzaAuto();
 
     // --- comandi ---
     this.tasti = this.input.keyboard.addKeys({ su: 'UP', giu: 'DOWN', sx: 'LEFT', dx: 'RIGHT', w: 'W', a: 'A', s: 'S', d: 'D' });
-    this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat && this.inCorso && !this.carica) this.carica = { t0: this.trascorso }; });
-    this.input.keyboard.on('keyup-SPACE', () => this.rilascia());
-    this.input.keyboard.on('keydown-Q', (e) => { if (!e.repeat) this.cambia(); });
-    this.input.keyboard.on('keydown-E', (e) => { if (!e.repeat) this.chiama(); });
+    this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) this.lanciaAvanti(); });
     this.input.mouse?.disableContextMenu();
-    this.input.on('wheel', () => this.cambia());
     multiTouch(this);
     this.input.on('pointerdown', (p) => {
       if (!this.inCorso) return;
       const w = puntatore(this, p);
       for (const tipo of ['biscotto', 'pallina']) if (dist(w, ICONE[tipo]) < 15) return this.toccaIcona(tipo, p.wasTouch);
-      if (dist(w, ICONE.pastaffi) < 18) return this.chiama();
-      if (p.wasTouch && this.armato) { this.armato = null; this.lancia(w.x, w.y); return this.aggiornaHud(true); }
+      if (p.wasTouch && this.armato) { const tipo = this.armato; this.armato = null; this.lancia(w.x, w.y, tipo); return this.aggiornaHud(true); }
       if (!p.wasTouch && (p.rightButtonDown() || p.event?.ctrlKey)) return this.lancia(w.x, w.y);
       this.dito = p.id;
       this.vaiA(w, p.wasTouch);
@@ -147,8 +137,8 @@ export class RetromarciaScene extends MicrogiocoBase {
     });
   }
 
-  // dopo una pausa il dito che trascinava non c'è più, e nemmeno il lancio a metà
-  alRientro() { this.dito = null; this.meta = null; this.carica = null; }
+  // dopo una pausa il dito che trascinava non c'è più
+  alRientro() { this.dito = null; this.meta = null; }
 
   // ------------------------------------------------------------
   //  ATTREZZI
@@ -202,6 +192,12 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.aggiornaCani(dt, p);
     this.aggiornaOggetti(dt, p);
     this.disegna();
+    // secondo atto: Emilio comincia a distrarsi
+    if (!this.distrattoDetto && p > c.distrattoDa) {
+      this.distrattoDetto = true;
+      Audio.sfx('bonus');
+      scritta(this, 240, 96, 'EMILIO SI DISTRAE!', { size: 14, color: '#ffe14a', durata: 1000, depth: 960 });
+    }
     // gli ultimi secondi: passa il gatto
     if (!this.gattoFatto && this.tempoRimasto <= c.gatto.a) this.passaIlGatto();
     // ogni tanto Emilio dice la sua dal finestrino
@@ -275,33 +271,27 @@ export class RetromarciaScene extends MicrogiocoBase {
   }
 
   // --- lanci ---
-  forza() {
-    const f = ((this.trascorso - this.carica.t0) / this.cfg.periodoForza) % 1;   // sale e scende, come in SegoScene
-    return f < 0.5 ? f * 2 : 2 - f * 2;
+  // cosa lanciare: quello che piace al cane più vicino alla zona rossa (il biscotto al goloso, la
+  // pallina all'altro); se è finito, l'altro
+  sceltaAuto() {
+    const Au = this.auto;
+    let tipo = null, dMin = 1e9;
+    for (const k of this.cani) {
+      const vuole = k.tipo === 'goloso' ? 'biscotto' : k.tipo === 'pallina' ? 'pallina' : null;
+      if (!vuole || this.muni[vuole] <= 0 || k.stato === 'portato' || k.stato === 'salto') continue;
+      const d = Math.hypot(k.x - (Au.x + this.cfg.zona / 2), k.y - CENTRO);
+      if (d < dMin) { dMin = d; tipo = vuole; }
+    }
+    return tipo ?? (this.muni.biscotto >= this.muni.pallina ? 'biscotto' : 'pallina');
   }
 
-  // dove cadrebbe adesso un lancio fatto con SPAZIO
-  mira() {
-    const c = this.cfg, io = this.io, g = lerp(c.gittataMin, c.gittataMax, this.forza());
-    return { x: io.x + io.dx * g, y: io.y + io.dy * g };
-  }
-
-  rilascia() {
-    if (!this.carica) return;
-    const m = this.inCorso ? this.mira() : null;
-    this.carica = null;
-    if (m) this.lancia(m.x, m.y);
-  }
-
-  cambia() {
-    if (!this.inCorso) return;
-    this.scelta = this.scelta === 'biscotto' ? 'pallina' : 'biscotto';
-    Audio.sfx('muovi');
-    this.aggiornaHud(true);
+  // SPAZIO: un tiro in avanti, dove sto guardando
+  lanciaAvanti() {
+    const io = this.io, g = this.cfg.gittataTasto;
+    this.lancia(io.x + io.dx * g, io.y + io.dy * g);
   }
 
   toccaIcona(tipo, colDito) {
-    this.scelta = tipo;
     if (colDito) {
       // col dito: l'icona si "arma", il prossimo tocco sul vialetto è il lancio
       if (this.muni[tipo] <= 0) this.avviso(`${NOMI[tipo]}: FINITE!`);
@@ -311,18 +301,11 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.aggiornaHud(true);
   }
 
-  lancia(x, y) {
+  lancia(x, y, voluto) {
     const c = this.cfg, io = this.io;
     if (!this.inCorso) return;
-    let tipo = this.scelta;
-    if (this.muni[tipo] <= 0) {
-      // finita quella in mano: se c'è, passo all'altra (e lo dico), se no niente
-      const altra = tipo === 'biscotto' ? 'pallina' : 'biscotto';
-      if (this.muni[altra] <= 0) return this.avviso('NIENTE DA LANCIARE!');
-      this.scelta = altra;
-      this.aggiornaHud(true);
-      return this.avviso(`${NOMI[tipo]} FINITA: ORA ${NOMI[altra]}`);
-    }
+    const tipo = voluto && this.muni[voluto] > 0 ? voluto : this.sceltaAuto();
+    if (this.muni[tipo] <= 0) return this.avviso('NIENTE DA LANCIARE!');
     this.muni[tipo]--;
     // non oltre la gittata, e dentro il giardino
     const dx = x - io.x, dy = y - io.y, d = Math.hypot(dx, dy) || 1, g = Math.min(d, c.gittataMax);
@@ -592,12 +575,10 @@ export class RetromarciaScene extends MicrogiocoBase {
   // ------------------------------------------------------------
   //  PASTAFFI, L'AIUTO DA CASA
   // ------------------------------------------------------------
+  // esce da solo quando passa il gatto
   chiama() {
     const c = this.cfg, cp = c.pastaffi, Au = this.auto;
-    if (!this.inCorso) return;
-    if (this.pasta) return this.avviso('STA GIÀ ARRIVANDO!');
-    if (this.chiamate <= 0) return this.avviso('PASTAFFI NON ESCE PIÙ!');
-    this.chiamate--;
+    if (!this.inCorso || this.pasta) return;
     Audio.sfx('scegli');
     vibra(40);
     this.pasta = { stato: 'corre', x: V.porta.x, y: V.porta.y, verso: 1, cane: null, t: 0, meta: null, key: 'pastaffi_corre',
@@ -682,6 +663,8 @@ export class RetromarciaScene extends MicrogiocoBase {
     scritta(this, 240, 124, 'PASSA IL GATTO!', { size: 30, color: '#ffe14a', durata: 1400, depth: 960 });
     // tutti gli Shar Pei gli vanno dietro (piano, goffi): pure il pigro
     for (const k of this.cani) if (['gira', 'sicuro', 'dorme', 'spinto'].includes(k.stato)) Object.assign(k, { stato: 'gatto', meta: null });
+    // e Pastaffi esce di corsa a prenderne uno
+    this.time.delayedCall(c.pastaffi.ritardo * 1000, () => this.chiama());
   }
 
   aggiornaGatto(dt) {
@@ -779,16 +762,9 @@ export class RetromarciaScene extends MicrogiocoBase {
       g.lineStyle(1.6, 0xffffff, 0.55);
       for (let i = 0; i < 3; i++) { const x = zx + 8 + ((T * 30 + i * 14) % Math.max(10, zw - 10)), y = zy + zh / 2; g.beginPath(); g.moveTo(x - 4, y - 6); g.lineTo(x + 2, y); g.lineTo(x - 4, y + 6); g.strokePath(); }
     }
-    // la mira, tenendo SPAZIO: una fila di puntini fin dove cadrebbe, e il cerchio
     const m = this.gMira;
     m.clear();
-    if (this.carica) {
-      const io = this.io, P = this.mira();
-      m.fillStyle(0xffffff, 0.85);
-      for (let i = 1; i <= 7; i++) { const e = i / 8; m.fillCircle(lerp(io.x, P.x, e), lerp(io.y - 30, P.y, e) - 20 * 4 * e * (1 - e), 1.3); }
-      m.lineStyle(1.6, 0xffe14a, 1); m.strokeCircle(P.x, P.y, 7);
-      m.fillStyle(0xffe14a, 0.3); m.fillCircle(P.x, P.y, 7);
-    } else if (this.armato) {
+    if (this.armato) {
       // col dito: il cerchio della gittata, per capire fin dove arriva il lancio
       m.lineStyle(1.2, 0xffe14a, 0.5 + 0.3 * Math.sin(T * 8)); m.strokeCircle(this.io.x, this.io.y, c.gittataMax);
     }
@@ -796,13 +772,13 @@ export class RetromarciaScene extends MicrogiocoBase {
 
   aggiornaHud(forza = false) {
     const c = this.cfg, metri = Math.floor((this.auto.x - V.partenza) / c.unitaMetro), totale = Math.round((V.cancello - V.partenza) / c.unitaMetro);
-    const hud = `${metri}|${this.vite}|${this.chiamate}|${this.muni.biscotto}|${this.muni.pallina}|${this.scelta}|${this.armato}|${!!this.pasta}`;
+    const hud = `${metri}|${this.vite}|${this.muni.biscotto}|${this.muni.pallina}|${this.armato}`;
     if (!forza && hud === this.hud) return;
     this.hud = hud;
     this.testoMetri.setText(`EMILIO: ${metri} m su ${totale}`);
     this.zampe.forEach((z, i) => z.setAlpha(i < this.vite ? 1 : 0.22).setTint(i < this.vite ? 0xff8a9a : 0x555555));
     for (const tipo of ['biscotto', 'pallina']) {
-      const s = this.slot[tipo], P = ICONE[tipo], scelta = this.scelta === tipo, vuota = this.muni[tipo] <= 0;
+      const s = this.slot[tipo], P = ICONE[tipo], scelta = this.armato === tipo, vuota = this.muni[tipo] <= 0;
       s.g.clear();
       s.g.fillStyle(0x1f1430, 0.85); s.g.fillCircle(P.x, P.y, 14.5);
       s.g.fillStyle(this.armato === tipo ? 0xb5651d : scelta ? 0x3d6b2a : 0x3a2a55, 1); s.g.fillCircle(P.x, P.y, 13);
@@ -810,13 +786,6 @@ export class RetromarciaScene extends MicrogiocoBase {
       s.ico.setAlpha(vuota ? 0.3 : 1);
       s.n.setText('x' + this.muni[tipo]).setColor(vuota ? '#ff9a8a' : '#ffffff');
     }
-    const PP = ICONE.pastaffi, pronto = this.chiamate > 0 && !this.pasta;
-    this.gPasta.clear();
-    this.gPasta.fillStyle(0x1f1430, 0.85); this.gPasta.fillCircle(PP.x, PP.y, 17);
-    this.gPasta.fillStyle(pronto ? 0x2f6fb0 : 0x4a4a55, 1); this.gPasta.fillCircle(PP.x, PP.y, 15.5);
-    this.gPasta.lineStyle(1.6, pronto ? 0xffe14a : 0x8a8a95, 1); this.gPasta.strokeCircle(PP.x, PP.y, 15.5);
-    this.icoPasta.setAlpha(pronto ? 1 : 0.4);
-    this.nPasta.setText('x' + this.chiamate);
     if (eTouch()) this.testoSotto.setText(this.armato ? `TOCCA DOVE LANCIARE LA ${NOMI[this.armato]}` : '');
   }
 
@@ -826,7 +795,8 @@ export class RetromarciaScene extends MicrogiocoBase {
   risultato() {
     const c = this.cfg, vinto = this.uscita && this.vite > 0;
     const metri = Math.floor((this.auto.x - V.partenza) / c.unitaMetro);
-    const punteggio = metri * c.puntiMetro + this.salvataggi * c.bonusSalvataggio + this.vite * c.bonusVita + (vinto ? this.chiamate * c.bonusChiamata : 0);
+    // vite e uscita contano solo se Emilio esce dal cancello (chi sta fermo non prende niente)
+    const punteggio = metri * c.puntiMetro + this.salvataggi * c.bonusSalvataggio + (vinto ? c.bonusUscita + this.vite * c.bonusVita : 0);
     return {
       punteggio,
       vittoria: vinto,

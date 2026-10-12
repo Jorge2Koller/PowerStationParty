@@ -2,7 +2,7 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party';   // versione 2: Il Passaggiorgio e Petri Tentacolari
+const CACHE = 'powerstation-party';   // versione 4: Fasi 3-7 (copertina, medaglie, Bancone, livelli, modalità)
 const FONT = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', () => self.skipWaiting());
