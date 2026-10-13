@@ -1,4 +1,4 @@
-// Microgioco 17: "Provini a X-Fattore" - dai la nota giusta a Tini e Oli. INTONA!
+// Microgioco 17: "Provini a X-Factor" - dai la nota giusta a Tini e Oli. INTONA!
 //
 //  Il palco di un talent show (inventato): i due cantanti ai lati col microfono, tu al centro alla
 //  pianola, davanti i quattro giudici. Sopra il palco c'è il pentagramma: la melodia scorre da
@@ -9,9 +9,9 @@
 //  tappano le orecchie. Le lucine sul tavolo dicono già come la pensa ogni giudice: alla fine votano.
 //  Tre atti: LA STROFA (un cantante alla volta, note lunghe), IL RITORNELLO (si alternano, salti
 //  più grandi), L'ACUTO (passaggi veloci e la nota più alta tenuta fino in fondo).
-//  La canzone, l'alternanza dei cantanti e le note d'oro escono dal seme del round: uguali per
-//  tutti i giocatori. Il tempo è quello della base (Audio.posizione); senza audio si va col
-//  proprio orologio.
+//  La canzone (rock, pop o rap: config.canzoni), la melodia, l'alternanza dei cantanti e le note
+//  d'oro escono dal seme del round: uguali per tutti i giocatori. Nel ritornello si sale di un
+//  tono. Il tempo è quello della base (Audio.posizione); senza audio si va col proprio orologio.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
@@ -20,7 +20,7 @@ import { casuale } from '../grafica/base.js';
 import { PROVINO } from '../grafica/provino.js';
 import { txt, im, scritta, stelle, fumetto, lerp, caso, eTouch, vibra, puntatore } from '../fx.js';
 
-const PASSO = 0.25;                                   // secondi di un ottavo: la base 'provino' va a 120
+const OTTAVO_120 = 0.25;                              // le durate in configurazione sono in ottavi a 120 bpm (0,25 s)
 const PENTA = { x0: 18, x1: 462, cima: 48, salto: 7, cursore: 84 };   // il pentagramma: la riga in cima, quanto dista una nota dall'altra, dove sta il cursore
 const ALTA = 6;                                       // la nota più alta (la riga in cima)
 const yNota = (p) => PENTA.cima + (ALTA - p) * PENTA.salto;
@@ -38,9 +38,14 @@ export class XfactorScene extends MicrogiocoBase {
   tempoMusica() { return 1; }
 
   prepara() {
-    const c = this.cfg;
+    const c = this.cfg, seme = Sessione.seme;
     this.colori = c.cantanti.map((id) => int(CONFIG.personaggiGiocabili.find((p) => p.id === id)?.colore ?? '#ffffff'));
-    this.note = this.canzone(casuale(Sessione.seme));
+    // la canzone del round (col suo tempo: un passo = un ottavo) e la base che la suona
+    this.brano = c.canzoni[Math.floor(casuale((seme ^ 0x51ab1e) >>> 0)() * c.canzoni.length)];
+    this.passo = 60 / this.brano.bpm / 2;
+    this.note = this.canzone(casuale(seme));
+    const sezioni = [0, ...c.atti.slice(1).map((a) => Math.round(a.da / this.passo))];
+    Audio.brano({ ...this.brano, sezioni, tono: c.tono, radici: c.armonia.radici, triadi: c.armonia.triadi });
     this.iNota = 0;                 // la nota che sta passando (o la prossima)
     this.pos = 0;                   // dove siamo nella canzone, in ottavi
     this.agganciato = false;        // la base è stata allineata alla partita?
@@ -71,7 +76,7 @@ export class XfactorScene extends MicrogiocoBase {
     const inizi = new Map(this.note.map((n) => [n.da, n]));
     Audio.guida((passo) => {
       const n = this.inCorso ? inizi.get(passo) : null;
-      return n ? { midi: c.scala[n.pos] + (n.chi === 1 ? c.voci[1].ottava * 12 : 0), passi: n.a - n.da } : null;
+      return n ? { midi: c.scala[n.pos] + n.tono + (n.chi === 1 ? c.voci[1].ottava * 12 : 0), passi: n.a - n.da } : null;
     });
     // in pausa le voci tacciono; al rientro la base si riallinea alla partita
     this.suPausa = () => Audio.vociZitte();
@@ -82,6 +87,7 @@ export class XfactorScene extends MicrogiocoBase {
 
   pulisci() {
     Audio.guida(null);
+    Audio.brano(null);
     Audio.vociZitte();
     this.events.off('pause', this.suPausa);
     this.events.off('resume', this.suRientro);
@@ -99,40 +105,41 @@ export class XfactorScene extends MicrogiocoBase {
   // Le note: { da, a (ottavi), pos (0..6 sul pentagramma), chi (0 Tini, 1 Oli, 2 tutti e due), oro,
   // acuto }. Si scrive tutta all'inizio, dal seme del round.
   canzone(rnd) {
-    const c = this.cfg, tot = Math.round(this.durata / PASSO), ultimo = c.atti[c.atti.length - 1];
-    const attoDi = (n) => c.atti.filter((a) => n * PASSO >= a.da).pop();
+    const c = this.cfg, P = this.passo, k120 = OTTAVO_120 / P, tot = Math.round(this.durata / P), ultimo = c.atti[c.atti.length - 1];
+    const attoDi = (n) => c.atti.filter((a) => n * P >= a.da).pop();
     // l'acuto c'è solo se la partita arriva al terzo atto (in Lampo, 15 secondi, no)
     this.conAcuto = this.durata >= ultimo.da + c.acuto.secondi + 1;
-    const pAcuto = this.conAcuto ? Math.round(c.acuto.secondi / PASSO) : 0, fine = tot - pAcuto;
+    const pAcuto = this.conAcuto ? Math.round(c.acuto.secondi / P) : 0, fine = tot - pAcuto;
     const note = [];
-    let n = Math.min(c.primoPasso, Math.max(0, fine - 4)), pos = 3, chi = rnd() < 0.5 ? 0 : 1, cambio = -1;
+    let n = Math.min(Math.round(c.primoPasso * k120), Math.max(0, fine - 4)), pos = 3, chi = rnd() < 0.5 ? 0 : 1, cambio = -1;
     while (n < fine) {
-      const a = attoDi(n), k = c.atti.indexOf(a), finoA = (c.atti[k + 1]?.da ?? this.durata) / PASSO, daA = a.da / PASSO;
-      let dur = Math.max(1, Math.round(a.durate[Math.floor(rnd() * a.durate.length)]));
+      const a = attoDi(n), k = c.atti.indexOf(a), finoA = (c.atti[k + 1]?.da ?? this.durata) / P, daA = a.da / P;
+      let dur = Math.max(1, Math.round(a.durate[Math.floor(rnd() * a.durate.length)] * k120));
       if (fine - n - dur < 2) dur = fine - n;                 // niente moncherini in fondo
       if (note.length) {
         // la nota dopo: entro "salto" da quella di prima, meglio se è una nota dell'accordo della battuta
-        const salto = Math.max(1, Math.round(a.salto)), accordo = c.accordi[Math.floor(n / 8) % c.accordi.length], cand = [];
+        const salto = Math.max(1, Math.round(a.salto)), accordo = c.accordi[this.brano.giro[Math.floor(n / 8) % this.brano.giro.length]], cand = [];
         for (let p = Math.max(0, pos - salto); p <= Math.min(ALTA, pos + salto); p++) if (p !== pos) for (let w = accordo.includes(p) ? 3 : 1; w > 0; w--) cand.push(p);
         pos = cand[Math.floor(rnd() * cand.length)];
         // il cantante cambia ogni tanto: sempre più spesso verso la fine dell'atto
-        if (n >= cambio) { if (cambio >= 0) chi = 1 - chi; cambio = n + Math.round(lerp(a.cambio[0], a.cambio[1], clamp((n - daA) / Math.max(1, finoA - daA), 0, 1))); }
-      } else cambio = n + a.cambio[0];
-      note.push({ da: n, a: n + dur, pos, chi, oro: dur >= 2 && rnd() < a.oro });
+        if (n >= cambio) { if (cambio >= 0) chi = 1 - chi; cambio = n + Math.round(lerp(a.cambio[0], a.cambio[1], clamp((n - daA) / Math.max(1, finoA - daA), 0, 1)) * k120); }
+      } else cambio = n + Math.round(a.cambio[0] * k120);
+      note.push({ da: n, a: n + dur, pos, chi, oro: dur >= 2 && rnd() < a.oro, tono: c.tono[k] ?? 0 });
       n += dur;
     }
     if (this.conAcuto) {
       // l'acuto: la nota più alta fino alla fine, con qualche tremolo (due ottavi sulla nota sotto)
-      const posti = [2, 5, 8].filter((p) => p + 2 <= pAcuto - 5), scelti = [];
+      const tono = c.tono[c.tono.length - 1] ?? 0, posti = [], scelti = [];
+      for (let q = 2; q + 2 <= pAcuto - 5; q += 3) posti.push(q);
       for (let i = Math.min(Math.round(c.acuto.tremoli), posti.length); i > 0; i--) scelti.push(posti.splice(Math.floor(rnd() * posti.length), 1)[0]);
       scelti.sort((x, y) => x - y);
       let p = 0;
       for (const s of scelti) {
-        if (s > p) note.push({ da: fine + p, a: fine + s, pos: ALTA, chi: ENTRAMBI, acuto: true });
-        note.push({ da: fine + s, a: fine + s + 2, pos: ALTA - 1, chi: ENTRAMBI, acuto: true });
+        if (s > p) note.push({ da: fine + p, a: fine + s, pos: ALTA, chi: ENTRAMBI, acuto: true, tono });
+        note.push({ da: fine + s, a: fine + s + 2, pos: ALTA - 1, chi: ENTRAMBI, acuto: true, tono });
         p = s + 2;
       }
-      note.push({ da: fine + p, a: tot, pos: ALTA, chi: ENTRAMBI, acuto: true });
+      note.push({ da: fine + p, a: tot, pos: ALTA, chi: ENTRAMBI, acuto: true, tono });
       this.inizioAcuto = fine;
     }
     // l'attimo di grazia di ogni nota (per arrivarci senza che conti come stonatura): più lungo
@@ -261,11 +268,13 @@ export class XfactorScene extends MicrogiocoBase {
   aggiorna(dt) {
     const c = this.cfg;
     // il tempo della canzone: il proprio orologio, tenuto agganciato a quello dell'audio quando c'è
-    this.pos += dt / PASSO;
-    const ap = Audio.posizione;
+    this.pos += dt / this.passo;
+    // (col ritardo audio misurato nelle Impostazioni: quello che si sente è un po' indietro rispetto
+    // a quello che l'audio sta suonando, e le note vanno a tempo con quello che si sente)
+    const rit = Audio.ritardo / this.passo, ap0 = Audio.posizione, ap = ap0 == null ? null : ap0 - rit;
     if (ap != null) {
       // (all'inizio, dopo una pausa o se si sono persi di vista: è la base che si riallinea alla partita)
-      if (!this.agganciato || Math.abs(ap - this.pos) > 1.5) { this.agganciato = true; Audio.vaiA(this.pos); }
+      if (!this.agganciato || Math.abs(ap - this.pos) > 1.5) { this.agganciato = true; Audio.vaiA(this.pos + rit); }
       else this.pos += (ap - this.pos) * Math.min(1, dt * 3);
     }
 
@@ -288,8 +297,8 @@ export class XfactorScene extends MicrogiocoBase {
     while (this.iNota < this.note.length && this.pos >= this.note[this.iNota].a) this.chiudi(this.note[this.iNota++]);
     const n = this.iNota < this.note.length && this.pos >= this.note[this.iNota].da ? this.note[this.iNota] : null;
 
-    // mouse e dito: il cursore si aggancia alla nota più vicina (e, se è abbastanza vicino, a quella giusta)
-    if (this.puntato) this.meta = n && Math.abs(this.metaF - n.pos) <= c.calamita ? n.pos : Math.round(this.metaF);
+    // mouse e dito: il cursore si aggancia alla nota più vicina (nessun aiuto verso quella giusta)
+    if (this.puntato) this.meta = Math.round(clamp(this.metaF, 0, ALTA));
     // il cursore scivola verso la sua nota: morbido, ma senza inerzia
     this.cur += (this.meta - this.cur) * Math.min(1, dt * c.scivola);
     if (Math.abs(this.meta - this.cur) < 0.02) this.cur = this.meta;
@@ -298,7 +307,7 @@ export class XfactorScene extends MicrogiocoBase {
     const prima = this.stato;
     if (!n) this.stato = 'attesa';
     else if (Math.abs(this.cur - n.pos) <= c.tolleranza) this.stato = 'ok';
-    else this.stato = (this.pos - n.da) * PASSO < n.grazia ? 'attesa' : 'no';
+    else this.stato = (this.pos - n.da) * this.passo < n.grazia ? 'attesa' : 'no';
     if (this.stato === 'ok') {
       const guadagno = dt * c.puntiSecondo * this.moltiplicatore;
       this.punti += guadagno; n.punti += guadagno; n.ok += dt;
@@ -323,7 +332,7 @@ export class XfactorScene extends MicrogiocoBase {
   chiudi(n) {
     const c = this.cfg;
     n.chiusa = true;
-    if (!n.oro || n.err > 0 || n.ok < ((n.a - n.da) * PASSO - n.grazia) * 0.85) return;
+    if (!n.oro || n.err > 0 || n.ok < ((n.a - n.da) * this.passo - n.grazia) * 0.85) return;
     this.punti += n.punti;
     this.ori++;
     Audio.sfx('ding');
@@ -365,11 +374,11 @@ export class XfactorScene extends MicrogiocoBase {
   canta(n) {
     const c = this.cfg, S = c.stonata;
     const giu = Math.floor(clamp(this.cur, 0, ALTA)), su = Math.min(ALTA, giu + 1), inMezzo = Math.abs(this.cur - Math.round(this.cur)) > 0.16;
-    const base = lerp(c.scala[giu], c.scala[su], this.cur - giu);
+    const base = lerp(c.scala[giu], c.scala[su], this.cur - giu) + (n?.tono ?? 0);
     c.voci.forEach((V, k) => {
       if (!n || !(n.chi === k || n.chi === ENTRAMBI)) return Audio.voce('cantante' + k, null);
       let midi = base + V.ottava * 12, vibrato = 0, vibratoHz = 5.5, crepa = inMezzo ? 0.3 : 0, vol = 1;
-      if (this.stato === 'ok') { if (n.ok > c.vibrato.dopo) vibrato = c.vibrato.cent * (n.acuto ? 1.6 : 1); }
+      if (this.stato === 'ok') { if (n.ok > c.vibrato.dopo) vibrato = c.vibrato.cent * (n.acuto ? c.vibrato.acuto : 1); }
       else if (this.stato === 'no') {
         midi -= lerp(S.cala[0], S.cala[1], Math.min(1, this.tStonata / S.secondi)) / 100;
         vibrato = S.tremolo; vibratoHz = 8.5; crepa = S.crepa; vol = 0.92;
@@ -426,7 +435,8 @@ export class XfactorScene extends MicrogiocoBase {
 
   // la melodia che scorre, il cursore, le lucine, i fasci di luce, i punti
   disegna(n) {
-    const c = this.cfg, g = this.gMelodia, PX = c.scorrimento, X = (passo) => PENTA.cursore + (passo - this.pos) * PX;
+    // (scorrimento è in unità per ottavo a 120: così la melodia scorre alla stessa velocità con ogni canzone)
+    const c = this.cfg, g = this.gMelodia, PX = c.scorrimento * this.passo / OTTAVO_120, X = (passo) => PENTA.cursore + (passo - this.pos) * PX;
     const sx = PENTA.x0 + 44, dx = PENTA.x1 - 4, colore = (x) => (x.chi === ENTRAMBI ? 0xffe14a : this.colori[x.chi]);
     g.clear();
     for (let i = Math.max(0, this.iNota - 6); i < this.note.length; i++) {

@@ -1,13 +1,13 @@
-// Configurazione del microgioco 'Provini a X-Fattore' (id: xfactor).
+// Configurazione del microgioco 'Provini a X-Factor' (id: xfactor).
 // Durata, comandi, obiettivo, punti, difficoltà e frasi: si cambiano qui senza toccare la logica.
 // (Il microgioco è in js/microgames/XfactorScene.js; questa sezione arriva in CONFIG.microgiochi.xfactor.)
-// Il talent, la grande X e i giudici sono inventati: non sono il programma né persone vere.
+// Il talent, la grande X e i giudici sono inventati: non sono il logo del programma né persone vere.
 export default {
-  titolo: 'Provini a X-Fattore',
+  titolo: 'Provini a X-Factor',
   verbo: 'INTONA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x7a2fd0,
-  musica: 'provino',        // la base (batteria e accordi) di audio.js: la melodia la dà il microgioco
+  musica: 'provino',        // la base di audio.js (una delle canzoni qui sotto): la melodia la dà il microgioco
   // i due cantanti: Tini e Oli (chi li sceglie come personaggio qui gioca "contro se stesso")
   ospite: { id: 'tini', etichetta: 'IL PROVINO DI:\nTINI E OLI' },
   cast: ['oli'],
@@ -25,11 +25,10 @@ export default {
   obiettivo: 'Almeno 3 SÌ su 4 dai giudici!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Tarate coi giocatori simulati: chi passa il provino (3 SÌ) fa almeno 276 punti (280 a Facile),
-  // quindi prende almeno l'argento; chi non passa di solito resta sotto i 240. Chi non tocca niente
-  // non supera i 60 e chi muove a caso (tasti o mouse) i 90, a tutti i livelli: niente bronzo.
-  // Chi segue bene tutta la canzone sta sui 750 (oro); il massimo è circa 1100.
-  medaglie: { bronzo: 150, argento: 250, oro: 650 },
+  // Ritarate dopo la serata di prova (era più facile: 150, 250, 650) col giocatore automatico:
+  // quello bravo (segue la melodia leggendo il pentagramma) fa 530-545 con 4 SÌ, chi muove a caso
+  // 40-45, chi sta fermo 25. Chi passa il provino (3 SÌ, almeno il 62-68% intonato) prende l'argento.
+  medaglie: { bronzo: 150, argento: 280, oro: 480 },
 
   // --- punti ---
   puntiSecondo: 10,         // per ogni secondo intonato (si contano le frazioni), per il moltiplicatore
@@ -39,52 +38,65 @@ export default {
   // (le note d'oro valgono doppio: a fine nota, se non l'hai mai stonata, si riprendono i suoi punti)
 
   // --- la nota di chi gioca ---
-  tolleranza: 0.3,          // quanto il cursore può stare lontano dalla nota giusta (in note) e contare come intonato
+  tolleranza: 0.2,          // quanto il cursore può stare lontano dalla nota giusta (in note) e contare come intonato (era 0,3)
   grazia: 0.18,             // secondi, dopo ogni cambio di nota, in cui non essere ancora arrivati non è una stonatura
   graziaSalto: 0.06,        // ...più tanti secondi per ogni nota di salto oltre la prima (un salto grande chiede più tempo)
-  calamita: 0.6,            // mouse e dito: entro tante note dalla nota giusta, il cursore ci si aggancia (0.5 = nessun aiuto)
   scivola: 26,              // quanto in fretta il cursore scivola da una nota all'altra (più alto = più svelto)
   ditoPasso: 12,            // dito: unità di schermo da trascinare per salire o scendere di una nota
   ripeti: [0.22, 0.085],    // tastiera, tenendo premuto: attesa prima di ripetere, poi ogni quanto (secondi)
 
-  // --- la canzone ---
+  // --- le canzoni ---
+  // Tre basi diverse (audio.js, suonaProvino), una per round, scelta col seme: nella stessa sfida
+  // tutti cantano la stessa. bpm = il tempo (un passo = un ottavo); giro = gli accordi, uno per
+  // battuta (indici di "accordi" qui sotto): Fa, Do, Re minore, Si bemolle.
+  canzoni: [
+    { nome: 'ROCK', stile: 'rock', bpm: 128, giro: [0, 1, 2, 3] },   // Fa Do Rem Sib: chitarra, cassa e rullante pieni
+    { nome: 'POP', stile: 'pop', bpm: 116, giro: [2, 3, 0, 1] },     // Rem Sib Fa Do: cassa in quattro, arpeggi
+    { nome: 'RAP', stile: 'rap', bpm: 96, giro: [2, 2, 3, 1] },      // Rem Rem Sib Do: boom bap, basso lungo
+  ],
   // Il pentagramma: 7 note utilizzabili, dalla seconda riga (Sol) alla quinta (Fa acuto), in Fa
-  // maggiore (il Si è bemolle). Il tempo è quello della base 'provino' (120: un passo = un ottavo = 0,25 s).
+  // maggiore (il Si è bemolle).
   scala: [67, 69, 70, 72, 74, 76, 77],          // le 7 note (numeri MIDI), dal basso all'alto
-  accordi: [[1, 3, 6], [0, 3, 5], [1, 4, 6], [2, 4, 6]],   // le note "buone" di ogni battuta: Fa, Do, Re minore, Si bemolle
+  accordi: [[1, 3, 6], [0, 3, 5], [1, 4, 6], [2, 4, 6]],   // le note "buone" di ogni accordo: Fa, Do, Re minore, Si bemolle
+  // gli stessi accordi per la base: la nota più bassa (il basso) e le tre dell'accordo (MIDI)
+  armonia: { radici: [41, 36, 38, 34], triadi: [[53, 57, 60], [52, 55, 60], [53, 57, 62], [53, 58, 62]] },
+  tono: [0, 2, 2],          // semitoni in più in ogni atto: dal ritornello si sale di un tono (voci, guida e base)
+  // (le durate qui sotto sono in ottavi a 120 bpm, 0,25 secondi: con ogni canzone durano uguale)
   primoPasso: 6,            // ottavi di attesa prima della prima nota
   scorrimento: 16,          // quanto scorre la melodia a ogni ottavo (unità di schermo): più alto = meno tempo per leggerla
   // I tre atti. da = secondo d'inizio; durate = quanto può durare una nota (in ottavi); salto = di
   // quante note al massimo si sposta la melodia; cambio = ogni quanti ottavi cambia il cantante
-  // (all'inizio e alla fine dell'atto); oro = quante note hanno la stella
+  // (all'inizio e alla fine dell'atto); oro = quante note hanno la stella.
+  // (più difficili dopo la serata di prova: prima 4-8 ottavi e salti di 2 nella strofa)
   atti: [
-    { da: 0, nome: 'LA STROFA', durate: [4, 6, 8], salto: 2, cambio: [16, 16], oro: 0.12 },
-    { da: 12, nome: 'IL RITORNELLO!', durate: [2, 3, 4], salto: 4, cambio: [8, 4], oro: 0.2 },
-    { da: 24, nome: "L'ACUTO!", durate: [1, 2, 2], salto: 3, cambio: [4, 4], oro: 0.12 },
+    { da: 0, nome: 'LA STROFA', durate: [3, 4, 5], salto: 3, cambio: [16, 12], oro: 0.12 },
+    { da: 12, nome: 'IL RITORNELLO!', durate: [1, 2, 2, 3], salto: 5, cambio: [8, 4], oro: 0.2 },
+    { da: 24, nome: "L'ACUTO!", durate: [1, 1, 2], salto: 4, cambio: [4, 3], oro: 0.14 },
   ],
   // l'acuto finale (solo se la partita arriva al terzo atto: in Lampo non c'è): la nota più alta
   // tenuta fino alla fine, con qualche tremolo (una discesa breve alla nota sotto) da seguire
-  acuto: { secondi: 4, tremoli: 2, tenuta: 0.85 },
+  acuto: { secondi: 5.5, tremoli: 4, tenuta: 0.85 },   // (era 4 secondi con 2 tremoli)
 
   // --- le voci dei cantanti (audio.js): forma d'onda, filtro, ottava rispetto al pentagramma ---
   voci: [
     { tipo: 'square', taglio: 2600, ottava: 0 },      // Tini: squillante
     { tipo: 'sawtooth', taglio: 1500, ottava: -1 },   // Oli: più scura, un'ottava sotto
   ],
-  vibrato: { dopo: 0.45, cent: 16 },                  // sulla nota giusta, tenuta: un po' di vibrato
+  vibrato: { dopo: 0.45, cent: 16, acuto: 2.4 },      // sulla nota giusta, tenuta: un po' di vibrato (sull'acuto, tanto di più)
   stonata: { cala: [55, 120], secondi: 0.9, tremolo: 48, crepa: 0.6 },   // sbagliata: calante (in cent, sempre di più), tremolio largo, la voce si incrina
 
   // --- i giudici (inventati), nell'ordine in cui siedono. soglia = quanto bisogna essere stati
   // intonati (da 0 a 1, sul tempo cantato) perché dica SÌ: è una percentuale, quindi vale uguale
   // nelle partite corte (Lampo). La lucina sul tavolo dice già come la sta pensando.
   // (Nessuna soglia sotto 0.4: chi muove a caso, o resta fermo su una nota di mezzo, azzecca per
-  // sbaglio un quarto del tempo, e non deve strappare neanche un SÌ.)
+  // sbaglio un quarto del tempo, e non deve strappare neanche un SÌ. Alzate dopo la serata di
+  // prova: prima 0,47, 0,55, 0,78, 0,4. Il produttore resta il più severo.)
   siPerVincere: 3,
   giudici: [
-    { nome: 'LA DIVA', soglia: 0.47, si: ['Tesoro, sei una stella!', 'Mi hai fatto venire i brividi.', 'Divino. Quasi come me.'], no: ['Per me è no, tesoro.', 'Mi si è sciolto il trucco.', 'Ho sentito di meglio in ascensore.'] },
-    { nome: 'MC CATENA', soglia: 0.55, si: ['Bro, spacca!', 'Bootcamp!', 'Flow pulito, rispetto.'], no: ['Bro... no.', 'Zero flow.', 'Non ho parole... in senso brutto.'] },
-    { nome: 'IL PRODUTTORE', soglia: 0.78, si: ['Si può lavorare.', 'Non male. Ho detto non male.', 'Firmate qui.'], no: ['Per me è no.', 'Ho un aereo da prendere.', 'Avanti il prossimo.'] },
-    { nome: 'IL COMMOSSO', soglia: 0.4, si: ['Sto piangendo! Sì!', 'Mi avete toccato il cuore.', 'Che emozione, ragazzi!'], no: ['Piango... ma di dispiacere.', 'Mi dispiace tanto, è no.'] },
+    { nome: 'LA DIVA', soglia: 0.62, si: ['Tesoro, sei una stella!', 'Mi hai fatto venire i brividi.', 'Divino. Quasi come me.'], no: ['Per me è no, tesoro.', 'Mi si è sciolto il trucco.', 'Ho sentito di meglio in ascensore.'] },
+    { nome: 'MC CATENA', soglia: 0.68, si: ['Bro, spacca!', 'Bootcamp!', 'Flow pulito, rispetto.'], no: ['Bro... no.', 'Zero flow.', 'Non ho parole... in senso brutto.'] },
+    { nome: 'IL PRODUTTORE', soglia: 0.86, si: ['Si può lavorare.', 'Non male. Ho detto non male.', 'Firmate qui.'], no: ['Per me è no.', 'Ho un aereo da prendere.', 'Avanti il prossimo.'] },
+    { nome: 'IL COMMOSSO', soglia: 0.55, si: ['Sto piangendo! Sì!', 'Mi avete toccato il cuore.', 'Che emozione, ragazzi!'], no: ['Piango... ma di dispiacere.', 'Mi dispiace tanto, è no.'] },
   ],
   frasiVittoria: ['SEI AI BOOTCAMP!'],
   frasiSconfitta: ['È UN NO PER ME'],
@@ -93,7 +105,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (atti, giudici) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { tolleranza: 0.36, grazia: 0.26, graziaSalto: 0.08, calamita: 0.75, scorrimento: 14, atti: { durate: 1.5, salto: 0.75 }, giudici: { soglia: 0.85 }, acuto: { tremoli: 1 } },
-    difficile: { tolleranza: 0.26, grazia: 0.13, graziaSalto: 0.045, calamita: 0.5, scorrimento: 19, atti: { durate: 0.75, salto: 1.3 }, giudici: { soglia: 1.1 }, acuto: { tremoli: 3 } },
+    facile: { tolleranza: 0.26, grazia: 0.24, graziaSalto: 0.08, scorrimento: 14, atti: { durate: 1.4, salto: 0.75 }, giudici: { soglia: 0.88 }, acuto: { tremoli: 2 } },
+    difficile: { tolleranza: 0.16, grazia: 0.13, graziaSalto: 0.045, scorrimento: 18, atti: { durate: 0.8, salto: 1.2 }, giudici: { soglia: 1.06 }, acuto: { tremoli: 5 } },
   },
 };

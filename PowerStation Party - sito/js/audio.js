@@ -7,9 +7,9 @@ let contaPassi = 0;   // passi (ottavi) della musica pianificati dall'inizio del
 let busMusica = null, busEffetti = null, uscita = null, volMusica = 0.8, volEffetti = 0.8;
 let traccia = null, timer = null, passo = 0, prossimo = 0, tempo = 1;
 let pour = null;
-// "Provini a X-Fattore": la melodia guida (la dà il microgioco: passo -> { midi, passi } o niente)
-// e le voci continue dei cantanti (una per nome)
-let guida = null;
+// "Provini a X-Factor": la melodia guida (la dà il microgioco: passo -> { midi, passi } o niente),
+// le voci continue dei cantanti (una per nome) e la canzone di questo provino (vedi suonaProvino)
+let guida = null, brano = null;
 const voci = {};
 
 const midi = (n) => 440 * 2 ** ((n - 69) / 12);
@@ -99,7 +99,7 @@ const SFX = {
   bordo: (t) => { for (let i = 0; i < 9; i++) nota(980 + (i % 2) * 170 - i * 30, t + i * 0.085, 0.07, 'triangle', 0.06); },
   rullo: (t) => { for (let i = 0; i < 26; i++) rumore(t + i * 0.055, 0.045, 0.05 + i * 0.004, 1700 + i * 35); },
   stonato: (t) => { nota(392, t, 0.28, 'triangle', 0.07, 372); nota(466, t + 0.28, 0.4, 'triangle', 0.07, 530); },   // i perdenti che cantano
-  // Provini a X-Fattore: il colpo di tamburo dei voti, i fischi del pubblico, l'applauso
+  // Provini a X-Factor: il colpo di tamburo dei voti, i fischi del pubblico, l'applauso
   tamburo: (t) => { nota(150, t, 0.24, 'sine', 0.3, 48); rumore(t, 0.13, 0.2, 500, 'lowpass'); },
   buu: (t) => { nota(196, t, 0.5, 'sawtooth', 0.055, 118); nota(204, t, 0.5, 'square', 0.03, 122); rumore(t, 0.4, 0.05, 700); },
   applauso: (t) => { for (let i = 0; i < 8; i++) rumore(t + i * 0.045 + Math.random() * 0.02, 0.05, 0.065, 1400 + Math.random() * 1000); },
@@ -140,6 +140,11 @@ const SFX = {
   plop: (t) => { nota(700, t, 0.1, 'triangle', 0.1, 180); rumore(t, 0.05, 0.08, 900, 'lowpass'); },
   glu: (t) => { for (let i = 0; i < 3; i++) { nota(260 - i * 30, t + i * 0.16, 0.1, 'triangle', 0.1, 140 - i * 15); rumore(t + i * 0.16, 0.06, 0.08, 600, 'lowpass'); } },
   salva: (t) => arp(t, [79, 84, 88, 91], 0.06, 0.12, 0.07),
+  // il gabbiano (Spalma il Bota!): due versi stridi che scendono
+  gabbiano: (t) => { nota(1500, t, 0.14, 'square', 0.05, 900); nota(1350, t + 0.17, 0.18, 'square', 0.05, 760); rumore(t, 0.12, 0.03, 3000); },
+  // il Petri: un verso gutturale (basso, raschiato) e il lamento che scende ("Gnamooo...")
+  verso: (t) => { for (let i = 0; i < 6; i++) nota(i % 2 ? 92 : 74, t + i * 0.055, 0.08, 'sawtooth', 0.09, 62); rumore(t, 0.34, 0.08, 260, 'lowpass'); },
+  lamento: (t) => { nota(240, t, 0.5, 'triangle', 0.1, 170); nota(190, t + 0.45, 0.55, 'triangle', 0.09, 120); },
   bonk: (t) => { nota(330, t, 0.12, 'square', 0.08, 160); rumore(t, 0.08, 0.15, 700, 'lowpass'); },
   // MaraZio
   calcio: (t) => { rumore(t, 0.08, 0.26, 700, 'lowpass'); nota(160, t, 0.1, 'triangle', 0.14, 70); },
@@ -230,15 +235,14 @@ const TRACCE = {
            76, 0, 74, 71, 0, 74, 71, 0, 69, 0, 71, 69, 67, 0, 64, 0, 67, 0, 69, 71, 0, 74, 76, 0, 74, 71, 69, 67, 64, 0, 64, 0],
     basso: [40, 40, 43, 45, 40, 40, 45, 47],
   },
-  // la base di "Provini a X-Fattore": batteria e accordi in Fa maggiore (Fa, Do, Re minore, Si
-  // bemolle: una battuta ciascuno). Niente melodia fissa: quella, piano, la dà il microgioco
-  // (Audio.guida), e sopra ci cantano le voci (Audio.voce)
+  // la base di "Provini a X-Factor": una canzone vera (rock, pop o rap: la sceglie il microgioco
+  // col seme del round, vedi Audio.brano e suonaProvino). Niente melodia fissa: quella, piano, la
+  // dà il microgioco (Audio.guida), e sopra ci cantano le voci (Audio.voce). Il bpm è del brano.
   provino: {
     bpm: 120,
     provino: true,
     lead: new Array(64).fill(0),
-    basso: [41, 36, 38, 34],
-    accordi: [[53, 57, 60], [52, 55, 60], [53, 57, 62], [53, 58, 62]],
+    basso: [41],
   },
 };
 
@@ -248,16 +252,10 @@ function suonaPasso(T, i, t, conta = 0) {
   if (n) nota(midi(n), t, d * 1.6, 'square', 0.045);
   const fond = T.basso[Math.floor(i / 8) % T.basso.length];
   if (T.provino) {
-    // basso che cammina, accordo a ogni mezza battuta, cassa sull'1 e sul 3, rullante sul 2 e sul 4
-    const k = i % 8;
-    if (k === 0 || k === 3 || k === 6) nota(midi(fond), t, d * 1.4, 'triangle', 0.13);
-    if (k === 0 || k === 4) for (const m of T.accordi[Math.floor(i / 8) % T.accordi.length]) nota(midi(m), t, d * 3.2, 'triangle', 0.028);
-    if (k % 4 === 0) nota(120, t, 0.11, 'sine', 0.2, 45);
-    if (k % 4 === 2) rumore(t, 0.08, 0.085, 2000);
-    rumore(t, 0.025, k % 2 ? 0.03 : 0.018, 8000, 'highpass');
+    suonaProvino(conta, t, d);
     // la melodia giusta, piano, come guida: chi è intonato la copre, chi stona la sente sotto
     const g = guida?.(conta);
-    if (g) nota(midi(g.midi), t, Math.max(0.1, g.passi * d * 0.92), 'triangle', 0.032);
+    if (g) nota(midi(g.midi), t, Math.max(0.1, g.passi * d * 0.92), 'triangle', 0.034);
     return;
   }
   if (T.disco) {
@@ -310,6 +308,70 @@ function suonaPasso(T, i, t, conta = 0) {
   if (i % 2 === 1) rumore(t, 0.03, 0.025, 7000, 'highpass');
 }
 
+// --- le canzoni del provino ---
+// Batteria: cassa (un tonfo che scende), rullante e battimani (rumore), charleston (rumore acuto)
+const cassa = (t, v = 0.2) => nota(120, t, 0.11, 'sine', v, 45);
+const rullante = (t, v = 0.09) => { rumore(t, 0.09, v, 2000); nota(190, t, 0.05, 'triangle', v * 0.35, 120); };
+const charleston = (t, v = 0.025, aperto = false) => rumore(t, aperto ? 0.09 : 0.025, v, 8000, 'highpass');
+const tom = (t, f, v = 0.12) => nota(f, t, 0.13, 'sine', v, f * 0.55);
+// il passaggio di batteria nell'ultima battuta prima di un atto nuovo: rullante in sedicesimi che
+// cresce, poi i tom che scendono
+function passaggio(k, t, d) {
+  if (k < 4) { for (const h of [0, 0.5]) rullante(t + h * d, 0.05 + k * 0.012); return; }
+  tom(t, [260, 210, 170, 130][k - 4]); tom(t + d / 2, [235, 190, 150, 115][k - 4]);
+}
+// Una canzone: brano = { stile, bpm, giro (gli accordi, uno per battuta), radici e triadi (MIDI),
+// sezioni [strofa, ritornello, acuto] (in passi dall'inizio), tono [semitoni in più per sezione] }.
+// La strofa è più tranquilla, il ritornello più pieno (e un tono sopra), l'acuto finale suona con tutto.
+function suonaProvino(conta, t, d) {
+  const B = brano;
+  if (!B) return;
+  const sez = conta >= B.sezioni[2] ? 2 : conta >= B.sezioni[1] ? 1 : 0, k = conta % 8;
+  const acc = B.giro[Math.floor(conta / 8) % B.giro.length], su = B.tono[sez];
+  const rad = B.radici[acc] + su, tri = B.triadi[acc].map((m) => m + su);
+  // l'ultima battuta prima di un atto nuovo: il passaggio di batteria (e il basso tiene)
+  const prossima = B.sezioni.find((x) => x > conta);
+  if (prossima != null && prossima - conta <= 8 && prossima - conta > 0) {
+    passaggio(8 - (prossima - conta), t, d);
+    if (k === 0) nota(midi(rad), t, d * 6, 'triangle', 0.12);
+    return;
+  }
+  if (sez === 2 && k === 0) rumore(t, 0.5, 0.06, 6000, 'highpass');              // il piatto, a ogni battuta dell'acuto
+  if (B.stile === 'rock') {
+    // rock: cassa sull'1 e sul 3 (più il levare del 3), rullante sul 2 e sul 4, charleston in ottavi;
+    // basso in ottavi con l'ottava sul 7; chitarra a "power chord" (3+3+2 nella strofa, in ottavi dopo)
+    if (k === 0 || k === 4 || (k === 5 && sez > 0)) cassa(t);
+    if (k === 2 || k === 6) rullante(t);
+    charleston(t, k % 2 ? 0.02 : 0.03, k === 7);
+    nota(midi(rad - 12 + (k === 6 ? 12 : 0)), t, d * 0.85, 'triangle', 0.12);
+    const colpi = sez === 0 ? [0, 3, 6] : [0, 1, 2, 3, 4, 5, 6, 7];
+    if (colpi.includes(k)) { nota(midi(rad), t, d * (sez ? 0.7 : 1.6), 'sawtooth', sez ? 0.04 : 0.032); nota(midi(rad + 7), t, d * (sez ? 0.7 : 1.6), 'square', 0.018); }
+    if (sez === 2) charleston(t + d / 2, 0.018);
+  } else if (B.stile === 'pop') {
+    // pop: cassa in quattro, battimani sul 2 e sul 4, shaker in sedicesimi; basso sincopato
+    // (1, il levare del 2, il 4); accordi arpeggiati (su e giù), e nel ritornello un tappeto sotto
+    if (k % 2 === 0) cassa(t, sez === 0 ? 0.15 : 0.2);
+    if (k === 2 || k === 6) { rumore(t, 0.08, 0.075, 1600); rumore(t + 0.012, 0.06, 0.05, 2400); }
+    for (const h of [0, 0.5]) charleston(t + h * d, 0.012 + (sez ? 0.006 : 0));
+    if (k === 0 || k === 3 || k === 6) nota(midi(rad - 12 + (k === 6 ? 7 : 0)), t, d * 1.6, 'triangle', 0.13);
+    const arp = [0, 1, 2, 1][k % 4];
+    nota(midi(tri[arp] + 12), t, d * 0.9, 'square', 0.016);
+    if (sez > 0) nota(midi(tri[(arp + 1) % 3] + 12), t + d / 2, d * 0.45, 'square', 0.012);
+    if (sez > 0 && k === 0) for (const m of tri) nota(midi(m), t, d * 7.5, 'sawtooth', 0.011);
+  } else {
+    // rap: batteria "boom bap" (cassa sull'1, sul levare del 2 e sul 3 e mezzo, rullante sul 2 e sul
+    // 4), charleston in sedicesimi un po' sghembi; basso lungo che scende di tono a fine nota; gli
+    // accordi a colpi secchi in levare, e nel ritornello una campanella che risponde
+    if (k === 0 || k === 3 || k === 5) cassa(t, 0.22);
+    if (k === 2 || k === 6) rullante(t, 0.1);
+    charleston(t, 0.022); charleston(t + d * 0.58, 0.014);
+    if (k === 0 || k === 5) nota(midi(rad - 12), t, d * (k === 0 ? 3.4 : 2.4), 'sine', 0.2, midi(rad - 13));
+    if (k === 1 || k === 5) for (const m of tri) nota(midi(m), t, d * 0.35, 'triangle', 0.022);
+    if (sez > 0 && (k === 3 || k === 7)) nota(midi(tri[2] + 12), t, d * 0.5, 'triangle', 0.03);
+    if (sez === 2 && k % 2 === 1) cassa(t + d / 2, 0.12);
+  }
+}
+
 function pianifica() {
   if (!ac || !traccia) return;
   const T = TRACCE[traccia];
@@ -324,6 +386,10 @@ function pianifica() {
 }
 
 export const Audio = {
+  // ritardo del suono in secondi (cuffie o casse Bluetooth: Impostazioni → Ritardo audio). I giochi a tempo
+  // di musica (Scapoli, X-Factor) spostano frecce e note di tanto, così sono a tempo con quello che si sente
+  ritardo: 0,
+
   // Va chiamato al primo input dell'utente (i browser bloccano l'audio prima)
   sblocca() {
     if (!ac) {
@@ -404,10 +470,16 @@ export const Audio = {
     return muto;
   },
 
-  // --- "Provini a X-Fattore" ---
+  // --- "Provini a X-Factor" ---
   // la melodia guida: fn(passo) ritorna { midi, passi } quando in quel passo (ottavo) comincia
   // una nota, se no niente. null per toglierla.
   guida(fn) { guida = fn; },
+
+  // la canzone del provino (vedi suonaProvino): la sceglie il microgioco; null = nessuna
+  brano(b) {
+    brano = b;
+    if (b) TRACCE.provino.bpm = b.bpm;
+  },
 
   // Porta la musica in un punto preciso (in passi, anche a metà di un passo): la usa il provino per
   // tenere la base agganciata alla partita, all'inizio e dopo una pausa.

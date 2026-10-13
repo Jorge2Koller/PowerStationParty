@@ -23,10 +23,10 @@ const Y_PIEDE = TERRA - 12;                 // altezza del pallone quando lo col
 const R_PALLA = 5.4;
 const X_MIN = 40, X_MAX = 292;              // dove può andare il giocatore
 const BORDO = [26, 318];                    // il pallone rimbalza qui (oltre c'è lo Zio)
-const ZIO = { x: 392, periodo: 0.95, alto: 92, lato: 16 };   // lato: il pallone cade sul suo piede destro
+const ZIO = { x: 376, periodo: 0.95, alto: 92, lato: 16 };   // lato: il pallone cade sul suo piede destro
 const migliaia = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const TAGLIA = 0.58;
-const PULSANTE = { x: 436, y: 236, r: 23 };
+const PULSANTE = { x: 452, y: 242, r: 21 };   // (nell'angolo: più in là coprirebbe lo Zio)
 const ORO = 0xffcf3a;
 
 export class PalleggiScene extends MicrogiocoBase {
@@ -87,7 +87,7 @@ export class PalleggiScene extends MicrogiocoBase {
     this.hud = [pannello(this, 240, 36, 120, 30, { depth: 1000 })];
     this.testoPalleggi = txt(this, 240, 31, '0', { size: 14, depth: 1001 });
     this.testoMolt = txt(this, 290, 31, '', { size: 8, depth: 1001, color: '#7dff9a' });
-    this.testoSerie = txt(this, 240, 45, 'SERIE MIGLIORE: 0', { size: 5.5, depth: 1001, color: '#ffe14a' });
+    this.testoSerie = txt(this, 240, 45, 'SERIE MIGLIORE: 0', { size: 7, depth: 1001, color: '#ffe14a' });
     this.testoPunti = txt(this, 474, 36, 'PUNTI: 0', { ox: 1, depth: 1001, size: 8 });
     this.testoZio = txt(this, ZIO.x, 122, 'ZIO: 4.312', { size: 7, depth: 1001, color: '#ffffff' });
     this.testoVento = txt(this, 166, 62, '', { size: 7, depth: 1001, color: '#e8f4ff' });
@@ -103,7 +103,7 @@ export class PalleggiScene extends MicrogiocoBase {
       g.fillStyle(0x1f1430, 0.85).fillCircle(PULSANTE.x, PULSANTE.y, PULSANTE.r + 1.5);
       g.fillStyle(0xe8603a, 1).fillCircle(PULSANTE.x, PULSANTE.y, PULSANTE.r);
       g.fillStyle(0xffffff, 0.25).fillEllipse(PULSANTE.x, PULSANTE.y - 9, PULSANTE.r * 1.3, 9);
-      this.hud.push(g, txt(this, PULSANTE.x, PULSANTE.y, 'CALCIA', { size: 7, depth: 1001 }));
+      this.hud.push(g, txt(this, PULSANTE.x, PULSANTE.y, 'CALCIA', { size: 8, depth: 1001 }));
     }
     this.input.on('pointerdown', (p) => {
       if (!this.inCorso) return;
@@ -406,7 +406,7 @@ export class PalleggiScene extends MicrogiocoBase {
       Audio.sfx(ris.vittoria ? 'vittoria' : 'sconfitta');
       // lo Zio palleggia di testa nel finale, ovviamente senza sbagliare
       this.tweens.add({ targets: this.pallaZio, y: 52, angle: 360, duration: 260, yoyo: true, repeat: 4, ease: 'Quad.out' });
-      this.time.delayedCall(300, () => fumetto(this, 330, 130, ris.vittoria ? 'Quasi bravo quanto me!' : "Te l'avevo detto: io non sbaglio mai.", 2000, 712));
+      this.time.delayedCall(300, () => fumetto(this, 330, 130, ris.vittoria ? this.cfg.fraseZioPerde : this.cfg.fraseZioVince, 2000, 712));
     });
     this.time.delayedCall(3300, fatto);
   }

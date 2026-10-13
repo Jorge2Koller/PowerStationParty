@@ -1,13 +1,14 @@
 // Microgioco 14: "L'Incubo degli Scapoli" - sfida di ballo contro il Manna. BALLA!
 //
 //  La pista vista di fronte: tu a sinistra, il Manna a destra, lo Zio DJ in fondo e cinque
-//  ragazze che guardano chi balla meglio. Al centro le frecce salgono a tempo di musica:
-//  quando una arriva sul suo bersaglio si preme quella freccia (FRECCE o WASD; col dito o col
-//  mouse si tocca il quarto di schermo della freccia). Perfetto o buono: la pista pende verso
-//  di te e le ragazze passano dalla tua parte; mancata: tornano dal Manna, che intanto tira
-//  sempre un po' (chi sta fermo le perde tutte).
-//  Tre atti: si comincia piano, poi arrivano le frecce doppie e quelle d'oro (valgono doppio ma
-//  vanno prese precise: la mossa rischiosa), alla fine il Manna si scatena e la musica accelera.
+//  ragazze che guardano chi balla meglio. Al centro le frecce scendono a tempo di musica:
+//  quando una arriva sul suo bersaglio, in basso, si preme quella freccia (FRECCE o WASD; col
+//  dito o col mouse si tocca il quarto di schermo della freccia). Perfetto o buono: balli, la
+//  pista pende verso di te e le ragazze passano dalla tua parte; mancata: tornano dal Manna, che
+//  intanto tira sempre un po' (chi sta fermo le perde tutte).
+//  Tre atti: si comincia piano, poi arrivano le frecce d'oro (valgono doppio ma vanno prese
+//  precise: la mossa rischiosa), alla fine il Manna si scatena, la musica accelera e arriva
+//  qualche freccia doppia (con la finestra più larga: due tasti, o due dita, insieme).
 //  Le frecce sono le stesse per tutti i giocatori del round (seme del round): conta l'abilità.
 //  Il tempo è quello della musica (Audio.posizione); senza audio si va col proprio orologio.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -15,12 +16,13 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { PALCO } from '../grafica/palco.js';
-import { txt, im, scalaDi, scritta, stelle, scuoti, lerp, caso, quanti, eTouch, vibra, multiTouch, puntatore, fumetto } from '../fx.js';
+import { preparaBallo } from '../sprites.js';
+import { txt, im, scalaDi, scritta, stelle, scuoti, lerp, caso, quanti, eTouch, perDito, vibra, multiTouch, puntatore, fumetto } from '../fx.js';
 
 const CORSIE = [192, 224, 256, 288];          // le quattro frecce: sinistra, giù, su, destra
 const ANGOLI = [-90, 180, 0, 90];
-const Y_BERSAGLIO = 50;
-const PIX_PASSO = 26;                          // quanto sale una freccia in un passo (un ottavo di battuta)
+const Y_BERSAGLIO = 218;                       // i bersagli, in basso: le frecce scendono dall'alto
+const PIX_PASSO = 26;                          // quanto scende una freccia in un passo (un ottavo di battuta)
 const BPM = 132;                               // la musica 'pista' (audio.js)
 const TASTI = { ARROWLEFT: 0, A: 0, ARROWDOWN: 1, S: 1, ARROWUP: 2, W: 2, ARROWRIGHT: 3, D: 3 };
 const N_RAGAZZE = 5;
@@ -47,12 +49,15 @@ export class ScapoliScene extends MicrogiocoBase {
 
     // le corsie delle frecce, un po' scure così le frecce si vedono anche sopra al DJ
     const g = this.add.graphics().setDepth(5);
-    g.fillStyle(0x0a0518, 0.45); g.fillRoundedRect(CORSIE[0] - 15, 34, CORSIE[3] - CORSIE[0] + 30, 236, 8);
+    g.fillStyle(0x0a0518, 0.45); g.fillRoundedRect(CORSIE[0] - 15, 34, CORSIE[3] - CORSIE[0] + 30, Y_BERSAGLIO - 34 + 22, 8);
     this.bersagli = CORSIE.map((x, i) => im(this, x, Y_BERSAGLIO, 'bersaglioBallo', 1.25).setAngle(ANGOLI[i]).setDepth(6));
     this.lampi = CORSIE.map((x) => this.add.ellipse(x, Y_BERSAGLIO, 30, 30, 0xffffff, 0).setDepth(7).setBlendMode(Phaser.BlendModes.ADD));
 
     // io, il Manna, le ragazze
+    preparaBallo(this, this.giocatore.id);
     this.io = im(this, 92, 268, `${this.giocatore.id}_normale`, TAGLIA).setOrigin(0.5, 1).setDepth(20);
+    this.tBallo = 0;          // fino a quando balla (ogni freccia presa lo fa ballare un po')
+    this.passoBallo = 0;
     this.manna = im(this, 388, 268, 'manna_balla1', TAGLIA).setOrigin(0.5, 1).setDepth(20);
     this.tipi = Phaser.Utils.Array.Shuffle([0, 1, 2, 3, 4]);
     // la pista: da che parte pende (0 = tutta del Manna, 1 = tutta mia). Si parte a metà: due
@@ -65,8 +70,8 @@ export class ScapoliScene extends MicrogiocoBase {
       return { t, img, mia };
     });
     this.barra = this.add.graphics().setDepth(1000);
-    txt(this, 128, 26, 'TU', { size: 6, color: this.giocatore.colore, depth: 1001, ox: 1 });
-    txt(this, 352, 26, 'MANNA', { size: 6, color: '#f6c63a', depth: 1001, ox: 0 });
+    txt(this, 128, 26, 'TU', { size: 8, color: this.giocatore.colore, depth: 1001, ox: 1 });
+    txt(this, 352, 26, 'MANNA', { size: 8, color: '#f6c63a', depth: 1001, ox: 0 });
     this.testoPunti = txt(this, 474, 36, '', { size: 8, ox: 1, depth: 1001 });
 
     // lo spartito: uguale per tutti i giocatori del round
@@ -106,8 +111,14 @@ export class ScapoliScene extends MicrogiocoBase {
       if (corsia === ultima && ++ripetute >= 2) { corsia = (corsia + 1 + Math.floor(rnd() * 3)) % 4; ripetute = 0; } else if (corsia !== ultima) ripetute = 0;
       ultima = corsia;
       const oro = rnd() < a.oro;
+      // la doppia (solo nell'ultimo atto, mai subito dopo un'altra): due frecce insieme
+      if (!oro && rnd() < a.doppie && note[note.length - 1]?.passo < n - 4 && !note[note.length - 1]?.doppia) {
+        note.push({ passo: n, corsia, oro, doppia: true });
+        note.push({ passo: n, corsia: (corsia + 1 + Math.floor(rnd() * 3)) % 4, oro: false, doppia: true });
+        n += Math.max(4, a.ogni);
+        continue;
+      }
       note.push({ passo: n, corsia, oro });
-      if (!oro && rnd() < a.doppie) note.push({ passo: n, corsia: (corsia + 1 + Math.floor(rnd() * 3)) % 4, oro: false });
       n += rnd() < a.raffica ? 1 : a.ogni;
     }
     return note;
@@ -140,14 +151,14 @@ export class ScapoliScene extends MicrogiocoBase {
       const e = Math.abs(n.passo - this.pos) * dur;
       if (e < errore) { errore = e; scelta = n; }
     }
-    if (!scelta || errore > c.finestre.buono) {
+    if (!scelta || errore > this.finestra(scelta).buono) {
       // a vuoto: niente punti e la serie riparte (pestare a caso non conviene)
       this.combo = 0;
       this.spingi(-c.spinta.vuoto);
       this.io.setTint(0xffb0b0); this.time.delayedCall(90, () => this.io.clearTint());
       return this.aggiornaHud();
     }
-    const f = scelta.oro ? c.finestreOro : c.finestre;
+    const f = this.finestra(scelta);
     const voto = errore <= f.perfetto ? 'perfetto' : errore <= f.buono ? 'buono' : 'mancato';
     if (voto === 'mancato') return this.manca(scelta, 'TROPPO TARDI!');
     scelta.fatta = true;
@@ -159,15 +170,29 @@ export class ScapoliScene extends MicrogiocoBase {
     this.spingi((voto === 'perfetto' ? c.spinta.perfetto : c.spinta.buono) * (scelta.oro ? 2 : 1));
     Audio.sfx(scelta.oro ? 'bonus' : voto === 'perfetto' ? 'preso' : 'muovi');
     const x = CORSIE[corsia];
-    scritta(this, x, Y_BERSAGLIO + 22, voto === 'perfetto' ? (scelta.oro ? 'ORO!' : 'PERFETTO') : 'BUONO', { size: 6.5, color: scelta.oro ? '#ffe14a' : voto === 'perfetto' ? '#7dff9a' : '#9af0ff', durata: 220, depth: 960 }).setAngle(0);
+    this.balla();
+    scritta(this, x, Y_BERSAGLIO - 24, voto === 'perfetto' ? (scelta.oro ? 'ORO!' : 'PERFETTO') : 'BUONO', { size: 8, color: scelta.oro ? '#ffe14a' : voto === 'perfetto' ? '#7dff9a' : '#9af0ff', durata: 220, depth: 960 }).setAngle(0);
     if (scelta.img) { const img = scelta.img; scelta.img = null; this.tweens.add({ targets: img, scale: img.scale * 1.6, alpha: 0, duration: 160, onComplete: () => img.destroy() }); }
     if (voto === 'perfetto') stelle(this, x, Y_BERSAGLIO, scelta.oro ? 6 : 3, 950);
     if (this.combo > 0 && this.combo % 10 === 0) {
       Audio.sfx('ok');
-      scritta(this, 240, 140, `SERIE DA ${this.combo}! x${this.moltiplicatore().toFixed(1)}`, { size: 11, color: '#ffe14a', durata: 500 });
-      this.faccia(this.io, `${this.giocatore.id}_felice`, 500);
+      scritta(this, 240, 120, `SERIE DA ${this.combo}! x${this.moltiplicatore().toFixed(1)}`, { size: 11, color: '#ffe14a', durata: 500 });
     }
     this.aggiornaHud();
+  }
+
+  // la finestra di tempo di una freccia: quelle d'oro sono più strette, le doppie più larghe
+  finestra(n) {
+    const c = this.cfg;
+    return n.oro ? c.finestreOro : n.doppia ? c.finestreDoppie : c.finestre;
+  }
+
+  // freccia presa: chi gioca balla (cambia passo subito, e continua a tempo per un po')
+  balla() {
+    this.tBallo = this.trascorso + this.cfg.durataBallo;
+    this.passoBallo = 1 - this.passoBallo;
+    this.io.tFaccia = 0;
+    this.io.setTexture(`${this.giocatore.id}_balla${this.passoBallo + 1}`);
   }
 
   manca(n, perche) {
@@ -176,8 +201,10 @@ export class ScapoliScene extends MicrogiocoBase {
     this.mancate++;
     this.combo = 0;
     this.spingi(-c.spinta.mancato);
-    if (n.img) { const img = n.img; n.img = null; img.setTint(0x777777); this.tweens.add({ targets: img, alpha: 0, y: img.y - 10, duration: 200, onComplete: () => img.destroy() }); }
-    scritta(this, CORSIE[n.corsia], Y_BERSAGLIO + 22, perche, { size: 6, color: '#ff9a8a', durata: 220, depth: 960 }).setAngle(0);
+    if (n.img) { const img = n.img; n.img = null; img.setTint(0x777777); this.tweens.add({ targets: img, alpha: 0, y: img.y + 10, duration: 200, onComplete: () => img.destroy() }); }
+    scritta(this, CORSIE[n.corsia], Y_BERSAGLIO - 24, perche, { size: 8, color: '#ff9a8a', durata: 220, depth: 960 }).setAngle(0);
+    this.tBallo = 0;
+    this.faccia(this.io, `${this.giocatore.id}_triste`, 350);
     Audio.sfx('errore');
     vibra(30);
     if (Math.random() < 0.35) this.faccia(this.manna, 'manna_occhiolino', 450);
@@ -214,7 +241,8 @@ export class ScapoliScene extends MicrogiocoBase {
     const ap = Audio.posizione;
     if (ap != null) {
       if (this.offsetAudio == null) this.offsetAudio = ap - this.pos;
-      this.pos += (ap - this.offsetAudio - this.pos) * Math.min(1, dt * 3);
+      // (col ritardo audio misurato nelle Impostazioni le frecce vanno a tempo con quello che si sente)
+      this.pos += (ap - this.offsetAudio - Audio.ritardo / dur - this.pos) * Math.min(1, dt * 3);
     }
 
     // l'atto: all'inizio di quelli nuovi, un annuncio
@@ -230,18 +258,23 @@ export class ScapoliScene extends MicrogiocoBase {
     const ultima = this.note[this.note.length - 1];
     if (ultima && this.pos < ultima.passo + 2) this.spingi(-c.pressione[atto] * dt);
 
-    // le note: si creano poco prima di entrare nello schermo, salgono, quelle passate sono mancate
-    const vista = (270 - Y_BERSAGLIO) / PIX_PASSO + 1;
+    // le note: si creano poco prima di entrare nello schermo (in alto), scendono, quelle passate sono mancate
+    const vista = (Y_BERSAGLIO + 20) / PIX_PASSO + 1;
     while (this.prossima < this.note.length && this.note[this.prossima].passo - this.pos < vista) {
       const n = this.note[this.prossima++];
-      n.img = im(this, CORSIE[n.corsia], 280, n.oro ? 'frecciaOro' : 'frecciaBallo', 1.25).setAngle(ANGOLI[n.corsia]).setDepth(8);
+      n.img = im(this, CORSIE[n.corsia], -20, n.oro ? 'frecciaOro' : 'frecciaBallo', 1.25).setAngle(ANGOLI[n.corsia]).setDepth(8);
+      // le doppie hanno un alone, per riconoscerle
+      if (n.doppia) n.img.setTint(0xffd6ff);
     }
     for (let i = Math.max(0, this.prossima - 40); i < this.prossima; i++) {
       const n = this.note[i];
       if (n.fatta) continue;
-      if (n.img) n.img.y = Y_BERSAGLIO + (n.passo - this.pos) * PIX_PASSO;
-      if ((this.pos - n.passo) * dur > c.finestre.buono) this.manca(n, 'MANCATA');
+      if (n.img) n.img.y = Y_BERSAGLIO - (n.passo - this.pos) * PIX_PASSO;
+      if ((this.pos - n.passo) * dur > this.finestra(n).buono) this.manca(n, 'MANCATA');
     }
+    // la prima doppia: un avviso
+    const doppia = !this.vistaDoppia && this.note.find((n, i) => i < this.prossima && n.doppia && !n.fatta && n.img && n.img.y > 60);
+    if (doppia) { this.vistaDoppia = true; scritta(this, 240, 96, perDito('DOPPIA: DUE TASTI INSIEME!', 'DOPPIA: DUE DITA INSIEME!'), { size: 10, color: '#ffd6ff', durata: 900 }).setAngle(0); }
 
     // a tempo: il Manna balla, il DJ muove la testa, i bersagli pulsano
     const battito = Math.floor(this.pos / 2);
@@ -253,7 +286,13 @@ export class ScapoliScene extends MicrogiocoBase {
       for (const b of this.bersagli) { b.setScale(scalaDi('bersaglioBallo', 1.25) * 1.12); this.tweens.add({ targets: b, scale: scalaDi('bersaglioBallo', 1.25), duration: 160 }); }
       for (const r of this.ragazze) if (Math.random() < 0.3) this.tweens.add({ targets: r.img, y: Y_RAGAZZE - 3, duration: 90, yoyo: true });
     }
+    // chi gioca: balla a tempo finché prende le frecce, se no torna fermo
     if (this.io.tFaccia && this.io.tFaccia < this.trascorso) { this.io.tFaccia = 0; this.io.setTexture(`${this.giocatore.id}_normale`); }
+    if (this.tBallo && battito !== this.battitoBallo) {
+      this.battitoBallo = battito;
+      if (this.tBallo > this.trascorso) { this.passoBallo = 1 - this.passoBallo; this.io.setTexture(`${this.giocatore.id}_balla${this.passoBallo + 1}`); }
+      else { this.tBallo = 0; if (!this.io.tFaccia) this.io.setTexture(`${this.giocatore.id}_normale`); }
+    }
     if (this.manna.tFaccia && this.manna.tFaccia < this.trascorso) this.manna.tFaccia = 0;
 
     // ogni tanto il Manna dice la sua

@@ -14,6 +14,7 @@ import { creaMedaglie } from './grafica/medaglie.js';
 import { creaVialetto } from './grafica/vialetto.js';
 import { creaPallaio, manoPong, MANO_IMG } from './grafica/pallaio.js';
 import { creaProvino } from './grafica/provino.js';
+import { creaMontagna } from './grafica/montagna.js';
 
 export { RES, Q, SP } from './grafica/base.js';
 export { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from './grafica/marco.js';
@@ -34,6 +35,9 @@ function vestito(id) {
   const v = Progressi.aspetto(id);
   return [{ ...PERSONAGGI[id], ...v.aspetto }, v.opzioni];
 }
+
+// com'è vestito un personaggio adesso (col costume del Bancone): per i disegni fatti a parte
+export const aspettoDi = (id) => vestito(id.replace(DOPPIONE, ''))[0];
 
 // rifà le texture di un personaggio dopo un cambio di costume (le pose dei calci si rifanno
 // da sole la prossima volta che servono)
@@ -78,6 +82,14 @@ export function preparaGiocatore(scene, id, doppione = false) {
     for (const e of ESPRESSIONI) figura(scene, `${bis}_${e}`, finto, e);
     calci(scene, bis, finto);
   }
+}
+
+// Le due pose del ballo (L'Incubo degli Scapoli) di chi gioca, felice: create quando servono
+export function preparaBallo(scene, id) {
+  const base = id.replace(DOPPIONE, '');
+  if (!PERSONAGGI[base] || scene.textures.exists(`${id}_balla2`)) return;
+  const [p0, o] = vestito(base), p = id === base ? p0 : { ...p0, travestimento: true };
+  for (const n of [1, 2]) figura(scene, `${id}_balla${n}`, p, 'felice', { ...o, posa: 'balla' + n });
 }
 
 // Il ritratto di un personaggio: la sua testa, ritagliata dalla figura intera, alta "lato" unità
@@ -143,7 +155,7 @@ export function creaTexture(scene) {
   personaggio('emilio_disperato', PERSONAGGI.emilio, 'shock', { posa: 'maniInTesta', maniSopra: true });
   personaggio('pastaffi_corre', PERSONAGGI.pastaffi, 'urlo', { posa: 'shock' });
   personaggio('pastaffi_porta', PERSONAGGI.pastaffi, 'shock', { posa: 'porta' });
-  // "Provini a X-Fattore". I due cantanti sul palco, col microfono: in attesa, mentre cantano (a
+  // "Provini a X-Factor". I due cantanti sul palco, col microfono: in attesa, mentre cantano (a
   // occhi chiusi e bocca aperta), gasati, sulla nota stonata (sconvolti), mentre guardano malissimo
   // chi li accompagna, sull'acuto (braccia al cielo) e mentre gli danno la colpa ("ti indico")
   for (const id of ['tini', 'oli']) {
@@ -176,4 +188,5 @@ export function creaTexture(scene) {
   creaVialetto(scene);
   creaPallaio(scene);
   creaProvino(scene);
+  creaMontagna(scene);
 }

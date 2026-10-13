@@ -11,12 +11,12 @@ export default {
   comandi: [
     'Clicca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'CLIC sui tentacoli del Petri: SCIAF! (tastiera: TAB ragazza, FRECCE, SPAZIO schiaffo)',
-    'Aiuti (in basso o 1 e 2): SHOTTINO GRATIS (poi clicca dove lanciarlo) e AMICO IN MEZZO',
+    'Aiuti (in basso o 1 e 2): BIRRA GRATIS (poi clicca dove lanciarla) e AMICO IN MEZZO',
   ],
   comandiTouch: [
     'Tocca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'Tocca i tentacoli del Petri: SCIAF! Mollano la presa (anche con un altro dito)',
-    'Aiuti in basso: SHOTTINO GRATIS (poi tocca dove lanciarlo) e AMICO IN MEZZO',
+    'Aiuti in basso: BIRRA GRATIS (poi tocca dove lanciarla) e AMICO IN MEZZO',
   ],
   obiettivo: 'Fai scappare almeno 8 ragazze!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
@@ -37,9 +37,14 @@ export default {
   raggioTentacolo: 5,      // quanto lontano dal tentacolo vale il colpo (unità, oltre al suo spessore)
   raggioDito: 4,           // col dito un po' di più
   // aiuti
-  shottino: { ricarica: 9, durata: 3, velPetri: 170 },
-  amico: { ricarica: 11, durata: 4, raggio: 18 },
-  amici: ['beppe', 'marsupino', 'guerra', 'sego', 'greg', 'generale', 'ingiocabile', 'zio', 'passaseo', 'bota', 'marco'],
+  birra: { ricarica: 9, durata: 3, velPetri: 170 },   // (era lo shottino: stesso effetto, il Petri ci si fionda)
+  // l'amico in mezzo: sempre O'Sfurnacchiat. Si mette davanti alla ragazza più in pericolo e la
+  // segue (vel); i tentacoli che gli passano a meno di "raggio" sbattono, e non si possono prendere
+  // né lei né chi gli sta a meno di "scudo"
+  amico: { id: 'marco', ricarica: 11, durata: 4.5, raggio: 20, scudo: 34, vel: 120 },
+  fraseAmico: 'Gnamo Petri, falla finita',
+  versoPetri: 'Grrhhh...',          // il verso gutturale del Petri, prima del lamento
+  lamentoPetri: 'Gnamooo DeLu',
   // Fasi di difficoltà. "da" = secondo da cui vale la fase.
   //  ogni = secondi tra una ragazza nuova e l'altra, max = ragazze in pista insieme, tentacoli = quanti ne usa,
   //  vel = velocità dei tentacoli (unità/s), portata = fin dove arrivano, petri = velocità con cui si sposta
@@ -59,12 +64,12 @@ export default {
   frasiRagazze: ['Aiuto!', 'Le mie amiche mi aspettano!', 'Ma quante mani hai?!', 'Ehm... devo andare', 'Lasciami!'],
   frasiSalva: ['Ciao ciao!', 'Salva!', 'Grazie!', 'Arrivo, ragazze!'],
   frasiSchiaffo: ['Ahia!', 'Era per salutare!', 'Che manesca!', 'Ma dai!'],
-  frasiShottino: ['Shottino gratis?! Arrivo!', 'Uno shottino! Mio!', 'Offre la casa?!'],
+  frasiBirra: ['Birra gratis?! Arrivo!', 'Una birra! Mia!', 'Offre la casa?!'],
   frasiAmico: ['Ehi, io no!', 'Petri, calmati!', 'Giù le mani!', 'Fermo lì!'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 } },
-    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 } },
+    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 }, amico: { ricarica: 9, durata: 5.5, scudo: 40 } },
+    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 }, amico: { ricarica: 13, durata: 3.5, scudo: 28 } },
   },
 };

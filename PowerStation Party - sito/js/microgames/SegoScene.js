@@ -19,6 +19,7 @@ import { txt, im, scalaDi, scritta, fumo, pannello, lerp, caso, colpetto, fumett
 const MANO = { x: 240, y: 240 };          // da dove parte il fumogeno
 const Y_BASSO = 230, Y_ALTO = 34;          // forza 0 = piede della casa, forza 1 = sotto il tetto
 const X_MIN = 96, X_MAX = 384;             // il mirino resta sulla facciata
+const BORDO_FIONDA = 268;                  // fin dove si può tirare giù la fionda (il fondo dello schermo)
 const COLORI = [0xff4a5a, 0xffc93a, 0x4ad97a, 0x4aa8ff, 0xb06aff, 0xff8a3a];
 const TAGLIA_FRANCI = 0.43;                // Franci affacciato: testa e spalle nel vano della finestra
 const CROP_FRANCI = 82.5;                  // unità del personaggio mostrate (dall'alto, su 144)
@@ -103,18 +104,28 @@ export class SegoScene extends MicrogiocoBase {
     this.input.on('pointerdown', (p) => {
       const w = mondo(p);
       if (!p.wasTouch && !p.leftButtonDown()) return;
-      if (!this.fionda) { this.fionda = { id: p.id, ax: w.x, ay: w.y, x: w.x, y: w.y }; this.tastiera = false; }
+      if (!this.fionda) { this.fionda = { id: p.id, ax: w.x, ay: w.y, x: w.x, y: w.y, dito: !!p.wasTouch }; this.tastiera = false; }
     });
     this.input.on('pointermove', (p) => {
       const w = mondo(p);
       if (this.fionda?.id === p.id) Object.assign(this.fionda, { x: w.x, y: w.y });
     });
-    this.input.on('pointerup', (p) => {
+    // (anche se il mouse esce dal gioco mentre tiri: prima il tiro si perdeva)
+    for (const ev of ['pointerup', 'pointerupoutside']) this.input.on(ev, (p) => {
       if (this.fionda?.id !== p.id) return;
       const t = this.tiroFionda(this.fionda);
       this.fionda = null;
       if (t) this.lancia(t.x, t.forza);
     });
+    // col mouse fuori dal gioco Phaser non segue più i movimenti: li segue la finestra
+    const fuori = (e) => {
+      const f = this.fionda;
+      if (!f || f.dito) return;
+      const r = this.game.canvas.getBoundingClientRect();
+      Object.assign(f, { x: ((e.clientX - r.left) / r.width) * 480, y: ((e.clientY - r.top) / r.height) * 270 });
+    };
+    window.addEventListener('mousemove', fuori);
+    this.events.once('shutdown', () => window.removeEventListener('mousemove', fuori));
   }
 
   // dopo una pausa non c'è più nessun lancio a metà (il rilascio, in pausa, non arriva)
@@ -178,11 +189,15 @@ export class SegoScene extends MicrogiocoBase {
     this.lancia(this.mira, f);
   }
 
-  // fionda: si tira indietro, il tiro va dalla parte opposta; più giù = più in alto
+  // fionda: si tira indietro, il tiro va dalla parte opposta; più giù = più in alto.
+  // La forza piena arriva tirando di tiroPieno unità (col dito tiroPienoDito), o di meno se sotto
+  // al punto dove hai premuto non c'è spazio: col mouse si preme di solito sulla mano, in fondo
+  // allo schermo, e prima le finestre in alto non si raggiungevano.
   tiroFionda(f) {
-    const dx = f.x - f.ax, dy = f.y - f.ay;
+    const c = this.cfg, dx = f.x - f.ax, dy = f.y - f.ay;
     if (Math.hypot(dx, dy) < 8) return null;
-    return { x: Phaser.Math.Clamp(MANO.x - dx * 2.2, X_MIN, X_MAX), forza: Phaser.Math.Clamp(dy / 70, 0, 1) };
+    const pieno = Phaser.Math.Clamp(BORDO_FIONDA - f.ay, c.tiroMinimo, f.dito ? c.tiroPienoDito : c.tiroPieno);
+    return { x: Phaser.Math.Clamp(MANO.x - dx * (f.dito ? c.mirinoDito : c.mirino), X_MIN, X_MAX), forza: Phaser.Math.Clamp(dy / pieno, 0, 1) };
   }
 
   // posizione lungo il volo (e da 0 a 1): un arco verso la facciata, rimpicciolendo
@@ -266,7 +281,7 @@ export class SegoScene extends MicrogiocoBase {
     const c = this.cfg, P = v.P, s = this.stanzaIn(P.x, P.y);
     if (s?.aperta) return this.entra(v, s);
     // muro o persiane chiuse: rimbalza e cade nel cortile
-    this.punti -= c.malusSprecato;
+    this.punti = Math.max(0, this.punti - c.malusSprecato);   // (i punti non scendono mai sotto zero)
     Audio.sfx(s ? 'tonk' : 'tonfo');
     vibra(25);
     scritta(this, P.x, P.y - 12, s ? 'TONK!' : caso(['MURO!', 'TUNF!']), { size: 9, color: '#ff9a8a', durata: 350 });

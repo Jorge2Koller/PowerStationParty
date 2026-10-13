@@ -1,13 +1,18 @@
-// Microgioco 11: "Spalma il Bota!" - insegui le zone calde prima che si scottino. SPALMA!
+// Microgioco 11: "Spalma il Bota!" - una giornata al lido in tre atti. SPALMA!
 //
-//  Il Bota è sdraiato sul telo, visto dall'alto, e non sta mai fermo (si stiracchia, si sposta,
-//  a metà partita si gira). La pelle è una griglia di celle. Il sole accende le ZONE CALDE, una
-//  dopo l'altra: dentro una zona la pelle senza crema si scotta in pochi secondi (rosa, rossa,
-//  rosso aragosta: da rossa è scottata per sempre). Un solo gesto: tenendo premuto (o col dito)
-//  la mano stende la crema dove passa. La crema dura poco: le zone vanno inseguite. Coprire
-//  tutta una zona prima che si scotti la SPEGNE (punti). Niente crema su occhi e bocca.
-//  Se occhi e bocca finiscono sotto la mano perché si è mosso lui, non è un errore.
-//  Le zone calde escono uguali per tutti i giocatori del round (seme del round).
+//  Il Bota è sdraiato sul telo, visto dall'alto, e non sta mai fermo (si stiracchia, si sposta).
+//  La pelle è una griglia di celle: senza crema, al sole, si scotta (rosa, rossa, rosso aragosta:
+//  da rossa è scottata per sempre). Niente crema su occhi e bocca (se ci finisce la mano perché
+//  si è mosso lui, non è un errore).
+//  1. LA CREMA: prima che il sole salga, coprilo tutto (tenendo premuto, o col dito, la mano
+//     stende la crema). Quanta pelle copri sono punti.
+//  2. L'OMBRELLONE: la crema comincia a sciogliersi e una MACCHIA DI SOLE scivola sul Bota; la mano
+//     diventa l'ombrellone: tieni la sua ombra sulla macchia (il vento ogni tanto lo sposta).
+//  3. GABBIANI E ONDE: si gira a pancia in giù (la schiena è senza crema) e il sole accende le
+//     ZONE CALDE: coprile tutte per spegnerle (è il gioco di prima, che resta anche come base di
+//     un futuro Lampo da 5 secondi). I gabbiani vengono a rubare la crema (un clic, o un tocco,
+//     li scaccia) e un'onda lava via la crema dalle gambe.
+//  Zone, macchia, vento, gabbiani e onda escono uguali per tutti i giocatori del round (seme).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
@@ -43,6 +48,18 @@ export class BotaScene extends MicrogiocoBase {
     }
     this.lato = this.lati.fronte;
     this.girato = false;
+    this.atto = 0;
+    this.punti = 0;
+    this.copertura = 0;           // la crema del primo atto (in %)
+    this.tOmbra = 0;              // secondi con l'ombra sulla macchia di sole (secondo atto)
+    this.cacciati = 0; this.rubate = 0;
+    this.senzaCrema = 0;          // un gabbiano ha rubato la crema: per un po' non si spalma
+    this.gabbiani = [];
+    this.tGabbiano = c.gabbiani.primo;
+    this.ombra = { x: CX, y: CY + 40, vx: 0, vy: 0 };   // dove sta l'ombrellone (segue il puntatore)
+    this.vento = { x: 0, y: 0 };
+    this.tVento = c.ombrellone.vento[0];
+    this.macchia = null;          // la macchia di sole del secondo atto, in unità del corpo
 
     // crema e scottatura si disegnano su una texture sopra il corpo (un pixel per cella, ingrandito)
     if (this.textures.exists('botaStrato')) this.textures.remove('botaStrato');
@@ -57,7 +74,9 @@ export class BotaScene extends MicrogiocoBase {
     this.imgTesta = im(this, -61, 0, 'botaTesta_normale');
     this.imgStrato = this.add.image(0, 0, 'botaStrato').setScale(1 / DB);
     this.corpo = this.add.container(CX, CY, [this.imgCorpo, this.imgTesta, this.imgStrato]).setScale(SCALA).setDepth(50);
-    this.zoneG = this.add.graphics().setDepth(55);   // le zone calde, disegnate sopra al corpo
+    this.zoneG = this.add.graphics().setDepth(55);   // le zone calde e la macchia di sole, sopra al corpo
+    this.ombraG = this.add.graphics().setDepth(56);  // l'ombra dell'ombrellone
+    this.ombrellone = im(this, CX, CY, 'ombrelloneAlto', 1.15).setDepth(620).setVisible(false).setAlpha(0.92);
 
     this.spost = { x: 0, y: 0, sx: 1, sy: 1, rot: 0 };
     this.zone = [];             // { cx, cy (celle del corpo), r, eta, lato, spenta, coperta }
@@ -86,6 +105,13 @@ export class BotaScene extends MicrogiocoBase {
       this.tSussulto = Math.max(this.tSussulto, 0.3);
     });
     for (const ev of ['pointerup', 'pointerupoutside']) this.input.on(ev, (p) => { if (this.dito?.id === p.id) { this.dito = null; this.prec = null; } });
+    // i gabbiani si scacciano con un clic o un tocco (prima di tutto il resto)
+    this.input.on('pointerdown', (p) => {
+      if (!this.inCorso) return;
+      const w = puntatore(this, p), r = c.gabbiani.raggio + (p.wasTouch ? 6 : 0);
+      const g = this.gabbiani.find((x) => !x.via && Math.hypot(w.x - x.img.x, w.y - (x.img.y - 10)) < r);
+      if (g) { this.scaccia(g); if (this.dito?.id === p.id) { this.dito = null; this.prec = null; } }
+    });
 
     // il sole, sempre più cattivo
     this.livSole = 0;
@@ -94,12 +120,52 @@ export class BotaScene extends MicrogiocoBase {
 
     this.testoSpente = txt(this, 186, 22, '', { size: 9, depth: 1001, color: '#7dff9a' });
     this.testoScot = txt(this, 296, 22, '', { size: 9, depth: 1001 });
-    this.hudBota = [
-      pannello(this, 240, 22, 220, 18, { depth: 1000 }), this.testoSpente, this.testoScot,
-      txt(this, 240, 37, `OBIETTIVO: MENO DEL ${c.sogliaScottata}% SCOTTATA`, { depth: 1001, size: 7 }),
-      txt(this, 6, 262, perDito('TIENI PREMUTO e passa la mano: spalmi la crema', 'Tieni il dito sul Bota e passalo: spalmi la crema'), { ox: 0, size: 6.5, depth: 1001 }),
-      this.sole,
-    ];
+    this.testoAtto = txt(this, 240, 37, '', { depth: 1001, size: 7 });
+    this.aiuto = txt(this, 6, 262, '', { ox: 0, size: 7, depth: 1001 });
+    this.hudBota = [pannello(this, 240, 22, 220, 18, { depth: 1000 }), this.testoSpente, this.testoScot, this.testoAtto, this.aiuto, this.sole];
+    this.aiutoAtto();
+  }
+
+  // la riga di aiuto in basso: cosa si fa in questo atto
+  aiutoAtto() {
+    const A = this.cfg.atti[this.atto];
+    this.aiuto.setText(perDito(A.aiuto, A.aiutoDito));
+  }
+
+  // la crema del primo atto: quanta pelle (del lato che si vede) è coperta, in %
+  coperta() {
+    const c = this.cfg, L = this.lato;
+    let ok = 0;
+    for (let i = 0; i < L.pelle.length; i++) if (L.pelle[i] && L.crema[i] >= c.sogliaProtetta) ok++;
+    return (ok / L.n) * 100;
+  }
+
+  // cambio d'atto: annuncio, e quello che cambia
+  nuovoAtto(n) {
+    const c = this.cfg, A = c.atti[n];
+    this.atto = n;
+    if (n === 1) {
+      // fine della crema: i punti della copertura; da qui la mano è l'ombrellone
+      this.copertura = Math.floor(this.coperta());
+      const pt = Math.round(this.copertura * c.puntiCopertura);
+      this.punti += pt;
+      scritta(this, 240, 96, `CREMA: ${this.copertura}%  +${pt}`, { size: 12, color: '#7dff9a', durata: 900 });
+      this.macchia = { t: 0 };
+      this.ombra.x = this.mano.x; this.ombra.y = this.mano.y;
+      this.dito = null; this.prec = null;
+      this.mano.setVisible(false);
+      this.ombrellone.setVisible(true);
+    } else if (n === 2) {
+      // si gira: crema di nuovo, zone calde, gabbiani, onda
+      this.macchia = null;
+      this.ombraG.clear();
+      this.ombrellone.setVisible(false);
+      this.mano.setVisible(true);
+      this.gira();
+      this.time.delayedCall(c.onda.dopo * 1000, () => { if (this.inCorso) this.onda(); });
+    }
+    if (A.nome) { Audio.sfx('bonus'); scritta(this, 240, 74, A.nome, { size: 15, color: '#ffe14a', durata: 900 }); }
+    this.aiutoAtto();
   }
 
   pulisci() { this.input.setDefaultCursor('default'); }
@@ -147,12 +213,15 @@ export class BotaScene extends MicrogiocoBase {
     let w = puntatore(this);
 
     // --- il Bota non sta mai fermo: ondeggia piano, ogni tanto si stiracchia; a metà si gira ---
-    const t = this.corpo, A = lerp(c.ondaInizio, c.ondaFine, p);
-    t.x = CX + this.spost.x + Math.sin(this.trascorso * 0.9) * A;
-    t.y = CY + this.spost.y + Math.cos(this.trascorso * 1.3) * A * 0.5;
-    t.rotation = this.spost.rot + Math.sin(this.trascorso * 0.7) * A * 0.004;
+    const t = this.corpo, onda = lerp(c.ondaInizio, c.ondaFine, p);
+    t.x = CX + this.spost.x + Math.sin(this.trascorso * 0.9) * onda;
+    t.y = CY + this.spost.y + Math.cos(this.trascorso * 1.3) * onda * 0.5;
+    t.rotation = this.spost.rot + Math.sin(this.trascorso * 0.7) * onda * 0.004;
     t.setScale(SCALA * this.spost.sx, SCALA * this.spost.sy * (1 + Math.sin(this.trascorso * 2.2) * 0.012));
-    if (!this.girato && p >= c.giraA) this.gira();
+    const atto = c.atti.filter((a) => this.trascorso >= a.da).length - 1;
+    if (atto !== this.atto) this.nuovoAtto(atto);
+    const A = c.atti[this.atto];
+    this.senzaCrema -= dt;
     this.tFermo -= dt; this.stordito -= dt; this.tSuono -= dt; this.tAvviso -= dt;
     this.tMossa -= dt;
     if (this.tMossa <= 0 && this.tFermo <= 0) { this.tMossa = lerp(c.mossaInizio, c.mossaFine, p) * (0.8 + this.rnd() * 0.4); this.siMuove(); }
@@ -166,8 +235,9 @@ export class BotaScene extends MicrogiocoBase {
       spalmo = !!this.dito;
     } else spalmo = ptr.isDown;
     if (this.tAppoggio > 0) { this.tAppoggio -= dt; spalmo = false; }
-    if (this.tFermo > 0 || this.stordito > 0) spalmo = false;
-    this.mano.setPosition(w.x, w.y).setAngle(spalmo ? Math.sin(this.trascorso * 18) * 5 : 0);
+    if (this.tFermo > 0 || this.stordito > 0 || this.senzaCrema > 0 || A.ombrellone) spalmo = false;
+    this.mano.setPosition(w.x, w.y).setAngle(spalmo ? Math.sin(this.trascorso * 18) * 5 : 0).setAlpha(this.senzaCrema > 0 ? 0.4 : 1);
+    if (A.ombrellone) this.ombrelloneSegue(dt, w);
 
     const loc = this.aLocale(w.x, w.y);
     // se il Bota fa uno scatto, per un attimo quello che finisce sotto la mano non è colpa mia
@@ -195,7 +265,9 @@ export class BotaScene extends MicrogiocoBase {
       this.prec = loc;
     } else this.prec = null;
 
-    this.zoneCalde(dt, p);
+    if (A.zone) this.zoneCalde(dt, p);
+    if (this.macchia) this.macchiaDiSole(dt);
+    if (A.gabbiani) this.muoviGabbiani(dt);
     this.scotta(dt, p);
 
     // --- il sole si incattivisce ---
@@ -206,15 +278,17 @@ export class BotaScene extends MicrogiocoBase {
     if (this.tFrase <= 0) { this.tFrase = 5 + Math.random() * 3; this.parla(caso(c.frasi)); }
 
     // contatori (si riscrivono solo quando cambiano)
-    const scot = Math.floor(this.conta().scottata), hud = `${this.spente}|${scot}`;
+    const scot = Math.floor(this.conta().scottata), sotto = this.atto === 0 ? `COPERTO: ${Math.floor(this.coperta())}%` : this.atto === 1 ? `IN OMBRA: ${this.tOmbra.toFixed(1)} s` : `ZONE SPENTE: ${this.spente}`;
+    const hud = `${Math.round(this.punti)}|${scot}|${sotto}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoSpente.setText(`ZONE SPENTE: ${this.spente}`);
+      this.testoSpente.setText(`PUNTI: ${Math.round(this.punti)}`);
       this.testoScot.setText(`SCOTTATA: ${scot}%`).setColor(scot >= c.sogliaScottata ? '#ff6b5a' : scot >= c.sogliaScottata * 0.6 ? '#ffe14a' : '#ffffff');
+      this.testoAtto.setText(sotto);
     }
 
-    // la crema si consuma: va ripassata
-    const L = this.lato, via = c.consumo * dt;
+    // la crema si consuma (non nel primo atto): va ripassata
+    const L = this.lato, via = c.consumo * (A.consumo ?? 1) * dt;
     for (let i = 0; i < L.pelle.length; i++) if (L.crema[i] > 0) { L.crema[i] = Math.max(0, L.crema[i] - via); if (L.crema[i] < c.sogliaProtetta + via * 2) this.sporco = true; }
     this.tDisegno -= dt;
     if (this.sporco && this.tDisegno <= 0) { this.tDisegno = 1 / 30; this.ridisegna(); }
@@ -288,6 +362,7 @@ export class BotaScene extends MicrogiocoBase {
     const c = this.cfg;
     z.finita = true;
     this.spente++;
+    this.punti += c.puntiZona;
     Audio.sfx('ok');
     const m = this.aMondo(z.cx, z.cy);
     stelle(this, m.x, m.y, 5, 610);
@@ -295,17 +370,130 @@ export class BotaScene extends MicrogiocoBase {
     if (this.spente % 5 === 0 && this.tFrase < 3.6) this.parla(caso(c.frasiBravo));
   }
 
+  // --- L'OMBRELLONE (secondo atto) ---
+  // l'ombrellone va dove punta il mouse (o il dito, anche senza premere), con un po' di ritardo; il
+  // vento ogni tanto lo sposta di colpo, e l'ombra cade un po' più in là (il sole è alto a sinistra)
+  ombrelloneSegue(dt, w) {
+    const c = this.cfg.ombrellone, O = this.ombra;
+    O.x += (w.x - O.x) * Math.min(1, dt * c.segue);
+    O.y += (w.y - O.y) * Math.min(1, dt * c.segue);
+    this.tVento -= dt;
+    if (this.tVento <= 0) {
+      this.tVento = c.vento[0] + this.rnd() * (c.vento[1] - c.vento[0]);
+      const a = this.rnd() * Math.PI * 2;
+      this.tweens.add({ targets: this.vento, x: Math.cos(a) * c.colpoVento, y: Math.sin(a) * c.colpoVento * 0.6, duration: 160, ease: 'Quad.out', yoyo: true, hold: c.tieneVento * 1000 });
+      Audio.sfx('scivola');
+      scritta(this, O.x, O.y - 34, 'VENTO!', { size: 9, color: '#9af0ff', durata: 500 });
+    }
+    const x = O.x + this.vento.x, y = O.y + this.vento.y;
+    this.ombrellone.setPosition(x, y - 26).setAngle(this.vento.x * 0.4);
+    this.ombraPos = { x: x + c.dx, y: y + c.dy };
+    const g = this.ombraG;
+    g.clear();
+    g.fillStyle(0x1a1430, 0.32).fillEllipse(this.ombraPos.x, this.ombraPos.y, c.r * 2, c.r * 1.6);
+  }
+
+  // la macchia di sole: scivola sul corpo dalla testa ai piedi (e torna), su e giù
+  macchiaDiSole(dt) {
+    const c = this.cfg.macchia, M = this.macchia, A0 = this.cfg.atti[1].da, D = this.cfg.atti[2].da - A0;
+    M.t += dt;
+    const k = Math.min(1, M.t / D), giro = (1 - Math.cos(k * Math.PI * c.giri)) / 2;
+    M.cx = lerp(c.da, c.a, giro);
+    M.cy = BH / 2 + Math.sin(M.t * c.ondeggia) * c.su;
+    // in ombra? (il centro della macchia sotto l'ombra dell'ombrellone)
+    const m = this.aMondo(M.cx, M.cy), O = this.ombraPos;
+    M.coperta = !!O && ((m.x - O.x) / this.cfg.ombrellone.r) ** 2 + ((m.y - O.y) / (this.cfg.ombrellone.r * 0.8)) ** 2 < 1;
+    if (M.coperta) { this.tOmbra += dt; this.punti += dt * this.cfg.puntiOmbra; }
+    const g = this.zoneG, R = c.r * SCALA, puls = 0.5 + 0.5 * Math.sin(this.trascorso * 6);
+    g.clear();
+    g.fillStyle(M.coperta ? 0x9af0ff : 0xffb020, M.coperta ? 0.1 : 0.16 + puls * 0.1).fillCircle(m.x, m.y, R);
+    g.lineStyle(1.6, M.coperta ? 0x7dff9a : 0xffc040, 0.85).strokeCircle(m.x, m.y, R);
+    if (!M.coperta) for (let k2 = 0; k2 < 8; k2++) { const a = k2 * 0.785 + this.trascorso; g.lineStyle(1.2, 0xffe14a, 0.5).lineBetween(m.x + Math.cos(a) * (R + 3), m.y + Math.sin(a) * (R + 3), m.x + Math.cos(a) * (R + 7), m.y + Math.sin(a) * (R + 7)); }
+  }
+
+  // --- I GABBIANI E L'ONDA (terzo atto) ---
+  muoviGabbiani(dt) {
+    const c = this.cfg.gabbiani;
+    this.tGabbiano -= dt;
+    if (this.tGabbiano <= 0) {
+      this.tGabbiano = c.ogni[0] + this.rnd() * (c.ogni[1] - c.ogni[0]);
+      // atterra vicino al telo, e va verso la mano (la crema)
+      const lato = this.rnd() < 0.5 ? -1 : 1, x = lato < 0 ? 40 + this.rnd() * 60 : 380 + this.rnd() * 60, y = 70 + this.rnd() * 150;
+      const img = im(this, x, y - 60, 'gabbiano_0', 1).setOrigin(0.5, 1).setDepth(640).setFlipX(lato > 0);
+      const g = { img, t: 0, x, y, via: false };
+      this.tweens.add({ targets: img, y, duration: 380, ease: 'Quad.out' });
+      this.gabbiani.push(g);
+      Audio.sfx('gabbiano');
+      scritta(this, x, y - 40, 'GABBIANO!', { size: 8, color: '#ffffff', durata: 400 });
+    }
+    for (const g of this.gabbiani) {
+      if (g.via) continue;
+      g.t += dt;
+      // cammina verso la mano, ballonzolando
+      const dx = this.mano.x - g.img.x, dy = this.mano.y + 10 - g.img.y, d = Math.hypot(dx, dy);
+      if (g.t > 0.4 && d > 6) { g.img.x += (dx / d) * c.vel * dt; g.img.y += (dy / d) * c.vel * dt; g.img.setFlipX(dx > 0); }
+      g.img.setTexture(Math.floor(this.trascorso * 8) % 2 ? 'gabbiano_0' : 'gabbiano_1');
+      if (g.t >= c.tempo || d < 10) this.ruba(g);
+    }
+    this.gabbiani = this.gabbiani.filter((g) => !g.finito);
+  }
+
+  scaccia(g) {
+    const c = this.cfg.gabbiani;
+    g.via = true;
+    this.cacciati++;
+    this.punti += c.punti;
+    Audio.sfx('ok');
+    scritta(this, g.img.x, g.img.y - 34, `SCIÒ! +${c.punti}`, { size: 9, color: '#7dff9a', durata: 400 });
+    this.vola(g);
+  }
+
+  ruba(g) {
+    const c = this.cfg.gabbiani;
+    g.via = true;
+    this.rubate++;
+    this.senzaCrema = c.senzaCrema;
+    Audio.sfx('errore');
+    vibra(40);
+    scritta(this, g.img.x, g.img.y - 34, 'TI RUBA LA CREMA!', { size: 10, color: '#ff6b5a', durata: 700 });
+    const tubo = im(this, g.img.x, g.img.y - 8, 'tubettoCrema', 0.6).setDepth(641);
+    this.tweens.add({ targets: tubo, x: tubo.x + (g.img.x < 240 ? -200 : 200), y: -40, angle: 300, duration: 900, ease: 'Quad.in', onComplete: () => tubo.destroy() });
+    this.vola(g);
+  }
+
+  vola(g) {
+    this.tweens.add({ targets: g.img, y: -40, x: g.img.x + (g.img.x < 240 ? -80 : 80), duration: 700, ease: 'Quad.in', onComplete: () => { g.img.destroy(); g.finito = true; } });
+  }
+
+  // l'onda arriva dal mare (a destra) e lava via la crema dalle gambe
+  onda() {
+    const c = this.cfg.onda, L = this.lato;
+    Audio.sfx('splash');
+    scritta(this, 330, 74, 'ONDA!', { size: 15, color: '#9af0ff', durata: 800 });
+    const img = im(this, 600, CY + 20, 'ondaLido', 1.6).setDepth(60).setOrigin(0, 0.5);
+    this.tweens.add({ targets: img, x: c.finoA, duration: 600, ease: 'Sine.out', yoyo: true, hold: 300, onComplete: () => img.destroy() });
+    this.time.delayedCall(500, () => {
+      for (let i = 0; i < L.pelle.length; i++) if (L.pelle[i] && (i % GW) * CELLA >= c.daX) L.crema[i] = 0;
+      this.sporco = true;
+      if (this.inCorso) this.parla(caso(this.cfg.frasiOnda), 1200);
+    });
+  }
+
   // --- IL SOLE ---
-  // dentro le zone calde la pelle senza crema si scotta in fretta; fuori, molto piano
+  // dentro le zone calde e nella macchia di sole (se non c'è l'ombra) la pelle senza crema si
+  // scotta in fretta; fuori, molto piano
   scotta(dt, p) {
     const c = this.cfg, L = this.lato;
     const fuori = (dt / c.secondiRossoFuori) * c.rossa, dentro = (dt / lerp(c.secondiRossoInizio, c.secondiRossoFine, p)) * c.rossa;
     const calde = new Uint8Array(L.pelle.length);
     for (const z of this.zone) if (z.lato === L) this.perCelle(z.cx, z.cy, z.r, (i) => { calde[i] = 1; });
+    // (la macchia di sole scotta un po' più piano delle zone: c.macchia.secondiRosso)
+    if (this.macchia?.cx != null && !this.macchia.coperta) this.perCelle(this.macchia.cx, this.macchia.cy, c.macchia.r, (i) => { calde[i] = 2; });
+    const sottoMacchia = (dt / c.macchia.secondiRosso) * c.rossa;
     let nuove = 0;
     for (let i = 0; i < L.pelle.length; i++) {
       if (!L.pelle[i] || L.scotta[i] >= 1 || L.crema[i] >= c.sogliaProtetta) continue;
-      const prima = L.scotta[i], dopo = Math.min(1, prima + (calde[i] ? dentro : fuori));
+      const prima = L.scotta[i], dopo = Math.min(1, prima + (calde[i] === 1 ? dentro : calde[i] === 2 ? sottoMacchia : fuori));
       L.scotta[i] = dopo;
       if (prima < c.rossa && dopo >= c.rossa) nuove++;
       if (Math.floor(prima * 14) !== Math.floor(dopo * 14)) this.sporco = true;
@@ -435,18 +623,20 @@ export class BotaScene extends MicrogiocoBase {
 
   risultato() {
     const c = this.cfg, scot = Math.floor(this.conta().scottata);
+    // (se la partita finisce prima del secondo atto, come in Lampo, la crema conta lo stesso)
+    const crema = this.atto === 0 ? Math.round(Math.floor(this.coperta()) * c.puntiCopertura) : 0;
     return {
       // (la pelle sana conta solo sotto pelleSana% di scottatura: chi sta fermo non prende niente)
-      punteggio: Math.max(0, this.spente * c.puntiZona + Math.max(0, c.pelleSana - scot) * c.puntiPelle),
+      punteggio: Math.max(0, Math.round(this.punti + crema + Math.max(0, c.pelleSana - scot) * c.puntiPelle)),
       vittoria: scot < c.sogliaScottata,
-      riepilogo: `${quanti(this.spente, 'zona spenta', 'zone spente')}, scottata ${scot}%`,
+      riepilogo: `crema ${this.atto === 0 ? Math.floor(this.coperta()) : this.copertura}%, ombra ${this.tOmbra.toFixed(1)} s, ${quanti(this.spente, 'zona spenta', 'zone spente')}, scottata ${scot}%`,
     };
   }
 
   // il Bota si alza e si guarda: abbronzato alla perfezione, oppure rosso aragosta
   finale(ris, fatto) {
     this.tweens.killTweensOf(this.spost);
-    for (const o of [...this.hudBota, this.mano, this.zoneG]) o?.setVisible(false);
+    for (const o of [...this.hudBota, this.mano, this.zoneG, this.ombraG, this.ombrellone, ...this.gabbiani.map((g) => g.img)]) o?.setVisible(false);
     this.fum?.destroy();
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);

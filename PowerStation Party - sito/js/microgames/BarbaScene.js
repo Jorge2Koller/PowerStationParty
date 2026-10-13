@@ -9,6 +9,8 @@
 //  Naso, labbra, occhi, orecchie e nei: vietati.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from '../sprites.js';
 import { txt, im, scritta, stelle, fumo, pannello, scuoti, puntatore, colpetto, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
 
@@ -22,7 +24,12 @@ const TAU = Math.PI * 2;
 export class BarbaScene extends MicrogiocoBase {
   constructor() { super('barba'); }
 
+  // scelte che cambiano la partita (nei, ricrescita, mosse di De Luca): col seme del round
+  pesca(a) { return a[Math.floor(this.rnd() * a.length)]; }
+  tra(a, b) { return Math.floor(a + this.rnd() * (b - a + 1)); }
+
   prepara() {
+    this.rnd = casuale(Sessione.seme);
     this.nAtto = 0;
     const c = this.cfg;
     im(this, 0, 0, 'bgBarbiere').setOrigin(0);
@@ -110,12 +117,12 @@ export class BarbaScene extends MicrogiocoBase {
     if (eTouch()) this.creaInterruttore();
 
     this.testoPct = txt(this, 240, 22, '', { size: 13, depth: 1001, thick: 3 });
-    this.testoTagli = txt(this, 240, 47, '', { size: 7, depth: 1001, color: '#ff9a8a' });
+    this.testoTagli = txt(this, 240, 47, '', { size: 8, depth: 1001, color: '#ff9a8a' });
     this.hudBarba = [
       pannello(this, 240, 22, 150, 18, { depth: 1000 }),
       this.testoPct, this.testoTagli, this.avvisoLama, this.barraLama,
       txt(this, 240, 37, `OBIETTIVO ${c.soglia}%`, { depth: 1001, size: 7 }),
-      txt(this, 6, 262, perDito('DESTRO (o CTRL+CLIC): schiuma    SINISTRO: rasoio', 'Tocca qui sopra per cambiare attrezzo'), { ox: 0, size: 6.5, depth: 1001 }),
+      txt(this, 6, 262, perDito('DESTRO (o CTRL+CLIC): schiuma    SINISTRO: rasoio', 'Tocca qui sopra: cambi attrezzo'), { ox: 0, size: 7, depth: 1001 }),
     ];
     if (this.interruttore) this.hudBarba.push(this.interruttore);
   }
@@ -126,7 +133,7 @@ export class BarbaScene extends MicrogiocoBase {
     const c = this.add.container(X, Y).setDepth(1002);
     const g = this.add.graphics();
     const icone = [im(this, -W / 4, -4, 'pennello', 0.42), im(this, W / 4, -4, 'rasoio', 0.42)];
-    const scritte = [txt(this, -W / 4, 8, 'PENNELLO', { size: 5.5 }), txt(this, W / 4, 8, 'RASOIO', { size: 5.5 })];
+    const scritte = [txt(this, -W / 4, 8, 'SCHIUMA', { size: 7 }), txt(this, W / 4, 8, 'RASOIO', { size: 7 })];
     c.add([g, ...icone, ...scritte]);
     const disegna = () => {
       const i = this.attrezzo === 'pennello' ? 0 : 1;
@@ -161,7 +168,7 @@ export class BarbaScene extends MicrogiocoBase {
   mettiNei(n) {
     this.nei = [];
     for (let prove = 0; prove < 400 && this.nei.length < n; prove++) {
-      const gx = Phaser.Math.Between(4, GW - 5), gy = Phaser.Math.Between(26, 44);
+      const gx = this.tra(4, GW - 5), gy = this.tra(26, 44);
       if (this.celle[gy * GW + gx] !== 1) continue;
       const x = gx * 2 + 1, y = gy * 2 + 1;
       if (!sulViso(x, y, 4)) continue;
@@ -317,8 +324,8 @@ export class BarbaScene extends MicrogiocoBase {
     const nuove = [];
     for (let gy = 1; gy < GH - 1; gy++) for (let gx = 1; gx < GW - 1; gx++) {
       const i = gy * GW + gx;
-      if (c[i] === 0.5) { if (Math.random() < 0.2) nuove.push([i, 1]); }
-      else if (c[i] === 0 && (c[i - 1] >= 1 || c[i + 1] >= 1 || c[i - GW] >= 1 || c[i + GW] >= 1) && Math.random() < prob) nuove.push([i, 0.5]);
+      if (c[i] === 0.5) { if (this.rnd() < 0.2) nuove.push([i, 1]); }
+      else if (c[i] === 0 && (c[i - 1] >= 1 || c[i + 1] >= 1 || c[i - GW] >= 1 || c[i + GW] >= 1) && this.rnd() < prob) nuove.push([i, 0.5]);
     }
     for (const [i, v] of nuove) c[i] = v;
     if (nuove.length) this.sporcaBarba = true;
@@ -346,8 +353,8 @@ export class BarbaScene extends MicrogiocoBase {
 
     this.tEvento -= dt;
     if (this.tEvento <= 0) {
-      this.tEvento = lerp(c.eventoInizio, c.eventoFine, p) * (0.7 + Math.random() * 0.6);
-      this[caso(['scatto', 'scatto', 'sbadiglio', 'starnuto', 'parla', 'gira'])]();
+      this.tEvento = lerp(c.eventoInizio, c.eventoFine, p) * (0.7 + this.rnd() * 0.6);
+      this[this.pesca(['scatto', 'scatto', 'sbadiglio', 'starnuto', 'parla', 'gira'])]();
     }
     if (this.tEspr > 0) { this.tEspr -= dt; if (this.tEspr <= 0) this.espressione('normale'); }
 
@@ -521,12 +528,12 @@ export class BarbaScene extends MicrogiocoBase {
   }
 
   scatto() {
-    const d = (Math.random() < 0.5 ? -1 : 1) * Phaser.Math.Between(14, 26);
+    const d = (this.rnd() < 0.5 ? -1 : 1) * this.tra(14, 26);
     this.tweens.add({ targets: this.spost, x: d, duration: 110, ease: 'Quad.out', yoyo: true, hold: 350 });
   }
 
   gira() {
-    const d = (Math.random() < 0.5 ? -1 : 1) * 0.2;
+    const d = (this.rnd() < 0.5 ? -1 : 1) * 0.2;
     this.tweens.add({ targets: this.spost, rot: d, duration: 220, ease: 'Quad.out', yoyo: true, hold: 500 });
   }
 

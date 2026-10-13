@@ -17,6 +17,7 @@ import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumett
 const Y_TAVOLO = 100;
 const Y_BANCO = 126, Y_MIA = 206, PASSO_CARTA = 20;
 const SABOT = { x: 428, y: 118 }, SCARTI = { x: 48, y: 118 };
+const ZIO = { x: 122, y: Y_TAVOLO + 18 };   // lo Zio spettatore, dietro al tavolo a sinistra
 const CERCHIO = { x: 120, y: 206 };
 const BANCA = { x: 384, y: 214 };
 const SPALLA = { x: 256, y: 92 };      // spalla destra (per chi guarda) dell'Ingiocabile
@@ -55,14 +56,17 @@ export class BlackjackScene extends MicrogiocoBase {
 
     im(this, 0, 0, 'bgCasino').setOrigin(0);
     this.dealer = im(this, 240, Y_TAVOLO + 30, 'ingiocabile_normale', 0.75).setOrigin(0.5, 1).setDepth(5);
+    // lo Zio, spettatore a braccia conserte: commenta le mani
+    this.zio = im(this, ZIO.x, ZIO.y, 'zio_sufficienza', 0.6).setOrigin(0.5, 1).setDepth(5);
+    this.tZio = 5;
     im(this, 0, Y_TAVOLO, 'tavoloVerde').setOrigin(0).setDepth(10);
     txt(this, 240, 166, 'BLACKJACK PAGA 3 A 2', { size: 7, color: '#e8d27a', thick: 0, depth: 11 }).setAlpha(0.8);
-    txt(this, 240, 176, `IL BANCO STA SU ${c.stai}`, { size: 5, color: '#e8d27a', thick: 0, depth: 11 }).setAlpha(0.65);
+    txt(this, 240, 176, `IL BANCO STA SU ${c.stai}`, { size: 7, color: '#e8d27a', thick: 0, depth: 11 }).setAlpha(0.65);
     im(this, SABOT.x, SABOT.y, 'sabot').setDepth(12);
 
-    this.testoBanco = txt(this, 240, 151, '', { size: 7, depth: 600 });
-    this.testoMio = txt(this, 240, 233, '', { size: 8, depth: 600, color: '#ffe14a' });
-    this.testoPuntata = txt(this, CERCHIO.x, CERCHIO.y + 21, '', { size: 6, depth: 600 });
+    this.testoBanco = txt(this, 240, 151, '', { size: 8, depth: 600 });
+    this.testoMio = txt(this, 240, 230, '', { size: 8, depth: 600, color: '#ffe14a' });   // (sotto: la barra del tempo)
+    this.testoPuntata = txt(this, CERCHIO.x, CERCHIO.y + 21, '', { size: 8, depth: 600 });
     this.testoFiches = txt(this, BANCA.x, BANCA.y + 22, '', { size: 8, depth: 600, color: '#ffe14a' });
     this.banca = [];
     this.aggiornaBanca();
@@ -73,7 +77,7 @@ export class BlackjackScene extends MicrogiocoBase {
 
     // pulsanti: fiches per puntare, poi carta / stai / raddoppia
     this.bottoniPunta = c.puntate.map((v, i) => this.bottone(200 + i * 40, 252, 30, String(v), null, () => this.punta(v), 'fiche_' + v));
-    this.etichettaPunta = txt(this, 176, 252, perDito('PUNTA\n(1, 2, 3)', 'PUNTA'), { size: 6, ox: 1, spacing: 0, depth: 700 });
+    this.etichettaPunta = txt(this, 176, 252, perDito('PUNTA\n1, 2, 3', 'PUNTA'), { size: 7, ox: 1, spacing: -1, depth: 700 });
     this.bottoniGioco = [
       this.bottone(160, 254, 70, perDito('CARTA (C)', 'CARTA'), 0x2e9a4a, () => this.scegli('carta')),
       this.bottone(240, 254, 70, perDito('STAI (S)', 'STAI'), 0xc0392b, () => this.scegli('stai')),
@@ -104,7 +108,7 @@ export class BlackjackScene extends MicrogiocoBase {
       g.fillStyle(0xffffff, 0.22).fillRoundedRect(-w / 2 + 3, -8, w - 6, 5, 3);
       parti.push(g);
     }
-    parti.push(txt(this, 0, fiche ? -1.5 : 0, testo, { size: fiche ? 6.5 : 7 }));
+    parti.push(txt(this, 0, fiche ? -1.5 : 0, testo, { size: fiche ? 7 : 8 }));
     const cont = this.add.container(x, y, parti).setDepth(700);
     const zona = this.add.zone(x, y, w + 8, 26).setInteractive().setDepth(701);
     zona.on('pointerdown', (p, lx, ly, ev) => { ev?.stopPropagation(); if (cont.visible && cont.alpha > 0.5) azione(); });
@@ -127,6 +131,16 @@ export class BlackjackScene extends MicrogiocoBase {
   parla(s, ms = 1300) {
     this.fum?.destroy();
     this.fum = fumetto(this, 306, 44, s, ms, 800);
+  }
+
+  // lo Zio commenta (ridendo, se hai perso)
+  zioParla(s, faccia = 'felice') {
+    this.fumZ?.destroy();
+    this.fumZ = fumetto(this, ZIO.x + 14, ZIO.y - 70, s, 1400, 800);
+    this.zio.setTexture('zio_' + faccia);
+    this.tFacciaZio?.remove();
+    this.tFacciaZio = this.time.delayedCall(1400, () => this.zio.setTexture('zio_sufficienza'));
+    this.tZio = Math.max(this.tZio, 4);
   }
 
   // --- sabot ---
@@ -218,6 +232,7 @@ export class BlackjackScene extends MicrogiocoBase {
     this.mostra('nessuno');
     this.scrivi();
     // carta a me, al banco, a me, al banco coperta
+    if (Math.random() < this.cfg.serveOgni) this.parla(this.cfg.fraseServe, 1100);
     [[this.mia], [this.banco], [this.mia], [this.banco, true]].forEach(([m, cop], i) => this.dopo(250 + i * 300, () => { this.dai(m, cop); this.scrivi(); }));
     this.dopo(250 + 4 * 300 + 150, () => this.dopoDistribuzione());
   }
@@ -328,7 +343,8 @@ export class BlackjackScene extends MicrogiocoBase {
     this.mostra('nessuno');
     const scritte = { vince: 'HAI VINTO!', blackjack: 'BLACKJACK!', pari: 'PAREGGIO', perde: 'VINCE IL BANCO', sballato: 'SBALLATO!', bancoBJ: 'BLACKJACK DEL BANCO' };
     const buono = tipo === 'vince' || tipo === 'blackjack';
-    scritta(this, 240, 186, scritte[tipo], { size: tipo === 'bancoBJ' ? 11 : 14, color: buono ? '#7dff9a' : tipo === 'pari' ? '#ffffff' : '#ff6b5a', durata: 900, depth: 960 });
+    // (sulle carte del giocatore, a mano finita: lì non copre le scritte del tavolo)
+    scritta(this, 240, 206, scritte[tipo], { size: tipo === 'bancoBJ' ? 11 : 14, color: buono ? '#7dff9a' : tipo === 'pari' ? '#ffffff' : '#ff6b5a', durata: 900, depth: 960 });
     if (buono || tipo === 'pari') {
       const vincita = tipo === 'blackjack' ? Math.round(this.puntata * 2.5) : tipo === 'vince' ? this.puntata * 2 : this.puntata;
       if (buono) {
@@ -337,7 +353,7 @@ export class BlackjackScene extends MicrogiocoBase {
         Audio.sfx(tipo === 'blackjack' ? 'bonus' : 'ok');
         stelle(this, CERCHIO.x, CERCHIO.y - 6, 6, 950);
         this.espr(tipo === 'blackjack' ? 'shock' : 'triste');
-        this.parla(caso(this.cfg.frasiPerde), 1100);
+        this.parla(Math.random() < 0.5 ? this.cfg.frasePerdeSpesso : caso(this.cfg.frasiPerde), 1100);
         // il banco paga: fiches dal suo lato al cerchio
         const paga = vincita - this.puntata;
         for (let i = 0; i < Math.max(1, Math.round(paga / 25)); i++) this.pila.push(this.fiche(paga >= 50 ? 50 : paga >= 25 ? 25 : 10, { x: 240, y: Y_TAVOLO + 4 }, CERCHIO.x + 20 + (i % 3) * 3, CERCHIO.y - Math.floor(i / 3) * 2));
@@ -354,6 +370,7 @@ export class BlackjackScene extends MicrogiocoBase {
     } else {
       this.puntata = 0;
       vibra(50);
+      this.dopo(300, () => this.zioParla(caso(this.cfg.frasiZioPerdi)));
       this.dopo(450, () => this.spazzola(() => this.sparecchia()));
     }
     this.scrivi();
@@ -432,6 +449,8 @@ export class BlackjackScene extends MicrogiocoBase {
 
   aggiorna(dt) {
     const c = this.cfg, g = this.barraTempo, A = this.atto, n = c.atti.indexOf(A);
+    this.tZio -= dt;
+    if (this.tZio <= 0) { this.zioParla(caso(c.frasiZio), 'normale'); this.tZio = c.zioOgni[0] + Math.random() * (c.zioOgni[1] - c.zioOgni[0]); }
     if (n !== this.nAtto) {
       if (this.nAtto != null && A.nome) { Audio.sfx('bonus'); scritta(this, 240, 120, A.nome, { size: 13, color: '#ffe14a', durata: 900 }).setAngle(0); }
       this.nAtto = n;
@@ -440,8 +459,9 @@ export class BlackjackScene extends MicrogiocoBase {
     if (this.stato !== 'punta' && this.stato !== 'gioca') return;
     this.tDecidi -= dt;
     const k = Phaser.Math.Clamp(this.tDecidi / A.tempo, 0, 1), W = 160;
-    g.fillStyle(0x1f1430, 0.85).fillRoundedRect(240 - W / 2 - 1, 233, W + 2, 6, 3);
-    g.fillStyle(k > 0.35 ? 0x7dff9a : 0xff6b5a, 1).fillRoundedRect(240 - W / 2, 234, W * k, 4, 2);
+    // (la barra sta tra il totale delle carte e i pulsanti)
+    g.fillStyle(0x1f1430, 0.85).fillRoundedRect(240 - W / 2 - 1, 237.5, W + 2, 5, 2.5);
+    g.fillStyle(k > 0.35 ? 0x7dff9a : 0xff6b5a, 1).fillRoundedRect(240 - W / 2, 238.5, W * k, 3, 1.5);
     if (this.tDecidi > 0) return;
     scritta(this, 240, 186, 'IL BANCO NON ASPETTA!', { size: 10, color: '#ffe14a', durata: 500 }).setAngle(0);
     Audio.sfx('tsk');
@@ -463,6 +483,7 @@ export class BlackjackScene extends MicrogiocoBase {
   finale(ris, fatto) {
     this.mostra('nessuno');
     this.fum?.destroy();
+    this.fumZ?.destroy();
     for (const o of [this.testoMio, this.testoBanco, this.testoPuntata]) o.setVisible(false);
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);

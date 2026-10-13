@@ -6,8 +6,11 @@
 //  parcheggio. Mentre è a terra si trascinano le chiavi fino a lui: va alla sua A3
 //  impolverata e si mette al volante (per poco: poi scende con una scusa).
 //  Se chiude la portiera, la macchina parte con lui dentro che saluta: passaggio scroccato.
-//  Più avanti: finte, sagome di cartone nelle altre portiere, travestimento col cappuccio
-//  (con un sosia incappucciato da non tirare fuori) e, alla fine, anche il bagagliaio.
+//  Giorgio diventa più FURBO col tempo e soprattutto coi tuoi successi (ogni volta che lo metti
+//  al volante, e un po' ogni volta che lo tiri fuori): più veloce, finte, sagome di cartone nelle
+//  altre portiere, travestimento col cappuccio (con un sosia incappucciato da non tirare fuori),
+//  il bagagliaio. I tre atti: il parcheggio; ARRIVA EMILIO! (passa con Denny, che lo chiama:
+//  Giorgio gli corre dietro e va fermato prima che salga); alla fine anche il bagagliaio.
 //  Clic a vuoto: la mano resta ferma per un attimo.
 //  I punti non scendono mai sotto zero (un passaggio scroccato toglie solo quello che hai).
 //  Le corse di Giorgio sono uguali per tutti i giocatori del round (seme del round).
@@ -17,7 +20,9 @@ import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { MODELLI, COLORI_AUTO, porteAuto } from '../grafica/oggetti.js';
 import { PARCHEGGIO } from '../grafica/sfondi.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, vibra, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
+import { ritratto } from '../sprites.js';
+import { VIALETTO } from '../grafica/vialetto.js';
 
 const AMICI = [
   { id: 'guerra', modello: 'panda', x: 128 },
@@ -46,7 +51,7 @@ export class GuidaScene extends MicrogiocoBase {
 
   prepara() {
     this.rnd = casuale(Sessione.seme);
-    this.nFase = 0;
+    this.nFase = -1;
     this.punti = 0;
     this.guidate = 0;
     this.fuori = 0;
@@ -56,6 +61,10 @@ export class GuidaScene extends MicrogiocoBase {
     this.hud = null;
     this.tScarico = 1;
     this.trascina = null;   // id del dito (o del mouse) che tiene le chiavi
+    this.atto = 0;
+    this.emilio = null;     // la macchina di Emilio che passa (vedi passaEmilio)
+    this.presiEmilio = 0;
+    this.saliti = 0;        // volte che è salito da Emilio
 
     im(this, 0, 0, 'bgParcheggio').setOrigin(0);
     this.auto = AMICI.map((a, i) => this.creaAuto({ ...a, i, y: PARCHEGGIO.fila, verso: 1 }));
@@ -71,12 +80,15 @@ export class GuidaScene extends MicrogiocoBase {
     this.G = { stato: 'pausa', t: 1, x: 240, y: 236, dir: 1, key: (e) => 'giorgioSera_' + e, img: im(this, 240, 236, 'giorgioSera_normale', TAGLIA).setOrigin(0.5, 1).setDepth(238) };
     this.sosia = null;
 
+    // ORA!: da tastiera, quando si può fermare Giorgio che corre da Emilio
+    this.oraEmilio = txt(this, 0, 0, 'ORA! (SPAZIO)', { size: 8, color: '#7dff9a', depth: 851 }).setVisible(false);
     // la freccia della tastiera sopra la macchina scelta (sul telefono non serve)
     this.freccia = txt(this, 0, 0, '▼', { size: 12, color: '#ffe14a', depth: 850 }).setVisible(!eTouch());
     this.tweens.add({ targets: this.freccia, y: '+=3', duration: 300, yoyo: true, repeat: -1 });
 
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, depth: 1001, size: 9 });
     this.testoGuidate = txt(this, 474, 49, '', { ox: 1, depth: 1001, size: 8 });
+    this.testoFurbo = txt(this, 474, 61, '', { ox: 1, depth: 1001, size: 7, color: '#ff9af0' });
 
     multiTouch(this);   // un dito trascina le chiavi, un altro tira fuori Giorgio
     this.input.on('pointerdown', (p) => this.tocco(p));
@@ -91,10 +103,17 @@ export class GuidaScene extends MicrogiocoBase {
 
   alRientro() { if (this.trascina != null) { this.trascina = null; this.riportaChiavi(); } }
 
+  // La furbizia di Giorgio: sale col tempo e coi tuoi successi. Le fasi valgono da quella.
+  get furbizia() {
+    const c = this.cfg;
+    return this.trascorso * c.furbiziaSecondo + this.guidate * c.furbiziaGuida + this.fuori * c.furbiziaFuori + this.presiEmilio * c.furbiziaFuori;
+  }
   get fase() {
     let f = this.cfg.fasi[0];
-    for (const x of this.cfg.fasi) if (this.trascorso >= x.da) f = x;
-    return f;
+    for (const x of this.cfg.fasi) if (this.furbizia >= x.da) f = x;
+    // i trucchi arrivano con gli atti: il cappuccio dal secondo, il bagagliaio dal terzo
+    const A = this.cfg.atti[this.atto];
+    return { ...f, travestimento: A.travestimento ? f.travestimento : 0, bagagliaio: A.bagagliaio ? f.bagagliaio : 0 };
   }
 
   // ------------------------------------------------------------
@@ -172,11 +191,23 @@ export class GuidaScene extends MicrogiocoBase {
   //  GIOCO
   // ------------------------------------------------------------
   aggiorna(dt) {
-    const f = this.fase, n = this.cfg.fasi.indexOf(f);
-    if (n !== this.nFase) {
-      this.nFase = n;
-      if (f.nome) { Audio.sfx('bonus'); scritta(this, 240, 110, f.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 950 }); }
+    const c = this.cfg;
+    // gli atti (a tempo): l'annuncio, e quando passa Emilio
+    const atto = c.atti.filter((a) => this.trascorso >= a.da).length - 1;
+    if (atto !== this.atto) {
+      this.atto = atto;
+      const A = c.atti[atto];
+      if (A.nome) { Audio.sfx('bonus'); scritta(this, 240, 110, A.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 950 }); }
+      for (const t of A.emilio ?? []) this.time.delayedCall(t * 1000, () => { if (this.inCorso) this.passaEmilio(); });
     }
+    const f = this.fase, n = c.fasi.findIndex((x) => x.da === f.da);
+    if (n !== this.nFase) {
+      // più furbo: lo dice, e lo segna in alto
+      if (n > this.nFase && this.nFase >= 0) { Audio.sfx('tsk'); scritta(this, this.G.x, this.G.y - ALTO - 14, 'PIÙ FURBO!', { size: 8, color: '#ff9af0', durata: 600 }); }
+      this.nFase = n;
+      this.testoFurbo.setText('FURBIZIA ' + '★'.repeat(n + 1));
+    }
+    if (this.emilio) this.muoviEmilio(dt);
     this.bloccata -= dt;
     this.muoviGiorgio(dt, f);
     if (this.sosia) this.muoviSosia(dt);
@@ -240,7 +271,100 @@ export class GuidaScene extends MicrogiocoBase {
     } else if (G.stato === 'volante') {
       G.t -= dt;
       if (G.t <= 0) this.scendeA3();
+    } else if (G.stato === 'emilio') {
+      // corre dietro alla macchina di Emilio (che si muove): se arriva alla portiera, sale
+      const E = this.emilio, tx = E.cont.x - 22, ty = E.y + 4, dx = tx - G.x, dy = ty - G.y, d = Math.hypot(dx, dy), passo = Math.min(d, G.vel * dt);
+      if (d > 0) { G.x += (dx / d) * passo; G.y += (dy / d) * passo; G.dir = dx < 0 ? -1 : 1; }
+      G.img.setPosition(G.x, G.y - Math.abs(Math.sin(this.trascorso * 18)) * 3).setFlipX(G.dir < 0).setAngle(Math.sin(this.trascorso * 18) * 5).setDepth(G.y + 2);
+      G.corsa = Math.min(1, G.corsa + passo / G.dist);
+      this.oraEmilio.setVisible(!eTouch() && G.corsa >= this.cfg.emilio.daQuando).setPosition(G.x, G.y - ALTO - 12);
+      if (d - passo <= 3) this.saleEmilio();
     }
+  }
+
+  // ------------------------------------------------------------
+  //  EMILIO: passa in macchina con Denny, che chiama Giorgio
+  // ------------------------------------------------------------
+  passaEmilio() {
+    if (this.emilio) return;
+    const c = this.cfg, A = VIALETTO.auto, y = PARCHEGGIO.strada + 10;
+    const cont = this.add.container(-90, y).setDepth(y);
+    const img = im(this, 0, 0, 'wagon', 1.05).setOrigin(0.5, A.suolo / A.h).setFlipX(true);
+    const emilio = ritratto(this, 18, -38, 'emilio', 17);
+    const denny = ritratto(this, -22, -44, 'pastaffi', 18, 'felice');
+    cont.add([emilio, denny, img]);
+    this.emilio = { cont, y, img, stato: 'arriva', x: -90, t: 0, vel: c.emilio.vel };
+    Audio.sfx('clacson');
+    this.time.delayedCall(450, () => {
+      if (!this.emilio) return;
+      Audio.sfx('clacson');
+      fumetto(this, Phaser.Math.Clamp(this.emilio.cont.x - 20, 90, 390), y - 70, c.fraseDenny, 2200, 870);
+      const G = this.G;
+      // Giorgio molla tutto e gli corre dietro (se non sta già guidando, salendo o in macchina)
+      if (['pausa', 'corre', 'aTerra'].includes(G.stato)) {
+        if (G.stato === 'aTerra') G.img.setAngle(0);
+        G.stato = 'emilio';
+        G.vel = c.emilio.velGiorgio;
+        G.corsa = 0;
+        G.dist = Math.max(60, Math.hypot(this.emilio.cont.x - G.x, y - G.y));
+        G.img.setTexture(G.key('felice')).setVisible(true);
+        scritta(this, G.x, G.y - ALTO - 6, 'ARRIVO!', { size: 8, color: '#ff9af0', durata: 500 });
+      }
+    });
+  }
+
+  // la macchina: entra, rallenta davanti al parcheggio (aspetta Giorgio), riparte
+  muoviEmilio(dt) {
+    const E = this.emilio, c = this.cfg.emilio;
+    E.t += dt;
+    const lenta = E.stato === 'arriva' && E.cont.x > c.ferma[0] && E.cont.x < c.ferma[1];
+    E.cont.x += E.vel * (lenta ? c.rallenta : 1) * dt;
+    E.cont.y = E.y + (Math.sin(this.trascorso * 40) > 0 ? 0.3 : 0);
+    if (E.cont.x > 560) {
+      E.cont.destroy();
+      this.emilio = null;
+      this.oraEmilio.setVisible(false);
+      // se Giorgio gli correva ancora dietro, rinuncia
+      if (this.G.stato === 'emilio') { this.G.stato = 'pausa'; this.G.t = 0.4; this.G.img.setAngle(0).setTexture(this.G.key('triste')); }
+    }
+  }
+
+  // ce l'ha fatta: sale da Emilio, che riparte a tutta (passaggio scroccato)
+  saleEmilio() {
+    const c = this.cfg, G = this.G, E = this.emilio;
+    this.oraEmilio.setVisible(false);
+    this.punti = Math.max(0, this.punti - c.emilio.malus);
+    this.saliti++;
+    G.stato = 'via';
+    G.img.setVisible(false).setAngle(0);
+    E.stato = 'parte';
+    E.vel = c.emilio.vel * 2.2;
+    E.cont.add(ritratto(this, -4, -40, 'giorgioSera', 17, 'felice'));
+    vibra(60);
+    Audio.sfx('portiera');
+    this.time.delayedCall(150, () => Audio.sfx('sgommata'));
+    scritta(this, Phaser.Math.Clamp(E.cont.x, 100, 380), E.y - 80, `SALE DA EMILIO! -${c.emilio.malus}`, { size: 9, color: '#ff6b5a', durata: 900 });
+    // torna dopo un po', a piedi, dal fondo del parcheggio
+    this.time.delayedCall(c.rientro * 1000, () => {
+      if (this.finito) return;
+      G.x = 500; G.y = 236;
+      G.img.setTexture(G.key('felice')).setPosition(G.x, G.y).setVisible(true).setFlipX(true);
+      G.stato = 'pausa'; G.t = 0.3;
+    });
+  }
+
+  // fermato mentre corre da Emilio: vola via come dalle portiere (e intanto ci sono le chiavi)
+  fermaEmilio() {
+    const c = this.cfg, G = this.G;
+    this.oraEmilio.setVisible(false);
+    this.presiEmilio++;
+    this.punti += c.emilio.punti;
+    Audio.sfx('schiaffo');
+    vibra(30);
+    scuoti(this, 90, 0.004);
+    scritta(this, G.x, G.y - ALTO - 10, `FERMATO! +${c.emilio.punti}`, { size: 10, color: '#7dff9a', durata: 600 });
+    if (this.emilio) fumetto(this, Phaser.Math.Clamp(this.emilio.cont.x, 90, 390), this.emilio.y - 70, caso(c.emilio.frasiVia), 1000, 870);
+    this.vola(G.x, G.y - ALTO * 0.5);
   }
 
   // Giorgio (o il sosia) punta una portiera di una macchina libera; fa = auto da evitare
@@ -417,7 +541,9 @@ export class GuidaScene extends MicrogiocoBase {
       return;
     }
     if (this.bloccata > 0) return;
-    const extra = p.wasTouch ? this.cfg.raggioDito : 0;
+    const extra = p.wasTouch ? this.cfg.raggioDito : 0, G = this.G;
+    // Giorgio che corre da Emilio: si ferma toccandolo
+    if (G.stato === 'emilio' && Math.abs(w.x - G.x) <= 12 + extra && w.y <= G.y + 4 + extra && w.y >= G.y - ALTO - extra) return this.fermaEmilio();
     for (const a of this.auto) {
       if (!a.ap || !a.casa) continue;
       const g = this.geometria(a, a.ap.porta), quanto = Math.min(1, a.ap.t / a.ap.durata);
@@ -452,7 +578,12 @@ export class GuidaScene extends MicrogiocoBase {
     const x0 = a.cont.x + g.x, y0 = a.cont.y + g.soglia + 30;
     scritta(this, x0, y0 - 66, ultimo ? `ALL'ULTIMO! +${pt}` : `FUORI! +${pt}`, { size: 9, color: '#7dff9a', durata: 500 });
     if (Math.random() < 0.5) fumetto(this, a.cont.x + 24, a.cont.y - a.M.tetto - 12, caso(c.frasiAutisti), 800, 860);
-    // vola in mezzo al parcheggio, a gambe all'aria
+    this.vola(x0, y0);
+  }
+
+  // vola in mezzo al parcheggio, a gambe all'aria, e resta a terra un attimo (le chiavi!)
+  vola(x0, y0) {
+    const c = this.cfg, G = this.G;
     const tx = 170 + Math.round(this.rnd() * 160), ty = 226 + Math.round(this.rnd() * 20);
     G.stato = 'vola';
     G.x = tx; G.y = ty;
@@ -504,6 +635,9 @@ export class GuidaScene extends MicrogiocoBase {
 
   tastoTira() {
     if (!this.inCorso || this.bloccata > 0) return;
+    // (da tastiera, Giorgio che corre da Emilio si ferma con SPAZIO: ma solo da metà corsa in poi,
+    // quando sopra di lui compare ORA!; prima è un colpo a vuoto)
+    if (this.G.stato === 'emilio') return this.G.corsa >= this.cfg.emilio.daQuando ? this.fermaEmilio() : this.aVuoto({ x: this.G.x, y: this.G.y - 40 }, 'TROPPO PRESTO!');
     const a = this.auto[this.sel];
     if (a.casa && a.ap) return this.colpito(a);
     this.aVuoto({ x: a.cont.x, y: a.cont.y - 40 });
@@ -618,7 +752,7 @@ export class GuidaScene extends MicrogiocoBase {
     return {
       punteggio: this.punti,
       vittoria: this.guidate >= c.obiettivoGuidate,
-      riepilogo: `al volante ${this.guidate}, tirato fuori ${this.fuori}, passaggi scroccati ${this.scrocchi}`,
+      riepilogo: `al volante ${this.guidate}, tirato fuori ${this.fuori + this.presiEmilio}, passaggi scroccati ${this.scrocchi + this.saliti}`,
       titoloFine: this.guidate ? 'TEMPO!' : 'NIENTE DA FARE!',
     };
   }
@@ -626,7 +760,9 @@ export class GuidaScene extends MicrogiocoBase {
   // Ha guidato: l'A3 impolverata parte verso la disco con Giorgio al volante e gli amici dietro.
   // Non ha guidato: Giorgio con le cuffie, seduto dietro nel SUV di Sego, felice.
   finale(ris, fatto) {
-    for (const o of [this.testoPunti, this.testoGuidate, this.freccia, this.aiutoChiavi, this.chiavi]) o.setVisible(false);
+    for (const o of [this.testoPunti, this.testoGuidate, this.testoFurbo, this.freccia, this.aiutoChiavi, this.chiavi, this.oraEmilio]) o.setVisible(false);
+    this.emilio?.cont.destroy();
+    this.emilio = null;
     for (const a of [...this.auto, this.a3]) { a.ap = null; this.disegnaPorta(a, null, false); a.dentro.setVisible(false).clearTint(); }
     this.sosia?.img.destroy();
     this.sosia = null;

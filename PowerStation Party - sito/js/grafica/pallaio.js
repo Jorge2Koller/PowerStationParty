@@ -305,6 +305,28 @@ function giacca(c) {
   for (const y of [14, 19, 24]) { ellisse(c, 32, y, 1.1, 1.1); riemp(c, '#c9cdd6'); }
 }
 
+// Chi ha perso, addormentato sul tavolo, visto da davanti: le spalle (dietro la testa) e le
+// braccia incrociate sul tavolo (davanti), col colore della sua maglia. La testa (il ritratto) e
+// la giacca buttata sulle spalle le mette la scena, in mezzo: così stanno tutte attaccate.
+export function creaAccasciato(scene, id, p) {
+  const M = p.vestito?.colore ?? '#5a6070', S = p.pelle ?? '#e8b890';
+  tela(scene, `${id}_spalle`, 64, 34, (c) => {
+    c.beginPath(); c.moveTo(3, 34); c.bezierCurveTo(3, 13, 15, 5, 32, 5); c.bezierCurveTo(49, 5, 61, 13, 61, 34); c.closePath();
+    riemp(c, gradL(c, 0, 5, 0, 34, [[0, chiaro(M, 0.16)], [1, scuro(M, 0.3)]])); tratto(c, CONT, 1.4);
+  }, 6);
+  tela(scene, `${id}_braccia`, 72, 22, (c) => {
+    // gli avambracci incrociati: prima quello di dietro, poi quello davanti; le mani sotto il mento
+    const braccio = (x0, y0, x1, y1) => {
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); tratto(c, CONT, 12.4);
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); tratto(c, M, 9.6);
+      c.beginPath(); c.moveTo(x0, y0 - 2.6); c.lineTo(x1, y1 - 2.6); tratto(c, alfa('#ffffff', 0.16), 2.2);
+      ellisse(c, x1 + Math.sign(x1 - x0) * 5, y1 - 0.5, 5, 3.8); riemp(c, S); tratto(c, CONT, 1.2);
+    };
+    braccio(8, 14, 44, 9);
+    braccio(64, 15, 28, 10);
+  }, 6);
+}
+
 export function creaPallaio(scene) {
   tela(scene, 'bgPallaio', 480, 270, sfondo);
   tela(scene, 'tavoloPong', TAVOLO_IMG.w, TAVOLO_IMG.h, tavolo);

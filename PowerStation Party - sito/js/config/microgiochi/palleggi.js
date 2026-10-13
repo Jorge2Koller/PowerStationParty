@@ -20,7 +20,7 @@ export default {
   obiettivo: 'Fai una serie di almeno 12 palleggi!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  medaglie: { bronzo: 100, argento: 280, oro: 500 },   // (giocatore automatico perfetto: 290-665)
+  medaglie: { bronzo: 180, argento: 380, oro: 600 },   // (erano 100, 280, 500: troppo facili. Giocatore automatico perfetto 730, a caso 0-55)
   obiettivoSerie: 12,
   // punti
   puntiPalleggio: 10,     // un palleggio, per il moltiplicatore della serie
@@ -50,10 +50,15 @@ export default {
   cambioVento: [2.5, 4],  // secondi tra un cambio di verso del vento e l'altro
   ogniOro: 3.2,           // secondi tra un pallone d'oro e l'altro (dopo che il precedente è sparito)
   voloOro: 1.5,           // secondi di volo del pallone d'oro, dal piede dello Zio al piede del giocatore
-  frasi: ['Io non sbaglio mai.', 'Visto? Facile.', 'Palla incollata al piede.', 'Mai sbagliato in vita mia.', 'Guarda e impara.'],
-  frasiErrore: ["Te l'avevo detto...", 'Ahia.', 'Guarda me!', 'Piede di legno!', 'Si ricomincia.'],
+  // mentre palleggia (ogni 5-8 secondi)
+  frasi: ['Se avevo le ginocchia buone giocavo in Serie A', 'Io non sbaglio mai.', 'Visto? Facile.', 'Palla incollata al piede.', 'Mai sbagliato in vita mia.', 'Guarda e impara.'],
+  // quando ti cade il pallone
+  frasiErrore: ['Popone', 'Sei più scarso di Lautaro', "Te l'avevo detto...", 'Ahia.', 'Guarda me!', 'Piede di legno!', 'Si ricomincia.'],
   frasiLancioOro: ['Prendi questo!', 'Vediamo se ci arrivi!', 'Uno per te!'],
   frasiOro: ['Fortuna.', 'Mah, passabile.', 'Ok, ok...'],
+  // alla fine: se vince lui, e se vinci tu
+  fraseZioVince: "So' bono tanto",
+  fraseZioPerde: 'Quasi bravo quanto me!',
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {

@@ -24,7 +24,7 @@ import { Sessione } from '../sessione.js';
 import { Salvataggio } from '../salvataggio.js';
 import { livellato } from '../livelli.js';
 import { preparaGiocatore } from '../sprites.js';
-import { txt, scritta, inquadra, eTouch, pulsante } from '../fx.js';
+import { txt, scritta, inquadra, eTouch, pulsantePausa } from '../fx.js';
 
 export class MicrogiocoBase extends Phaser.Scene {
   constructor(id) {
@@ -76,10 +76,9 @@ export class MicrogiocoBase extends Phaser.Scene {
     // nella sfida, chi non gioca per primo vede il record del round finora
     const rec = Sessione.record;
     if (rec) txt(this, 6, 35, `RECORD: ${rec.punteggio}  (${rec.giocatore.nome})`, { ox: 0, depth: 1001, size: 7, color: '#ffe14a' });
-    // sul telefono non ci sono ESC e M: pulsanti a schermo, accanto al tempo
-    if (eTouch()) {
-      this.pulsanti = [pulsante(this, 438, 22, 'pausa', () => this.pausa()), pulsante(this, 416, 22, 'audio', () => Audio.silenzia())];
-    }
+    // sul telefono non c'è ESC: il pulsante della pausa, un po' staccato dal tempo, col doppio
+    // tocco (vedi pulsantePausa). L'audio si cambia dalla pausa (là c'è il pulsante) e dalle Impostazioni.
+    if (eTouch()) this.pulsanti = pulsantePausa(this, 422, 22, () => this.pausa());
     this.disegnaBarra();
   }
 

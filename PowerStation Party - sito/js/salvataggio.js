@@ -28,6 +28,7 @@ export const IMPOSTAZIONI = {
   provaLampo: true,         // prova di 5 secondi prima dei microgiochi mai visti (Fase 3)
   velocitaTesti: 'normale', // 'lenta' | 'normale' | 'veloce': quanto restano a schermo scritte e fumetti
   tremolio: true,           // lo schermo che trema sui colpi
+  ritardoAudio: 0,          // ms: quanto arriva in ritardo il suono (cuffie e casse Bluetooth); misurato nelle Impostazioni
 };
 
 const nuovo = () => ({

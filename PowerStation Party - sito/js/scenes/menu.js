@@ -30,6 +30,9 @@ export class BootScene extends Phaser.Scene {
     if (prova && MICROGIOCHI[prova]) {
       if (chi) Sessione.imposta([chi]);
       Sessione.nuovoAllenamento(prova, 0);
+      // &seme=123: la partita col seme scelto (per rigiocarla identica: le prove automatiche)
+      const seme = Number(pagina.get('seme'));
+      if (seme) Sessione.semi = [seme >>> 0];
       return this.scene.start('mg_' + prova);
     }
     // dopo un aggiornamento, prima del menu: cosa c'è di nuovo (solo se il salvataggio funziona,
@@ -50,11 +53,11 @@ export class MenuScene extends Phaser.Scene {
   }
 
   // le voci del menu (uguali con e senza copertina)
-  voci(y, passo) {
+  voci(x, y, passo, xPinte = 38, yPinte = 16) {
     // le Pinte da spendere al Bancone
-    pannello(this, 38, 16, 60, 18, { alfa: 0.75, raggio: 8 });
-    im(this, 21, 16, 'iconaPinta', 0.55);
-    txt(this, 45, 16, String(Progressi.pinte), { size: 9, color: '#ffe14a' });
+    pannello(this, xPinte, yPinte, 60, 18, { alfa: 0.75, raggio: 8 });
+    im(this, xPinte - 17, yPinte, 'iconaPinta', 0.55);
+    txt(this, xPinte + 7, yPinte, String(Progressi.pinte), { size: 9, color: '#ffe14a' });
     menuLista(this, [
       { label: 'GIOCA', azione: () => this.scene.start('Giocatori') },
       { label: 'BANCONE', azione: () => this.scene.start('Bancone') },
@@ -62,21 +65,28 @@ export class MenuScene extends Phaser.Scene {
       { label: 'IMPOSTAZIONI', azione: () => this.scene.start('Impostazioni', { ritorno: 'Menu' }) },
       { label: 'COMANDI', azione: () => this.scene.start('Comandi') },
       { label: 'NOVITÀ', azione: () => this.scene.start('Novita') },
-    ], 240, y, passo, 9.5);
+    ], x, y, passo, 9.5, { larghezza: 124 });
   }
 
-  // la copertina a tutto schermo (il titolo è già dentro), le voci in un riquadro sopra
+  // la copertina intera a sinistra (il titolo è già dentro: nessuna voce sopra le facce), le voci
+  // in colonna a destra. Dietro, la copertina stessa in grande e scurita.
   conCopertina() {
-    const c = this.add.image(240, 0, 'copertina').setOrigin(0.5, 0);
-    c.setScale(480 / c.width);
-    this.tweens.add({ targets: c, scale: c.scale * 1.03, duration: 9000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-    // in basso si scurisce, per leggere le scritte (a strisce: le sfumature vere ci sono solo in WebGL)
-    const g = this.add.graphics();
-    for (let i = 0; i < 42; i++) g.fillStyle(0x1f1430, ((i + 1) / 42) * 0.85).fillRect(0, 186 + i * 2, 480, 2);
-    pannello(this, 240, 146, 168, 124, { alfa: 0.72, raggio: 10 });
-    this.voci(100.5, 18.2);
-    txt(this, 240, 222, `Da 1 a ${CONFIG.maxGiocatori} giocatori, sullo stesso schermo`, { size: 7.5, color: '#fff3d6' });
-    txt(this, 240, 240, perDito('Frecce + INVIO, oppure il mouse     M: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
+    const fondo = this.add.image(240, 135, 'copertina');
+    fondo.setScale(Math.max(480 / fondo.width, 270 / fondo.height) * 1.1);
+    this.add.rectangle(0, 0, 480, 270, 0x140c20, 0.82).setOrigin(0);
+    const W = 330, c = this.add.image(8 + W / 2, 135, 'copertina'), k = W / c.width, H = c.height * k;
+    c.setScale(k);
+    const cornice = this.add.graphics();
+    cornice.fillStyle(0x000000, 0.35).fillRoundedRect(9, 135 - H / 2 + 2, W, H, 8);
+    cornice.lineStyle(2, 0xffe14a, 1).strokeRoundedRect(8, 135 - H / 2, W, H, 8);
+    c.setDepth(1); cornice.setDepth(0);
+    this.tweens.add({ targets: c, scale: k * 1.015, duration: 4000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    // la colonna delle voci
+    const X = 409;
+    pannello(this, X, 128, 128, 152, { alfa: 0.72, raggio: 10 });
+    this.voci(X, 72, 22, X, 38);
+    txt(this, X, 222, `Da 1 a ${CONFIG.maxGiocatori} giocatori, sullo stesso schermo`, { size: 7, color: '#fff3d6', wrap: 128 });
+    txt(this, X, 248, perDito('Frecce + INVIO o il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6', wrap: 128 });
   }
 
   senzaCopertina() {
@@ -108,7 +118,7 @@ export class MenuScene extends Phaser.Scene {
     // GIOCA porta a: quanti siete, i personaggi, la modalità (ogni schermata ricorda l'ultima
     // scelta: per rigiocare uguale basta premere INVIO fino in fondo)
     pannello(this, 240, 145, 178, 122, { alfa: 0.55, bordo: null, raggio: 10 });
-    this.voci(100, 18);
+    this.voci(240, 100, 18);
     txt(this, 240, 204, `Da 1 a ${CONFIG.maxGiocatori} giocatori, sullo stesso schermo`, { size: 7.5, color: '#fff3d6' });
     txt(this, 240, 224, perDito('Frecce + INVIO, oppure il mouse\nM: audio sì/no', 'Tocca per scegliere'), { size: 7, color: '#fff3d6' });
   }
@@ -204,7 +214,7 @@ export class ComandiScene extends Phaser.Scene {
     };
     mostra();
     txt(this, 240, 244, perDito('Si gioca a turni: lo stesso microgioco, uno dopo l\'altro.   ESC: pausa   M: audio',
-      'Si gioca a turni: lo stesso microgioco, uno dopo l\'altro. Pausa e audio: in alto a destra'), { size: 6, color: '#fff3d6' });
+      'Si gioca a turni: lo stesso microgioco, uno dopo l\'altro. Pausa: due tocchi in alto a destra'), { size: 7, color: '#fff3d6' });
     txt(this, 240, 259, perDito(pagine.length > 1 ? 'SINISTRA/DESTRA: pagina     INVIO: torna al menu' : 'INVIO: torna al menu',
       pagine.length > 1 ? 'Tocca: pagina dopo   (dall\'ultima si torna al menu)' : 'Tocca: torna al menu'), { color: '#ffe14a' });
     const via = (e) => { if (!e?.repeat) { Audio.sfx('scegli'); this.scene.start('Menu'); } };

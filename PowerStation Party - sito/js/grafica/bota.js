@@ -342,6 +342,21 @@ function sfondoLido(c) {
   c.fillStyle = gradR(c, 240, 135, 170, 340, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(60,30,0,0.2)']]); c.fillRect(0, 0, 480, 270);
 }
 
+// l'ombrellone visto dall'alto (60x60): otto spicchi bianchi e azzurri col bordo a festoni e il pomello
+function ombrelloneAlto(c) {
+  const R = 27, cx = 30, cy = 30;
+  for (let k = 0; k < 8; k++) {
+    const a0 = (k / 8) * Math.PI * 2, a1 = ((k + 1) / 8) * Math.PI * 2;
+    c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, R, a0, a1); c.closePath();
+    c.fillStyle = k % 2 ? '#ffffff' : '#2f8fd0'; c.fill();
+  }
+  // le stecche e il bordo a festoni
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); tratto(c, 'rgba(0,0,0,0.18)', 0.8); }
+  c.beginPath(); for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, r = R + (k % 2 ? 0 : 1.6); c[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); tratto(c, CONT, 1.4);
+  c.fillStyle = gradR(c, cx - 8, cy - 8, 2, R, [[0, 'rgba(255,255,255,0.28)'], [1, 'rgba(0,0,0,0.12)']]); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
+  ellisse(c, cx, cy, 3.4, 3.4); c.fillStyle = '#e8c048'; c.fill(); tratto(c, CONT, 1);
+}
+
 export function creaBota(scene) {
   const { w, h, dens } = CORPO, R = RIQUADRO_TESTA;
   tela(scene, 'bgLido', 480, 270, sfondoLido);
@@ -357,6 +372,7 @@ export function creaBota(scene) {
   tela(scene, 'gabbiano_0', 34, 30, (c) => gabbiano(c, false), 8);
   tela(scene, 'gabbiano_1', 34, 30, (c) => gabbiano(c, true), 8);
   tela(scene, 'ondaLido', 190, 40, onda, 5);
+  tela(scene, 'ombrelloneAlto', 60, 60, ombrelloneAlto, 6);
   tela(scene, 'telefono', 11, 17, telefono, 10);
   tela(scene, 'lattina', 10, 15, lattina, 10);
 }

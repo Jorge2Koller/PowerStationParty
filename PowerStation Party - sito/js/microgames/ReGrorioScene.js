@@ -39,6 +39,7 @@ export class ReGrorioScene extends MicrogiocoBase {
     this.invulnerabile = false;
     this.ko = false;
     this.ultimoCambio = { da: -1, t: -9 };
+    this.avvisi = [];          // corsie dove sta per passare una Golf (le legge anche il giocatore automatico)
     this.nFase = 0;
 
     im(this, 0, 0, 'bgStrada').setOrigin(0);
@@ -66,14 +67,11 @@ export class ReGrorioScene extends MicrogiocoBase {
       this.lampo(zona);
     });
     if (eTouch()) {
-      // le tre zone segnate in basso (sotto alla strada, dietro alle macchine)
-      const g = this.add.graphics().setDepth(3);
-      g.fillStyle(0x1f1430, 0.35);
-      g.fillRoundedRect(6, 254, ZONE[0] - 12, 14, 6); g.fillRoundedRect(ZONE[0] + 6, 254, ZONE[1] - ZONE[0] - 12, 14, 6); g.fillRoundedRect(ZONE[1] + 6, 254, 480 - ZONE[1] - 12, 14, 6);
-      g.fillStyle(0xffe14a, 0.9);
-      g.fillTriangle(ZONE[0] / 2 - 6, 261, ZONE[0] / 2 + 4, 256, ZONE[0] / 2 + 4, 266);
-      g.fillTriangle((480 + ZONE[1]) / 2 + 6, 261, (480 + ZONE[1]) / 2 - 4, 256, (480 + ZONE[1]) / 2 - 4, 266);
-      txt(this, 240, 261, 'SALTA', { size: 6.5, color: '#ffe14a', depth: 3 });
+      // le tre zone segnate in basso coi loro tasti (sotto alla strada, dietro alle macchine)
+      im(this, ZONE[0] / 2, 260, 'tastoRe_sx').setDepth(3);
+      im(this, (480 + ZONE[1]) / 2, 260, 'tastoRe_dx').setDepth(3);
+      im(this, 240, 260, 'tastoRe_salta').setDepth(3);
+      txt(this, 248, 260, 'SALTA', { size: 8, color: '#ffe14a', depth: 3 });
     }
   }
 
@@ -242,14 +240,21 @@ export class ReGrorioScene extends MicrogiocoBase {
     const finta = !dalBasso && r() < f.finta ? altre[Math.floor(r() * altre.length)] : null;
     const corona = !dalBasso && r() < f.corona;
     if (!muta) Audio.sfx('clacson');
-    const striscia = this.add.rectangle(x, 135, 56, 270, 0xff3b3b, 0.18).setDepth(3);
-    const segno = txt(this, x, dalBasso ? 204 : 46, '!', { size: 30, color: '#ffe14a', stroke: '#c81e1e', thick: 7, depth: 60 });
-    const freccia = this.add.triangle(x, dalBasso ? 232 : 74, -7, dalBasso ? 5 : -5, 7, dalBasso ? 5 : -5, 0, dalBasso ? -6 : 6, 0xffe14a).setStrokeStyle(1.5, 0xc81e1e).setDepth(60);
-    this.tweens.add({ targets: [striscia, segno, freccia], alpha: 0.15, duration: 90, yoyo: true, repeat: -1 });
-    this.tweens.add({ targets: segno, scale: 1.3, duration: 180, yoyo: true, repeat: -1 });
+    // la corsia si accende (forte dalla parte da cui arriva), il cartello di pericolo lampeggia e
+    // tre frecce scorrono nel verso della Golf
+    const striscia = im(this, x, 135, 'corsiaPericolo').setDepth(3).setFlipY(dalBasso).setAlpha(0.9);
+    const cartello = im(this, x, dalBasso ? 212 : 40, 'cartelloPericolo').setDepth(60);
+    const frecce = [0, 1, 2].map((i) => im(this, x, 0, 'chevron').setDepth(59).setFlipY(dalBasso).setAlpha(0));
+    const y0 = dalBasso ? 196 : 62, verso = dalBasso ? -1 : 1;
+    frecce.forEach((fr, i) => this.tweens.add({ targets: fr, y: { from: y0, to: y0 + verso * 36 }, alpha: { from: 1, to: 0 }, duration: 520, delay: i * 170, repeat: -1 }));
+    this.tweens.add({ targets: striscia, alpha: 0.45, duration: 150, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    this.tweens.add({ targets: cartello, scale: cartello.scale * 1.18, duration: 150, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    const avviso = { corsia };
+    this.avvisi.push(avviso);
     const attesa = f.avviso + (dalBasso ? 0.3 : 0);
     this.time.delayedCall(attesa * 1000, () => {
-      striscia.destroy(); segno.destroy(); freccia.destroy();
+      striscia.destroy(); cartello.destroy(); frecce.forEach((fr) => fr.destroy());
+      this.avvisi = this.avvisi.filter((v) => v !== avviso);
       if (!this.inCorso) return;
       const img = im(this, x, dalBasso ? 332 : -54, dalBasso ? 'golfSu0' : 'golfGiu0').setDepth(dalBasso ? 45 : 20);
       const a = { img, corsia, dir: dalBasso ? -1 : 1, vel: f.vel, tFumo: 0, finta };

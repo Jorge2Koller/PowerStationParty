@@ -35,7 +35,14 @@ export default {
   stai: 17,               // il banco tira finché non arriva almeno a questo
   frasi: ['Puntate, signori.', 'Fate il vostro gioco.', 'Il banco aspetta.', 'Coraggio...', 'Carte!'],
   frasiPerde: ['Mah...', 'Fortuna.', 'Stavolta passi.', 'Mischio meglio la prossima.', 'Pff.'],
+  frasePerdeSpesso: 'Non mi fanno',   // quando perde il banco, una volta su due dice questa
+  fraseServe: 'Sto leggendo',         // mentre dà le carte (non sempre: vedi serveOgni)
+  serveOgni: 0.5,                     // probabilità di dirla a ogni mano
   fraseVince: 'Come le leggo!',
+  // lo Zio, al tavolo come spettatore (non gioca): quando perdi ride, e ogni tanto sogna in grande
+  frasiZioPerdi: ['Popone'],
+  frasiZio: ['Se entro mi fo lo stipendio'],
+  zioOgni: [10, 16],                  // secondi (da... a...) tra un commento e l'altro
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {

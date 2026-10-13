@@ -4,8 +4,9 @@
 //  ragazze per attaccare bottone. Le ragazze entrano dall'ingresso e ballano: tocca una ragazza
 //  e trascina per disegnarle la strada fino al tavolo delle amiche (uscita, a destra): salva.
 //  Un tentacolo che la prende la tiene agganciata a chiacchierare col Petri: tocca il tentacolo
-//  (SCIAF!) per liberarla. Aiuti con ricarica: lo shottino gratis (il Petri ci si fionda e molla
-//  tutto) e un amico che si mette in mezzo e blocca i tentacoli. Ogni tanto un tentacolo a
+//  (SCIAF!) per liberarla. Aiuti con ricarica: la birra gratis (il Petri ci si fionda e molla
+//  tutto) e l'amico in mezzo, O'Sfurnacchiat: si piazza tra il Petri e la ragazza più in pericolo,
+//  la segue, e i tentacoli che ci passano contro sbattono (BONK!). Ogni tanto un tentacolo a
 //  sorpresa sbuca da sotto un tavolino o dalla consolle.
 //  Multi-touch: un dito disegna la strada, un altro dà gli schiaffi.
 //  Tre atti annunciati: IL PETRI SI MUOVE, poi i TENTACOLI A SORPRESA. Le ragazze arrivano uguali
@@ -24,7 +25,14 @@ const TAGLIA_PETRI = 0.44;
 const PISTA = { x0: 52, x1: 428, y0: 106, y1: 246 }; // dove stanno i piedi di chi balla
 const ZONA_PETRI = { x0: 180, x1: 300, y0: 140, y1: 214 };
 const USCITA = { x: DISCO.uscita, y0: DISCO.uscitaY[0], y1: DISCO.uscitaY[1] };
-const PULSANTI = [{ tipo: 'shottino', x: 206, y: 250, ico: 'shottino', tasto: '1' }, { tipo: 'amico', x: 274, y: 250, ico: 'icoAmico', tasto: '2' }];
+// distanza del punto (px, py) dal segmento (ax, ay)-(bx, by)
+function distSegmento(px, py, ax, ay, bx, by) {
+  const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1;
+  const k = Phaser.Math.Clamp(((px - ax) * vx + (py - ay) * vy) / l2, 0, 1);
+  return Math.hypot(px - (ax + vx * k), py - (ay + vy * k));
+}
+
+const PULSANTI = [{ tipo: 'birra', x: 206, y: 250, ico: 'birraPetri', tasto: '1' }, { tipo: 'amico', x: 274, y: 250, ico: 'icoAmico', tasto: '2' }];
 const ORIGINI_SORPRESA = [{ x: 78, y: 96, nome: 'DAL TAVOLINO!' }, { x: 402, y: 96, nome: 'DAL TAVOLINO!' }, { x: 240, y: 74, nome: 'DALLA CONSOLLE!' }];
 // da dove escono i tentacoli del Petri (rispetto ai suoi piedi) e verso dove stanno a riposo
 const ATTACCHI = [[-11, -24, Math.PI * 1.1], [11, -24, -Math.PI * 0.1], [-8, -14, Math.PI * 0.8], [8, -14, Math.PI * 0.2], [0, -30, -Math.PI / 2]];
@@ -52,11 +60,11 @@ export class PiovraScene extends MicrogiocoBase {
     this.tBattito = 0;
     this.sel = null;            // la ragazza scelta con la tastiera
     this.tastiera = false;
-    this.mira = false;          // shottino in mano: il prossimo tocco lo lancia
-    this.shot = null;
+    this.mira = false;          // birra in mano: il prossimo tocco la lancia
+    this.pinta = null;
     this.bevuta = 0;
     this.amico = null;
-    this.aiuti = { shottino: 0, amico: 0 };   // secondi di ricarica che mancano
+    this.aiuti = { birra: 0, amico: 0 };   // secondi di ricarica che mancano
 
     im(this, 0, 0, 'bgDisco').setOrigin(0);
     // luci della pista: ogni mattonella si accende a tempo di musica
@@ -87,15 +95,15 @@ export class PiovraScene extends MicrogiocoBase {
     // gli aiuti
     this.gPuls = this.add.graphics().setDepth(1002);
     for (const b of PULSANTI) {
-      b.img = im(this, b.x, b.y, b.ico, b.tipo === 'shottino' ? 1.25 : 1.1).setDepth(1003);
+      b.img = im(this, b.x, b.y, b.ico, b.tipo === 'birra' ? 1.25 : 1.1).setDepth(1003);
       if (!eTouch()) b.lettera = txt(this, b.x + 11, b.y + 9, b.tasto, { size: 6, depth: 1004 });
     }
     this.aiutoMira = txt(this, 240, 228, '', { size: 8, color: '#ffe14a', depth: 1004 });
-    this.shotMano = im(this, 0, 0, 'shottino', 1.2).setDepth(1005).setVisible(false);
+    this.birraMano = im(this, 0, 0, 'birraPetri', 1.2).setDepth(1005).setVisible(false);
 
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, depth: 1001, size: 9 });
     this.testoSalvate = txt(this, 474, 49, '', { ox: 1, depth: 1001, size: 8 });
-    this.testoSerie = txt(this, 474, 61, '', { ox: 1, depth: 1001, size: 7, color: '#ff9af0' });
+    this.testoSerie = txt(this, 474, 61, '', { ox: 1, depth: 1001, size: 8, color: '#ff9af0' });
 
     multiTouch(this);
     this.input.on('pointerdown', (p) => this.tocco(p));
@@ -106,7 +114,7 @@ export class PiovraScene extends MicrogiocoBase {
     this.frecce = k.createCursorKeys();
     k.on('keydown-TAB', () => this.prossima());
     k.on('keydown-SPACE', () => this.tastoSchiaffo());
-    k.on('keydown-ONE', () => this.usaAiuto('shottino', true));
+    k.on('keydown-ONE', () => this.usaAiuto('birra', true));
     k.on('keydown-TWO', () => this.usaAiuto('amico', true));
   }
 
@@ -149,11 +157,11 @@ export class PiovraScene extends MicrogiocoBase {
 
     // aiuti: ricarica, amico in mezzo
     for (const k of Object.keys(this.aiuti)) this.aiuti[k] = Math.max(0, this.aiuti[k] - dt);
-    if (this.amico) { this.amico.t -= dt; if (this.amico.t <= 0) this.viaAmico(); }
+    if (this.amico) { this.amico.t -= dt; if (this.amico.t <= 0) this.viaAmico(); else this.muoviAmico(dt); }
     this.disegnaPulsanti();
     if (this.mira) {
       const w = puntatore(this);
-      this.shotMano.setVisible(!eTouch()).setPosition(w.x, w.y - 6);
+      this.birraMano.setVisible(!eTouch()).setPosition(w.x, w.y - 6);
     }
 
     // il Petri chiacchiera con chi ha agganciato
@@ -209,7 +217,7 @@ export class PiovraScene extends MicrogiocoBase {
     this.ultima = v;
     const r0 = this.rnd, y = DISCO.ingressoY + Math.round(r0() * 28 - 14);
     const r = {
-      v, x: -12, y, stato: 'entra', perc: [], fase: Math.random() * 6, espr: '', tEspr: 0, colore: col(RAGAZZE[v].vestito.colore),
+      v, x: -12, y, stato: 'entra', perc: [], fase: r0() * 6, espr: '', tEspr: 0, colore: col(RAGAZZE[v].vestito.colore),
       meta: { x: 70 + Math.round(r0() * 80), y: Math.round(PISTA.y0 + 20 + r0() * (PISTA.y1 - PISTA.y0 - 40)) }, tMeta: 0,
       img: im(this, -12, y, `ragazza${v}_felice`, TAGLIA).setOrigin(0.5, 1),
     };
@@ -228,12 +236,12 @@ export class PiovraScene extends MicrogiocoBase {
     const c = this.cfg;
     if (r.stato === 'salva') return;
     if (r.stato === 'entra') {
-      if (this.verso(r, r.meta.x, r.meta.y, c.velSegue * 0.7, dt) <= 1) { r.stato = 'balla'; r.tMeta = 1 + Math.random(); }
+      if (this.verso(r, r.meta.x, r.meta.y, c.velSegue * 0.7, dt) <= 1) { r.stato = 'balla'; r.tMeta = 1 + this.rnd(); }
     } else if (r.stato === 'balla') {
       r.tMeta -= dt;
       if (r.tMeta <= 0) {
-        r.tMeta = 1.5 + Math.random() * 1.5;
-        r.meta = { x: Phaser.Math.Clamp(r.x + Phaser.Math.Between(-40, 40), PISTA.x0, PISTA.x1), y: Phaser.Math.Clamp(r.y + Phaser.Math.Between(-30, 30), PISTA.y0, PISTA.y1) };
+        r.tMeta = 1.5 + this.rnd() * 1.5;
+        r.meta = { x: Phaser.Math.Clamp(r.x + Math.round(this.rnd() * 80 - 40), PISTA.x0, PISTA.x1), y: Phaser.Math.Clamp(r.y + Math.round(this.rnd() * 60 - 30), PISTA.y0, PISTA.y1) };
       }
       this.verso(r, r.meta.x, r.meta.y, c.velBalla, dt);
     } else if (r.stato === 'segue') {
@@ -288,12 +296,12 @@ export class PiovraScene extends MicrogiocoBase {
   //  IL PETRI E I TENTACOLI
   // ------------------------------------------------------------
   muoviPetri(dt, f) {
-    const P = this.petri, cs = this.cfg.shottino;
-    if (this.shot) {
-      // corre verso lo shottino gratis, poi se lo beve
-      if (this.verso(P, this.shot.x, this.shot.y, cs.velPetri, dt) <= 1) {
-        this.shot.img.destroy();
-        this.shot = null;
+    const P = this.petri, cs = this.cfg.birra;
+    if (this.pinta) {
+      // corre verso la birra gratis, poi se la beve
+      if (this.verso(P, this.pinta.x, this.pinta.y, cs.velPetri, dt) <= 1) {
+        this.pinta.img.destroy();
+        this.pinta = null;
         this.bevuta = cs.durata;
         Audio.sfx('glu');
         scritta(this, P.x, P.y - 70, 'GLU GLU!', { size: 10, color: '#ffc34a', durata: 700 });
@@ -304,8 +312,8 @@ export class PiovraScene extends MicrogiocoBase {
     } else if (f.petri > 0) {
       if (!P.meta) {
         P.pausa -= dt;
-        if (P.pausa <= 0) P.meta = { x: Phaser.Math.Between(ZONA_PETRI.x0, ZONA_PETRI.x1), y: Phaser.Math.Between(ZONA_PETRI.y0, ZONA_PETRI.y1) };
-      } else if (this.verso(P, P.meta.x, P.meta.y, f.petri, dt) <= 0.5) { P.meta = null; P.pausa = 1 + Math.random() * 1.5; }
+        if (P.pausa <= 0) P.meta = { x: Math.round(ZONA_PETRI.x0 + this.rnd() * (ZONA_PETRI.x1 - ZONA_PETRI.x0)), y: Math.round(ZONA_PETRI.y0 + this.rnd() * (ZONA_PETRI.y1 - ZONA_PETRI.y0)) };
+      } else if (this.verso(P, P.meta.x, P.meta.y, f.petri, dt) <= 0.5) { P.meta = null; P.pausa = 1 + this.rnd() * 1.5; }
     }
     const tb = this.trascorso * 4.1;
     P.img.setPosition(P.x, P.y - Math.abs(Math.sin(tb)) * 1.5).setAngle(Math.sin(tb * 0.5) * 3).setDepth(P.y);
@@ -330,14 +338,14 @@ export class PiovraScene extends MicrogiocoBase {
     return { x: this.petri.x + t.dx, y: this.petri.y + t.dy };
   }
 
-  bloccati() { return !!this.shot || this.bevuta > 0; }
+  bloccati() { return !!this.pinta || this.bevuta > 0; }
 
   // la ragazza libera più vicina, meglio se non è già puntata da un altro tentacolo
   scegliBersaglio(b, portata) {
     const puntate = new Set([...this.tentacoli, ...this.sorprese].filter((t) => t.stato === 'allunga').map((t) => t.bersaglio));
     let meglio = null, dMin = portata;
     for (const r of this.ragazze) {
-      if (!this.libera(r) || r.stato === 'stordita') continue;
+      if (!this.libera(r) || r.stato === 'stordita' || this.protetta(r)) continue;
       const d = Math.hypot(r.x - b.x, r.y - 26 - b.y) + (puntate.has(r) ? 60 : 0);
       if (d < dMin) { dMin = d; meglio = r; }
     }
@@ -359,7 +367,7 @@ export class PiovraScene extends MicrogiocoBase {
       t.cool -= dt;
       if (t.cool <= 0 && !this.bloccati()) {
         const r = this.scegliBersaglio(b, f.portata);
-        if (r) { t.stato = 'allunga'; t.bersaglio = r; t.piega = (Math.random() < 0.5 ? -1 : 1) * Phaser.Math.Between(10, 26); Audio.sfx('plop'); }
+        if (r) { t.stato = 'allunga'; t.bersaglio = r; t.piega = (this.rnd() < 0.5 ? -1 : 1) * Math.round(10 + this.rnd() * 16); Audio.sfx('plop'); }
         else t.cool = 0.3;
       }
     } else if (t.stato === 'allunga') {
@@ -369,18 +377,15 @@ export class PiovraScene extends MicrogiocoBase {
       const voluto = Math.atan2(ty - b.y, tx - b.x);
       t.dir += Phaser.Math.Angle.Wrap(voluto - t.dir) * Math.min(1, dt * 8);
       t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * dt;
-      // l'amico in mezzo blocca i tentacoli
+      // l'amico in mezzo: se il tentacolo gli passa contro (in qualunque punto) sbatte, e se
+      // puntava la ragazza che lui protegge rinuncia appena ci arriva vicino
       const A = this.amico, punta = { x: b.x + Math.cos(t.dir) * t.len, y: b.y + Math.sin(t.dir) * t.len };
-      if (A && Math.hypot(punta.x - A.x, punta.y - (A.y - 26)) < this.cfg.amico.raggio) {
-        Audio.sfx('bonk');
-        scritta(this, punta.x, punta.y - 10, 'BONK!', { size: 9, color: '#ffe14a', durata: 400 });
-        if (Math.random() < 0.5) fumetto(this, A.x, A.y - 64, caso(this.cfg.frasiAmico), 800, 950);
-        return this.molla(t, false);
-      }
+      if (A && (distSegmento(A.x, A.y - 18, b.x, b.y, punta.x, punta.y) < this.cfg.amico.raggio || this.protetta(r) && Math.hypot(punta.x - r.x, punta.y - r.y + 26) < 40)) return this.sbatte(t, punta);
       if (t.len >= D - 3) return this.aggancia(t, r);
       if (D > f.portata * 1.2 || t.len > f.portata * 1.3) this.molla(t, false);
     } else if (t.stato === 'presa') {
       const r = t.bersaglio;
+      if (this.protetta(r)) return this.sbatte(t, { x: r.x, y: r.y - 26 });
       t.dir = Math.atan2(r.y - 26 - b.y, r.x - b.x);
       t.len = Math.hypot(r.x - b.x, r.y - 26 - b.y);
     } else if (t.stato === 'ritira') {
@@ -390,6 +395,22 @@ export class PiovraScene extends MicrogiocoBase {
         else { t.stato = 'riposo'; t.cool = f.reazione[0] + this.rnd() * (f.reazione[1] - f.reazione[0]) + (t.dopoSchiaffo ? 0.6 : 0); t.dopoSchiaffo = false; }
       }
     }
+  }
+
+  // il tentacolo sbatte contro l'amico e torna indietro
+  sbatte(t, punto) {
+    const A = this.amico;
+    Audio.sfx('bonk');
+    scritta(this, punto.x, punto.y - 10, 'BONK!', { size: 9, color: '#ffe14a', durata: 400 });
+    if (A && this.time.now - (A.ultimaFrase ?? 0) > 1500 && Math.random() < 0.5) { A.ultimaFrase = this.time.now; fumetto(this, A.x, A.y - 64, caso(this.cfg.frasiAmico), 800, 950); }
+    this.molla(t, false);
+    t.tRosso = 0.25;
+  }
+
+  // la protegge l'amico? (quella che segue, e chi gli sta proprio accanto)
+  protetta(r) {
+    const A = this.amico;
+    return !!A && !!r && (r === A.r || Math.hypot(r.x - A.x, r.y - A.y) < this.cfg.amico.scudo);
   }
 
   aggancia(t, r) {
@@ -420,7 +441,7 @@ export class PiovraScene extends MicrogiocoBase {
 
   sorpresa() {
     const o = ORIGINI_SORPRESA[Math.floor(this.rnd() * ORIGINI_SORPRESA.length)];
-    const t = { tipo: 'sorpresa', ox: o.x, oy: o.y, stato: 'riposo', len: 0, dir: Math.PI / 2, ang: Math.PI / 2, cool: 0, fase: Math.random() * 6, piega: 16, punti: null };
+    const t = { tipo: 'sorpresa', ox: o.x, oy: o.y, stato: 'riposo', len: 0, dir: Math.PI / 2, ang: Math.PI / 2, cool: 0, fase: this.rnd() * 6, piega: 16, punti: null };
     const r = this.scegliBersaglio(o, 230);
     if (!r) return;
     t.stato = 'allunga'; t.bersaglio = r;
@@ -480,10 +501,10 @@ export class PiovraScene extends MicrogiocoBase {
   usaAiuto(tipo, daTastiera) {
     if (!this.inCorso || this.aiuti[tipo] > 0) { Audio.sfx('vuoto'); return; }
     if (tipo === 'amico') return this.chiamaAmico();
-    if (daTastiera) return this.lanciaShottino(this.puntoLontano());
+    if (daTastiera) return this.lanciaBirra(this.puntoLontano());
     this.mira = !this.mira;
-    this.aiutoMira.setText(this.mira ? (eTouch() ? 'TOCCA DOVE LANCIARE LO SHOTTINO' : 'CLICCA DOVE LANCIARE LO SHOTTINO') : '');
-    this.shotMano.setVisible(false);
+    this.aiutoMira.setText(this.mira ? (eTouch() ? 'TOCCA DOVE LANCIARE LA BIRRA' : 'CLICCA DOVE LANCIARE LA BIRRA') : '');
+    this.birraMano.setVisible(false);
     Audio.sfx('muovi');
   }
 
@@ -497,44 +518,70 @@ export class PiovraScene extends MicrogiocoBase {
     return meglio;
   }
 
-  lanciaShottino(w) {
+  lanciaBirra(w) {
     const c = this.cfg, P = this.petri;
     this.mira = false;
     this.aiutoMira.setText('');
-    this.shotMano.setVisible(false);
-    this.aiuti.shottino = c.shottino.ricarica;
+    this.birraMano.setVisible(false);
+    this.aiuti.birra = c.birra.ricarica;
     const x = Phaser.Math.Clamp(w.x, PISTA.x0, PISTA.x1), y = Phaser.Math.Clamp(w.y, PISTA.y0, PISTA.y1);
-    const img = im(this, PULSANTI[0].x, PULSANTI[0].y, 'shottino', 1.2).setDepth(959);
+    const img = im(this, PULSANTI[0].x, PULSANTI[0].y, 'birraPetri', 1.2).setDepth(959);
     this.tweens.add({ targets: img, x, duration: 380, ease: 'Linear' });
     this.tweens.add({ targets: img, y: { from: PULSANTI[0].y, to: y - 4 }, angle: 360, duration: 380, ease: 'Back.in', onComplete: () => img.setDepth(y) });
     Audio.sfx('lancio');
-    this.shot = { x, y, img };
+    this.pinta = { x, y, img };
     P.meta = null;
     for (const t of [...this.tentacoli, ...this.sorprese]) if (t.stato === 'allunga' || t.stato === 'presa') this.molla(t, false);
-    fumetto(this, P.x, P.y - 66, caso(c.frasiShottino), 1000, 950);
+    fumetto(this, P.x, P.y - 66, caso(c.frasiBirra), 1000, 950);
     this.espressione('shock', 0.5);
   }
 
   chiamaAmico() {
     const c = this.cfg, P = this.petri;
     this.aiuti.amico = c.amico.ricarica;
-    // la ragazza più in pericolo: quella col tentacolo più vicino, se no la più vicina al Petri
+    if (this.amico) this.viaAmico();
+    const r = this.inPericolo();
+    const { x: tx, y: ty } = r ? this.postoAmico(r) : { x: P.x + 40, y: P.y + 20 };
+    const img = im(this, tx, ty - 80, `${c.amico.id}_sufficienza`, TAGLIA).setOrigin(0.5, 1).setDepth(ty);
+    this.tweens.add({ targets: img, y: ty, duration: 260, ease: 'Bounce.out' });
+    this.amico = { x: tx, y: ty, img, t: c.amico.durata, r, arrivo: 0.26 };
+    Audio.sfx('fischietto');
+    // "Gnamo Petri, falla finita": il Petri risponde con un verso, poi il lamento
+    fumetto(this, tx, ty - 64, c.fraseAmico, 1300, 950);
+    this.time.delayedCall(1150, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.versoPetri, 700, 951); Audio.sfx('verso'); this.espressione('shock', 0.7); } });
+    this.time.delayedCall(1900, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.lamentoPetri, 1400, 951); Audio.sfx('lamento'); this.espressione('triste', 1.4); } });
+    // i tentacoli che la tenevano o stavano arrivando sbattono contro di lui
+    for (const t of [...this.tentacoli, ...this.sorprese]) if ((t.stato === 'allunga' || t.stato === 'presa') && t.bersaglio && this.protetta(t.bersaglio)) this.sbatte(t, { x: tx, y: ty - 40 });
+  }
+
+  // la ragazza più in pericolo: quella col tentacolo più vicino (o già presa), se no la più vicina al Petri
+  inPericolo() {
+    const P = this.petri;
     let r = null, dMin = Infinity;
-    for (const t of this.tentacoli) if (t.stato === 'allunga' && t.bersaglio) {
-      const b = this.base(t), d = Math.hypot(t.bersaglio.x - b.x, t.bersaglio.y - b.y) - t.len;
+    for (const t of [...this.tentacoli, ...this.sorprese]) if ((t.stato === 'allunga' || t.stato === 'presa') && t.bersaglio && t.bersaglio.stato !== 'salva') {
+      const b = this.base(t), d = t.stato === 'presa' ? -1 : Math.hypot(t.bersaglio.x - b.x, t.bersaglio.y - b.y) - t.len;
       if (d < dMin) { dMin = d; r = t.bersaglio; }
     }
     if (!r) for (const x of this.ragazze) if (this.libera(x)) { const d = Math.hypot(x.x - P.x, x.y - P.y); if (d < dMin) { dMin = d; r = x; } }
-    const tx = r ? lerp(P.x, r.x, 0.5) : P.x + 40, ty = r ? lerp(P.y, r.y, 0.5) + 6 : P.y + 20;
-    if (this.amico) this.viaAmico();
-    const id = caso(c.amici);
-    const img = im(this, tx, ty - 80, `${id}_sufficienza`, TAGLIA).setOrigin(0.5, 1).setDepth(ty);
-    this.tweens.add({ targets: img, y: ty, duration: 260, ease: 'Bounce.out' });
-    this.amico = { x: tx, y: ty, img, t: c.amico.durata };
-    Audio.sfx('fischietto');
-    fumetto(this, tx, ty - 64, caso(c.frasiAmico), 900, 950);
-    // i tentacoli che stavano arrivando sbattono contro di lui
-    for (const t of this.tentacoli) if (t.stato === 'allunga' && t.bersaglio === r) { this.molla(t, false); scritta(this, tx, ty - 40, 'BONK!', { size: 9, color: '#ffe14a', durata: 400 }); Audio.sfx('bonk'); }
+    return r;
+  }
+
+  // dove si mette l'amico: davanti alla ragazza, dalla parte del Petri
+  postoAmico(r) {
+    const P = this.petri, dx = P.x - r.x, dy = P.y - r.y, d = Math.hypot(dx, dy) || 1;
+    return { x: Phaser.Math.Clamp(r.x + (dx / d) * 24, PISTA.x0, PISTA.x1), y: Phaser.Math.Clamp(r.y + (dy / d) * 12 + 4, PISTA.y0, PISTA.y1) };
+  }
+
+  // l'amico segue la ragazza che protegge (se è salva o sparita, passa alla prossima in pericolo)
+  muoviAmico(dt) {
+    const A = this.amico;
+    A.arrivo -= dt;
+    if (!A.r || A.r.stato === 'salva' || !this.ragazze.includes(A.r)) A.r = this.inPericolo();
+    if (A.r && A.arrivo <= 0) {
+      const p = this.postoAmico(A.r);
+      this.verso(A, p.x, p.y, this.cfg.amico.vel, dt);
+      A.img.setPosition(A.x, A.y).setDepth(A.y);
+    }
   }
 
   viaAmico() {
@@ -549,7 +596,7 @@ export class PiovraScene extends MicrogiocoBase {
     for (const b of PULSANTI) {
       const resto = this.aiuti[b.tipo], tot = c[b.tipo].ricarica, pronto = resto <= 0;
       g.fillStyle(0x000000, 0.3); g.fillCircle(b.x + 1, b.y + 2, 15);
-      g.fillStyle(this.mira && b.tipo === 'shottino' ? 0x7a2fa8 : 0x1f1430, 0.92); g.fillCircle(b.x, b.y, 15);
+      g.fillStyle(this.mira && b.tipo === 'birra' ? 0x7a2fa8 : 0x1f1430, 0.92); g.fillCircle(b.x, b.y, 15);
       if (!pronto) {
         g.fillStyle(0x000000, 0.55);
         g.beginPath(); g.slice(b.x, b.y, 15, -Math.PI / 2, -Math.PI / 2 + (resto / tot) * Math.PI * 2, false); g.fillPath();
@@ -567,7 +614,7 @@ export class PiovraScene extends MicrogiocoBase {
     const w = puntatore(this, p), extra = p.wasTouch ? this.cfg.raggioDito : 0;
     // i pulsanti degli aiuti
     for (const b of PULSANTI) if (Math.hypot(w.x - b.x, w.y - b.y) <= 16 + extra) return this.usaAiuto(b.tipo, false);
-    if (this.mira) return this.lanciaShottino(w);
+    if (this.mira) return this.lanciaBirra(w);
     // una ragazza libera: si comincia a disegnarle la strada
     let r = null, dMin = Infinity;
     for (const x of this.ragazze) {
@@ -670,7 +717,8 @@ export class PiovraScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, this.punti - prese * c.malusAgganciata),   // (mai sotto zero)
       vittoria: this.salvate >= c.obiettivoSalvate,
-      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}, agganciate ${prese} (-${prese * c.malusAgganciata})`,
+      // (le agganciate si scrivono solo se tolgono davvero qualcosa: il totale non va sotto zero)
+      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (Math.min(this.punti, prese * c.malusAgganciata) > 0 ? `, agganciate ${prese} (-${Math.min(this.punti, prese * c.malusAgganciata)})` : ''),
       titoloFine: this.salvate >= c.obiettivoSalvate ? 'TEMPO!' : 'IL PIOVRA HA VINTO!',
     };
   }
@@ -679,10 +727,10 @@ export class PiovraScene extends MicrogiocoBase {
   // Tante agganciate: lui al centro, felicissimo, circondato di ragazze annoiate.
   finale(ris, fatto) {
     const prese = this.ragazze.filter((r) => r.stato === 'presa');
-    for (const o of [this.testoPunti, this.testoSalvate, this.testoSerie, this.aiutoMira, this.gPuls, this.percorsi, this.segno, this.shotMano]) o.setVisible(false);
+    for (const o of [this.testoPunti, this.testoSalvate, this.testoSerie, this.aiutoMira, this.gPuls, this.percorsi, this.segno, this.birraMano]) o.setVisible(false);
     for (const b of PULSANTI) { b.img.setVisible(false); b.lettera?.setVisible(false); }
     this.gT.clear(); this.gS.clear();
-    this.shot?.img.destroy();
+    this.pinta?.img.destroy();
     if (this.amico) this.amico.img.setVisible(false);
     for (const r of this.ragazze) if (r.stato !== 'presa') r.img.setVisible(false);
     Audio.sfx('tempo');

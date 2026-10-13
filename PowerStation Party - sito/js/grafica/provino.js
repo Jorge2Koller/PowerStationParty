@@ -1,4 +1,4 @@
-// "Provini a X-Fattore": il palco di un talent show televisivo INVENTATO (luci, muro di led, una
+// "Provini a X-Factor": il palco di un talent show televisivo INVENTATO (luci, muro di led, una
 // grande X luminosa di fantasia: non è il logo di nessun programma vero), il tavolo dei giudici,
 // il pubblico al buio con gli accendini, la pianola di chi accompagna, la chiave di violino e la
 // nota che fa da cursore sul pentagramma. I giudici e i cantanti sono in personaggi.js.

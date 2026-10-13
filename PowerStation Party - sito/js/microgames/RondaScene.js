@@ -65,7 +65,7 @@ export class RondaScene extends MicrogiocoBase {
     this.iconeColpi = [];
     for (let i = 0; i < this.cfg.colpiMax; i++) this.iconeColpi.push(im(this, 240 - 50 + i * 12 + 10, 25, 'palla', 1.3).setDepth(1001));
     this.hud.push(...this.iconeColpi);
-    this.testoPunti = txt(this, 474, 36, 'AFFONDATE: 0', { ox: 1, depth: 1001, size: 7 });
+    this.testoPunti = txt(this, 474, 36, 'AFFONDATE: 0', { ox: 1, depth: 1001, size: 8 });
     this.hud.push(this.testoPunti);
     this.aggiornaColpi();
 

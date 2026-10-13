@@ -1,12 +1,14 @@
 // Schermata IMPOSTAZIONI (dal menu e dalla pausa): volumi, audio, vibrazione, difficoltà di
-// partenza, prova lampo, velocità dei testi, schermo che trema; e il salvataggio (esporta,
-// importa, azzera). Tutto si salva da solo (js/salvataggio.js).
+// partenza, prova lampo, velocità dei testi, schermo che trema, ritardo audio (con la schermata
+// che lo misura: RitardoScene, qui sotto); e il salvataggio (esporta, importa, azzera).
+// Tutto si salva da solo (js/salvataggio.js).
 // Tastiera: SU/GIÙ scelgono la riga, SINISTRA/DESTRA cambiano, INVIO conferma, ESC esce.
 // Mouse e dito: si tocca direttamente il comando.
+import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { Salvataggio } from '../salvataggio.js';
 import { dialogo, dialogoAperto } from '../dialogo.js';
-import { txt, inquadra, raggi, pannello, eTouch, perDito, pulsante } from '../fx.js';
+import { txt, inquadra, raggi, pannello, eTouch, perDito, pulsante, scritta } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
 
 const SCELTE = {
@@ -37,10 +39,11 @@ export class ImpostazioniScene extends Phaser.Scene {
       { tipo: 'si', chiave: 'provaLampo', eti: 'Prova lampo', aiuto: 'Pochi secondi di prova prima di un microgioco mai visto (in arrivo)' },
       { tipo: 'scelta', chiave: 'velocitaTesti', eti: 'Velocità dei testi', aiuto: 'Quanto restano a schermo scritte e fumetti' },
       { tipo: 'si', chiave: 'tremolio', eti: 'Schermo che trema', aiuto: 'Il tremolio sui colpi: spegnilo se ti dà fastidio' },
+      { tipo: 'ritardo', chiave: 'ritardoAudio', eti: 'Ritardo audio', aiuto: perDito('Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. INVIO: lo misuro io (PROVA). SINISTRA/DESTRA: a mano', 'Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. PROVA: lo misuro io. Le frecce: a mano') },
       { tipo: 'bottoni', eti: 'Salvataggio', bottoni: ['ESPORTA', 'IMPORTA', 'AZZERA'], aiuto: 'Il salvataggio come codice da copiare su un altro telefono, oppure da capo' },
       { tipo: 'esci', eti: this.ritorno === 'Pausa' ? 'TORNA ALLA PAUSA' : 'TORNA AL MENU', aiuto: '' },
     ];
-    const Y0 = 44, PASSO = 18.5;
+    const Y0 = 44, PASSO = 17.5;
     pannello(this, 240, Y0 + (PASSO * (this.righe.length - 1)) / 2, 430, PASSO * this.righe.length + 8, { alfa: 0.6, bordo: null, raggio: 10 });
     this.evid = this.add.graphics();
     this.g = this.add.graphics().setDepth(2);
@@ -49,6 +52,7 @@ export class ImpostazioniScene extends Phaser.Scene {
       if (r.tipo === 'esci') r.testo = txt(this, 240, r.y, r.eti, { size: 8.5, depth: 3 });
       else r.testo = txt(this, X_ETI, r.y, r.eti, { size: 8, ox: 0, depth: 3 });
       if (r.tipo !== 'esci') r.valore = txt(this, X_COM, r.y, '', { size: 7.5, depth: 3 });
+      if (r.tipo === 'ritardo') r.prova = txt(this, X_COM + 82, r.y, 'PROVA', { size: 7.5, depth: 3, color: '#ffe14a' });
       if (r.tipo === 'bottoni') {
         r.valore.destroy();
         r.pulsanti = r.bottoni.map((b, k) => txt(this, X_COM - 52 + k * 52, r.y, b, { size: 7, depth: 3, color: b === 'AZZERA' ? '#ff9a8a' : '#ffffff' }));
@@ -102,6 +106,11 @@ export class ImpostazioniScene extends Phaser.Scene {
       } else if (r.tipo === 'scelta') {
         const voci = SCELTE[r.chiave], k = Math.max(0, voci.findIndex(([v]) => v === I[r.chiave]));
         r.valore.setText(`<   ${voci[k][1]}   >`);
+      } else if (r.tipo === 'ritardo') {
+        r.valore.setText(`<   ${I.ritardoAudio ?? 0} ms   >`);
+        const w = r.prova.width + 8;
+        g.fillStyle(0x1f1430, 0.9); g.fillRoundedRect(r.prova.x - w / 2, r.y - 7, w, 14, 7);
+        g.lineStyle(1, 0xffe14a, scelta ? 1 : 0.6); g.strokeRoundedRect(r.prova.x - w / 2, r.y - 7, w, 14, 7);
       } else if (r.tipo === 'bottoni') {
         r.pulsanti.forEach((t, k) => {
           const w = t.width + 8;
@@ -126,7 +135,8 @@ export class ImpostazioniScene extends Phaser.Scene {
     else if (r.tipo === 'scelta') {
       const voci = SCELTE[r.chiave], k = voci.findIndex(([v]) => v === I[r.chiave]);
       this.metti(r.chiave, voci[Phaser.Math.Clamp(k + d, 0, voci.length - 1)][0]);
-    } else if (r.tipo === 'bottoni') { this.selBottone = Phaser.Math.Clamp((this.selBottone ?? 0) + d, 0, 2); this.lampeggiaBottone(); }
+    } else if (r.tipo === 'ritardo') this.metti(r.chiave, Phaser.Math.Clamp((I[r.chiave] ?? 0) + d * 10, 0, 500));
+    else if (r.tipo === 'bottoni') { this.selBottone = Phaser.Math.Clamp((this.selBottone ?? 0) + d, 0, 2); this.lampeggiaBottone(); }
   }
 
   // INVIO sulla riga scelta
@@ -137,6 +147,7 @@ export class ImpostazioniScene extends Phaser.Scene {
       const voci = SCELTE[r.chiave], k = voci.findIndex(([v]) => v === I[r.chiave]);
       this.metti(r.chiave, voci[(k + 1) % voci.length][0]);
     } else if (r.tipo === 'bottoni') this.bottone(this.selBottone ?? 0);
+    else if (r.tipo === 'ritardo') this.misuraRitardo();
     else if (r.tipo === 'esci') this.esci();
     else if (r.tipo === 'volume') this.metti(r.chiave, I[r.chiave] > 0 ? 0 : 0.8);
   }
@@ -152,6 +163,9 @@ export class ImpostazioniScene extends Phaser.Scene {
       const voci = SCELTE[r.chiave], k = voci.findIndex(([v]) => v === I[r.chiave]);
       const d = x < X_COM - 20 ? -1 : 1;
       this.metti(r.chiave, voci[(k + d + voci.length) % voci.length][0]);
+    } else if (r.tipo === 'ritardo') {
+      if (x > X_COM + 55) this.misuraRitardo();
+      else this.metti(r.chiave, Phaser.Math.Clamp((I[r.chiave] ?? 0) + (x < X_COM ? -10 : 10), 0, 500));
     } else if (r.tipo === 'bottoni') {
       const k = r.pulsanti.findIndex((t) => Math.abs(x - t.x) < t.width / 2 + 6);
       if (k >= 0) { this.selBottone = k; this.bottone(k); } else this.disegna();
@@ -224,9 +238,94 @@ export class ImpostazioniScene extends Phaser.Scene {
     }
   }
 
+  misuraRitardo() {
+    Audio.sfx('scegli');
+    this.scene.start('Ritardo', { ritorno: this.ritorno, chiave: this.chiave });
+  }
+
   esci() {
     Audio.sfx('scegli');
     if (this.ritorno === 'Pausa') this.scene.start('Pausa', { chiave: this.chiave });
     else this.scene.start('Menu');
+  }
+}
+
+// ------------------------------------------------------------
+// La misura del ritardo audio: il gioco suona dei BIP a tempo, e si tocca (o si preme SPAZIO) a ogni
+// BIP ascoltando, senza guardare. Il ritardo è la mediana tra quando il BIP parte e quando si tocca
+// (i primi colpi non contano: servono a prendere il ritmo).
+const BIP = { quanti: 16, ogni: 0.6, scarta: 3 };
+
+export class RitardoScene extends Phaser.Scene {
+  constructor() { super('Ritardo'); }
+
+  create(dati) {
+    inquadra(this);
+    this.dati = dati;
+    raggi(this, 0x4a6ad8, 0x6a8af0);
+    txt(this, 240, 22, 'RITARDO AUDIO', { size: 16, color: '#ffe14a' });
+    pannello(this, 240, 104, 400, 110, { alfa: 0.65, raggio: 10 });
+    txt(this, 240, 72, perDito('Metti le cuffie (o le casse) che usi per giocare. Quando parte, premi SPAZIO a ogni BIP, a tempo: ascolta, non guardare lo schermo.',
+      'Metti le cuffie (o le casse) che usi per giocare. Quando parte, tocca lo schermo a ogni BIP, a tempo: ascolta, non guardare lo schermo.'), { size: 8, wrap: 380 });
+    this.stato = txt(this, 240, 128, perDito('INVIO: comincia', 'Tocca: comincia'), { size: 11, color: '#ffe14a' });
+    this.conto = txt(this, 240, 190, '', { size: 9, color: '#fff3d6' });
+    txt(this, 240, 256, perDito('ESC: torna alle impostazioni', 'La freccia in alto: torna alle impostazioni'), { size: 7, color: '#fff3d6' });
+    this.fase = 'pronto';
+    this.bip = [];
+    this.tocchi = [];
+    Audio.musica(null);                       // (senza musica, si sentono solo i BIP)
+    const tocco = () => {
+      if (this.fase === 'pronto') return this.parti();
+      if (this.fase === 'misura') this.tocchi.push(performance.now());
+      else if (this.fase === 'fatto') this.esci();
+    };
+    this.input.on('pointerdown', tocco);
+    for (const k of ['SPACE', 'ENTER']) this.input.keyboard.on('keydown-' + k, (e) => { if (!e.repeat) tocco(); });
+    this.input.keyboard.on('keydown-ESC', () => this.esci());
+    if (eTouch()) pulsante(this, 16, 13, 'indietro', () => this.esci());
+  }
+
+  parti() {
+    this.fase = 'misura';
+    this.stato.setText('ASCOLTA... E TOCCA A OGNI BIP');
+    for (let k = 0; k < BIP.quanti; k++) this.time.delayedCall(800 + k * BIP.ogni * 1000, () => {
+      Audio.sfx('bip');
+      this.bip.push(performance.now());
+      this.conto.setText(`${k + 1} / ${BIP.quanti}`);
+    });
+    this.time.delayedCall(800 + BIP.quanti * BIP.ogni * 1000 + 500, () => this.calcola());
+  }
+
+  calcola() {
+    // ogni tocco va col BIP che lo precede da 0,1 s prima fino a mezzo secondo dopo (i BIP sono a
+    // 0,6 s l'uno dall'altro: ce n'è uno solo così). Un ritardo più lungo di mezzo secondo non si misura
+    const d = [];
+    for (const t of this.tocchi) {
+      const b = this.bip.slice(BIP.scarta).find((x) => t - x >= -100 && t - x <= 500);
+      if (b != null) d.push(t - b);
+    }
+    this.fase = 'fatto';
+    if (d.length < 6) {
+      this.fase = 'pronto';
+      this.bip = []; this.tocchi = [];
+      this.stato.setText(perDito('Troppo pochi tocchi a tempo: INVIO per riprovare', 'Troppo pochi tocchi a tempo: tocca per riprovare'));
+      Audio.sfx('errore');
+      return;
+    }
+    d.sort((a, b) => a - b);
+    const mediana = d[Math.floor(d.length / 2)], ms = Phaser.Math.Clamp(Math.round(mediana / 10) * 10, 0, 500);
+    Salvataggio.imposta('ritardoAudio', ms);
+    Audio.sfx('bonus');
+    this.stato.setText(`RITARDO: ${ms} ms`);
+    scritta(this, 240, 158, ms >= 100 ? 'Le frecce e le note aspetteranno il suono' : 'Il suono arriva quasi subito', { size: 9, color: '#7dff9a', durata: 99999 }).setAngle(0);
+    this.conto.setText(perDito('INVIO: torna alle impostazioni', 'Tocca: torna alle impostazioni'));
+  }
+
+  esci() {
+    Audio.sfx('scegli');
+    // la musica di prima: quella del menu, o del microgioco in pausa
+    const id = this.dati?.chiave?.replace('mg_', '');
+    Audio.musica(this.dati?.ritorno === 'Pausa' ? CONFIG.microgiochi[id]?.musica ?? 'gioco' : 'menu');
+    this.scene.start('Impostazioni', { ritorno: this.dati?.ritorno, chiave: this.dati?.chiave });
   }
 }

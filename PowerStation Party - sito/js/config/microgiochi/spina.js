@@ -20,17 +20,22 @@ export default {
   obiettivo: 'Fai più punti di Beppe!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Stima: Beppe in 35 s fa circa 19 pinte (114 punti); chi lo batte prende l'argento.
-  medaglie: { bronzo: 80, argento: 120, oro: 170 },
+  // Stima: Beppe in 35 s fa da 20 a 25 pinte (120-150 punti, dipende dalla sua giornata).
+  medaglie: { bronzo: 100, argento: 150, oro: 200 },   // (erano 80, 120, 170. Giocatore automatico bravo 200-225, a caso 0)
   // i tre bicchieri: forma (largo, alto), ampiezza della zona verde (x), velocità (x) e punti
   bicchieri: {
     pinta: { largo: 1, alto: 1, zona: 1, vel: 1, punti: 5 },
     boccale: { largo: 1.25, alto: 1.1, zona: 1.1, vel: 0.7, punti: 8 },  // grande: si riempie piano
     calice: { largo: 0.8, alto: 1.05, zona: 0.55, vel: 1.15, punti: 9 }, // zona strettissima: il rischio
   },
-  perfetta: 0.3,       // PERFETTA se si rilascia entro questa frazione dal centro della zona verde
+  perfetta: 0.18,      // PERFETTA se si rilascia entro questa frazione dal centro della zona verde (era 0.3)
   bonusPerfetta: 3,    // punti in più per una PERFETTA
   puntiBeppe: 6,       // punti che Beppe fa con ogni sua pinta
+  // la giornata di Beppe (dal seme del round: uguale per tutti nel round, diversa tra un round e
+  // l'altro): i suoi secondi per pinta si moltiplicano per un numero tra questi due...
+  formaBeppe: [0.88, 1.12],
+  variaBeppe: 0.12,    // ...e ogni pinta ci mette fino al 12% in più o in meno
+  sbagliaBeppe: 0.07,  // probabilità che una pinta gli trabocchi (la butta: niente punti)
   // zona verde: ampiezza (frazione del bicchiere) a inizio e fine partita
   zonaInizio: 0.22,
   zonaFine: 0.13,
@@ -41,9 +46,9 @@ export default {
   // i tre atti: da quando (secondi), annuncio, secondi per pinta di Beppe, pausa dopo un bicchiere
   // buono, probabilità di calice e boccale, dispetti di Beppe
   atti: [
-    { da: 0, nome: 'SPILLA!', beppe: 2.0, pausa: 0.35, calice: 0, boccale: 0 },
-    { da: 12, nome: 'ORA DI PUNTA!', beppe: 1.8, pausa: 0.25, calice: 0.2, boccale: 0.3 },
-    { da: 24, nome: 'BEPPE FA I DISPETTI!', beppe: 1.7, pausa: 0.25, calice: 0.25, boccale: 0.3, dispetti: true },
+    { da: 0, nome: 'SPILLA!', beppe: 1.6, pausa: 0.35, calice: 0, boccale: 0 },              // (Beppe era 2.0, 1.8, 1.7)
+    { da: 12, nome: 'ORA DI PUNTA!', beppe: 1.45, pausa: 0.25, calice: 0.2, boccale: 0.3 },
+    { da: 24, nome: 'BEPPE FA I DISPETTI!', beppe: 1.35, pausa: 0.25, calice: 0.25, boccale: 0.3, dispetti: true },
   ],
   dispettoOgni: 3.5,   // secondi (circa) tra un urto al bancone e l'altro
   durataUrto: 1.2,     // secondi in cui la zona verde balla
@@ -54,7 +59,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { zonaInizio: 0.28, zonaFine: 0.18, velInizio: 0.75, velFine: 0.95, perfetta: 0.38, dispettoOgni: 5, ballaZona: 0.05 },
-    difficile: { zonaInizio: 0.18, zonaFine: 0.1, velInizio: 0.95, velFine: 1.25, perfetta: 0.25, dispettoOgni: 2.6, ballaZona: 0.1 },
+    facile: { zonaInizio: 0.28, zonaFine: 0.18, velInizio: 0.75, velFine: 0.95, perfetta: 0.26, dispettoOgni: 5, ballaZona: 0.05, formaBeppe: [1, 1.22] },
+    difficile: { zonaInizio: 0.18, zonaFine: 0.1, velInizio: 0.95, velFine: 1.25, perfetta: 0.13, dispettoOgni: 2.6, ballaZona: 0.1, formaBeppe: [0.82, 1] },
   },
 };

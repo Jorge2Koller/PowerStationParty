@@ -63,7 +63,7 @@ export const CONFIG = {
     { id: 'petri', nome: 'Petri', soprannome: 'Il Piovra', colore: '#8fa8ff', esulta: 'Ci ho messo le mani, tutte!', perde: 'Mi sono impigliato.' },
     { id: 'manna', nome: 'Il Manna', soprannome: 'La Calamita', colore: '#f6c63a', esulta: 'Ovviamente.', perde: 'Era bianca! BIANCA!' },
     { id: 'pastaffi', nome: 'Pastaffi', soprannome: 'Il figlio di Emilio', colore: '#c98a4e', esulta: 'Papà, hai visto?', perde: 'Papà, non guardare.' },
-    // i due cantanti di "Provini a X-Fattore"
+    // i due cantanti di "Provini a X-Factor"
     { id: 'tini', nome: 'Tini', soprannome: 'Social Tedio', colore: '#b6f23c', esulta: 'Questa finisce nel disco.', perde: 'Il pubblico non era pronto.' },
     { id: 'oli', nome: 'Oli', soprannome: 'Vanz', colore: '#4d7cff', esulta: 'Sold out, ragazzi!', perde: 'Avevo il microfono spento.' },
   ],

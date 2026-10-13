@@ -2,16 +2,16 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.10-xfattore',
+  versione: '2026.10-collaudo',
   titolo: 'NOVITÀ',
   voci: [
-    'PROVINI A X-FATTORE: il diciassettesimo microgioco, a tempo di musica',
-    'Sposti la nota sul pentagramma: i cantanti cantano quella che dai tu',
-    'Nota giusta, voce piena; nota sbagliata... si sente, eccome',
-    'Tre atti: LA STROFA, IL RITORNELLO e L\'ACUTO da tenere fino in fondo',
-    'Alla fine votano i quattro giudici: con 3 SÌ sei ai Bootcamp',
-    'Due personaggi nuovi, i cantanti: TINI (Social Tedio) e OLI (Vanz)',
-    'La griglia dei personaggi ora ha sei colonne: ci stanno tutti',
-    'E sempre: beer pong, medaglie, Pinte, Bancone, livelli, Lampo, Torneo',
+    'IL PASSO DEL PASSASEO: la salita in bici, testa a testa. Pedala a tempo!',
+    'SPALMA IL BOTA in tre atti: crema, ombrellone, gabbiani e onde',
+    'PASSAGGIORGIO più furbo a ogni successo, e passa Emilio con Denny',
+    'PANINO: gli ordini dei clienti, in fila, e la pila che crolla',
+    'SCAPOLI: frecce dall\'alto, doppie solo alla fine, e balli anche tu',
+    'PROVINI A X-FACTOR: tre canzoni nuove (rock, pop, rap) e giudici più severi',
+    'Ritocchi dappertutto: Beppe più veloce, la lama da sciacquare, mani vere...',
+    'Impostazioni: RITARDO AUDIO per cuffie e casse Bluetooth. Pausa con due tocchi',
   ],
 };

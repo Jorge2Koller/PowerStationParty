@@ -204,8 +204,16 @@ function sfondoStrada(c) {
   for (let i = 0; i < 900; i++) { c.fillStyle = i % 2 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.1)'; c.fillRect(151 + r() * 178, r() * 270, 1, 1); }
   for (const [x, y, w, h] of [[168, 60, 30, 18], [280, 150, 34, 22], [200, 190, 22, 12]]) { rrect(c, x, y, w, h, 3); c.fillStyle = 'rgba(40,40,48,0.25)'; c.fill(); }
   c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(151, 0, 5, 270); c.fillRect(324, 0, 5, 270);
-  for (const x of [209, 269]) for (let y = 4; y < 214; y += 26) { rrect(c, x, y, 2.4, 15, 1.2); c.fillStyle = '#f1f1ea'; c.fill(); }
-  for (let x = 157; x < 324; x += 14) { rrect(c, x, 222, 8.5, 31, 1); c.fillStyle = '#f1f1ea'; c.fill(); }
+  // le strisce (Arriva ReGrorio!): continue ai bordi, tratteggiate tra le tre corsie, con l'ombra
+  // e un po' consumate; poi le strisce pedonali
+  const rs = casuale(77);
+  for (const x of [156.4, 321.2]) { c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(x + 0.7, 0, 2.4, 216); c.fillStyle = '#eceade'; c.fillRect(x, 0, 2.4, 216); }
+  for (const x of [208.4, 268.4]) for (let y = 2; y < 210; y += 24) {
+    rrect(c, x + 0.7, y + 0.9, 3.2, 13, 1.6); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fill();
+    rrect(c, x, y, 3.2, 13, 1.6); c.fillStyle = '#f4f3ea'; c.fill();
+    for (let k = 0; k < 4; k++) { c.fillStyle = 'rgba(95,95,105,0.4)'; c.fillRect(x + rs() * 2.4, y + rs() * 12, 0.8, 0.8); }
+  }
+  for (let x = 157; x < 324; x += 14) { rrect(c, x + 0.7, 222.9, 8.5, 31, 1); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fill(); rrect(c, x, 222, 8.5, 31, 1); c.fillStyle = '#f1f1ea'; c.fill(); }
   ellisse(c, 285, 120, 6.5, 6); c.fillStyle = '#3f4048'; c.fill(); tratto(c, '#2c2d34', 0.8);
   for (let i = -2; i <= 2; i++) { c.fillStyle = '#2c2d34'; c.fillRect(280.5, 120 + i * 2.2 - 0.3, 9, 0.6); }
 

@@ -44,6 +44,14 @@ export default {
   ],
   // lancio
   ricarica: 0.7,          // secondi per prendere il fumogeno successivo
+  // fionda (mouse e dito): quanto tirare indietro (unità) per la forza piena. Se sotto al punto
+  // dove hai premuto c'è meno spazio, basta meno (mai meno di tiroMinimo). Col mouse si tira di
+  // meno: il mouse è preciso, e spesso si preme in fondo allo schermo, sulla mano
+  tiroPieno: 46,          // (era 70 per tutti)
+  tiroPienoDito: 64,
+  tiroMinimo: 24,
+  mirino: 2.2,            // quanto si sposta il mirino per ogni unità di tiro di lato (mouse)...
+  mirinoDito: 2.2,        //   ...e col dito
   periodoForza: 2.2,      // tastiera: secondi perché la forza salga e riscenda (SPAZIO tenuto)
   velMira: 200,           // tastiera: velocità del mirino (unità/s)
   tolleranza: 4,          // margine (unità) intorno al vano della finestra

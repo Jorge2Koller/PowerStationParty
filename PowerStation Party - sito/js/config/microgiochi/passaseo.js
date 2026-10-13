@@ -1,76 +1,66 @@
-// Configurazione del microgioco "Passa di qua" (id: passaseo).
+// Configurazione del microgioco "Il Passo del Passaseo" (id: passaseo): la salita in bici.
 // Durata, comandi, obiettivo, punti, difficoltà e frasi: si cambiano qui senza toccare la logica.
 // (Il microgioco è in js/microgames/PassaseoScene.js; questa sezione arriva in CONFIG.microgiochi.passaseo.)
+// Prima era "Passa di qua" (in Panda tra le pozzanghere): rifatto dopo la serata di prova.
 export default {
-  titolo: 'Passa di qua',
-  verbo: 'SCHIZZA!',        // il comando in una parola (schermata prima del microgioco)
+  titolo: 'Il Passo del Passaseo',
+  verbo: 'PEDALA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
-  musica: 'corsa',         // traccia di audio.js
-  colore: 0xd83a3a,
-  ospite: { id: 'passaseo', etichetta: 'IN BICI:\nPASSASEO' },
+  musica: 'corsa',          // traccia di audio.js
+  colore: 0x2f8a4a,
+  ospite: { id: 'passaseo', etichetta: 'TESTA A TESTA:\nPASSASEO' },
   comandi: [
-    "FRECCE (o A/D), oppure il mouse: sterza. Pozzanghera accanto a un Passaseo: SPLASH!",
-    "SPAZIO (o tasto destro): clacson, sbanda e non apre l'ombrello",
-    'Non toccare i ciclisti: occhio al fango, alle Vespe e alla Golf',
+    'FRECCE SINISTRA e DESTRA (o A e D), una alla volta: pedali',
+    'A TEMPO: quando la pallina in basso arriva sul pedale. A caso si va piano',
+    'Prima del TORNANTE il ritmo rallenta: seguilo, o vai largo! Allo SPRINT, tutto',
   ],
   comandiTouch: [
-    'Trascina il dito: sterzi. Pozzanghera accanto a un Passaseo: SPLASH!',
-    "CLACSON (in basso a destra): sbanda e non apre l'ombrello",
-    'Non toccare i ciclisti: occhio al fango, alle Vespe e alla Golf',
+    'Tocca la metà SINISTRA e la DESTRA dello schermo, una alla volta: pedali',
+    'A TEMPO: quando la pallina in basso arriva sul pedale. A caso si va piano',
+    'Prima del TORNANTE il ritmo rallenta: seguilo, o vai largo! Allo SPRINT, tutto',
   ],
-  obiettivo: 'Schizza almeno 10 Passaseo!',
-  obiettivoSchizzi: 10,
+  obiettivo: 'Arriva in cima prima del Passaseo!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // (un giocatore automatico perfetto fa 800-1400 punti; 10 schizzi, la vittoria, sono circa 300)
-  medaglie: { bronzo: 120, argento: 320, oro: 650 },
-  // punti
-  puntiSchizzo: 10,         // moltiplicato per la serie di schizzi di fila (fino a maxSerie)
-  maxSerie: 5,
-  puntiPozzanghera: 1,      // pozzanghera presa senza nessuno accanto
-  malusCiclista: 10,
-  malusVeicolo: 10,
-  // guida
-  velInizio: 165,           // velocità della strada (unità/s), a inizio e fine partita
-  velFine: 255,
-  velFreno: 35,             // dopo un tocco si scende a questa velocità...
-  ripresa: 1.4,             // ...e si torna su in questi secondi
-  velSterzo: 175,
-  presaBagnato: 5,          // sotto l'acquazzone la Panda scivola (più basso = più scivolosa; all'asciutto è 30)
-  guadagnoDito: 1.25,
-  rallentaFango: 0.55,      // nel fango la strada va a questa frazione della velocità...
-  durataFango: 1.2,         // ...per tanti secondi
-  // ciclisti e pozzanghere
-  distanzaPozza: 30,        // la pozzanghera è a tanto dal ciclista, verso il centro strada (le piccole un po' più vicino)
-  ondeggioInizio: 2,        // il ciclista ondeggia di tanto (unità)...
-  ondeggioFine: 6,          // ...e a fine partita di più
-  bici: 0.35,               // velocità del ciclista rispetto alla strada
-  trattore: 0.55,
-  vespa: 95,                // la Vespa arriva contromano, con questa velocità in più
-  golf: 150,                // e la Golf di ReGrorio ancora più forte
-  // clacson e ombrello
-  ricaricaClacson: 3,       // secondi tra un clacson e l'altro
-  portataClacson: 150,      // si spaventano i ciclisti fino a tanto davanti alla Panda
-  spavento: 0.9,            // secondi di sbandata...
-  sbandata: 9,              // ...di tante unità verso il centro strada
-  accorgeA: 120,            // chi ha l'ombrello si accorge della Panda quando è a tanto...
-  tempoOmbrello: 0.55,      // ...e dopo tanti secondi lo apre (se non lo spaventi prima col clacson)
-  // I tre atti: da = secondo d'inizio; intervallo = secondi tra un incontro e l'altro; le altre sono
-  // probabilità: veicoli (un mezzo invece di un ciclista), golf (tra i mezzi), contromano (ciclista a
-  // sinistra), gruppetto, fango, grande (pozzanghera grande invece che piccola), ombrello,
-  // trafficoContromano (una Vespa arriva insieme alla pozzanghera contromano)
-  atti: [
-    { da: 0, nome: '', intervallo: 1.5, veicoli: 0.15, golf: 0, contromano: 0.3, gruppetto: 0, fango: 0, grande: 0.5, ombrello: 0, trafficoContromano: 0 },
-    { da: 11, nome: 'ACQUAZZONE!', pioggia: true, intervallo: 1.1, veicoli: 0.15, golf: 0.2, contromano: 0.35, gruppetto: 0.1, fango: 0.22, grande: 0.45, ombrello: 0.35, trafficoContromano: 0.3 },
-    { da: 23, nome: 'ARRIVA IL GRUPPETTO!', intervallo: 1.0, veicoli: 0.22, golf: 0.4, contromano: 0.4, gruppetto: 0.35, fango: 0.12, grande: 0.35, ombrello: 0.3, trafficoContromano: 0.5 },
-  ],
-  frasi: ['Ma dai!', 'Sono fradicio!', 'La mia divisa!', 'Ma guarda te!', 'Che doccia!', 'Passa di là!'],
-  frasiSfiorato: ['Attento!', 'Piano!', 'Ehi!'],
-  frasiClacson: ['Eh?!', 'Che spavento!', 'Uh!'],
+  // (tarate coi giocatori automatici: quello bravo arriva in cima in 30 s e fa circa 310, quello a
+  // caso 25-30, chi sta fermo 0)
+  medaglie: { bronzo: 110, argento: 220, oro: 290 },
+  // punti: i metri fatti, le pedalate perfette (allo sprint doppie) e, se batti il Passaseo, un
+  // premio più tanto per ogni secondo di vantaggio
+  punti: { metro: 0.2, perfetta: 2, vittoria: 50, secondo: 10 },
+
+  // --- la salita ---
+  // la lunghezza si adatta: il Passaseo, col suo passo, arriva in cima tra questi secondi (dal seme)
+  arrivoPassaseo: [32.6, 33.8],
+  passoPassaseo: [0.8, 0.85],     // il Passaseo va a questa frazione della velocità di chi pedala perfetto
+  lunghezze: { tornante: 26, sprint: 110 },   // (in proporzione: poi la salita si allunga tutta insieme)
+  avvicinamento: 34,              // metri prima di un tornante in cui il ritmo rallenta già
+  pendenze: { salita: 0.06, tornante: 0.02, strappo: 0.13, sprint: 0.04 },
+  nomiAtti: ['', 'I TORNANTI!', 'STRAPPO E SPRINT!'],
+
+  // --- pedalare ---
+  vel: { salita: 30, tornante: 15, strappo: 17, sprint: 38 },     // velocità con la spinta piena (metri al secondo)
+  cadenza: { salita: 2.2, tornante: 1.35, strappo: 1.55, sprint: 2.9 },   // pedalate al secondo (il ritmo)
+  finestre: { perfetta: 0.075, buona: 0.15 },   // quanto si può sbagliare il tempo (secondi, prima o dopo)
+  finestraStrappo: 0.8,           // sugli strappi le finestre sono più strette (x)
+  // ogni pedalata porta la spinta (da 0 a 1) verso il suo valore: perfetta 1, buona 0,75, a vuoto
+  // (fuori tempo o col pedale sbagliato) giù. Senza pedalare, dopo un po' la spinta cala
+  potenza: { perfetta: 1, buona: 0.75, vuoto: -0.35 },
+  spinta: { presa: 0.45, cala: 0.8 },
+  accelera: 1.5,                  // quanto in fretta si prende velocità (al secondo)...
+  frena: 2.2,                     // ...e quanto in fretta si perde
+  tornanteMax: 21,                // chi entra in un tornante più veloce di così va LARGO...
+  largo: 0.45,                    // ...e resta con tanto della sua velocità
+
+  frasiPassaseo: ['In salita sono un fulmine!', 'Respira col naso!', 'Che bel panorama, eh?', 'Su, su, su!', 'Questa la faccio ogni domenica.'],
+  frasiSorpasso: ['Ciao ciao!', 'Ti aspetto in cima!', 'Passo io!'],
+  frasiSorpassato: ['Ehi! Da dove sbuchi?', 'Ma che gambe hai?', 'Non vale, hai la bici nuova!'],
+  frasiVince: ['Torna quando hai le gambe!', 'Tutta questione di fiato.', 'Ci vediamo al prossimo passo!'],
+  frasiPerde: ['Mi si è scaricata la borraccia...', 'Ho bucato, giuro.', 'Rivincita in discesa!'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
-  // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
+  // questi valori. Un oggetto dentro un oggetto si unisce campo per campo (valori assoluti).
   livelli: {
-    facile: { velInizio: 145, velFine: 215, tempoOmbrello: 0.8, ricaricaClacson: 2.2 },
-    difficile: { velInizio: 185, velFine: 290, tempoOmbrello: 0.4, ricaricaClacson: 3.8 },
+    facile: { passoPassaseo: [0.74, 0.78], finestre: { perfetta: 0.095, buona: 0.18 }, tornanteMax: 24 },
+    difficile: { passoPassaseo: [0.86, 0.9], finestre: { perfetta: 0.06, buona: 0.12 }, tornanteMax: 19 },
   },
 };

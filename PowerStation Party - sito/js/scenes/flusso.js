@@ -83,10 +83,13 @@ export class IntroScene extends Phaser.Scene {
     const titolo = txt(this, 240, cambio ? 37 : 40, cambio ? `TOCCA A ${g.nome.toUpperCase()}!` : m.titolo, { size: cambio ? 21 : 19, color: cambio ? g.colore : '#ffe14a', wrap: 460 });
     titolo.setScale(0);
     this.tweens.add({ targets: titolo, scale: 1, duration: 450, ease: 'Back.out' });
-    if (cambio) txt(this, 240, 57, perDito(`Passa la tastiera a ${g.nome}`, `Passa il telefono a ${g.nome}`), { size: 7.5, color: '#fff3d6' });
+    // sotto il titolo, alla sua altezza vera (un titolo lungo va su due righe)
+    let sotto = titolo.y + titolo.height / 2 - 3;
+    if (cambio) { const t = txt(this, 240, sotto + 1, perDito(`Passa la tastiera a ${g.nome}`, `Passa il telefono a ${g.nome}`), { size: 7.5, color: '#fff3d6', oy: 0 }); sotto = t.y + t.height; }
     else if (m.verbo) {
       // il comando in una parola
-      const v = txt(this, 240, 58, m.verbo, { size: 11, color: '#ffffff', stroke: '#1f1430', thick: 4 }).setAlpha(0);
+      const v = txt(this, 240, sotto + 8, m.verbo, { size: 11, color: '#ffffff', stroke: '#1f1430', thick: 4 }).setAlpha(0);
+      sotto = v.y + v.height / 2;
       this.tweens.add({ targets: v, alpha: 1, delay: 350, duration: 200 });
       this.tweens.add({ targets: v, scale: 1.12, delay: 550, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
@@ -119,7 +122,7 @@ export class IntroScene extends Phaser.Scene {
 
     // comandi e obiettivo
     // (il pannello si adatta all'altezza reale dei testi)
-    const cima = 66;
+    const cima = Math.max(66, Math.round(sotto + 1));
     txt(this, 240, cima + 11, 'COMANDI', { size: 9, color: '#ffe14a', depth: 2 });
     const tc = txt(this, 240, cima + 18, (eTouch() && m.comandiTouch ? m.comandiTouch : m.comandi).join('\n'), { size: 7, oy: 0, spacing: 0, wrap: 246, depth: 2 });
     const to = txt(this, 240, tc.y + tc.height + 1, m.obiettivo, { size: 8, oy: 0, color: '#7dff9a', wrap: 246, depth: 2 });
@@ -148,6 +151,9 @@ export class IntroScene extends Phaser.Scene {
 
     attendiInvio(this, () => {
       pronto.destroy();
+      // durante il conto alla rovescia regole e personaggi si scuriscono: i numeri si leggono meglio
+      const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(90);
+      this.tweens.add({ targets: velo, fillAlpha: 0.78, duration: 180 });
       // conto alla rovescia 3-2-1-VIA
       // (l'ultimo è il comando in una parola: SPILLA!, SCHIVA!...)
       // in Lampo si parte subito: solo il comando
@@ -203,11 +209,17 @@ export class RisultatoScene extends Phaser.Scene {
     const frase = r.vittoria ? g.esulta : g.perde;
     if (frase) txt(this, 104, 233, `"${frase}"`, { size: 6, color: '#fff3d6', wrap: 190 });
 
-    // (il riquadro parte un po' più in alto: se il riepilogo va su due righe ci sta lo stesso)
-    pannello(this, 330, 116, 240, 86, { alfa: 0.6, bordo: null, raggio: 10 });
-    txt(this, 330, 88, r.riepilogo, { size: 8, wrap: 230 });
-    txt(this, 330, 106, 'PUNTEGGIO', { size: 9, color: '#ffe14a' });
-    const pt = txt(this, 330, 134, '0', { size: 32 });
+    // il riepilogo (una o due righe), e sotto, all'altezza vera del testo, PUNTEGGIO e il numero;
+    // il riquadro si allunga quanto serve (come nell'introduzione)
+    // (con due righe tutto si stringe un po', se no la medaglia tocca il riquadro di sotto)
+    const riep = txt(this, 330, 79, r.riepilogo, { size: 8, wrap: 230, oy: 0, depth: 2 });
+    const stretto = riep.height > 20;
+    const yEtichetta = Math.max(103, riep.y + riep.height + (stretto ? 2 : 4));
+    this.yPunti = yEtichetta + (stretto ? 24 : 27);
+    this.dySotto = stretto ? 19 : 21;
+    pannello(this, 330, (74 + this.yPunti + this.dySotto + 9) / 2, 240, this.yPunti + this.dySotto + 9 - 74, { alfa: 0.6, bordo: null, raggio: 10 });
+    txt(this, 330, yEtichetta, 'PUNTEGGIO', { size: 9, color: '#ffe14a', depth: 2 });
+    const pt = txt(this, 330, this.yPunti, '0', { size: 32, depth: 2 });
     pt.setScale(0);
     this.tweens.add({ targets: pt, scale: 1, delay: 300, duration: 400, ease: 'Bounce.out' });
     // il punteggio sale (col ticchettio), poi arriva la medaglia col timbro
@@ -295,22 +307,24 @@ export class RisultatoScene extends Phaser.Scene {
     const id = Sessione.idCorrente, soglie = CONFIG.microgiochi[id].medaglie, tipo = medaglia(id, punteggio);
     if (!soglie) return;
     if (tipo) {
-      const img = im(this, 262, 132, 'medaglia_' + tipo, 1.3).setAngle(-10), s0 = img.scaleX;
+      const Y = this.yPunti, img = im(this, 262, Y - 2, 'medaglia_' + tipo, 1.3).setAngle(-10).setDepth(3), s0 = img.scaleX;
       img.setScale(s0 * 3).setAlpha(0);
       this.tweens.add({ targets: img, scale: s0, alpha: 1, duration: 200, ease: 'Quad.in', onComplete: () => {
         Audio.sfx(tipo === 'oro' ? 'bonus' : 'sbam');
         scuoti(this, 90, 0.004);
-        stelle(this, 262, 132, tipo === 'oro' ? 9 : 5);
+        stelle(this, 262, Y - 2, tipo === 'oro' ? 9 : 5);
         this.tweens.add({ targets: img, angle: 10, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       } });
-      txt(this, 262, 154, NOMI_MEDAGLIE[tipo], { size: 6, color: '#ffe14a' });
+      txt(this, 262, Y + this.dySotto, NOMI_MEDAGLIE[tipo], { size: 7, color: '#ffe14a', depth: 3 });
     }
     const P = this.progressi;
-    if (P?.pinte) { im(this, 395, 152, 'iconaPinta', 0.42); txt(this, 401, 152, `+${P.pinte} PINTE`, { size: 6, ox: 0, color: '#ffe14a' }); }
-    if (P?.record) { scritta(this, 330, 72, 'NUOVO RECORD!', { size: 12, color: '#7dff9a', durata: 1600 }).setAngle(0); Audio.sfx('bonus'); }
-    annunciaTrofei(this, P?.trofei, 300);
+    const Y = this.yPunti;
+    if (P?.pinte) { im(this, 388, Y + this.dySotto, 'iconaPinta', 0.42).setDepth(3); txt(this, 394, Y + this.dySotto, `+${P.pinte} PINTE`, { size: 7, ox: 0, color: '#ffe14a', depth: 3 }); }
+    if (P?.record) { scritta(this, 330, Y + this.dySotto, 'NUOVO RECORD!', { size: 10, color: '#7dff9a', durata: 1600 }).setAngle(0); Audio.sfx('bonus'); }
+    // (i trofei arrivano in basso, dopo il titolo e la medaglia)
+    annunciaTrofei(this, P?.trofei, 900);
     const prossima = MEDAGLIE.find((k) => punteggio < soglie[k]);
-    txt(this, 404, 134, prossima ? `${NOMI_MEDAGLIE[prossima]}\na ${soglie[prossima]}` : 'TUTTE LE\nMEDAGLIE!', { size: 6.5, color: '#fff3d6', spacing: -1 });
+    txt(this, 404, Y - 2, prossima ? `${NOMI_MEDAGLIE[prossima]}\na ${soglie[prossima]}` : 'TUTTE LE\nMEDAGLIE!', { size: 7, color: '#fff3d6', spacing: -1, depth: 3 });
   }
 }
 

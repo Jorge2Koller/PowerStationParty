@@ -18,14 +18,14 @@ I microgiochi sono diciassette:
 | `ronda` | TorRONDAcelli | il Generale |
 | `blackjack` | L'Ingiocabile | l'Ingiocabile |
 | `palleggi` | MaraZio | lo Zio |
-| `passaseo` | Passa di qua | Passaseo |
+| `passaseo` | Il Passo del Passaseo | Passaseo |
 | `bota` | Spalma il Bota! | il Bota |
 | `guida` | Il Passaggiorgio | Giorgio |
 | `piovra` | Petri Tentacolari | il Petri ("il Piovra") |
 | `scapoli` | L'Incubo degli Scapoli | il Manna |
 | `retromarcia` | Emilio in Retromarcia | Emilio (con Pastaffi e gli Shar Pei) |
 | `beerpong` | Beer Pong al Pallaio | i veterani del Pallaio (lo Zio e Marsupino) |
-| `xfactor` | Provini a X-Fattore | i cantanti, Tini e Oli |
+| `xfactor` | Provini a X-Factor | i cantanti, Tini e Oli |
 
 Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
 "Modalità" e "Beer pong" qui sotto.
@@ -103,8 +103,10 @@ precedenti, Mac non aggiornati) `js/compat.js` aggiunge al canvas quello che man
 
 Il gioco si tiene in **orizzontale**: in verticale compare "Gira il telefono" e,
 se si stava giocando, il microgioco va in pausa (anche quando arriva una telefonata
-o si passa a un'altra app). In alto a destra ci sono i pulsanti **pausa** e
-**audio** (sul telefono non ci sono ESC e M) e, nel menu, **schermo intero** dove il
+o si passa a un'altra app). Sul telefono non ci sono ESC e M: mentre si gioca, in alto a
+destra c'è il pulsante **pausa**, che vuole **due tocchi** (al primo si accende e sotto dice
+ANCORA: giocando lo si sfiorava e la partita si fermava). L'**audio** si accende e spegne dal
+pulsante in alto a destra del menu e della pausa; nel menu c'è anche **schermo intero** dove il
 browser lo permette (Android sì, iPhone no: lì si usa la schermata Home, sotto).
 
 ### Stessa Wi-Fi, col computer acceso
@@ -178,7 +180,9 @@ Sul computer il gioco si disegna a 1920x1080 (`RES = 4`); su telefoni e tablet a
 1440x810 (`RES = 3`): metà dei pixel e metà della memoria per le texture, che su
 iPhone hanno un tetto e sui telefoni economici pesano. Sullo schermo di un telefono
 resta nitido. Per provare: `index.html?res=2` (o 3, 4) forza la risoluzione,
-`index.html?touch=1` mostra dal computer i testi e i pulsanti del telefono.
+`index.html?touch=1` mostra dal computer i testi e i pulsanti del telefono,
+`index.html?seme=1234` fa giocare sempre lo stesso round (stesse uscite, stesse carte), per
+rifare una partita uguale mentre si prova qualcosa.
 
 ## Modalità
 
@@ -237,10 +241,17 @@ in fondo.
 Dal menu (e dalla pausa) **IMPOSTAZIONI**: volume della **musica** e degli **effetti**,
 **audio** sì/no, **vibrazione** sì/no (dove il telefono la ha: Android), **difficoltà di
 partenza**, **prova lampo** prima dei microgiochi nuovi, **velocità dei testi** (quanto
-restano a schermo scritte e fumetti) e **schermo che trema** sì/no. Si cambiano con le
+restano a schermo scritte e fumetti), **schermo che trema** sì/no e **ritardo audio**. Si cambiano con le
 frecce (SU/GIÙ la riga, SINISTRA/DESTRA il valore) o toccando direttamente i comandi, e si
 salvano da sole. La **difficoltà di partenza** è il livello di chi non ne ha scelto uno
 (vedi "Livelli" qui sotto).
+
+**Ritardo audio** (0 di serie, da 0 a 500 ms): con le cuffie Bluetooth o la TV il suono arriva
+in ritardo, e nei giochi a tempo di musica (L'Incubo degli Scapoli, Provini a X-Factor) le note
+sembrano sfasate. Si regola a mano con SINISTRA/DESTRA (di 10 in 10) oppure con **PROVA**: parte
+una serie di BIP e si tocca (o si preme SPAZIO) a ogni BIP, ascoltando e senza guardare lo
+schermo; il gioco misura di quanto si arriva in ritardo e salva il numero. Quei giochi spostano
+il tempo di gioco di quanto indicato.
 
 **Prova lampo** (acceso di serie): la prima volta che si incontra un microgioco, su quel
 telefono o computer, prima della partita vera si giocano 6 secondi di prova che non contano
@@ -265,8 +276,10 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
 
 ### Prima e dopo i microgiochi
 
-- **Menu**: lo sfondo è la copertina del gioco (`icone/copertina.webp`, l'unica immagine non
-  disegnata col codice; se non si carica, il menu si disegna come prima). La copertina è anche
+- **Menu**: la copertina del gioco (`icone/copertina.webp`, l'unica immagine non disegnata col
+  codice) sta a sinistra, intera, e le voci in una colonna a destra, così non coprono le facce;
+  dietro, la stessa copertina sfocata e scurita. Se non si carica, il menu si disegna come prima
+  (personaggi e voci al centro). La copertina è anche
   l'icona dell'app (`icone/icona-*.png`) e l'anteprima quando si condivide il link
   (`icone/copertina-og.jpg`: per WhatsApp e simili funziona meglio quando il gioco è su
   GitHub Pages).
@@ -274,15 +287,18 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
   (testi in `js/config/novita.js`: per un aggiornamento nuovo si cambia `versione`); si
   rivede dal menu.
 - **Il comando in una parola**: ogni microgioco ha il suo verbo (SPILLA!, SCHIVA!, BALLA!...,
-  `verbo` nel suo file di configurazione): si vede sotto il titolo e chiude il conto alla
-  rovescia al posto di VIA!.
+  `verbo` nel suo file di configurazione): si vede sotto il titolo (anche quando il titolo va su
+  due righe) e chiude il conto alla rovescia al posto di VIA!. Durante il 3-2-1 l'introduzione
+  si scurisce, così il numero si legge sopra il riquadro dei comandi.
 - **Risultati**: il punteggio sale con un ticchettio, poi arriva la **medaglia** (bronzo,
-  argento o oro) col timbro; accanto, quanto manca alla prossima.
+  argento o oro) col timbro; accanto, quanto manca alla prossima. Il riquadro si allunga col
+  riepilogo (una o due righe) e i trofei appena presi arrivano dal basso, senza coprire
+  VITTORIA! o SCONFITTA.
 - **Premi buffi**: a fine sfida, prima della classifica finale, fino a tre premi ("Lo
   specialista", "Mani di burro", "L'eterno secondo", "Il diesel"...), calcolati dai punti
   sfida dei round (`js/premi.js`, titoli e frasi in `js/config/premi.js`).
 - **Musiche**: oltre a quelle di prima, la marcia del Generale (TorRONDAcelli), la corsa in
-  strada (Arriva ReGrorio!, Passa di qua) e la festa dei premi e della classifica finale
+  strada (Arriva ReGrorio!, Il Passo del Passaseo) e la festa dei premi e della classifica finale
   (tutte in `js/audio.js`, a 8 bit).
 - Le schermate entrano con una dissolvenza veloce.
 
@@ -380,7 +396,7 @@ compare il timbro "CONTRO SE STESSO!" e, dove il giocatore si vede in scena, ent
 il suo **doppione**: lo stesso personaggio travestito con occhiali finti, nasone e
 baffi, così i due non si confondono. Il microgioco non cambia di una virgola.
 Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
-microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Fattore").
+microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Factor").
 
 ### Beer pong
 
@@ -429,7 +445,8 @@ zoom sulla pallina e il rullo di tamburi.
   piedi; se sono pari, un tiro a testa a oltranza.
 - La sbronza vale per tutta la squadra che perde il bicchiere.
 - Alla fine i vincitori fanno il giro del tavolo coi coriandoli e il bicchiere alzato; i perdenti,
-  se sono SBRONZI, dormono con la faccia sul tavolo sotto una giacca, se no cantano stonati
+  se sono SBRONZI, dormono col mento sulle braccia incrociate e una giacca buttata sulle spalle,
+  se no cantano stonati
   abbracciati all'arbitro. Poi la frase di sfottò e Rivincita, Cambia personaggi, Menu.
 - Nel salvataggio conta come le altre: Pinte (`pinte.beerpong` in `js/config/bancone.js`), albo
   d'oro, sfide e vittorie dei personaggi (nel Profilo c'è anche la riga "Beer pong"), e il trofeo
@@ -450,17 +467,25 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - i clienti ordinano pinte, boccali (grandi: si riempiono piano) e calici (zona verde
     strettissima); dal 12° secondo l'ORA DI PUNTA, dal 24° Beppe FA I DISPETTI: urta il
     bancone e la zona verde balla
+  - al bancone, di spalle, quattro personaggi giocabili a caso (disegnati da dietro: capelli,
+    pettinatura, cappello e maglia dei personaggi veri)
+  - Beppe ha la sua giornata: dal seme del round esce quanto è in forma (e ogni pinta è un po'
+    diversa, ogni tanto gli trabocca): nel round è uguale per tutti, da un round all'altro cambia
 - Arriva ReGrorio! (SCHIVA!): frecce SINISTRA/DESTRA per cambiare corsia, SPAZIO per saltare.
   Col dito: tocca nel terzo di sinistra o di destra dello schermo per cambiare
   corsia, in mezzo per saltare (con due dita insieme si salta e si cambia corsia)
   - passa sulle monete per prenderle; la corona rotola davanti al muso della Golf: per
     prenderla bisogna restare nella corsia fino all'ultimo (o saltare la Golf)
   - le fasi si annunciano: ARRIVA DA DIETRO!, FA LE FINTE!, IL RE SI ARRABBIA!
+  - dove sta per passare una Golf la corsia si accende di rosso (più forte dalla parte da cui
+    arriva), col cartello di pericolo e le frecce che scendono (o salgono) nel suo verso
 - La Barba di O'Sfurnacchiat (mouse o trackpad):
   - tasto destro: stendi la schiuma (dopo qualche secondo si secca).
     Sul trackpad del Mac: clic a due dita, oppure tieni premuto CTRL e clicca.
     Si può premere o lasciare CTRL anche a metà passata per cambiare attrezzo
   - tasto sinistro: radi, solo dove c'è schiuma e senza correre (se vai veloce, taglietto)
+  - la lama si intasa: quando è piena (la barretta accanto al rasoio) va sciacquata nella
+    bacinella a destra (SCIACQUA QUI!), poi si rade di nuovo
   - la barba copre guance, baffi e mento ed esce appena dal viso; quella tagliata resta
     tagliata (la ricrescita è spenta: `ricrescitaInizio` e `ricrescitaFine` in `js/config/microgiochi/barba.js`)
   - niente rasoio su naso, labbra, occhi, orecchie e nei (nei e cerotti stanno sempre
@@ -477,15 +502,17 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     velocità massima per tutti, col mouse non si teletrasporta)
   - col dito: trascina in basso dove vuoi, il pane si sposta della stessa misura
     (non salta sotto il dito, così non lo copri)
-  - prendi prosciutto, würstel, sottiletta, ketchup e maionese (gli ultimi due
-    arrivano come schizzi dai tubetti che passano in alto); con tutti e 5 il panino
-    si chiude e ne parte un altro. Calzini, lische, ghiaccio e ciabatte lo rovinano
+  - ogni panino è l'ORDINE di un cliente (la sua faccia, in alto, col biglietto): gli
+    ingredienti vanno presi NELL'ORDINE del biglietto (il prossimo ha il cerchio giallo). Ketchup
+    e maionese arrivano come schizzi dai tubetti che passano in alto. Un ingrediente fuori ordine
+    non entra (-3): va lasciato cadere. Calzini, lische, ghiaccio e ciabatte rovinano il panino
     (e Marsupino va su tutte le furie: diventa paonazzo, salta, fuma dalle orecchie e urla)
-  - si prende in cima alla pila: più è alta, più ondeggia quando ti muovi
+  - si prende in cima alla pila: più è alta, più ondeggia quando ti muovi. Se pende troppo
+    (corri e freni di colpo) CROLLA: cadono gli ultimi due strati (un attimo prima lampeggia OCCHIO!)
   - Marsupino lancia la roba buona lontano dal pane: bisogna correre (chi sta fermo non
     prende niente)
-  - tre atti: dal 12° secondo DOPPIO LANCIO; dal 24° MARSUPINO SI ARRABBIA e le schifezze
-    te le tira addosso
+  - tre atti: ordini da 3 ingredienti; dal 12° secondo ORDINI DA QUATTRO (e il doppio lancio);
+    dal 24° MARSUPINO SI ARRABBIA: ordini da 5 e le schifezze te le tira addosso
 - Guerra, via quelle mani! (SCIAF!):
   - clic o tocco sulla mano = schiaffo; col dito si possono colpire due mani insieme
   - tastiera: i tasti da 1 a 5 (il numero è scritto sotto ogni piatto) danno lo schiaffo
@@ -495,7 +522,10 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - col guanto da forno servono due schiaffi; le finte tornano indietro da sole
   - schiaffo a vuoto: la tua mano resta dolorante per un attimo
 - Sego, sono sotto casa! (LANCIA!):
-  - mouse e dito: appoggia, tira indietro come una fionda, lascia (tiri più giù = più in alto)
+  - mouse e dito: appoggia, tira indietro come una fionda, lascia (tiri più giù = più in alto).
+    Per la forza piena basta tirare di poco col mouse, e se premi in fondo allo schermo basta
+    ancora meno (`tiroPieno`, `tiroPienoDito`, `tiroMinimo` in `sego.js`); il tiro vale anche
+    se il mouse esce dalla finestra
   - tastiera: FRECCE per mirare, SPAZIO tenuto per la forza (sale e scende), rilascia per lanciare
   - tre atti: dal 12° secondo TIRA VENTO (le finestre sbattono più spesso); dal 24° FRANCI
     CHIUDE TUTTO
@@ -505,7 +535,8 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
   - la palla ci mette di più ad arrivare lontano: mira un po' avanti alla bagnarola
-  - gommone 1 colpo, pedalò 2, galeone 3. Se toccano riva si prendono un
+  - le bagnarole dei pirati (inventati): lo SQUALOTTO (gommone a forma di squalo, 1 colpo), il
+    CIGNO PIRATA (pedalò, 2 colpi) e il GALEONE PAPERA (galeone gonfiabile, 3 colpi). Se toccano riva si prendono un
     ombrellone: affondali mentre scappano e l'ombrellone torna
   - munizioni: poche (i pallini in alto). Il Generale lancia una cassa ogni tanto, che
     atterra da sola sul cannone; un colpo torna anche da solo ogni tanto
@@ -519,6 +550,7 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     2 dal 24°): poi il banco punta il minimo per te, o ti fa stare
   - MOSSA DA PRO: ogni scelta uguale alla strategia di base vale 5 fiches in più (10 negli
     ultimi 11 secondi)
+  - al tavolo, spettatore, c'è lo Zio: quando perdi ride ("Popone"), e ogni tanto sogna
 - MaraZio (PALLEGGIA!):
   - FRECCE SINISTRA/DESTRA (o A/D) o il mouse per muoversi, SPAZIO o clic per calciare;
     col dito: trascina sul prato per muoverti e tocca CALCIA
@@ -529,24 +561,30 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     bianche sul prato dicono da che parte); dal 24° lo Zio calcia il PALLONE D'ORO:
     colpiscilo per 25 punti (se cade non succede niente, ma il tuo pallone intanto scende)
   - a ogni colpo la gamba dalla parte del pallone si alza (anche quella dello Zio)
-- Passa di qua (SCHIZZA!):
-  - FRECCE SINISTRA/DESTRA (o A/D), il mouse o il dito trascinato per sterzare
-  - passa nella pozzanghera proprio mentre affianchi un Passaseo in bici: SPLASH. Le piccole
-    vanno prese stando attaccati al ciclista; il gruppetto (tre in fila) si bagna uno dopo
-    l'altro; il fango rallenta la Panda
-  - SPAZIO (o tasto destro; sul telefono il pulsante CLACSON) suona il clacson, con la
-    ricarica: i Passaseo davanti sbandano verso la pozzanghera e non fanno in tempo ad aprire
-    l'ombrello (quelli col "!" lo aprono, e l'ombrello para lo schizzo)
-  - non toccare i ciclisti (si frena e si perdono punti); contromano arrivano Vespe e la Golf
-  - a metà l'acquazzone: piove, la strada è scura e la Panda scivola
-- Spalma il Bota! (SPALMA!, col mouse o col dito):
-  - tieni premuto e passa la mano sul Bota: la crema si stende dove passi (il tubetto non
-    finisce mai)
-  - il sole accende le zone calde (cerchi rossi) una dopo l'altra: dentro, la pelle senza crema
-    si scotta in pochi secondi. Coprila tutta prima e la zona si spegne (+10)
-  - la crema dura qualche secondo e il Bota non sta fermo (ondeggia, si stiracchia, prende il
-    telefono o una birra; a metà partita si gira): le zone vanno inseguite
+- Il Passo del Passaseo (PEDALA!: la salita in bici, testa a testa col Passaseo):
+  - si pedala un pedale alla volta, A TEMPO: FRECCE SINISTRA e DESTRA (o A e D); col dito (o
+    col mouse) la metà sinistra e la metà destra dello schermo. In basso la pallina del ritmo va
+    da un pedale all'altro: si preme quando ci arriva. Perfetta = spinta piena; buona = un po'
+    meno; fuori tempo o col pedale sbagliato = A VUOTO, si rallenta
+  - il ritmo cambia con la strada: prima dei TORNANTI rallenta (chi ci entra lanciato va LARGO e
+    perde metà della velocità), sugli STRAPPI è lento e preciso, allo SPRINT va forte (e le
+    perfette valgono doppio)
+  - in alto la salita col traguardo e le due facce, il distacco e la velocità
+  - tre atti lungo la salita: LA SALITA; I TORNANTI! (due tornanti e uno strappo); STRAPPO E
+    SPRINT! Il Passaseo va del suo passo, uguale per tutti nel round (seme): arriva in cima in
+    32-34 secondi, e la salita è lunga apposta
+- Spalma il Bota! (SPALMA!, col mouse o col dito: una giornata al lido in tre atti):
+  - LA CREMA: tieni premuto e passa la mano sul Bota, coprilo tutto (la crema ancora non si
+    scioglie): ogni % di pelle coperta sono punti
+  - L'OMBRELLONE (dal 12° secondo): la crema comincia a sciogliersi e una MACCHIA DI SOLE scivola
+    sul Bota; la mano diventa l'ombrellone (segue il mouse o il dito): tieni la sua ombra sulla
+    macchia. Il vento ogni tanto lo sposta
+  - GABBIANI E ONDE (dal 24°): si gira a pancia in giù e il sole accende le ZONE CALDE (cerchi
+    rossi): coprile tutte di crema prima che si scottino e si spengono. I gabbiani vengono a
+    rubare la crema: un clic (o un tocco) li scaccia, se no per un po' niente crema. Un'onda lava
+    la crema dalle gambe
   - niente crema su occhi e bocca; se ci finiscono sotto la mano perché si è mosso lui, non conta
+  - (il gioco delle zone calde da solo resta pronto per un futuro Lampo da 5 secondi)
 - Il Passaggiorgio (ACCHIAPPA!: stasera guida Giorgio, per forza):
   - Giorgio corre verso le macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV
     di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
@@ -556,35 +594,39 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     impolverata e si mette al volante (poi scende con una scusa e si ricomincia)
   - tastiera: FRECCE SINISTRA/DESTRA scelgono la macchina, SPAZIO lo tira fuori, INVIO gli
     lancia le chiavi quando è a terra
-  - più avanti: finte, sagome di cartone di Giorgio nelle altre portiere, Giorgio col
-    cappuccio e gli occhiali con un sosia incappucciato (da non tirare fuori), il bagagliaio
+  - più lo fai guidare (e più lo tiri fuori), più diventa FURBO (le stelline in alto a destra):
+    più veloce, finte, sagome di cartone nelle altre portiere, il cappuccio con un sosia
+    incappucciato (da non tirare fuori), il bagagliaio
+  - tre atti: il parcheggio; dal 12° secondo ARRIVA EMILIO! (passa in macchina con Denny, che
+    grida "Giorgio, ci porta i mi babbo, gnamo monta!": Giorgio molla tutto e gli corre dietro.
+    Fermalo con un clic o un tocco prima che salga; da tastiera SPAZIO, ma solo quando sopra di
+    lui compare ORA!); dal 24° ANCHE NEL BAGAGLIAIO (ed Emilio ripassa)
   - clic a vuoto (o sul cartone): la mano resta ferma per un attimo
-  - tre atti: dal 12° secondo GIORGIO SI TRAVESTE; dal 24° ANCHE NEL BAGAGLIAIO
 - Petri Tentacolari (SALVALE!: scappa dal Piovra):
   - tocca (o clicca) una ragazza e trascina: le disegni la strada, lei la segue. Se arriva al
     tavolo delle amiche, a destra, è salva
   - i tentacoli del Petri puntano la ragazza più vicina: se la prendono resta agganciata a
     chiacchierare. Tocca il tentacolo (SCIAF!) per liberarla; col dito si può guidare una
     ragazza e intanto schiaffeggiare con un altro dito
-  - aiuti in basso, con la ricarica: SHOTTINO GRATIS (poi tocca dove lanciarlo: il Petri ci si
-    fionda e molla tutto) e AMICO IN MEZZO (un personaggio del gioco blocca i tentacoli)
+  - aiuti in basso, con la ricarica: BIRRA GRATIS (poi tocca dove lanciarla: il Petri ci si
+    fionda e molla tutto) e AMICO IN MEZZO: arriva O'Sfurnacchiat ("Gnamo Petri, falla
+    finita"), si mette davanti alla ragazza più in pericolo e la segue; i tentacoli che gli
+    passano contro sbattono (BONK!) e lei e chi le sta accanto non si possono prendere
   - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
-    vicino a lei, 1 e 2 gli aiuti (lo shottino va da solo nel punto più lontano dalle ragazze)
+    vicino a lei, 1 e 2 gli aiuti (la birra va da sola nel punto più lontano dalle ragazze)
   - tre atti: dal 12° secondo IL PETRI SI MUOVE; dal 24° TENTACOLI A SORPRESA (sbucano da
     sotto un tavolino o dalla consolle)
 - L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna):
-  - le frecce salgono al centro a tempo di musica: premi quella giusta quando arriva sul
-    bersaglio, con le FRECCE o WASD; col dito (o col mouse) tocca il quarto di schermo della
-    freccia: da sinistra, sinistra / giù / su / destra. Le doppie si prendono con due dita
-  - perfetto o buono: la pista pende verso di te e le ragazze passano dalla tua parte; mancata
-    o premuta a vuoto: tornano dal Manna, che intanto tira sempre un po'
+  - le frecce scendono al centro a tempo di musica: premi quella giusta quando arriva sul
+    bersaglio in basso, con le FRECCE o WASD; col dito (o col mouse) tocca il quarto di schermo
+    della freccia: da sinistra, sinistra / giù / su / destra
+  - perfetto o buono: balli, la pista pende verso di te e le ragazze passano dalla tua parte;
+    mancata o premuta a vuoto: tornano dal Manna, che intanto tira sempre un po'
   - le frecce d'oro valgono il doppio ma vanno prese precise; ogni 10 di fila il moltiplicatore
     sale di 0,5 (fino a x3)
-  - a metà arrivano le frecce doppie; alla fine il Manna si scatena e la musica accelera
+  - dal 12° secondo LE FRECCE D'ORO; dal 24° il Manna si scatena, la musica accelera e arriva
+    qualche freccia DOPPIA (due tasti o due dita insieme, con più tempo per prenderla)
   - le frecce sono le stesse per tutti i giocatori del round
-  - per renderlo più facile o più difficile, in `js/config/microgiochi/scapoli.js`: `finestre`
-    (quanto si può sbagliare il tempo), `atti` (ogni quanto arrivano le frecce, doppie, d'oro,
-    raffiche), `pressione` (quanto tira il Manna), `tempoFinale`
 - Emilio in Retromarcia (SPINGI!: fai uscire Emilio dal cancello senza che tocchi i cani):
   - FRECCE (o WASD) per muoverti; col mouse, clic sul punto del vialetto dove andare;
     col dito, trascina (il personaggio sta un po' sopra il polpastrello)
@@ -622,11 +664,12 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - anche i veterani bevono quelli che gli centri: più bevono, meno centrano
   - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
     ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
-- Provini a X-Fattore (INTONA!: sei alla pianola e dai la nota ai cantanti, Tini e Oli):
+- Provini a X-Factor (INTONA!: sei alla pianola e dai la nota ai cantanti, Tini e Oli):
   - la melodia scorre sul pentagramma da destra verso sinistra, colorata come chi la canta; il
     tuo cursore sta fermo a sinistra e si sposta solo su e giù, tra 7 note
   - tastiera: SU / GIÙ (o W / S), una nota a colpo; tenendo premuto si scorre
-  - mouse: il cursore va all'altezza del puntatore, agganciandosi alla nota più vicina
+  - mouse: il cursore va all'altezza del puntatore, sulla nota più vicina (nessun aiuto verso
+    quella giusta)
   - dito: trascina su e giù nella metà destra dello schermo, sotto i pulsanti (conta di quanto
     ti sposti, non dove tocchi, così il dito non copre le note)
   - i cantanti cantano la nota dove sta il cursore: giusta, voce piena e un po' di vibrato;
@@ -641,11 +684,13 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - alla fine votano i quattro giudici (inventati), ognuno con la sua soglia di intonazione: con
     almeno 3 SÌ si passa. Il verdetto si salta con un tocco o con INVIO. Le lucine sul loro
     tavolo dicono già durante la canzone come la stanno pensando
-  - la melodia esce dal seme del round: è la stessa per tutti i giocatori
+  - la base è una di tre canzoni (ROCK, POP o RAP), con la batteria, un basso che si muove, gli
+    accordi a ritmo e un passaggio di batteria a ogni atto; nel ritornello si sale di un tono
+  - la canzone e la melodia escono dal seme del round: sono le stesse per tutti i giocatori
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `tolleranza`,
-    `grazia` e `graziaSalto` (quanto tempo c'è per arrivare sulla nota nuova), `calamita`,
+    `grazia` e `graziaSalto` (quanto tempo c'è per arrivare sulla nota nuova),
     `scorrimento`, `atti` (durata delle note, salti, stelle) e le `soglia` dei `giudici`
-- ESC: pausa — M: audio sì/no (sul telefono: i pulsanti in alto a destra)
+- ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
 brevemente il telefono.
@@ -662,29 +707,30 @@ brevemente il telefono.
 - **MaraZio** (35 s): +10 per ogni palleggio, per il moltiplicatore della serie (x1,5 ogni 5
   di fila, fino a x3), +5 se perfetto, +25 per ogni pallone d'oro, e a fine partita +5 per
   ogni palleggio della serie migliore. Vittoria con una serie di almeno 12.
-- **Passa di qua** (35 s): SPLASH +10, +20, +30... fino a +50 se fatti di fila (si riparte da
-  +10 dopo un tocco o se lasci passare un Passaseo asciutto accanto alla sua pozzanghera), +1
-  per una pozzanghera presa senza nessuno accanto, -10 per un ciclista o un mezzo toccato.
-  Vittoria con almeno 10 schizzi.
-- **Spalma il Bota!** (35 s): +10 per ogni zona calda spenta, più 2 per ogni punto di pelle
-  sana sotto il 40% di scottatura. Vittoria con meno del 15% di pelle scottata. Le percentuali
-  contano la pelle che ha preso il sole: solo il davanti fino al giro, poi tutto.
+- **Il Passo del Passaseo** (35 s): 0,2 punti per metro, 2 per pedalata perfetta (4 allo
+  sprint); se arrivi in cima prima del Passaseo, +50 e +10 per ogni secondo di vantaggio. Se
+  nessuno arriva in cima, vince chi è più avanti allo scadere.
+- **Spalma il Bota!** (35 s): 0,8 per ogni % di pelle coperta di crema alla fine del primo atto,
+  6 al secondo con l'ombra sulla macchia di sole, +10 per ogni zona calda spenta, +5 per ogni
+  gabbiano scacciato, più 2 per ogni punto di pelle sana sotto il 40% di scottatura. Vittoria con
+  meno del 18% di pelle scottata.
 - **La Spina del PowerStation** (35 s): pinta 5, boccale 8, calice 9, +3 se PERFETTA (al centro
   della zona verde). Beppe fa 6 punti per ogni sua pinta. Vittoria se fai più punti di Beppe.
 - **Arriva ReGrorio!** (35 s): 1 punto per ogni secondo vivo, 1 per ogni moneta, 6 per la
   corona, 2 per ogni schivata all'ultimo. 3 vite. Vittoria se arrivi in fondo.
 
-- **Panino** (35 s): +10 per ogni ingrediente che mancava, +3 per i doppioni,
-  +30 per ogni panino completo (+10 se fatto in meno di 8 s), -10 per ogni
-  schifezza (il totale non va sotto zero). Vittoria con almeno 3 panini.
+- **Panino** (35 s): +10 per ogni ingrediente preso al momento giusto, +30 per ogni ordine
+  servito (+10 per ogni ingrediente oltre i tre, +10 se fatto in meno di 8 s), -3 per un
+  ingrediente fuori ordine, -5 per un crollo, -10 per ogni schifezza (il totale non va sotto
+  zero). Vittoria con almeno 3 ordini serviti.
 - **Mani** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava
   trascinando via un piatto (è un recupero, vale meno: se no converrebbe lasciarli
   prendere apposta), +2 per il guanto tolto, +15 per ogni piatto ancora tuo alla
   fine. Vittoria con almeno 3 piatti su 5; persi tutti, finisce prima.
 - **Il Passaggiorgio** (35 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
-  quasi dentro), +50 ogni volta che si mette al volante della sua A3, -25 per ogni passaggio
-  scroccato, -5 se si tira fuori il sosia incappucciato (i punti non vanno mai sotto zero).
-  Vittoria se guida almeno 4 volte.
+  quasi dentro), +15 se lo fermi prima che salga da Emilio, +50 ogni volta che si mette al volante
+  della sua A3, -25 per ogni passaggio scroccato (anche da Emilio), -5 se si tira fuori il sosia
+  incappucciato (i punti non vanno mai sotto zero). Vittoria se guida almeno 4 volte.
 - **Petri Tentacolari** (35 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
   la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
   terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine (il totale non va
@@ -700,12 +746,12 @@ brevemente il telefono.
   quando si è IN FIAMME (dal secondo centro di fila), +25 per ogni triangolo finito, e alla fine
   +5 per ogni bicchiere tuo ancora in piedi. Vittoria se hai tolto più bicchieri di quanti te ne
   hanno tolti; se li perdi tutti, finisce prima.
-- **Provini a X-Fattore** (35 s): 10 punti per ogni secondo intonato (si contano anche le
+- **Provini a X-Factor** (35 s): 10 punti per ogni secondo intonato (si contano anche le
   frazioni), per il moltiplicatore della serie (+0,5 ogni 3 secondi di fila intonati, fino a x3;
   alla prima stonatura torna a x1); le note con la stella valgono doppio se tenute senza
   stonare; +40 per l'acuto finale tenuto fino in fondo; +50 per ogni SÌ dei giudici. Ogni giudice
-  dice SÌ se sei stato intonato almeno per la sua soglia (la percentuale del tempo cantato: 30%
-  il Commosso, 45% la Diva, 55% MC Catena, 78% il Produttore). Vittoria con almeno 3 SÌ su 4:
+  dice SÌ se sei stato intonato almeno per la sua soglia (la percentuale del tempo cantato: 55%
+  il Commosso, 62% la Diva, 68% MC Catena, 86% il Produttore). Vittoria con almeno 3 SÌ su 4:
   chi passa prende almeno l'argento. In Lampo (15 secondi) l'acuto non c'è e le soglie, che sono
   percentuali, restano quelle.
 - **Sego** (35 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
@@ -732,7 +778,7 @@ La cartella `test/` non fa parte del gioco: non va caricata sul sito.
 aggiunto alle prove di ogni microgioco, a quelle delle modalità e ai giocatori automatici di
 `test/bot.py`. Per chi li scrive: il tiro si può dare anche dal codice, `scena.T.tira(m, p)`, e
 `gestoPer(x, y, tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere.
-Lo stesso vale per "Provini a X-Fattore" e per i due personaggi nuovi, Tini e Oli. Per chi scrive
+Lo stesso vale per "Provini a X-Factor" e per i due personaggi nuovi, Tini e Oli. Per chi scrive
 il suo giocatore automatico: la melodia è in `scena.note` (`da` e `a` in ottavi, `pos` da 0 a 6),
 il tempo in `scena.pos`, e il cursore si sposta con `scena.diUnaNota(+1 o -1)`.)
 
@@ -804,7 +850,7 @@ js/
                          pallone, Panda, ciclisti scout, trattore e Vespa,
                          macchine viste di lato (Panda, Golf, SUV e l'A3 di
                          Giorgio), chiavi, cartello, consolle del DJ, tavolini,
-                         shottino
+                         birra gratis
     tentacoli.js         i tentacoli del Petri (ridisegnati a ogni fotogramma)
     disco.js             la discoteca del Manna vista dall'alto (sfondo `bgPista`), la
                          palla a specchi, il DJ, gli oggetti dei sabotaggi, i bersagli
@@ -819,7 +865,7 @@ js/
     pallaio.js           il Pallaio visto da dietro le spalle di chi tira, il tavolo da
                          ping pong in prospettiva, la rete, i bicchieri di plastica pieni
                          di birra, la pallina, la mano, la lampadina, la giacca
-    provino.js           il palco del talent (inventato) di "Provini a X-Fattore": la grande
+    provino.js           il palco del talent (inventato) di "Provini a X-Factor": la grande
                          X luminosa, i fari, il tavolo dei giudici, il pubblico con gli
                          accendini, la pianola, la chiave di violino e la nota del cursore
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
@@ -934,7 +980,7 @@ avversari e per il pubblico (`preparaBevitore` in `js/sprites.js`), le facce del
 sale `id_allegro`, `id_brillo`, `id_sbronzo` (guance rosse con `gote`, naso rosso con `nasoRosso`,
 da 0 a 1; palpebre a mezz'asta e occhi incrociati con `palpebra` e `sguardo`), quelle del finale
 `id_dorme` e `id_canta`, e la mano con la pallina `manoPong_<id>` (del colore della sua pelle);
-per "Provini a X-Fattore" le pose sul palco di Tini e Oli, col microfono in mano (`tini_palco`,
+per "Provini a X-Factor" le pose sul palco di Tini e Oli, col microfono in mano (`tini_palco`,
 `tini_canta` a bocca aperta, `tini_gasato`, `tini_stona` sconvolto, `tini_male`, `tini_acuto`
 con le braccia al cielo, `tini_indica` col dito puntato, e lo stesso per `oli_`), e i quattro
 giudici inventati `giudice0_normale` ... `giudice3_normale` (anche `_felice`, `_orecchie` con le
@@ -1036,7 +1082,13 @@ export class MioGiocoScene extends MicrogiocoBase {
 Partita singola, schermata comandi (a pagine), introduzione, turni per tutti i
 giocatori, risultati e classifiche lo prendono da soli.
 
-Pausa e audio a schermo sul telefono li mette già `MicrogiocoBase`. Per il resto:
+La pausa a schermo sul telefono (coi due tocchi, `pulsantePausa` di `fx.js`) la mette già
+`MicrogiocoBase`. Per il resto:
+- testi mai sotto 7 (`size` di `txt()`; quelli che servono per giocare almeno 8): `txt()` alza
+  da solo quelli più piccoli. Se non c'è posto, meglio togliere parole che rimpicciolire
+- per le scelte di gioco (chi esce, quando, dove) `this.rnd = casuale(Sessione.seme)` di
+  `grafica/base.js`, mai `Math.random()` (quello solo per gli effetti: fumo, scintille): così
+  tutti i giocatori del round trovano la stessa partita. La prova `--solo-seme` lo controlla
 - `eTouch()` e `perDito(testoTastiera, testoDito)` di `fx.js` per scegliere testi e
   comandi; `comandiTouch` nel file di configurazione per l'introduzione e la schermata Comandi
 - `multiTouch(this)` (usa `this.input.addPointer`) se servono più dita insieme;

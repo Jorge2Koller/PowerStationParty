@@ -9,12 +9,12 @@ export default {
   musica: 'pista',          // traccia di audio.js (un'altra da 'disco', che è quella di Petri Tentacolari)
   ospite: { id: 'manna', etichetta: 'SFIDA DI BALLO:\nIL MANNA' },
   comandi: [
-    'FRECCE (o WASD): premi la freccia quando arriva sul bersaglio',
+    'FRECCE (o WASD): premi la freccia quando scende sul bersaglio',
     'Perfetto e serie: le ragazze passano dalla tua parte',
     "Quelle d'oro valgono doppio, ma vanno prese precise",
   ],
   comandiTouch: [
-    'Tocca il quarto di schermo della freccia quando arriva sul bersaglio',
+    'Tocca il quarto di schermo della freccia quando scende sul bersaglio',
     'Perfetto e serie: le ragazze passano dalla tua parte',
     "Quelle d'oro valgono doppio, ma vanno prese precise",
   ],
@@ -33,17 +33,20 @@ export default {
   // quanto si può sbagliare il tempo (secondi, prima o dopo): perfetto e buono; oltre è mancata
   finestre: { perfetto: 0.06, buono: 0.13 },
   finestreOro: { perfetto: 0.045, buono: 0.08 },
+  finestreDoppie: { perfetto: 0.1, buono: 0.2 },   // le doppie: due tasti (o due dita) insieme, più larghe
+  durataBallo: 0.9,         // secondi che chi gioca continua a ballare dopo una freccia presa
   // quanto pende la pista (da 0 a 1: ogni ragazza è un quinto) per ogni freccia...
   spinta: { perfetto: 0.03, buono: 0.015, mancato: 0.05, vuoto: 0.015 },
   // ...e quanto la tira il Manna, al secondo, in ogni atto (chi sta fermo le perde tutte)
   pressione: [0.012, 0.02, 0.032],
   primoPasso: 8,            // ottavi di attesa prima della prima freccia
   // I tre atti: da = secondo d'inizio, ogni = ottavi tra una freccia e l'altra, doppie = probabilità
-  // di due frecce insieme, oro = di una freccia d'oro, raffica = di una freccia subito dopo (un ottavo)
+  // di due frecce insieme (solo nell'ultimo atto, mai due di fila), oro = di una freccia d'oro,
+  // raffica = di una freccia subito dopo (un ottavo)
   atti: [
     { da: 0, ogni: 4, doppie: 0, oro: 0, raffica: 0, nome: '' },
-    { da: 11, ogni: 2, doppie: 0.22, oro: 0.1, raffica: 0, nome: 'ARRIVANO LE DOPPIE!' },
-    { da: 23, ogni: 2, doppie: 0.15, oro: 0.12, raffica: 0.35, nome: 'IL MANNA SI SCATENA!' },
+    { da: 11, ogni: 2, doppie: 0, oro: 0.14, raffica: 0.12, nome: "LE FRECCE D'ORO!" },
+    { da: 23, ogni: 2, doppie: 0.08, oro: 0.12, raffica: 0.3, nome: 'IL MANNA SI SCATENA!' },
   ],
   tempoFinale: 1.25,        // nell'ultimo atto la musica accelera fino a tanto
   frasiManna: ['Guarda e impara.', 'Ovviamente.', 'Questa è roba mia.', 'Troppo lento, bello.', 'Le ragazze mi adorano.'],
@@ -52,7 +55,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { finestre: { perfetto: 0.075, buono: 0.16 }, finestreOro: { perfetto: 0.06, buono: 0.1 }, tempoFinale: 1.15 },
-    difficile: { finestre: { perfetto: 0.05, buono: 0.11 }, finestreOro: { perfetto: 0.038, buono: 0.065 }, tempoFinale: 1.35 },
+    facile: { finestre: { perfetto: 0.075, buono: 0.16 }, finestreOro: { perfetto: 0.06, buono: 0.1 }, finestreDoppie: { perfetto: 0.12, buono: 0.24 }, tempoFinale: 1.15 },
+    difficile: { finestre: { perfetto: 0.05, buono: 0.11 }, finestreOro: { perfetto: 0.038, buono: 0.065 }, finestreDoppie: { perfetto: 0.085, buono: 0.17 }, tempoFinale: 1.35 },
   },
 };

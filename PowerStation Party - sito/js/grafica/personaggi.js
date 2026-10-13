@@ -182,7 +182,7 @@ export const PERSONAGGI = {
     occhiali: { inFronte: true, montatura: '#1a1a20', lenti: '#27324a' },
     vestito: { tipo: 'giacca', colore: '#a8703c', sotto: '#f6f6f2' }, pantaloni: '#9db8d6', scarpe: '#f2f2f2',
   },
-  // I due cantanti di "Provini a X-Fattore".
+  // I due cantanti di "Provini a X-Factor".
   // Tini ("Social Tedio"): dreadlock biondi che cadono sulla fronte e sulle tempie da sotto un
   // berretto blu calcato storto, palpebre a mezz'asta, labbra carnose, orecchini. Da rocker
   // stravagante: maglietta gialla col fulmine, catena al collo, pantaloni scozzesi rossi, anfibi
@@ -260,7 +260,7 @@ export const BUTTAFUORI = {
   vestito: { tipo: 'giacca', colore: '#17171d', sotto: '#17171d' }, pantaloni: '#17171d', scarpe: '#0e0e12',
 };
 
-// I quattro giudici di "Provini a X-Fattore": personaggi INVENTATI e caricaturali (non sono
+// I quattro giudici di "Provini a X-Factor": personaggi INVENTATI e caricaturali (non sono
 // persone vere), nell'ordine in cui siedono al tavolo. La diva (occhiali da sole, ventaglio), il
 // rapper (cappellino, catena d'oro), il produttore severo (stempiato, occhialini, a braccia
 // conserte), quello che si commuove sempre.
@@ -1883,7 +1883,7 @@ const POSE = {
   // (Pastaffi col cane in braccio). Con o.maniSopra le braccia si ridisegnano sopra la testa.
   maniInTesta: [[33, 196], [70, 168], [50, 84]],
   porta: [[33, 196], [44, 224], [20, 232]],
-  // sul palco (i cantanti di "Provini a X-Fattore"): il microfono davanti alla bocca, e "ti
+  // sul palco (i cantanti di "Provini a X-Factor"): il microfono davanti alla bocca, e "ti
   // indico" (il braccio destro teso di lato, col dito puntato: dito = true)
   microfono: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [53, 215], [27, 185]] },
   tiIndico: { sx: [[33, 196], [45, 216], [36, 232]], dx: [[33, 196], [60, 199], [87, 195]], dito: true },

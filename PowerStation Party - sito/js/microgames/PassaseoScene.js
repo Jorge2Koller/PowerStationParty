@@ -1,377 +1,449 @@
-// Microgioco 10: "Passa di qua" - in Panda per le strade toscane. SCHIZZA!
+// Microgioco 10: "Il Passo del Passaseo" - la salita in bici, testa a testa col Passaseo. PEDALA!
 //
-//  La strada scorre dall'alto. Lungo i bordi pedalano i Passaseo in divisa da scout, con le
-//  pozzanghere accanto: passarci dentro proprio mentre li affianchi li inzuppa (SPLASH!).
-//  Toccarli no: si inchioda e si perdono punti.
-//  Gli incontri cambiano: il Passaseo nel nostro verso (a destra), quello contromano (a sinistra:
-//  la pozzanghera è nella corsia opposta e arrivano Vespe e la Golf di ReGrorio), il GRUPPETTO
-//  (tre in fila, con una pozzanghera lunga: tanti punti, tanto rischio). Pozzanghere piccole
-//  (bisogna stargli attaccati), grandi, e di fango (rallenta la Panda).
-//  Il CLACSON (con la ricarica): i Passaseo davanti sbandano verso la pozzanghera e non fanno in
-//  tempo ad aprire l'OMBRELLO (quelli che si accorgono di te lo aprono, e l'ombrello para).
-//  Tre atti: si comincia tranquilli, poi l'ACQUAZZONE (pioggia, più pozzanghere, sterzo che
-//  scivola), alla fine il gruppetto e il traffico. Strada uguale per tutti (seme del round).
-//  Ciclisti, pozzanghere e mezzi si muovono in proporzione alla strada, così ogni ciclista
-//  arriva accanto alla sua pozzanghera anche se la Panda frena.
+//  Vista di fianco: la strada sale verso destra, tu e il Passaseo pedalate fino al traguardo in
+//  cima. Si pedala A TEMPO: un pedale alla volta (FRECCE SINISTRA e DESTRA, o A e D; col dito o
+//  col mouse la metà sinistra e la metà destra dello schermo), quando la pallina del ritmo, in
+//  basso, arriva su quel pedale. Pedalate perfette = spinta piena; a caso = la catena gira a vuoto
+//  e si rallenta. Il ritmo lo dà la strada: in salita regolare, prima dei TORNANTI rallenta (chi
+//  ci arriva lanciato va LARGO e perde la velocità), sugli STRAPPI è lento e pesante (finestre più
+//  strette), allo SPRINT finale va forte (e le pedalate perfette valgono doppio).
+//  Tre atti, lungo la salita: LA SALITA (un tornante), I TORNANTI! (due tornanti e uno strappo),
+//  STRAPPO E SPRINT! (lo strappo più duro, poi lo sprint fino al traguardo).
+//  Il Passaseo va del suo passo, costante, uguale per tutti i giocatori del round (seme), e
+//  arriva in cima tra arrivoPassaseo secondi: per batterlo bisogna pedalare quasi perfetti.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
+import { CONFIG } from '../config.js';
 import { casuale } from '../grafica/base.js';
-import { STRADA } from '../grafica/sfondi.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, scuoti, lerp, caso, quanti, fumetto, vibra, eTouch, multiTouch, puntatore } from '../fx.js';
+import { ritratto, aspettoDi } from '../sprites.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, perDito, multiTouch, puntatore } from '../fx.js';
 
-const Y_AUTO = 214;
-const X_MIN = STRADA.sx - 10, X_MAX = STRADA.dx + 10;
-const AUTO = { mx: 13, my: 23 };              // mezza larghezza e mezza lunghezza della Panda
-// a destra si va nel nostro verso, a sinistra si arriva contromano
-const LATO = { dx: { bici: STRADA.dx - 12, verso: -1 }, sx: { bici: STRADA.sx + 12, verso: 1 } };
-const POZZE = { piccola: { key: 'pozzanghera', k: 0.75, presa: 9, raggio: 34, lungo: 12 }, grande: { key: 'pozzanghera', k: 1.25, presa: 16, raggio: 48, lungo: 20 },
-  lunga: { key: 'pozzanghera', k: 1.3, kY: 3.2, presa: 16, raggio: 48, lungo: 70 }, fango: { key: 'fango', k: 1.1, presa: 15, raggio: 0, lungo: 16 } };
-const CLACSON = { x: 440, y: 236, r: 22 };   // sul telefono, il pulsante
+const XP = 150, YP = 196;      // dove sta chi gioca sullo schermo (il punto della strada sotto le ruote)
+const SCALA = 2.2;             // unità di schermo per metro, in orizzontale
+const RIPIDO = 3.2;            // le pendenze si disegnano più ripide di così (6% vero -> 19% a schermo)
+const RITMO = { x: 240, y: 252, mezza: 44 };   // la barra del ritmo, in basso
+const BARRA = { x0: 140, x1: 340, y: 22 };     // la salita in alto: chi è dove
+const col = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
 
 export class PassaseoScene extends MicrogiocoBase {
   constructor() { super('passaseo'); }
 
   prepara() {
-    const c = this.cfg;
-    this.rnd = casuale(Sessione.seme);
-    this.punti = 0; this.schizzi = 0; this.serie = 0; this.serieMax = 0; this.sfiorati = 0; this.urti = 0; this.parati = 0;
-    this.x = 240; this.obiettivoX = 240; this.vx = 0;
-    this.modo = 'tastiera';
-    this.vel = c.velInizio;
-    this.freno = 0; this.fango = 0;
-    this.scorri = 0;
-    this.tIncontro = 1;
-    this.ricaricaClacson = 0;
-    this.atto = 0;
-    this.dito = null;
-    this.cose = [];            // { tipo: 'bici'|'pozza'|'trattore'|'vespa'|'golf', img, f (velocità rispetto alla strada), extra, ... }
+    const c = this.cfg, seme = Sessione.seme;
+    this.rnd = casuale(seme);
+    this.costruisciSalita(casuale((seme ^ 0x5a1175) >>> 0));
+    // chi gioca
+    this.x = 0; this.v = 0; this.spinta = 0;
+    this.fase = 0;                 // la fase del ritmo: ogni intero è una pedalata (pari = sinistra, dispari = destra)
+    this.usata = -1;               // l'ultima pedalata (indice) già fatta
+    this.tUltima = 0;              // da quanto non si pedala a tempo
+    this.perfette = 0; this.buone = 0; this.vuoto = 0; this.serie = 0; this.larghi = 0;
+    this.tArrivo = null;
+    this.atto = 0; this.inSprint = false;
+    this.tornantePreso = new Set();
+    this.davanti = null;           // chi era davanti all'ultimo controllo (per le frasi del sorpasso)
+    this.tFrase = 4;
 
-    this.fondo = [0, 1].map(() => im(this, 0, 0, 'bgStradaToscana').setOrigin(0));
-    this.bagnato = this.add.rectangle(0, 0, 480, 270, 0x203048, 0).setOrigin(0).setDepth(5);   // la strada scura sotto l'acquazzone
-    this.pioggia = this.add.graphics().setDepth(800);
-    this.auto = im(this, this.x, Y_AUTO, 'panda').setDepth(50);
+    // lo sfondo: il cielo e le montagne fermi, le colline che scorrono piano, la strada disegnata
+    im(this, 0, 0, 'bgMontagna').setOrigin(0).setDepth(0);
+    this.colline = [0, 1].map(() => im(this, 0, 128, 'collineMontagna').setOrigin(0, 0).setDepth(1));
+    this.gStrada = this.add.graphics().setDepth(10);
+    this.cartelli = this.segni.map((s) => im(this, -100, 0, s.key, s.k ?? 1).setOrigin(0.5, 1).setDepth(s.davanti ? 30 : 9));
+    // le due bici: il Passaseo un filo più in là (l'altra corsia), poi chi gioca
+    const io = aspettoDi(this.giocatore.id), lui = aspettoDi('passaseo');
+    this.ciclisti = [
+      { id: 'passaseo', ...this.colori(lui, '#f2c43a'), g: this.add.graphics().setDepth(18), testa: ritratto(this, 0, 0, 'passaseo', 25).setDepth(19), dy: -5 },
+      { id: this.giocatore.id, ...this.colori(io, this.giocatore.colore), g: this.add.graphics().setDepth(20), testa: ritratto(this, 0, 0, this.giocatore.id, 25).setDepth(21), dy: 0 },
+    ];
+    this.indicatore = txt(this, 466, 120, '', { size: 7, ox: 1, color: '#f2c43a', depth: 40 });
 
-    this.hud = [pannello(this, 240, 34, 132, 26, { depth: 1000 })];
-    this.testoSchizzi = txt(this, 240, 30, 'SCHIZZATI: 0', { size: 9, depth: 1001 });
-    this.testoSerie = txt(this, 240, 42, '', { size: 6.5, depth: 1001, color: '#ffe14a' });
-    this.hud.push(this.testoSchizzi, this.testoSerie);
-    // la ricarica del clacson (in basso a destra; sul telefono è anche il pulsante)
-    this.clacsonG = this.add.graphics().setDepth(1000);
-    this.hud.push(this.clacsonG, txt(this, CLACSON.x, CLACSON.y + 1, eTouch() ? 'CLACSON' : 'SPAZIO:\nCLACSON', { size: 4.8, depth: 1001, spacing: -1 }));
-    this.disegnaClacson();
+    // in alto: la salita col traguardo e le due facce; il distacco e la velocità
+    pannello(this, 240, BARRA.y, 236, 18, { depth: 1000 });
+    this.gBarra = this.add.graphics().setDepth(1001);
+    this.facce = [ritratto(this, 0, BARRA.y, 'passaseo', 13).setDepth(1002), ritratto(this, 0, BARRA.y, this.giocatore.id, 13).setDepth(1003)];
+    this.testoDistacco = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
+    this.testoVel = txt(this, 474, 49, '', { size: 7, ox: 1, depth: 1001, color: '#fff3d6' });
+    this.hud = '';
 
-    this.tasti = this.input.keyboard.addKeys({ sx: 'LEFT', dx: 'RIGHT', a: 'A', d: 'D' });
-    this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) this.clacson(); });
-    multiTouch(this, 2);
-    this.input.on('pointerdown', (p) => {
-      const w = puntatore(this, p);
-      if (Math.hypot(w.x - CLACSON.x, w.y - CLACSON.y) < CLACSON.r + 6 || (!p.wasTouch && p.rightButtonDown())) return this.clacson();
-      if (p.wasTouch && this.dito == null) { this.dito = { id: p.id, x: w.x }; this.modo = 'dito'; this.obiettivoX = this.x; }
-    });
-    this.input.on('pointermove', (p) => {
-      const w = puntatore(this, p);
-      if (!p.wasTouch) { this.modo = 'mouse'; this.obiettivoX = Phaser.Math.Clamp(w.x, X_MIN, X_MAX); return; }
-      if (this.dito?.id !== p.id) return;
-      this.obiettivoX = Phaser.Math.Clamp(this.obiettivoX + (w.x - this.dito.x) * this.cfg.guadagnoDito, X_MIN, X_MAX);
-      this.dito.x = w.x;
-    });
-    this.input.on('pointerup', (p) => { if (this.dito?.id === p.id) this.dito = null; });
+    // in basso: la barra del ritmo (la pallina va da un pedale all'altro) e, col dito, le due metà
+    this.gRitmo = this.add.graphics().setDepth(1000);
+    this.pedali = [im(this, RITMO.x - RITMO.mezza - 18, RITMO.y, 'pedaleSx', 0.62).setDepth(1001), im(this, RITMO.x + RITMO.mezza + 18, RITMO.y, 'pedaleDx', 0.62).setDepth(1001)];
+    if (eTouch()) {
+      for (const [x, k, s] of [[52, 'pedaleSx', 'SINISTRO'], [428, 'pedaleDx', 'DESTRO']]) {
+        im(this, x, 232, k, 1).setDepth(1001).setAlpha(0.85);
+        txt(this, x, 256, s, { size: 7, color: '#ffe14a', depth: 1001 });
+      }
+    }
+    this.voto = txt(this, RITMO.x, RITMO.y - 18, '', { size: 8, depth: 1002 });
+
+    // comandi
+    const k = this.input.keyboard;
+    for (const [tasti, lato] of [[['LEFT', 'A'], 0], [['RIGHT', 'D'], 1]]) for (const t of tasti) k.on('keydown-' + t, (e) => { if (!e.repeat) this.pedala(lato); });
+    multiTouch(this);
+    this.input.on('pointerdown', (p) => { if (this.inCorso) this.pedala(puntatore(this, p).x < 240 ? 0 : 1); });
+    this.disegna(0);
   }
 
-  // dopo una pausa il dito che sterzava non c'è più (se no non si potrebbe più sterzare)
-  alRientro() { this.dito = null; }
-
-  disegnaClacson() {
-    const g = this.clacsonG, pronto = this.ricaricaClacson <= 0, k = 1 - this.ricaricaClacson / this.cfg.ricaricaClacson;
-    g.clear();
-    g.fillStyle(0x1f1430, 0.85).fillCircle(CLACSON.x, CLACSON.y, CLACSON.r + 1.5);
-    g.fillStyle(pronto ? 0xe8603a : 0x5a4a6a, 1).fillCircle(CLACSON.x, CLACSON.y, CLACSON.r);
-    if (!pronto) { g.lineStyle(3, 0xffe14a, 1); g.beginPath(); g.arc(CLACSON.x, CLACSON.y, CLACSON.r - 3, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); g.strokePath(); }
+  // i colori di una bici: maglia, pantaloni, pelle, scarpe e telaio
+  colori(p, telaio) {
+    return { maglia: col(p.vestito?.colore ?? '#5a6070'), gambe: col(p.pantaloni ?? '#3a3c46'), corti: !!p.corti, pelle: col(p.pelle ?? '#e8b890'), scarpe: col(p.scarpe ?? '#2a2a30'), telaio: col(telaio) };
   }
 
-  get fase() { const c = this.cfg; return c.atti.filter((a) => this.trascorso >= a.da).pop(); }
-
-  aggiungi(tipo, x, y, f, extra = {}) {
-    const chiave = { bici: 'ciclista', trattore: 'trattore', vespa: 'vespa', golf: 'golfGiu0' }[tipo] ?? extra.chiave;
-    const img = im(this, x, y, chiave, extra.scala ?? 1).setDepth(tipo === 'pozza' ? 10 : 40);
-    if (extra.kY) img.setScale(img.scaleX, img.scaleY * extra.kY);
-    const o = { tipo, img, f, ...extra };
-    this.cose.push(o);
-    return o;
+  // ------------------------------------------------------------
+  //  LA SALITA: i tratti, la sua forma, il passo del Passaseo
+  // ------------------------------------------------------------
+  // I tratti si scrivono in proporzione, poi la salita si allunga (o si accorcia) finché il
+  // Passaseo, col suo passo, ci mette quanto deve (arrivoPassaseo, dal seme): così è giusta per
+  // tutti e il traguardo si raggiunge in 35 secondi pedalando bene.
+  costruisciSalita(r) {
+    const c = this.cfg, T = [];
+    const metti = (tipo, lungo) => T.push({ tipo, lungo });
+    const tra = (a, b) => a + r() * (b - a);
+    // primo atto: la salita, con un tornante
+    metti('salita', tra(110, 150)); metti('tornante', c.lunghezze.tornante); metti('salita', tra(70, 100));
+    const atto2 = T.length;
+    // secondo atto: due tornanti e uno strappo (in un ordine che cambia)
+    const pezzi = r() < 0.5 ? ['tornante', 'strappo', 'tornante'] : ['strappo', 'tornante', 'tornante'];
+    for (const p of pezzi) { metti('salita', tra(45, 75)); metti(p, p === 'strappo' ? tra(55, 75) : c.lunghezze.tornante); }
+    metti('salita', tra(40, 60));
+    const atto3 = T.length;
+    // terzo atto: lo strappo più duro, un po' di respiro, lo sprint
+    metti('strappo', tra(85, 110)); metti('salita', tra(45, 65)); metti('sprint', c.lunghezze.sprint);
+    // il Passaseo: il suo passo dal seme, e quanto ci mette così com'è
+    this.passo = c.passoPassaseo[0] + this.rnd() * (c.passoPassaseo[1] - c.passoPassaseo[0]);
+    const voluto = c.arrivoPassaseo[0] + this.rnd() * (c.arrivoPassaseo[1] - c.arrivoPassaseo[0]);
+    const posa = (k) => { let x = 0; for (const t of T) { t.da = x; x += t.lungo * k; t.a = x; } return x; };
+    this.tratti = T;
+    let k = 1;
+    for (let i = 0; i < 3; i++) { this.lunghezza = posa(k); k *= voluto / this.simulaPassaseo().t; }
+    this.lunghezza = posa(k);
+    this.atti = [0, T[atto2].da, T[atto3].da];
+    const S = this.simulaPassaseo();
+    this.corsaPassaseo = S.punti; this.arrivoPassaseo = S.t;
+    // la quota (per disegnare la pendenza): metri saliti a ogni inizio di tratto
+    let q = 0;
+    for (const t of T) { t.q = q; q += (t.a - t.da) * c.pendenze[t.tipo]; }
+    // i cartelli: prima di ogni tornante e di ogni strappo; gli striscioni dello sprint e del traguardo
+    this.segni = [];
+    for (const t of T) {
+      if (t.tipo === 'tornante') this.segni.push({ x: t.da - c.avvicinamento, key: 'cartelloTornante' });
+      if (t.tipo === 'strappo') this.segni.push({ x: t.da - 12, key: 'cartelloStrappo' });
+      if (t.tipo === 'sprint') this.segni.push({ x: t.da, key: 'striscioneSprint', k: 0.7, arco: true, davanti: true });
+    }
+    this.segni.push({ x: this.lunghezza, key: 'striscioneArrivo', k: 0.7, arco: true, davanti: true });
   }
 
-  // Un incontro: ciclista (nel nostro verso o contromano) con la sua pozzanghera, il gruppetto,
-  // oppure un mezzo da evitare. Il ciclista va più piano (o più forte) della strada: si sceglie
-  // da dove partono perché arrivino insieme all'altezza della Panda.
-  incontro() {
-    const c = this.cfg, F = this.fase, r = this.rnd;
-    if (r() < F.veicoli) {
-      const v = r();
-      if (v < 0.4) this.aggiungi('trattore', STRADA.dx - 42 + (r() - 0.5) * 8, -40, 1 - c.trattore);
-      else if (v < 0.4 + F.golf) this.aggiungi('golf', STRADA.sx + 42, -60, 1, { extra: c.golf, scala: 0.55 });
-      else this.aggiungi('vespa', STRADA.sx + 44 + (r() - 0.5) * 12, -30, 1, { extra: c.vespa }).img.setFlipY(true);
+  // il tratto in un punto della salita; "ritmo" è quello che detta la cadenza (prima di un
+  // tornante si rallenta già: l'avvicinamento)
+  trattoIn(x) {
+    const T = this.tratti;
+    let t = T[T.length - 1];
+    for (const u of T) if (x < u.a) { t = u; break; }
+    const prossimo = T[T.indexOf(t) + 1];
+    const ritmo = t.tipo === 'salita' && prossimo?.tipo === 'tornante' && prossimo.da - x < this.cfg.avvicinamento ? 'tornante' : t.tipo;
+    return { t, ritmo };
+  }
+
+  quota(x) {
+    const { t } = this.trattoIn(Phaser.Math.Clamp(x, 0, this.lunghezza));
+    const base = t.q + (Phaser.Math.Clamp(x, t.da, t.a) - t.da) * this.cfg.pendenze[t.tipo];
+    return x < 0 ? x * this.cfg.pendenze.salita : x > this.lunghezza ? base + (x - this.lunghezza) * 0.01 : base;
+  }
+
+  // il Passaseo: va a "passo" di chi pedala perfetto, cambiando velocità con dolcezza
+  simulaPassaseo() {
+    const c = this.cfg, dt = 1 / 30, punti = [{ t: 0, x: 0 }];
+    let x = 0, v = 0, t = 0;
+    while (x < this.lunghezza && t < 120) {
+      const vt = c.vel[this.trattoIn(x).ritmo] * this.passo;
+      v += (vt - v) * Math.min(1, dt * (vt > v ? c.accelera : c.frena));
+      x += v * dt; t += dt;
+      punti.push({ t, x: Math.min(x, this.lunghezza) });
+    }
+    return { t, punti };
+  }
+
+  xPassaseo(t) {
+    const P = this.corsaPassaseo, i = Math.min(P.length - 1, Math.floor(t * 30));
+    return i >= P.length - 1 ? this.lunghezza : lerp(P[i].x, P[i + 1].x, t * 30 - i);
+  }
+
+  // ------------------------------------------------------------
+  //  PEDALARE
+  // ------------------------------------------------------------
+  get cadenza() { return this.cfg.cadenza[this.trattoIn(this.x).ritmo]; }
+
+  // una pedalata (0 = sinistra, 1 = destra): la si confronta con la battuta più vicina di quel lato
+  pedala(lato) {
+    if (!this.inCorso || this.tArrivo != null) return;
+    const c = this.cfg, cad = this.cadenza, f = this.fase, n0 = Math.floor(f), dopo = (n0 + 1 - f) / cad, prima = (f - n0) / cad;
+    let n = null, err = Infinity;
+    for (const [m, e] of [[n0, prima], [n0 + 1, dopo]]) if (m % 2 === lato && m > this.usata && e < err) { n = m; err = e; }
+    const k = this.trattoIn(this.x).ritmo === 'strappo' ? c.finestraStrappo : 1;
+    const voto = n == null ? 'vuoto' : err <= c.finestre.perfetta * k ? 'perfetta' : err <= c.finestre.buona * k ? 'buona' : 'vuoto';
+    const q = c.potenza[voto];
+    this.spinta = Phaser.Math.Clamp(this.spinta + (q - this.spinta) * c.spinta.presa, 0, 1);
+    this.pedali[lato].setScale(scalaDi(lato ? 'pedaleDx' : 'pedaleSx', 0.62) * 1.25);
+    this.tweens.add({ targets: this.pedali[lato], scale: scalaDi(lato ? 'pedaleDx' : 'pedaleSx', 0.62), duration: 120 });
+    if (voto === 'vuoto') {
+      this.vuoto++; this.serie = 0;
+      Audio.sfx('vuoto');
+      this.mostraVoto('A VUOTO', '#ff9a8a');
       return;
     }
-    const gruppo = r() < F.gruppetto;
-    const lato = gruppo ? 'dx' : r() < F.contromano ? 'sx' : 'dx', L = LATO[lato];
-    const f = 1 + L.verso * c.bici;
-    const tipoPozza = gruppo ? 'lunga' : r() < F.fango ? 'fango' : r() < F.grande ? 'grande' : 'piccola';
-    const P = POZZE[tipoPozza];
-    let yb, yp;
-    if (f < 1) { yb = -30; yp = Y_AUTO - (Y_AUTO - yb) / f; } else { yp = -20 - P.lungo; yb = Y_AUTO - (Y_AUTO - yp) * f; }
-    // la pozzanghera: più vicina al ciclista se è piccola (bisogna stargli attaccati)
-    const dist = tipoPozza === 'piccola' ? c.distanzaPozza - 4 : c.distanzaPozza;
-    const pozza = this.aggiungi('pozza', L.bici + L.verso * dist + (r() - 0.5) * 4, yp, 1, { chiave: P.key, scala: P.k, kY: P.kY, pozza: P, tipoPozza });
-    if (tipoPozza === 'fango') return;                      // il fango sta lì da solo: è una trappola
-    const ombrello = !gruppo && r() < F.ombrello;
-    const quanti_ = gruppo ? 3 : 1;
-    // contromano, a volte, arriva una Vespa proprio mentre stai per prendere la pozzanghera
-    if (lato === 'sx' && r() < F.trafficoContromano) this.aggiungi('vespa', STRADA.sx + 44, yp - 90, 1, { extra: c.vespa }).img.setFlipY(true);
-    for (let i = 0; i < quanti_; i++) {
-      const dy = gruppo ? (i - 1) * 24 * f : 0;
-      const bici = this.aggiungi('bici', L.bici, yb + dy, f, { pozza, lato, x0: L.bici, onda: lerp(c.ondeggioInizio, c.ondeggioFine, this.progresso), fase: r() * 6.28, ombrello, accorto: false });
-      bici.img.setFlipY(L.verso > 0);
-    }
-    pozza.bici = true;
-  }
-
-  frena(perche, quanto = 1) {
-    this.freno = this.cfg.ripresa * quanto;
-    Audio.sfx('frenata');
-    vibra(60);
-    scuoti(this, 120, 0.005);
-    if (perche) {
-      this.serie = 0;
-      this.testoSerie.setText('');
-      scritta(this, this.x, Y_AUTO - 34, perche, { size: 8, color: '#ff6b5a', durata: 300 });
-    }
-  }
-
-  // il clacson: i Passaseo davanti si spaventano, sbandano verso la pozzanghera e non aprono l'ombrello
-  clacson() {
-    if (!this.inCorso || this.ricaricaClacson > 0) return;
-    const c = this.cfg;
-    this.ricaricaClacson = c.ricaricaClacson;
-    Audio.sfx('clacson');
-    scritta(this, this.x, Y_AUTO - 40, 'PEEP!', { size: 9, color: '#ffe14a', durata: 200 });
-    for (const o of this.cose) {
-      if (o.tipo !== 'bici' || o.bagnato || o.sfiorato) continue;
-      const davanti = Y_AUTO - o.img.y;
-      if (davanti < -10 || davanti > c.portataClacson) continue;
-      o.spavento = c.spavento;                 // secondi di sbandata verso il centro strada
-      if (o.aperto) { o.aperto = false; o.ombrelloImg?.destroy(); o.ombrelloImg = null; }
-      o.ombrello = false;
-      fumetto(this, o.img.x, o.img.y - 24, caso(c.frasiClacson), 600, 902);
-    }
-    this.disegnaClacson();
-  }
-
-  // SPLASH: il ciclista è fradicio (se ha l'ombrello aperto, invece, ha parato)
-  schizza(bici, pozza) {
-    const c = this.cfg;
-    if (bici.aperto) {
-      bici.bagnato = true;
-      this.parati++;
-      Audio.sfx('pof');
-      scritta(this, bici.img.x, bici.img.y - 24, 'OMBRELLO!', { size: 8, color: '#9fe0ff', durata: 350 });
-      return;
-    }
-    bici.bagnato = true;
-    bici.img.setTexture('ciclistaBagnato');
-    this.schizzi++;
+    this.usata = n;
+    this.tUltima = 0;
     this.serie++;
-    this.serieMax = Math.max(this.serieMax, this.serie);
-    const p = c.puntiSchizzo * Math.min(this.serie, c.maxSerie);
-    this.punti += p;
-    Audio.sfx('schizzo');
-    vibra(40);
-    this.testoSchizzi.setText('SCHIZZATI: ' + this.schizzi);
-    this.testoSerie.setText(this.serie > 1 ? `DI FILA x${Math.min(this.serie, c.maxSerie)}` : '');
-    scritta(this, bici.img.x, bici.img.y - 24, 'SPLASH! +' + p, { size: 9, color: '#9fe0ff', durata: 400 });
-    const verso = Math.sign(bici.img.x - pozza.img.x) || 1;
-    for (let i = 0; i < 6; i++) {
-      const g = im(this, pozza.img.x, Y_AUTO, 'spruzzo', 0.6 + Math.random() * 0.5).setDepth(45).setAlpha(0.95).setTint(0x8fd0ff);
-      this.tweens.add({ targets: g, x: bici.img.x + verso * Phaser.Math.Between(-6, 14), y: bici.img.y + Phaser.Math.Between(-18, 14), scale: g.scale * 1.6, alpha: 0, duration: 380 + i * 40, ease: 'Quad.out', onComplete: () => g.destroy() });
-    }
-    this.tweens.add({ targets: bici.img, angle: { from: -14 * verso, to: 0 }, duration: 500, ease: 'Elastic.out' });
-    if (this.serie > 0 && this.serie % 5 === 0) Audio.sfx('bonus');
-    // il Passaseo, fradicio, si affaccia dal bordo strada
-    const xr = bici.lato === 'dx' ? 418 : 62, yr = Phaser.Math.Clamp(bici.img.y + 30, 96, 230);
-    this.ritratto?.destroy();
-    this.ritratto = im(this, xr, yr, 'passaseo_shock', 0.42).setOrigin(0.5, 1).setDepth(900).setScale(0);
-    this.tweens.add({ targets: this.ritratto, scale: scalaDi('passaseo_shock', 0.42), duration: 200, ease: 'Back.out' });
-    const rit = this.ritratto;
-    this.time.delayedCall(900, () => this.tweens.add({ targets: rit, scale: 0, duration: 160, onComplete: () => rit.destroy() }));
-    this.fumRitratto?.destroy();
-    this.fumRitratto = fumetto(this, Phaser.Math.Clamp(xr, 60, 420), yr - 66, caso(c.frasi), 900, 902);
+    if (voto === 'perfetta') { this.perfette += this.inSprint ? 2 : 1; Audio.sfx('muovi'); this.mostraVoto(this.inSprint ? 'PERFETTA x2' : 'PERFETTA', '#7dff9a'); }
+    else { this.buone++; this.mostraVoto('BUONA', '#9af0ff'); }
+    if (this.serie > 0 && this.serie % 12 === 0) { Audio.sfx('ok'); scritta(this, XP + 30, YP - 74, `${this.serie} DI FILA!`, { size: 9, color: '#ffe14a', durata: 500 }); }
   }
 
-  aggiorna(dt, p) {
-    const c = this.cfg, t = this.tasti, F = this.fase;
-
-    // gli atti: all'inizio di quelli nuovi, un annuncio
-    const atto = c.atti.indexOf(F);
-    if (atto !== this.atto) {
-      this.atto = atto;
-      Audio.sfx('bonus');
-      scritta(this, 240, 120, F.nome, { size: 14, color: '#ffe14a', durata: 900 });
-    }
-    // l'acquazzone: strada scura e pioggia
-    const piove = !!F.pioggia;
-    this.bagnato.fillAlpha = lerp(this.bagnato.fillAlpha, piove ? 0.28 : 0, dt * 2);
-    this.pioggia.clear();
-    if (piove) {
-      this.pioggia.lineStyle(1, 0xcfe6ff, 0.45);
-      for (let i = 0; i < 46; i++) {
-        const x = (i * 97.3 + this.trascorso * 140) % 500 - 10, y = (i * 53.7 + this.trascorso * 520) % 290 - 10;
-        this.pioggia.lineBetween(x, y, x - 4, y + 12);
-      }
-    }
-
-    // velocità della strada, con la frenata dopo un tocco e il fango
-    const obiettivo = lerp(c.velInizio, c.velFine, p) * (this.fango > 0 ? c.rallentaFango : 1);
-    this.fango = Math.max(0, this.fango - dt);
-    if (this.freno > 0) { this.freno = Math.max(0, this.freno - dt); this.vel = lerp(obiettivo, c.velFreno, Math.min(1, this.freno / c.ripresa)); }
-    else this.vel = lerp(this.vel, obiettivo, Math.min(1, dt * 4));
-    this.auto.setTexture(this.freno > c.ripresa * 0.45 ? 'pandaFreni' : 'panda');
-    const dD = this.vel * dt;
-    this.scorri = (this.scorri + dD) % 270;
-    this.fondo[0].y = this.scorri - 270;
-    this.fondo[1].y = this.scorri;
-
-    // sterzo (sotto l'acquazzone la Panda scivola: ci mette di più a cambiare direzione)
-    const dir = (t.dx.isDown || t.d.isDown) - (t.sx.isDown || t.a.isDown);
-    let voglio = 0;
-    if (dir) { this.modo = 'tastiera'; voglio = dir * c.velSterzo; }
-    else if (this.modo !== 'tastiera') voglio = Phaser.Math.Clamp((this.obiettivoX - this.x) * 10, -c.velSterzo, c.velSterzo);
-    this.vx = lerp(this.vx, voglio, Math.min(1, dt * (piove ? c.presaBagnato : 30)));
-    this.x = Phaser.Math.Clamp(this.x + this.vx * dt, X_MIN, X_MAX);
-    if (this.modo === 'tastiera') this.obiettivoX = this.x;
-    this.auto.setPosition(this.x, Y_AUTO).setAngle(Phaser.Math.Clamp(this.vx * 0.05, -9, 9));
-
-    // clacson in ricarica
-    if (this.ricaricaClacson > 0) { this.ricaricaClacson = Math.max(0, this.ricaricaClacson - dt); this.disegnaClacson(); }
-
-    // nuovi incontri
-    this.tIncontro -= dt;
-    if (this.tIncontro <= 0) { this.incontro(); this.tIncontro = F.intervallo * (0.85 + this.rnd() * 0.3); }
-
-    for (const o of this.cose) {
-      o.img.y += o.f * dD + (o.extra ?? 0) * dt;
-      if (o.tipo === 'bici' && !o.sfiorato) {
-        o.fase += dt * 2.6;
-        // sbandata per lo spavento del clacson: verso il centro strada
-        o.spavento = Math.max(0, (o.spavento ?? 0) - dt);
-        const verso = LATO[o.lato].verso, sbanda = o.spavento > 0 ? Math.sin((o.spavento / c.spavento) * Math.PI) * c.sbandata : 0;
-        o.img.x = o.x0 + Math.sin(o.fase) * o.onda + verso * sbanda;
-        // chi ha l'ombrello si accorge della Panda e lo apre (se non è stato spaventato prima)
-        const davanti = Y_AUTO - o.img.y;
-        if (o.ombrello && !o.accorto && davanti < c.accorgeA && davanti > 0) {
-          o.accorto = true;
-          o.allarme = txt(this, o.img.x, o.img.y - 22, '!', { size: 12, color: '#ffe14a', depth: 902 });
-          this.time.delayedCall(c.tempoOmbrello * 1000, () => {
-            o.allarme?.destroy();
-            if (!o.ombrello || o.bagnato || !o.img.active) return;
-            o.aperto = true;
-            Audio.sfx('pof');
-            o.ombrelloImg = im(this, o.img.x, o.img.y - 4, 'ombrelloBici').setDepth(41);
-          });
-        }
-        o.allarme?.setPosition(o.img.x, o.img.y - 22);
-        o.ombrelloImg?.setPosition(o.img.x, o.img.y - 4);
-      }
-      const dx = Math.abs(this.x - o.img.x), dy = Math.abs(Y_AUTO - o.img.y);
-      if (o.tipo === 'pozza') {
-        const P = o.pozza, dentro = dy < P.lungo / 2 + 6 && dx < P.presa;
-        if (dentro && !o.toccata) {
-          o.toccata = true;
-          if (o.tipoPozza === 'fango') {
-            this.fango = c.durataFango;
-            Audio.sfx('splat');
-            scritta(this, this.x, Y_AUTO - 34, 'FANGO!', { size: 8, color: '#c8a070', durata: 300 });
-            for (const s of [-1, 1]) { const g = im(this, o.img.x, o.img.y, 'spruzzo', 0.7).setDepth(45).setTint(0x8a6a3a); this.tweens.add({ targets: g, x: g.x + s * 22, alpha: 0, duration: 380, onComplete: () => g.destroy() }); }
-          } else if (!o.bici) { this.punti += c.puntiPozzanghera; Audio.sfx('splash'); }
-        }
-        // finché la Panda è dentro, chi le pedala accanto si bagna (il gruppetto, uno dopo l'altro)
-        if (dentro && o.tipoPozza !== 'fango') {
-          for (const b of this.cose) {
-            if (b.tipo !== 'bici' || b.bagnato || b.sfiorato || b.pozza !== o) continue;
-            if (Math.abs(b.img.y - Y_AUTO) < 22 && Math.abs(b.img.x - o.img.x) < P.raggio) this.schizza(b, o);
-          }
-        }
-      } else if (o.tipo === 'bici' && !o.sfiorato && dx < AUTO.mx + 7 && dy < AUTO.my + 20) {
-        // mai addosso ai ciclisti: si inchioda, lui sbanda e suona il campanello
-        o.sfiorato = true;
-        this.sfiorati++;
-        this.punti -= c.malusCiclista;
-        Audio.sfx('campanello');
-        this.frena('-' + c.malusCiclista);
-        this.scansa(o.img.x, AUTO.mx + 9);
-        this.tweens.add({ targets: o.img, angle: { from: 18, to: -18 }, duration: 110, yoyo: true, repeat: 2, onComplete: () => o.img.setAngle(0) });
-        fumetto(this, o.img.x, o.img.y - 26, caso(c.frasiSfiorato), 800, 902);
-      } else if (['trattore', 'vespa', 'golf'].includes(o.tipo) && !o.urtato) {
-        const mx = { trattore: 14, vespa: 6, golf: 14 }[o.tipo], my = { trattore: 26, vespa: 18, golf: 28 }[o.tipo];
-        if (dx < AUTO.mx + mx && dy < AUTO.my + my) {
-          o.urtato = true;
-          this.urti++;
-          this.punti -= c.malusVeicolo;
-          Audio.sfx('clacson');
-          this.frena('-' + c.malusVeicolo);
-          this.scansa(o.img.x, AUTO.mx + mx + 2);
-        }
-      }
-    }
-    // pozzanghere passate con un ciclista asciutto accanto: la serie riparte
-    for (const o of this.cose) if (o.tipo === 'pozza' && o.bici && !o.persa && o.img.y > Y_AUTO + o.pozza.lungo / 2 + 14) {
-      o.persa = true;
-      const asciutti = this.cose.filter((b) => b.tipo === 'bici' && b.pozza === o && !b.bagnato && !b.sfiorato);
-      if (asciutti.length && this.serie > 0) { this.serie = 0; this.testoSerie.setText(''); scritta(this, asciutti[0].img.x, asciutti[0].img.y - 20, 'ASCIUTTO!', { size: 8, color: '#ffffff', durata: 300 }); }
-    }
-    for (const o of this.cose) if (o.img.y > 330 || o.img.y < -600) { this.tweens.killTweensOf(o.img); o.img.destroy(); o.ombrelloImg?.destroy(); o.allarme?.destroy(); o.via = true; }
-    this.cose = this.cose.filter((o) => !o.via);
+  mostraVoto(s, colore) {
+    this.voto.setText(s).setColor(colore).setAlpha(1);
+    this.tweens.killTweensOf(this.voto);
+    this.tweens.add({ targets: this.voto, alpha: 0, delay: 250, duration: 250 });
   }
 
-  // la Panda sterza di colpo e si toglie da davanti a quello che stava per toccare
-  scansa(x, distanza) {
-    let verso = Math.sign(this.x - x) || 1;
-    if (x + verso * distanza < X_MIN || x + verso * distanza > X_MAX) verso = -verso;
-    this.x = this.obiettivoX = Phaser.Math.Clamp(x + verso * distanza, X_MIN, X_MAX);
-    this.vx = 0;
+  aggiorna(dt) {
+    const c = this.cfg;
+    if (this.tArrivo == null) {
+      const { t, ritmo } = this.trattoIn(this.x);
+      // il ritmo: le pedalate a tempo tengono su la spinta; se ne salti, cala
+      this.fase += c.cadenza[ritmo] * dt;
+      this.tUltima += dt;
+      if (this.tUltima > 1.5 / c.cadenza[ritmo]) this.spinta = Math.max(0, this.spinta - c.spinta.cala * dt);
+      // la velocità va verso quella che la spinta permette in quel tratto
+      const vt = c.vel[ritmo] * this.spinta;
+      this.v += (vt - this.v) * Math.min(1, dt * (vt > this.v ? c.accelera : c.frena));
+      const prima = this.x;
+      this.x += this.v * dt;
+      // il tornante: chi ci entra lanciato va largo
+      const tn = this.tratti.find((u) => u.tipo === 'tornante' && prima < u.da && this.x >= u.da);
+      if (tn && this.v > c.tornanteMax) this.largo();
+      // gli atti, lo sprint, il traguardo
+      const atto = this.atti.filter((a) => this.x >= a).length - 1;
+      if (atto !== this.atto) { this.atto = atto; this.annuncia(c.nomiAtti[atto]); }
+      if (!this.inSprint && t.tipo === 'sprint') { this.inSprint = true; this.annuncia('SPRINT!'); }
+      if (this.x >= this.lunghezza) this.arriva();
+    }
+    // il Passaseo dice la sua quando lo superi (o ti supera)
+    const xr = this.xPassaseo(this.trascorso), avanti = this.x >= xr;
+    if (this.davanti != null && avanti !== this.davanti && Math.abs(this.x - xr) > 3) {
+      const q = this.aSchermo(xr);
+      fumetto(this, Phaser.Math.Clamp(q.x, 80, 400), q.y - 64, caso(avanti ? c.frasiSorpassato : c.frasiSorpasso), 1100, 900);
+      if (avanti) Audio.sfx('ok');
+    }
+    this.davanti = avanti;
+    this.tFrase -= dt;
+    if (this.tFrase <= 0) {
+      this.tFrase = 6 + Math.random() * 3;
+      const q = this.aSchermo(xr);
+      if (q.x > 40 && q.x < 440) fumetto(this, q.x, q.y - 64, caso(c.frasiPassaseo), 1200, 900);
+    }
+    this.disegna(dt);
+  }
+
+  largo() {
+    const c = this.cfg;
+    this.larghi++;
+    this.v *= c.largo;
+    this.spinta *= 0.5;
+    this.serie = 0;
+    Audio.sfx('errore');
+    vibra(60);
+    scritta(this, XP + 20, YP - 70, 'LARGO! TROPPO VELOCE', { size: 10, color: '#ff6b5a', durata: 700 });
+  }
+
+  annuncia(s) {
+    if (!s) return;
+    Audio.sfx('bonus');
+    scritta(this, 240, 96, s, { size: 15, color: '#ffe14a', durata: 900 });
+  }
+
+  // in cima! (la partita finisce subito: il tempo che avanza conta)
+  arriva() {
+    this.x = this.lunghezza;
+    this.tArrivo = this.trascorso;
+    const primo = this.tArrivo < this.arrivoPassaseo;
+    Audio.sfx(primo ? 'vittoria' : 'ok');
+    stelle(this, XP, YP - 40, 10, 900);
+    scritta(this, 240, 110, primo ? 'IN CIMA PER PRIMO!' : 'IN CIMA!', { size: 16, color: primo ? '#7dff9a' : '#ffe14a', durata: 1000 });
+    this.time.delayedCall(900, () => { if (this.inCorso) this.termina(); });
+  }
+
+  // ------------------------------------------------------------
+  //  DISEGNO
+  // ------------------------------------------------------------
+  // dalla salita allo schermo: x in metri -> punto sulla strada
+  aSchermo(x) { return { x: XP + (x - this.x) * SCALA, y: YP - (this.quota(x) - this.quota(this.x)) * SCALA * RIPIDO }; }
+
+  disegna(dt) {
+    const c = this.cfg, g = this.gStrada;
+    // le colline scorrono più piano della strada
+    const off = (this.x * SCALA * 0.3) % 960;
+    this.colline[0].x = -off; this.colline[1].x = 960 - off;
+    this.colline.forEach((img) => { img.y = 128 + (this.quota(this.x) * SCALA * RIPIDO * 0.08) % 20; });
+    // la montagna e la strada: il terreno sotto, l'asfalto, le strisce, il guardrail
+    g.clear();
+    const punti = [];
+    for (let sx = -8; sx <= 488; sx += 6) { const x = this.x + (sx - XP) / SCALA; punti.push({ x: sx, y: this.aSchermo(x).y, m: x }); }
+    g.fillStyle(0x5a8a46, 1);
+    g.fillPoints([...punti.map((p) => ({ x: p.x, y: p.y + 4 })), { x: 488, y: 280 }, { x: -8, y: 280 }], true);
+    g.fillStyle(0x3f6a34, 1);
+    g.fillPoints([...punti.map((p) => ({ x: p.x, y: p.y + 22 })), { x: 488, y: 280 }, { x: -8, y: 280 }], true);
+    for (let i = 1; i < punti.length; i++) {
+      const a = punti[i - 1], b = punti[i], tipo = this.trattoIn(b.m).t.tipo, fuori = b.m < 0 || b.m > this.lunghezza;
+      g.lineStyle(9, fuori ? 0x6a6a72 : tipo === 'strappo' ? 0x4a4a54 : 0x55565f, 1).lineBetween(a.x, a.y + 3.5, b.x, b.y + 3.5);
+      g.lineStyle(1.2, 0xeceade, 1).lineBetween(a.x, a.y - 0.8, b.x, b.y - 0.8);
+    }
+    // la striscia di mezzo (a tratti) e il guardrail coi paletti, ogni 8 metri
+    const m0 = Math.ceil((this.x - XP / SCALA) / 8) * 8;
+    for (let m = m0; m < this.x + (480 - XP) / SCALA; m += 8) {
+      const a = this.aSchermo(m), b = this.aSchermo(m + 3.5);
+      g.lineStyle(1.4, 0xf4f3ea, 0.9).lineBetween(a.x, a.y + 3.5, b.x, b.y + 3.5);
+      g.fillStyle(0xb8bcc6, 1).fillRect(a.x - 0.8, a.y + 7, 1.6, 6);
+      // sui tornanti, i pannelli gialli e neri con la freccia (come in montagna)
+      if (this.trattoIn(m).t.tipo === 'tornante') {
+        g.fillStyle(0xffd23a, 1).fillRect(a.x - 4, a.y - 13, 8, 8);
+        g.lineStyle(1.4, 0x1c1c22, 1).beginPath(); g.moveTo(a.x + 1.5, a.y - 11.5); g.lineTo(a.x - 1.5, a.y - 9); g.lineTo(a.x + 1.5, a.y - 6.5); g.strokePath();
+      }
+    }
+    for (let m = m0; m < this.x + (480 - XP) / SCALA; m += 8) { const a = this.aSchermo(m), b = this.aSchermo(m + 8); g.lineStyle(1.6, 0xd8dce4, 1).lineBetween(a.x, a.y + 8, b.x, b.y + 8); }
+    // cartelli e striscioni
+    this.segni.forEach((s, i) => {
+      const img = this.cartelli[i], q = this.aSchermo(s.x), vis = q.x > -70 && q.x < 550;
+      img.setVisible(vis);
+      if (!vis) return;
+      if (s.arco) {
+        img.setPosition(q.x, q.y - 46);
+        g.fillStyle(0x8a8e96, 1).fillRect(q.x - 42, q.y - 52, 2.4, 52).fillRect(q.x + 40, q.y - 52, 2.4, 52);
+      } else img.setPosition(q.x + 6, q.y - 2);
+    });
+    // le due bici
+    const xr = this.xPassaseo(this.trascorso);
+    this.bici(this.ciclisti[0], xr, this.fasePassaseo(xr));
+    this.bici(this.ciclisti[1], this.x, this.fase);
+    // il Passaseo fuori dallo schermo: la freccia col distacco
+    const q = this.aSchermo(xr), d = Math.round(xr - this.x);
+    this.indicatore.setVisible(q.x > 470 || q.x < 10);
+    if (q.x > 470) this.indicatore.setText(`PASSASEO ▶ +${d} m`).setPosition(474, Phaser.Math.Clamp(q.y - 40, 70, 200)).setOrigin(1, 0.5);
+    else if (q.x < 10) this.indicatore.setText(`◀ PASSASEO ${d} m`).setPosition(6, Phaser.Math.Clamp(q.y - 40, 70, 200)).setOrigin(0, 0.5);
+    this.disegnaHud(xr);
+  }
+
+  // il Passaseo pedala a tempo anche lui (la sua pedalata segue la sua velocità)
+  fasePassaseo(xr) { return xr * 0.075; }
+
+  // una bici di fianco, con chi ci pedala sopra: tutto ruotato secondo la pendenza
+  bici(C, x, fase) {
+    const g = C.g, q = this.aSchermo(x), q2 = this.aSchermo(x + 2), ang = Math.atan2(q2.y - q.y, q2.x - q.x);
+    g.clear();
+    C.testa.setVisible(q.x > -30 && q.x < 510);
+    if (!C.testa.visible) return;
+    const cs = Math.cos(ang), sn = Math.sin(ang), ox = q.x, oy = q.y + C.dy;
+    const P = (lx, ly) => ({ x: ox + lx * cs - ly * sn, y: oy + lx * sn + ly * cs });
+    const linea = (a, b, w, colore) => { g.lineStyle(w, colore, 1).lineBetween(a.x, a.y, b.x, b.y); };
+    const ruota = (cx, cy) => {
+      const p = P(cx, cy), giro = x / 9;
+      g.lineStyle(2.2, 0x1c1c22, 1).strokeCircle(p.x, p.y, 8.6);
+      g.lineStyle(0.8, 0xb8bcc6, 1).strokeCircle(p.x, p.y, 7);
+      for (let k = 0; k < 4; k++) { const a = giro + (k * Math.PI) / 4; g.lineStyle(0.6, 0xc8ccd4, 1).lineBetween(p.x - Math.cos(a) * 7, p.y - Math.sin(a) * 7, p.x + Math.cos(a) * 7, p.y + Math.sin(a) * 7); }
+      g.fillStyle(0x8a8e96, 1).fillCircle(p.x, p.y, 1.2);
+    };
+    // la pedivella: mezzo giro a ogni pedalata (la pedalata sinistra spinge giù il pedale sinistro)
+    const a = Math.PI * fase + Math.PI / 2, mov = P(0, -9);
+    const pedale = (s) => P(Math.cos(a + (s ? Math.PI : 0)) * 4.6, -9 + Math.sin(a + (s ? Math.PI : 0)) * 4.6);
+    const anca = P(-5, -31), spalla = P(6, -43), manubrio = P(13, -31);
+    const gamba = (s, scura) => {
+      // il ginocchio: a metà tra anca e pedale, spostato in avanti (verso il manubrio) quanto serve
+      const f = pedale(s), dx = f.x - anca.x, dy = f.y - anca.y, lungo = Math.hypot(dx, dy) || 1, L = 11.2;
+      const m = Math.min(lungo, 2 * L - 0.5) / 2, h = Math.sqrt(Math.max(0, L * L - m * m)), ux = dx / lungo, uy = dy / lungo;
+      const avanti = -uy * cs + ux * sn > 0 ? 1 : -1;
+      const gin = { x: anca.x + ux * m - uy * h * avanti, y: anca.y + uy * m + ux * h * avanti };
+      const k1 = scura ? 0.75 : 1;
+      linea(anca, gin, 5.2, C.gambe);
+      linea(gin, f, 4.2, C.corti ? C.pelle : C.gambe);
+      if (scura) { g.fillStyle(0x000000, 0.25).fillCircle(gin.x, gin.y, 2); }
+      g.fillStyle(C.scarpe, k1).fillEllipse(f.x + 1.6, f.y, 6, 3);
+    };
+    gamba(1, true);                        // la gamba di là, dietro alla bici
+    ruota(-14, -9); ruota(14, -9);
+    const t = C.telaio;
+    linea(P(-14, -9), mov, 2, t); linea(mov, P(-4, -26), 2.2, t); linea(P(-4, -26), P(11, -26), 2.2, t); linea(mov, P(11, -26), 2.2, t);
+    linea(P(-14, -9), P(-4, -26), 1.6, t); linea(P(11, -26), P(14, -9), 2, t); linea(P(11, -26), manubrio, 1.8, 0x3a3a42);
+    linea(P(-8, -28), P(-1, -28), 2.6, 0x1c1c22);                                  // la sella
+    g.fillStyle(0x8a8e96, 1).fillCircle(mov.x, mov.y, 2.6);
+    linea(mov, pedale(1), 1.4, 0x6a6e78); linea(mov, pedale(0), 1.4, 0x8a8e96);
+    gamba(0, false);                       // la gamba di qua
+    // il busto chino sul manubrio, il braccio teso
+    linea(anca, spalla, 10, C.maglia);
+    g.fillStyle(C.maglia, 1).fillCircle(spalla.x, spalla.y, 5.2);
+    g.fillStyle(C.maglia, 1).fillCircle(anca.x, anca.y, 4.6);
+    linea(spalla, manubrio, 3.2, C.pelle);
+    g.fillStyle(C.pelle, 1).fillCircle(manubrio.x, manubrio.y, 1.8);
+    const testa = P(10, -55);
+    C.testa.setPosition(testa.x, testa.y).setRotation(ang * 0.6);
+  }
+
+  disegnaHud(xr) {
+    const c = this.cfg, g = this.gBarra, L = this.lunghezza, X = (x) => lerp(BARRA.x0, BARRA.x1, Phaser.Math.Clamp(x / L, 0, 1));
+    g.clear();
+    g.fillStyle(0x1f1430, 0.9).fillRoundedRect(BARRA.x0 - 2, BARRA.y - 3, BARRA.x1 - BARRA.x0 + 4, 6, 3);
+    for (const a of this.atti.slice(1)) g.fillStyle(0xffe14a, 0.7).fillRect(X(a) - 0.5, BARRA.y - 4, 1, 8);
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) g.fillStyle((i + j) % 2 ? 0xffffff : 0x1c1c22, 1).fillRect(BARRA.x1 + 3 + i * 2.5, BARRA.y - 5 + j * 2.5, 2.5, 2.5);
+    g.fillStyle(col(this.giocatore.colore), 1).fillRoundedRect(BARRA.x0, BARRA.y - 1.5, X(this.x) - BARRA.x0, 3, 1.5);
+    this.facce[0].setX(X(xr)); this.facce[1].setX(X(this.x));
+    // il ritmo: la pallina va da un pedale all'altro; il pedale che tocca si accende
+    const r = this.gRitmo, f = this.fase, px = RITMO.x - Math.cos(Math.PI * f) * RITMO.mezza, vicino = Math.abs(f - Math.round(f)) < 0.18;
+    r.clear();
+    r.fillStyle(0x1f1430, 0.75).fillRoundedRect(RITMO.x - RITMO.mezza - 6, RITMO.y - 5, RITMO.mezza * 2 + 12, 10, 5);
+    for (const s of [-1, 1]) r.fillStyle(0x7dff9a, 0.35).fillRoundedRect(RITMO.x + s * RITMO.mezza - 6, RITMO.y - 4, 12, 8, 4);
+    r.fillStyle(this.tArrivo != null ? 0x8a8e96 : 0xffe14a, 1).fillCircle(px, RITMO.y, 4.2);
+    r.lineStyle(1.2, 0x1c1c22, 1).strokeCircle(px, RITMO.y, 4.2);
+    const lato = Math.round(f) % 2;
+    this.pedali.forEach((p, i) => p.setAlpha(vicino && lato === i ? 1 : 0.55));
+    // il distacco e la velocità (si riscrivono solo quando cambiano)
+    const d = Math.round(this.x - xr), kmh = Math.round(this.v * 1.25), hud = `${d}|${kmh}`;
+    if (hud !== this.hud) {
+      this.hud = hud;
+      this.testoDistacco.setText(d >= 0 ? `+${d} m` : `${d} m`).setColor(d >= 0 ? '#7dff9a' : '#ff9a8a');
+      this.testoVel.setText(`${kmh} km/h`);
+    }
   }
 
   risultato() {
+    const c = this.cfg, t = this.tArrivo ?? this.trascorso, arrivato = this.tArrivo != null;
+    // chi vince: chi arriva prima in cima; se nessuno ci arriva, chi è più avanti allo scadere
+    const vittoria = arrivato ? this.tArrivo < this.arrivoPassaseo : this.arrivoPassaseo > this.trascorso && this.x > this.xPassaseo(this.trascorso);
+    const vantaggio = vittoria && arrivato ? Math.min(this.arrivoPassaseo, this.durata) - this.tArrivo : 0;
+    const P = c.punti;
     return {
-      punteggio: Math.max(0, this.punti),
-      vittoria: this.schizzi >= this.cfg.obiettivoSchizzi,
-      riepilogo: `${quanti(this.schizzi, 'Passaseo schizzato', 'Passaseo schizzati')}, serie max ${this.serieMax}` + (this.parati ? `, ${this.parati} con l'ombrello` : '') + `, ${quanti(this.sfiorati + this.urti, 'tocco', 'tocchi')}`,
+      punteggio: Math.max(0, Math.round(this.x * P.metro + this.perfette * P.perfetta + (vittoria ? P.vittoria + vantaggio * P.secondo : 0))),
+      vittoria,
+      riepilogo: `${Math.round(this.x)} m su ${Math.round(this.lunghezza)}, ${quanti(this.perfette, 'pedalata perfetta', 'pedalate perfette')}` + (arrivato ? `, in cima in ${t.toFixed(1)} s` : '') + (this.larghi ? `, ${quanti(this.larghi, 'tornante largo', 'tornanti larghi')}` : ''),
+      titoloFine: vittoria ? 'IN CIMA PER PRIMO!' : 'TI HA STACCATO!',
     };
   }
 
+  // chi ha vinto in grande, in cima al passo; l'altro arriva sbuffando
   finale(ris, fatto) {
-    for (const o of this.hud) o.setVisible(false);
-    this.fumRitratto?.destroy();
-    this.pioggia.clear();
+    for (const o of [this.gRitmo, ...this.pedali, this.voto, this.gBarra, ...this.facce, this.testoDistacco, this.testoVel, this.indicatore]) o.setVisible(false);
     Audio.sfx('tempo');
-    this.auto.setTexture('pandaFreni');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });
-    const pas = im(this, 240, 330, ris.vittoria ? 'passaseo_shock' : 'passaseo_felice', 1.35).setOrigin(0.5, 1).setDepth(701);
-    this.tweens.add({ targets: pas, y: 300, duration: 400, ease: 'Back.out' });
-    this.time.delayedCall(700, () => {
-      txt(this, 240, 26, ris.vittoria ? 'FRADICI!' : 'TUTTI ASCIUTTI!', { size: 18, color: ris.vittoria ? '#9fe0ff' : '#ff6b5a', depth: 710 });
-      if (ris.vittoria) {
-        Audio.sfx('schizzo');
-        for (let i = 0; i < 24; i++) {
-          const g = this.add.ellipse(Phaser.Math.Between(150, 330), Phaser.Math.Between(40, 90), 3, 4.5, 0x9fd4ff).setDepth(705);
-          this.tweens.add({ targets: g, y: 280, delay: i * 50, duration: 700, ease: 'Quad.in', onComplete: () => g.destroy() });
-        }
-        this.time.delayedCall(300, () => fumetto(this, 330, 130, 'Passa di qua, eh?!', 1900, 712));
-        stelle(this, 240, 70, 8, 706);
-      } else {
-        Audio.sfx('sconfitta');
-        this.time.delayedCall(300, () => fumetto(this, 330, 130, 'Asciutto come un biscotto!', 1900, 712));
-      }
+    const vince = ris.vittoria ? this.giocatore.id : 'passaseo', perde = ris.vittoria ? 'passaseo' : this.giocatore.id;
+    this.time.delayedCall(450, () => {
+      txt(this, 240, 26, ris.vittoria ? 'IN CIMA PER PRIMO!' : 'IL PASSASEO TI HA STACCATO!', { size: 17, color: ris.vittoria ? '#7dff9a' : '#ff6b5a', depth: 710 });
+      Audio.sfx(ris.vittoria ? 'vittoria' : 'sconfitta');
+      const v = im(this, 220, 290, `${vince}_felice`, 0.5).setOrigin(0.5, 1).setDepth(705);
+      this.tweens.add({ targets: v, y: 262, scale: scalaDi(`${vince}_felice`, 1.45), duration: 420, ease: 'Back.out' });
+      this.tweens.add({ targets: v, y: 254, delay: 500, duration: 260, yoyo: true, repeat: -1, ease: 'Quad.out' });
+      const p = im(this, 400, 262, `${perde}_triste`, 0.9).setOrigin(0.5, 1).setDepth(704);
+      this.tweens.add({ targets: p, x: 396, duration: 70, yoyo: true, repeat: -1 });
+      for (let i = 0; i < 4; i++) this.time.delayedCall(i * 260, () => stelle(this, 150 + Math.random() * 140, 80 + Math.random() * 90, 6, 706));
+      fumetto(this, 400, 120, caso(ris.vittoria ? this.cfg.frasiPerde : this.cfg.frasiVince), 1800, 712);
     });
     this.time.delayedCall(3300, fatto);
   }

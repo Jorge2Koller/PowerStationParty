@@ -16,7 +16,7 @@ import { LivelliScene } from './scenes/livelli.js';
 import { FineSolitarioScene } from './scenes/modalita.js';
 import { TorneoScene, FineGiornoScene } from './scenes/torneo.js';
 import { BeerPongSquadreScene, BeerPongScene, BeerPongFineScene } from './scenes/beerpong.js';
-import { ImpostazioniScene } from './scenes/impostazioni.js';
+import { ImpostazioniScene, RitardoScene } from './scenes/impostazioni.js';
 
 // i browser fanno partire l'audio solo dopo un input dell'utente; Safari (soprattutto
 // su iPhone) accetta solo alcuni eventi, quindi si ascoltano tutti quelli buoni
@@ -26,7 +26,7 @@ for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchstart', 'touchend
 window.addEventListener('keydown', (e) => { if (e.key === 'm' || e.key === 'M') Audio.silenzia(); });
 
 // le impostazioni (js/salvataggio.js): all'avvio e ogni volta che cambiano
-const applica = () => { const I = Salvataggio.impostazioni; Audio.volumi(I.volumeMusica, I.volumeEffetti); Audio.accendi(I.audio); };
+const applica = () => { const I = Salvataggio.impostazioni; Audio.volumi(I.volumeMusica, I.volumeEffetti); Audio.accendi(I.audio); Audio.ritardo = (I.ritardoAudio ?? 0) / 1000; };
 applica();
 window.addEventListener('impostazioni-cambiate', applica);
 // il tasto M e il pulsante dell'audio cambiano anche l'impostazione salvata
@@ -51,7 +51,7 @@ function avvia() {
     // velocità per 4 secondi; ne bastano pochi
     fps: { panicMax: 20 },
     scene: [BootScene, MenuScene, GiocatoriScene, PersonaggiScene, ModalitaScene, AllenamentoScene, ComandiScene, IntroScene,
-      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene,
+      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, RitardoScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene,
       BeerPongSquadreScene, BeerPongScene, BeerPongFineScene, PausaScene],
   });
   controllaVerso();

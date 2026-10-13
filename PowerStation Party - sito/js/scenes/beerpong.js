@@ -10,15 +10,16 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { Progressi } from '../progressi.js';
 import { livellato } from '../livelli.js';
-import { SP, ritratto, preparaBevitore, FACCE_SBRONZA } from '../sprites.js';
-import { TAVOLO_IMG, RETE_IMG } from '../grafica/pallaio.js';
-import { txt, im, scalaDi, inquadra, raggi, pannello, stelle, scritta, fumetto, caso, eTouch, perDito, pulsante, menuLista, annunciaTrofei } from '../fx.js';
+import { SP, ritratto, preparaBevitore, FACCE_SBRONZA, aspettoDi } from '../sprites.js';
+import { TAVOLO_IMG, RETE_IMG, creaAccasciato } from '../grafica/pallaio.js';
+import { txt, im, scalaDi, inquadra, raggi, pannello, stelle, scritta, fumetto, caso, eTouch, perDito, pulsante, pulsantePausa, menuLista, annunciaTrofei } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
 import { Tavolo } from '../beerpong/tavolo.js';
 import { Partita, formato } from '../beerpong/partita.js';
 
 const colore = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
 const Z = -100;   // la profondità di partenza della scena di fine partita (vedi BeerPongFineScene)
+const Y_DORME = 136;   // dove dormono i perdenti, in fondo al tavolo (sopra la rete)
 const lampeggia = (scene, t) => scene.tweens.add({ targets: t, alpha: 0.25, duration: 400, yoyo: true, repeat: -1 });
 // "a Riccardo", ma "al Manna", "all'Ingiocabile": i nomi con l'articolo
 const aChi = (nome) => (/^il /i.test(nome) ? 'al ' + nome.slice(3) : /^lo /i.test(nome) ? 'allo ' + nome.slice(3) : /^la /i.test(nome) ? 'alla ' + nome.slice(3) : /^l'/i.test(nome) ? "all'" + nome.slice(2) : 'a ' + nome);
@@ -120,8 +121,9 @@ export class BeerPongScene extends Phaser.Scene {
     this.testoTempo = txt(this, 240, 47, '', { size: 8, depth: 1001 });
     this.tSq = [txt(this, 6, 22, '', { ox: 0, size: 10, color: Q.colori[0], depth: 1001 }), txt(this, xd, 22, '', { ox: 1, size: 10, color: Q.colori[1], depth: 1001 })];
     this.tLiv = [txt(this, 6, 35, '', { ox: 0, size: 6.5, depth: 1001 }), txt(this, xd, 35, '', { ox: 1, size: 6.5, depth: 1001 })];
-    // sul telefono non ci sono ESC e M: pulsanti a schermo, in alto a destra
-    if (eTouch()) this.pulsanti = [pulsante(this, 464, 24, 'pausa', () => this.pausa()), pulsante(this, 442, 24, 'audio', () => Audio.silenzia())];
+    // sul telefono non c'è ESC: la pausa in alto a destra, col doppio tocco (vedi pulsantePausa);
+    // l'audio si cambia dalla pausa
+    if (eTouch()) this.pulsanti = pulsantePausa(this, 464, 24, () => this.pausa());
     this.hud = null;
   }
 
@@ -314,22 +316,27 @@ export class BeerPongFineScene extends Phaser.Scene {
     pulsantiAngolo(this);
   }
 
-  // I perdenti, in fondo al tavolo. Allo stadio peggiore della sbronza dormono con la faccia sul
-  // tavolo e qualcuno li copre con una giacca; se no cantano stonati abbracciati all'arbitro (o tra loro).
+  // I perdenti, in fondo al tavolo. Allo stadio peggiore della sbronza dormono col mento sulle
+  // braccia incrociate e qualcuno gli butta una giacca sulle spalle; se no cantano stonati
+  // abbracciati all'arbitro (o tra loro).
   perdenti(perd, arbitro, sbronzi) {
     const R = CONFIG.modalita.beerpong, n = perd.membri.length;
     if (sbronzi) {
       const passo = n === 1 ? 0 : n === 2 ? 84 : 66;
       perd.membri.forEach((g, i) => {
-        const x = 240 + (i - (n - 1) / 2) * passo, y = 142;
-        // la testa appoggiata di lato sul tavolo
-        const testa = this.add.container(x - 14, y, [ritratto(this, 0, 0, g.id, 40, 'dorme')]).setDepth(Z + 12).setAngle(78);
-        this.tweens.add({ targets: testa, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-        // la giacca arriva dopo un attimo, buttata sulle spalle
-        const giacca = im(this, x + 14, -40, 'giaccaPong', 1.15).setDepth(Z + 11).setAngle(-8);
-        this.tweens.add({ targets: giacca, y: y - 12, angle: 4, delay: 1100 + i * 250, duration: 420, ease: 'Bounce.out', onStart: () => Audio.sfx('pof') });
+        const x = 240 + (i - (n - 1) / 2) * passo, y = Y_DORME, verso = i % 2 ? -1 : 1;
+        // tutto intero, dal fondo in avanti: le spalle, la giacca (arriva dopo), le braccia sul
+        // tavolo e la testa appoggiata sopra, un po' piegata
+        creaAccasciato(this, g.id, aspettoDi(g.id));
+        im(this, x, y + 6, `${g.id}_spalle`).setOrigin(0.5, 1).setDepth(Z + 11);
+        const giacca = im(this, x, -40, 'giaccaPong', 1).setDepth(Z + 11.2).setAngle(-8);
+        this.tweens.add({ targets: giacca, y: y - 8, angle: verso * 3, delay: 1100 + i * 250, duration: 420, ease: 'Bounce.out', onStart: () => Audio.sfx('pof') });
+        im(this, x, y + 10, `${g.id}_braccia`).setDepth(Z + 11.6);
+        const testa = this.add.container(x + verso * 2, y - 7, [ritratto(this, 0, 0, g.id, 38, 'dorme')]).setDepth(Z + 12).setAngle(verso * 15);
+        // respira: la testa sale e scende di poco
+        this.tweens.add({ targets: testa, y: y - 8.5, scaleY: 1.03, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
         this.time.addEvent({ delay: 1300, loop: true, startAt: i * 400, callback: () => {
-          const z = txt(this, x - 20, y - 22, 'Z', { size: 9, color: '#dfe6ff', depth: Z + 13 });
+          const z = txt(this, x + verso * 14, y - 26, 'Z', { size: 9, color: '#dfe6ff', depth: Z + 13 });
           this.tweens.add({ targets: z, x: z.x + 16, y: z.y - 34, alpha: 0, scale: 1.7, duration: 1500, onComplete: () => z.destroy() });
         } });
       });

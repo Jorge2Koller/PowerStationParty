@@ -23,7 +23,7 @@ export default {
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Stima: uscire vale 40, più 20 per vita rimasta, più 10 per ogni cane salvato all'ultimo.
-  medaglie: { bronzo: 60, argento: 110, oro: 160 },   // (chi sta fermo perde le 3 vite: 0)
+  medaglie: { bronzo: 80, argento: 120, oro: 170 },   // (erano 60, 110, 160: chi stava fermo a volte usciva con una vita)
   // --- vite e punti ---
   vite: 3,                 // spaventi che ti puoi permettere (al terzo la partita finisce)
   unitaMetro: 10,          // quante unità di schermo fanno un metro (il vialetto è lungo 25 metri)
@@ -84,14 +84,14 @@ export default {
   velCane: 15,             // quanto veloci vanno a spasso (unità/s): ciondolano
   velCorsa: 62,            // quando corrono dietro al biscotto o alla pallina
   sosta: [0.7, 1.8],       // quanto si fermano tra una passeggiata e l'altra (secondi): tra questo e questo
-  vogliaZonaInizio: 0.16,  // quante volte su 1 scelgono di andare proprio dietro la macchina, a inizio partita...
-  vogliaZonaFine: 0.3,     //   ...e a fine partita
-  sicuroInizio: 5,         // secondi che restano nel prato (o sotto il portico) prima di tornare sul vialetto, a inizio partita...
-  sicuroFine: 3.5,         //   ...e a fine partita
+  vogliaZonaInizio: 0.24,  // quante volte su 1 scelgono di andare proprio dietro la macchina, a inizio partita...
+  vogliaZonaFine: 0.42,    //   ...e a fine partita (erano 0,16 e 0,3)
+  sicuroInizio: 3.8,       // secondi che restano nel prato (o sotto il portico) prima di tornare sul vialetto, a inizio partita...
+  sicuroFine: 2.6,         //   ...e a fine partita (erano 5 e 3,5)
   pigroDietro: 18,         // il pigro si sdraia a tante unità dalla coda della macchina
   pigroVel: 1.5,           // per tornare dietro la ruota va più svelto degli altri a spasso (1 = uguale): se no la macchina lo semina
-  pigroPausa: 6,           // dopo una spinta, quanto aspetta prima di tornare a sdraiarsi dietro la ruota, a inizio partita...
-  pigroPausaFine: 4,       //   ...e a fine partita
+  pigroPausa: 4.5,         // dopo una spinta, quanto aspetta prima di tornare a sdraiarsi dietro la ruota, a inizio partita...
+  pigroPausaFine: 3,       //   ...e a fine partita (erano 6 e 4)
   // --- Pastaffi: quando passa il gatto esce di casa e porta via un cane ---
   pastaffi: {
     ritardo: 0.8,          // secondi dopo il gatto
@@ -108,7 +108,7 @@ export default {
     avanti: 42,            // passa a tante unità dalla coda della macchina
   },
   // --- frasi ---
-  frasi: ['Spostatevi, ragazzi!', 'Faccio tardi!', 'Ma chi li ha fatti uscire?', "Rock'n'roll!", 'Via, via, via!', 'Quanto è lungo questo vialetto?'],
+  frasi: ['Talebani', 'Faccio tardi al raduno', 'Spostatevi, ragazzi!', 'Ma chi li ha fatti uscire?', "Rock'n'roll!", 'Via, via, via!', 'Quanto è lungo questo vialetto?'],
   frasiDistratto: {
     radio: ['Questa la alzo!', 'Senti che assolo!'],
     bandana: ['Un attimo, la bandana...', 'Mi è scesa sugli occhi!'],
@@ -116,11 +116,13 @@ export default {
   },
   frasiIncidente: ['NOOO! Il mio cucciolo!', 'Da dove è sbucato?!', 'Non ti avevo visto!', 'Mi viene un infarto!'],
   frasiPastaffi: ['PAPÀ, IL GATTO!', 'PAPÀ, FERMO!'],
+  // Pastaffi (Denny) dalla porta di casa, quando Emilio tocca un cane
+  frasiPastaffiSpavento: ["Babbo, non un'altra volta!!!!"],
   frasiCarico: ['Quanto pesi!', 'Sei tutto pieghe!', 'Dai, su...'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { avvisoInizio: 1.6, avvisoFine: 1.2, vogliaZonaInizio: 0.1, vogliaZonaFine: 0.2 },
-    difficile: { avvisoInizio: 0.95, avvisoFine: 0.7, vogliaZonaInizio: 0.22, vogliaZonaFine: 0.38 },
+    facile: { avvisoInizio: 1.6, avvisoFine: 1.2, vogliaZonaInizio: 0.16, vogliaZonaFine: 0.3, sicuroInizio: 5, sicuroFine: 3.5 },
+    difficile: { avvisoInizio: 0.95, avvisoFine: 0.7, vogliaZonaInizio: 0.3, vogliaZonaFine: 0.5, sicuroInizio: 3, sicuroFine: 2 },
   },
 };

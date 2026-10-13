@@ -6,12 +6,16 @@
 //  vale di più) e il calice (zona strettissima, vale tanto: il rischio). Tre atti: si comincia
 //  con le pinte, poi l'ORA DI PUNTA (arrivano boccali e calici, Beppe accelera), alla fine
 //  Beppe FA I DISPETTI (urta il bancone e la zona verde balla mentre spilli).
-//  Beppe intanto spilla pinte a ritmo fisso: per vincere bisogna fare più punti di lui.
+//  Beppe intanto spilla pinte a ritmo suo (la forma del giorno esce dal seme: cambia da un round
+//  all'altro, ma nel round è la stessa per tutti): per vincere bisogna fare più punti di lui.
 //  I bicchieri arrivano nello stesso ordine per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { Sessione } from '../sessione.js';
-import { casuale } from '../grafica/base.js';
+import { Sessione, DOPPIONE } from '../sessione.js';
+import { CONFIG } from '../config.js';
+import { casuale, tela } from '../grafica/base.js';
+import { clienteDi } from '../grafica/oggetti.js';
+import { aspettoDi } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, colpetto, eTouch, vibra } from '../fx.js';
 
 const Y_BANCONE = 181;            // dove appoggia il bicchiere
@@ -19,6 +23,7 @@ const Y_BECCO = 137;              // da dove esce la birra
 const X_MIO = 160, X_BEPPE = 320;
 const CAVO = 43;                  // altezza interna del bicchiere (unità)
 const NOMI = { pinta: 'PINTA', boccale: 'BOCCALE', calice: 'CALICE' };
+const Y_ESITO = 200;              // BUONA / TRABOCCA! escono sul bancone, sotto: sopra c'è il nome del bicchiere
 
 export class SpinaScene extends MicrogiocoBase {
   constructor() { super('spina'); }
@@ -27,12 +32,17 @@ export class SpinaScene extends MicrogiocoBase {
 
   prepara() {
     const c = this.cfg;
-    this.rnd = casuale(Sessione.seme);
+    const seme = Sessione.seme;
+    this.rnd = casuale(seme);
+    // Beppe ha il suo generatore: quello che fa il giocatore non cambia le sue pinte
+    this.rndBeppe = casuale((seme ^ 0x9e3779b9) >>> 0);
+    this.formaBeppe = c.formaBeppe[0] + this.rndBeppe() * (c.formaBeppe[1] - c.formaBeppe[0]);
     this.punti = 0;
     this.pinte = 0;            // bicchieri buoni (di qualunque tipo)
     this.perfette = 0;
     this.pinteBeppe = 0;
     this.tBeppe = 0;
+    this.pintaBeppe();
     this.tOcchiata = 5;
     this.tChiacchiere = 1.5;
     this.tDispetto = 0;
@@ -53,9 +63,13 @@ export class SpinaScene extends MicrogiocoBase {
     this.getto = this.add.rectangle(X_MIO - 1, Y_BECCO, 3, 1, 0xf6ae1e).setOrigin(0.5, 0).setDepth(12).setVisible(false);
     this.gettoBeppe = this.add.rectangle(X_BEPPE + 1, Y_BECCO, 3, 1, 0xf6ae1e).setOrigin(0.5, 0).setDepth(12);
 
-    // clienti di spalle che chiacchierano e gesticolano
+    // clienti di spalle che chiacchierano e gesticolano: quattro personaggi giocabili a caso (non
+    // chi gioca), disegnati da dietro ogni volta (col costume del Bancone, se ce l'hanno)
+    const io = this.giocatore.id.replace(DOPPIONE, '');
+    const scelti = Phaser.Utils.Array.Shuffle(CONFIG.personaggiGiocabili.map((p) => p.id).filter((id) => id !== io)).slice(0, 4);
+    scelti.forEach((id, i) => { for (const f of [0, 1]) tela(this, `clienteSpina${i}_${f}`, 58, 78, (cc) => clienteDi(cc, aspettoDi(id), f), 5); });
     this.clienti = [0, 1, 2, 3].map((i) => {
-      const s = im(this, 150 + i * 60, 280, `cliente${i}_0`).setOrigin(0.5, 1).setDepth(20);
+      const s = im(this, 150 + i * 60, 280, `clienteSpina${i}_0`).setOrigin(0.5, 1).setDepth(20);
       s.idx = i;
       this.tweens.add({ targets: s, y: 277, duration: 500 + i * 130, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       return s;
@@ -64,7 +78,7 @@ export class SpinaScene extends MicrogiocoBase {
     // contatore: i miei punti contro quelli di Beppe
     pannello(this, 240, 22, 196, 18, { depth: 1000 });
     this.contatore = txt(this, 240, 22, '', { size: 12, depth: 1001, thick: 3 });
-    this.ordine = txt(this, X_MIO, 118, '', { size: 7, depth: 30, color: '#ffe14a' });
+    this.ordine = txt(this, X_MIO, 118, '', { size: 8, depth: 30, color: '#ffe14a' });
 
     this.spazio = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     // dito (o mouse) tenuto premuto in qualunque punto = SPAZIO tenuto
@@ -77,7 +91,7 @@ export class SpinaScene extends MicrogiocoBase {
       g.fillStyle(0x000000, 0.3); g.fillCircle(1.5, 2.5, 25);
       g.fillStyle(0xb5651d, 1); g.fillCircle(0, 0, 25);
       g.lineStyle(2.5, 0xffe14a, 1); g.strokeCircle(0, 0, 25);
-      this.spilla.add([g, txt(this, 0, -4, 'SPILLA', { size: 8, color: '#ffe14a' }), txt(this, 0, 7, 'tieni premuto', { size: 4.6, color: '#fff3d6' })]);
+      this.spilla.add([g, txt(this, 0, 0, 'SPILLA', { size: 9, color: '#ffe14a' })]);   // ("tieni premuto" lo dicono i comandi)
     }
     this.bicchiereBeppe = this.creaBicchiere(X_BEPPE, 'pinta');
     this.nuovoBicchiere();
@@ -195,20 +209,29 @@ export class SpinaScene extends MicrogiocoBase {
       this.riempi(this.bicchiere, this.livello);
     }
 
-    // --- Beppe, metronomo umano ---
+    // --- Beppe: la sua forma del giorno, e ogni pinta un po' diversa (ogni tanto gli trabocca) ---
     this.tBeppe += dt;
-    const f = this.tBeppe / F.beppe;
-    const livB = Math.min(0.82, f * 1.05);
+    const f = this.tBeppe / (F.beppe * this.kBeppe);
+    const livB = Math.min(this.buttaBeppe ? 1 : 0.82, f * 1.05);
     this.riempi(this.bicchiereBeppe, livB);
     this.gettoBeppe.setVisible(livB < 0.82 && f > 0.05);
     this.gettoBeppe.setSize(3, Math.max(1, Y_BANCONE - 3 - livB * CAVO - Y_BECCO));
     if (f >= 1) {
       this.tBeppe = 0;
-      this.pinteBeppe++;
       const g = this.bicchiereBeppe;
       this.bicchiereBeppe = this.creaBicchiere(X_BEPPE, 'pinta');
-      this.servi(g, 270, false);
-      this.aggiornaContatore();
+      if (this.buttaBeppe) {
+        // traboccata: la butta via, niente punti
+        scritta(this, X_BEPPE, Y_ESITO, 'TRABOCCA!', { size: 9, color: '#ff9a8a', durata: 500 });
+        this.tweens.add({ targets: g, alpha: 0, y: g.y + 6, duration: 300, onComplete: () => g.destroy() });
+        this.beppe.setTexture('beppe_triste');
+        this.time.delayedCall(700, () => this.beppe.setTexture('beppe_normale'));
+      } else {
+        this.pinteBeppe++;
+        this.servi(g, 270, false);
+        this.aggiornaContatore();
+      }
+      this.pintaBeppe();
     }
 
     // occhiata di sufficienza
@@ -226,10 +249,17 @@ export class SpinaScene extends MicrogiocoBase {
     if (this.tChiacchiere <= 0) {
       this.tChiacchiere = 1.6 + Math.random() * 1.6;
       const s = caso(this.clienti);
-      s.setTexture(`cliente${s.idx}_1`);
+      s.setTexture(`clienteSpina${s.idx}_1`);
       this.fumetto(s.x + 8, 190, caso(c.frasiClienti), 1000);
-      this.time.delayedCall(700, () => s.setTexture(`cliente${s.idx}_0`));
+      this.time.delayedCall(700, () => s.setTexture(`clienteSpina${s.idx}_0`));
     }
+  }
+
+  // la prossima pinta di Beppe: quanto ci mette (in proporzione) e se gli trabocca
+  pintaBeppe() {
+    const c = this.cfg;
+    this.kBeppe = this.formaBeppe * (1 + (this.rndBeppe() * 2 - 1) * c.variaBeppe);
+    this.buttaBeppe = this.rndBeppe() < c.sbagliaBeppe;
   }
 
   valuta(traboccata) {
@@ -250,7 +280,7 @@ export class SpinaScene extends MicrogiocoBase {
       this.punti += guadagno;
       Audio.sfx('scivola');
       this.time.delayedCall(260, () => Audio.sfx(perfetta ? 'bonus' : 'ding'));
-      scritta(this, X_MIO, 112, perfetta ? `PERFETTA! +${guadagno}` : `BUONA +${guadagno}`, { size: 10, color: perfetta ? '#ffe14a' : '#7dff9a', durata: 400 });
+      scritta(this, X_MIO, Y_ESITO, perfetta ? `PERFETTA! +${guadagno}` : `BUONA +${guadagno}`, { size: 10, color: perfetta ? '#ffe14a' : '#7dff9a', durata: 400 });
       if (perfetta) stelle(this, X_MIO, Y_BANCONE - 40, 6, 15);
       this.faccia('felice', 500);
       colpetto(this, this.contatore, 1.15, 1.15);
@@ -267,12 +297,12 @@ export class SpinaScene extends MicrogiocoBase {
     scuoti(this, 120, 0.006);
     if (this.livello < a) {
       // troppo poca: il cliente la rimanda indietro
-      scritta(this, X_MIO, 112, 'TROPPO POCA!', { size: 10, color: '#ff9a8a' });
+      scritta(this, X_MIO, Y_ESITO, 'TROPPO POCA!', { size: 10, color: '#ff9a8a' });
       this.fumetto(218, 190, 'È mezza vuota!', 1000);
       this.tweens.add({ targets: g, x: 205, duration: 300, ease: 'Cubic.out', yoyo: true, hold: 250, onComplete: () => g.destroy() });
     } else {
       // troppa: la schiuma trabocca sul bancone
-      scritta(this, X_MIO, 112, 'TRABOCCA!', { size: 10, color: '#ff9a8a' });
+      scritta(this, X_MIO, Y_ESITO, 'TRABOCCA!', { size: 10, color: '#ff9a8a' });
       Audio.sfx('splash');
       fumo(this, X_MIO, Y_BANCONE - 46, 6, 14, 0xfffbe8);
       for (let i = 0; i < 12; i++) {

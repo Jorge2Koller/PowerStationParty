@@ -56,7 +56,9 @@ export function puntatore(scene, p = scene.input.activePointer) {
 }
 
 export function txt(scene, x, y, s, o = {}) {
-  const size = (o.size ?? 8) * 1.3;
+  // (mai sotto 7: sul telefono, dentro Safari, le scritte più piccole non si leggevano. Se una scritta
+  // non ci sta, si toglie testo: non si rimpicciolisce)
+  const size = Math.max(7, o.size ?? 8) * 1.3;
   const thick = o.thick ?? (size >= 20 ? 5 : 3);
   const t = scene.add.text(x, y, s, {
     fontFamily: FONT,
@@ -173,15 +175,16 @@ function motivo(scene, tema, c1, c2) {
 }
 const scuroInt = (col) => { const c = Phaser.Display.Color.IntegerToColor(col); return Phaser.Display.Color.GetColor(c.red * 0.25, c.green * 0.25, c.blue * 0.35); };
 
-// trofei appena sbloccati: una striscia che scende dall'alto per ciascuno, uno dopo l'altro
+// trofei appena sbloccati: una striscia che sale dal basso per ciascuno, uno dopo l'altro
+// (in basso c'è sempre posto: in alto coprirebbe i titoli)
 export function annunciaTrofei(scene, trofei = [], ritardo = 0) {
   trofei.forEach((t, k) => scene.time.delayedCall(ritardo + k * 1900, () => {
-    const c = scene.add.container(240, -24).setDepth(5000);
-    c.add([pannello(scene, 0, 0, 250, 32, { alfa: 0.95, raggio: 10, colore: 0x3a2050 }), im(scene, -108, 0, 'coppa', 0.75),
-      txt(scene, -90, -7, 'TROFEO: ' + t.nome, { size: 8.5, ox: 0, color: '#ffe14a' }),
-      txt(scene, -90, 6, `${t.descrizione}   +${CONFIG.trofei.pinte} PINTE`, { size: 5.5, ox: 0, color: '#fff3d6' })]);
+    const c = scene.add.container(240, 300).setDepth(5000);
+    c.add([pannello(scene, 0, 0, 290, 34, { alfa: 0.95, raggio: 10, colore: 0x3a2050 }), im(scene, -126, 0, 'coppa', 0.75),
+      txt(scene, -108, -7, 'TROFEO: ' + t.nome, { size: 9, ox: 0, color: '#ffe14a' }),
+      txt(scene, -108, 7, `${t.descrizione}   +${CONFIG.trofei.pinte} PINTE`, { size: 7, ox: 0, color: '#fff3d6' })]);
     Audio.sfx('bonus');
-    scene.tweens.add({ targets: c, y: 26, duration: 300, ease: 'Back.out', hold: 1300, yoyo: true, onComplete: () => c.destroy() });
+    scene.tweens.add({ targets: c, y: 244, duration: 300, ease: 'Back.out', hold: 1300, yoyo: true, onComplete: () => c.destroy() });
   }));
 }
 
@@ -228,6 +231,21 @@ export function pulsante(scene, x, y, icona, azione, o = {}) {
     scene.events.once('shutdown', () => window.removeEventListener('audio-cambiato', disegna));
   }
   return { g, zona, disegna, setVisible: (v) => { g.setVisible(v); zona.setVisible(v); } };
+}
+
+// La pausa a schermo dei giochi, sul telefono: col DOPPIO tocco (al primo si accende e sotto
+// dice ANCORA), perché giocando la si sfiorava e la partita si fermava. Ridà [tasto, scritta].
+export function pulsantePausa(scene, x, y, azione) {
+  let primo = -9999;
+  const ancora = txt(scene, x, y + 14, 'ANCORA', { size: 7, color: '#ffe14a', depth: 1004 }).setVisible(false);
+  const tasto = pulsante(scene, x, y, 'pausa', () => {
+    const ora = scene.time.now;
+    if (ora - primo < 900) { primo = -9999; ancora.setVisible(false); return azione(); }
+    primo = ora;
+    ancora.setVisible(true);
+    scene.time.delayedCall(900, () => { if (scene.time.now - primo >= 880) ancora.setVisible(false); });
+  });
+  return [tasto, ancora];
 }
 
 // Schermo intero, dove il browser lo permette (Android sì, iPhone no: lì si usa

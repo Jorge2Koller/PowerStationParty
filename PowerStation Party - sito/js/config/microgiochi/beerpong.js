@@ -29,7 +29,8 @@ export default {
   // metà fa un'ottantina di punti (bronzo), chi ne mette due su tre arriva a 110 (argento), chi
   // finisce il triangolo va verso i 190 (oro). "zero": i punti che restano anche a chi non tira mai
   // (5 per ogni suo bicchiere ancora in piedi).
-  medaglie: { bronzo: 50, argento: 95, oro: 150, zero: 15 },
+  // (alzate dopo la serata di prova, il gioco era giudicato facile: erano 50, 95, 150. A caso 10-30, fermo 10)
+  medaglie: { bronzo: 70, argento: 110, oro: 170, zero: 15 },
   // punti
   puntiCentro: 10,          // un bicchiere centrato
   puntiRimbalzo: 20,        // ...centrato dopo un rimbalzo sul tavolo

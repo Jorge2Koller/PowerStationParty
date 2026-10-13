@@ -9,49 +9,58 @@ export default {
   ospite: { id: 'marsupino', etichetta: 'CHEF:\nMARSUPINO' },
   comandi: [
     'FRECCE SINISTRA/DESTRA (o A/D), oppure il mouse: muovi il pane',
-    'Prendi i 5 ingredienti in alto (ketchup e maionese dai tubetti): panino fatto!',
-    'NON prendere calzini, lische, ghiaccio e ciabatte! Più è alto, più ondeggia',
+    "Prendi gli ingredienti NELL'ORDINE del cliente (in alto): il prossimo ha il cerchio giallo",
+    'Lascia cadere schifezze e ingredienti fuori ordine. Piano: la pila alta crolla!',
   ],
   comandiTouch: [
     'Trascina il dito in basso: il pane si sposta con lui',
-    'Prendi i 5 ingredienti in alto (ketchup e maionese dai tubetti): panino fatto!',
-    'NON prendere calzini, lische, ghiaccio e ciabatte! Più è alto, più ondeggia',
+    "Prendi gli ingredienti NELL'ORDINE del cliente (in alto): il prossimo ha il cerchio giallo",
+    'Lascia cadere schifezze e ingredienti fuori ordine. Piano: la pila alta crolla!',
   ],
-  obiettivo: 'Fai almeno 3 panini completi!',
+  obiettivo: 'Servi almeno 3 ordini!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Stima: un panino completo vale circa 80-90: tre panini (la vittoria) sono l'argento.
-  medaglie: { bronzo: 70, argento: 180, oro: 300 },   // (stima per 35 s, con la roba che cade lontano dal pane)
+  // (ritarate col giocatore automatico: quello bravo serve 2-3 ordini, 145-200 punti; a caso 0-14;
+  // fermo 0)
+  medaglie: { bronzo: 70, argento: 150, oro: 220 },
   obiettivoPanini: 3,
   // punti
-  puntiIngrediente: 10,   // ingrediente che mancava nel panino
-  puntiDoppione: 3,       // ingrediente che c'era già (si impila lo stesso)
-  puntiPanino: 30,        // panino completo
-  bonusRapido: 10,        // ...se fatto in meno di "secondiRapido" secondi
+  puntiIngrediente: 10,   // l'ingrediente giusto, al momento giusto
+  puntiPanino: 30,        // ordine servito...
+  puntiLungo: 10,         // ...più tanto per ogni ingrediente oltre i tre (gli ordini lunghi valgono di più)
+  bonusRapido: 10,        // ...e se fatto in meno di "secondiRapido" secondi
   secondiRapido: 8,
-  malusSbagliato: 10,     // presa una schifezza: punti tolti e panino nel cestino
+  malusFuoriOrdine: 3,    // preso un ingrediente che non tocca ancora: non entra
+  malusSbagliato: 10,     // presa una schifezza: punti tolti e panino nel cestino (l'ordine resta)
+  lanciaGiusto: 0.5,      // quante volte su 1 Marsupino lancia proprio l'ingrediente che serve adesso
   // movimento del pane: velocità massima uguale per tastiera, mouse e dito (unità/s)
   velPane: 300,
   guadagnoDito: 1.15,     // col dito: quanto si sposta il pane per ogni unità di trascinamento
   presa: 20,              // mezza larghezza della zona in cui si prende (cresce di 0,6 per strato)
-  maxStrati: 10,          // oltre, i doppioni non entrano più (gli ingredienti che mancano sì)
   // la pila ondeggia: molla (rigidità e smorzamento) spinta dalle accelerazioni del pane;
   // più strati = molla più morbida
   ondeggio: 0.003,
   rigidita: 90,
   smorzamento: 9,
+  // il crollo: se la pila (con almeno due strati) pende più di "crollo", cadono gli strati di sopra
+  // (stratiCrollo). Il limite si abbassa per ogni strato oltre il secondo (crolloPerStrato)
+  crollo: 0.3,
+  crolloPerStrato: 0.12,
+  stratiCrollo: 2,
+  malusCrollo: 5,
   // lanci di Marsupino: velocità di caduta a inizio e fine partita
   cadutaInizio: 80,
   cadutaFine: 150,
   // la roba buona cade lontano dal pane: a una distanza tra questi due valori (unità)
   lontanoMin: 60,
   lontanoMax: 190,
-  // i tre atti: da quando (secondi), annuncio, secondi tra un lancio e l'altro, probabilità di una
-  // schifezza, di due lanci insieme e che la schifezza sia tirata addosso al pane
+  // i tre atti: da quando (secondi), annuncio, quanti ingredienti negli ordini nuovi, secondi tra
+  // un lancio e l'altro, probabilità di una schifezza, di due lanci insieme e che la schifezza sia
+  // tirata addosso al pane
   atti: [
-    { da: 0, lancio: 1.0, sbagliati: 0.1, doppio: 0 },
-    { da: 12, nome: 'DOPPIO LANCIO!', lancio: 0.8, sbagliati: 0.18, doppio: 0.4 },
-    { da: 24, nome: 'MARSUPINO SI ARRABBIA!', lancio: 0.6, sbagliati: 0.3, doppio: 0.35, mira: 0.7 },
+    { da: 0, ricetta: 3, lancio: 0.95, sbagliati: 0.1, doppio: 0 },
+    { da: 12, nome: 'ORDINI DA QUATTRO!', ricetta: 4, lancio: 0.75, sbagliati: 0.18, doppio: 0.4 },
+    { da: 24, nome: 'MARSUPINO SI ARRABBIA!', ricetta: 5, lancio: 0.6, sbagliati: 0.3, doppio: 0.35, mira: 0.7 },
   ],
   // tubetti di ketchup e maionese
   tubettoInizio: 3.4,     // secondi tra un tubetto e l'altro
@@ -65,7 +74,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { lontanoMin: 40, lontanoMax: 140, cadutaInizio: 70, cadutaFine: 125, atti: { lancio: 1.2, sbagliati: 0.6 } },
-    difficile: { lontanoMin: 80, lontanoMax: 230, cadutaFine: 175, atti: { lancio: 0.85, sbagliati: 1.3 } },
+    facile: { lontanoMin: 40, lontanoMax: 140, cadutaInizio: 70, cadutaFine: 125, crollo: 0.38, lanciaGiusto: 0.6, atti: { lancio: 1.2, sbagliati: 0.6 } },
+    difficile: { lontanoMin: 80, lontanoMax: 230, cadutaFine: 175, crollo: 0.25, lanciaGiusto: 0.42, atti: { lancio: 0.85, sbagliati: 1.3 } },
   },
 };

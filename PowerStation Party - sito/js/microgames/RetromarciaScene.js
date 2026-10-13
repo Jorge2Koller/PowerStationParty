@@ -17,6 +17,8 @@
 //  inchioda un attimo).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
+import { Sessione } from '../sessione.js';
+import { casuale } from '../grafica/base.js';
 import { VIALETTO as V, CANE } from '../grafica/vialetto.js';
 import { txt, im, scalaDi, scritta, stelle, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, vibra, multiTouch } from '../fx.js';
 
@@ -32,7 +34,7 @@ const ICONE = { biscotto: { x: 30, y: 247 }, pallina: { x: 62, y: 247 } };
 const NOMI = { biscotto: 'BISCOTTO', pallina: 'PALLINA' };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const limita = Phaser.Math.Clamp;
-const tra = (a, b) => a + Math.random() * (b - a);
+const tra = (a, b) => a + Math.random() * (b - a);   // (solo per le frasi: il gioco usa this.tra, col seme)
 // i cani si chiamano tutti Morgan: chi non ha il nome in config.js prende il suo numero romano
 const ROMANI = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
 const romano = (n) => ROMANI.reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
@@ -40,7 +42,12 @@ const romano = (n) => ROMANI.reduce((s, [v, r]) => { while (n >= v) { s += r; n 
 export class RetromarciaScene extends MicrogiocoBase {
   constructor() { super('retromarcia'); }
 
+  // scelte che cambiano la partita: col seme del round, uguali per tutti i giocatori
+  tra(a, b) { return a + this.rnd() * (b - a); }
+  pesca(a) { return a[Math.floor(this.rnd() * a.length)]; }
+
   prepara() {
+    this.rnd = casuale(Sessione.seme);
     const c = this.cfg, id = this.giocatore.id;
     im(this, 0, 0, 'bgVialetto').setOrigin(0);
     // quello che sta in giardino e copre (o è coperto da) chi passa
@@ -110,7 +117,7 @@ export class RetromarciaScene extends MicrogiocoBase {
       this.slot[tipo] = { g: this.add.graphics().setDepth(1000), ico: im(this, P.x, P.y - 2, tipo, tipo === 'biscotto' ? 1.15 : 1.5).setDepth(1001), n: txt(this, P.x + 9, P.y + 8, '', { size: 7, depth: 1002 }) };
       this.hudV.push(...Object.values(this.slot[tipo]));
     }
-    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti    SPAZIO: lancia avanti    tasto destro: lancia lì', { ox: 0, size: 5.2, depth: 1001 });
+    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti   SPAZIO: lancia   destro: lancia lì', { ox: 0, size: 7, depth: 1001 });
     this.hudV.push(this.testoSotto);
     this.aggiornaHud(true);
     this.piazzaAuto();
@@ -338,7 +345,7 @@ export class RetromarciaScene extends MicrogiocoBase {
       if (Au.tScatto <= 0) Au.stato = 'frena';
     } else if (Au.stato === 'frena') {
       Au.v = Math.max(0, Au.v - c.frenata * dt);
-      if (Au.v <= 0) this.fermaAuto((lerp(c.pausaInizio, c.pausaFine, p) * tra(0.75, 1.25)) / (Au.ritmo ?? 1));
+      if (Au.v <= 0) this.fermaAuto((lerp(c.pausaInizio, c.pausaFine, p) * this.tra(0.75, 1.25)) / (Au.ritmo ?? 1));
     } else if (Au.stato === 'inchiodata') {
       if (Au.t <= 0) this.fermaAuto(0.25);
     } else if (Au.stato === 'incidente' && Au.t <= 0) {
@@ -377,15 +384,15 @@ export class RetromarciaScene extends MicrogiocoBase {
   preparaScatto(p) {
     const c = this.cfg, Au = this.auto;
     const quanto = p <= c.distrattoDa ? 0 : c.distratto * (p - c.distrattoDa) / (1 - c.distrattoDa);
-    const distratto = Math.random() < quanto ? caso(['radio', 'bandana', 'telefono']) : null;
+    const distratto = this.rnd() < quanto ? this.pesca(['radio', 'bandana', 'telefono']) : null;
     // "Faccio tardi!": se è indietro sulla tabella di marcia (dopo uno spavento o una frenata)
     // recupera, andando più forte e fermandosi meno
     const fatto = (Au.x - V.partenza) / (V.cancello - V.partenza), atteso = Math.min(1, (p / c.arrivo) ** c.curvaArrivo);
     const ritmo = limita(1 + (atteso - fatto - 0.05) * c.recupero, 1, c.recuperoMax);
     Object.assign(Au, {
       stato: 'avviso', t: lerp(c.avvisoInizio, c.avvisoFine, p), tBip: 0, distratto, ritmo,
-      vMeta: lerp(c.velInizio, c.velFine, p) * tra(0.8, 1.2) * (distratto ? c.distrattoVel : 1) * ritmo,
-      tScatto: tra(c.scatto[0], c.scatto[1]),
+      vMeta: lerp(c.velInizio, c.velFine, p) * this.tra(0.8, 1.2) * (distratto ? c.distrattoVel : 1) * ritmo,
+      tScatto: this.tra(c.scatto[0], c.scatto[1]),
     });
     this.luce.setVisible(true);
     // più va avanti, più è distratto: alza la radio (corna rock dal finestrino), si sistema la bandana, guarda il telefono
@@ -437,6 +444,8 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.piazzaAuto();
     colpetto(this, this.emilioGiu, 1.15, 0.9);
     this.parlaEmilio(caso(c.frasiIncidente), 1900);
+    // e Pastaffi, dalla porta di casa
+    this.time.delayedCall(900, () => { if (!this.finito) fumetto(this, V.porta.x + 44, V.porta.y - 60, caso(c.frasiPastaffiSpavento), 1500, 946); });
     this.aggiornaHud(true);
     if (this.vite <= 0) this.time.delayedCall(1100, () => this.termina());
   }
@@ -455,9 +464,9 @@ export class RetromarciaScene extends MicrogiocoBase {
   // dove va a spasso un cane: ogni tanto proprio dietro la macchina, se no in giro per il vialetto
   nuovaMeta(k, p) {
     const c = this.cfg, Au = this.auto;
-    if (Math.random() < lerp(c.vogliaZonaInizio, c.vogliaZonaFine, p)) return { x: Math.min(Au.x + tra(10, c.zona - 4), CAMPO.x1 - 6), y: tra(K.y - K.prof + 6, K.y - 3) };
+    if (this.rnd() < lerp(c.vogliaZonaInizio, c.vogliaZonaFine, p)) return { x: Math.min(Au.x + this.tra(10, c.zona - 4), CAMPO.x1 - 6), y: this.tra(K.y - K.prof + 6, K.y - 3) };
     for (let prove = 0; prove < 8; prove++) {
-      const m = { x: tra(Math.max(110, Au.x - 60), CAMPO.x1 - 8), y: tra(S.y0 + 8, S.y1 - 5) };
+      const m = { x: this.tra(Math.max(110, Au.x - 60), CAMPO.x1 - 8), y: this.tra(S.y0 + 8, S.y1 - 5) };
       if (!(m.x < Au.x + 8 && m.y > K.y - K.prof - 4 && m.y < K.y + 4)) return m;      // non sotto la macchina
     }
     return { x: Math.min(Au.x + 60, CAMPO.x1 - 8), y: S.y1 - 8 };
@@ -529,7 +538,7 @@ export class RetromarciaScene extends MicrogiocoBase {
           else if (!k.meta) k.meta = this.nuovaMeta(k, p);
           if (this.vai(k, k.meta.x, k.meta.y, c.velCane * (pigro ? c.pigroVel : 1), dt, 2)) {
             if (pigro) { if (this.inZona(k)) k.stato = 'dorme'; }
-            else { k.meta = null; k.t = tra(c.sosta[0], c.sosta[1]); }
+            else { k.meta = null; k.t = this.tra(c.sosta[0], c.sosta[1]); }
           }
         }
       }
@@ -719,12 +728,12 @@ export class RetromarciaScene extends MicrogiocoBase {
     // ogni tanto ne compare una da raccogliere, in giro per il giardino: quella che mi manca di più
     this.tNuova -= dt;
     if (this.tNuova <= 0 && this.raccolte.length < c.maxInGiro) {
-      this.tNuova = lerp(c.nuoveInizio, c.nuoveFine, p) * tra(0.8, 1.2);
+      this.tNuova = lerp(c.nuoveInizio, c.nuoveFine, p) * this.tra(0.8, 1.2);
       const conta = (t) => this.muni[t] + this.raccolte.filter((r) => r.tipo === t).length;
-      const tipo = conta('biscotto') === conta('pallina') ? caso(['biscotto', 'pallina']) : conta('biscotto') < conta('pallina') ? 'biscotto' : 'pallina';
+      const tipo = conta('biscotto') === conta('pallina') ? this.pesca(['biscotto', 'pallina']) : conta('biscotto') < conta('pallina') ? 'biscotto' : 'pallina';
       const liberi = V.nascondigli.filter(([x, y]) => Math.hypot(x - io.x, y - io.y) > 46 && !this.raccolte.some((r) => r.x === x && r.y === y));
       if (liberi.length && conta(tipo) < c.maxMunizioni) {
-        const [x, y] = caso(liberi);
+        const [x, y] = this.pesca(liberi);
         const alone = this.add.ellipse(x, y, 20, 8, 0xffe14a, 0.4).setDepth(8);
         const img = im(this, x, y - 8, tipo, tipo === 'biscotto' ? 0.95 : 1.1).setDepth(100 + y);
         this.tweens.add({ targets: img, y: y - 12, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
