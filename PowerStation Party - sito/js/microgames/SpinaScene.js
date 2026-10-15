@@ -16,7 +16,7 @@ import { CONFIG } from '../config.js';
 import { casuale, tela } from '../grafica/base.js';
 import { clienteDi } from '../grafica/oggetti.js';
 import { aspettoDi } from '../sprites.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, colpetto, eTouch, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, colpetto, eTouch, vibra, puntiHud, numero, quanti } from '../fx.js';
 
 const Y_BANCONE = 181;            // dove appoggia il bicchiere
 const Y_BECCO = 137;              // da dove esce la birra
@@ -52,7 +52,8 @@ export class SpinaScene extends MicrogiocoBase {
     im(this, 0, 0, 'bgPub').setOrigin(0);
     txt(this, 240, 42, 'POWERSTATION', { size: 9, color: '#f6d36b', thick: 0 });
     txt(this, 240, 69, 'OGGI ALLA SPINA', { size: 8, color: '#ffe9a0', thick: 0 });
-    txt(this, 240, 92, 'Pinta .......... 5\nBoccale ........ 8\nCalice ......... 9', { size: 7, color: '#eef2e4', thick: 0, spacing: 0 });
+    const B = this.cfg.bicchieri, prezzo = (nome, k) => `${nome} ${'.'.repeat(15 - nome.length - String(B[k].punti).length)} ${B[k].punti}`;
+    txt(this, 240, 92, [prezzo('Pinta', 'pinta'), prezzo('Boccale', 'boccale'), prezzo('Calice', 'calice')].join('\n'), { size: 7, color: '#eef2e4', thick: 0, spacing: 0 });
 
     // baristi dietro al bancone
     this.io = im(this, 84, 200, this.giocatore.id + '_normale').setOrigin(0.5, 1);
@@ -343,11 +344,14 @@ export class SpinaScene extends MicrogiocoBase {
   }
 
   risultato() {
-    const beppe = this.pinteBeppe * this.cfg.puntiBeppe;
+    // il punteggio è la sfida con Beppe: a pari punti con lui vale puntiPari (il bronzo), e poi
+    // quanto lo batti (o quanto ti batte). Così "fai più punti di Beppe" è proprio il bronzo, anche
+    // se Beppe un giorno va più forte e un altro più piano
+    const c = this.cfg, beppe = this.pinteBeppe * c.puntiBeppe, scarto = this.punti - beppe;
     return {
-      punteggio: this.punti,
-      vittoria: this.punti > beppe,
-      riepilogo: `${this.pinte} bicchieri (${this.perfette} perfetti): tu ${this.punti} - Beppe ${beppe}`,
+      punteggio: Math.max(0, c.puntiPari + scarto),
+      vittoria: this.punti >= beppe,
+      riepilogo: `${quanti(this.pinte, 'bicchiere', 'bicchieri')} (${quanti(this.perfette, 'perfetto', 'perfetti')}): tu ${this.punti}, Beppe ${beppe} (${scarto >= 0 ? '+' : ''}${scarto})`,
     };
   }
 }

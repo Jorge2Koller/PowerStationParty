@@ -19,20 +19,28 @@ export default {
     'Cammina contro un cane: lo spingi via dalla ZONA ROSSA dietro la macchina',
     'Tocca biscotto o pallina, poi dove lanciarli. BIP BIP: la macchina parte!',
   ],
-  obiettivo: 'Fai uscire Emilio dal cancello senza toccare i cani!',
+  obiettivo: 'Fai uscire Emilio dal cancello: al massimo uno spavento!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Stima: uscire vale 40, più 20 per vita rimasta, più 10 per ogni cane salvato all'ultimo.
-  medaglie: { bronzo: 80, argento: 120, oro: 170 },   // (erano 60, 110, 160: chi stava fermo a volte usciva con una vita)
+  // Revisione 4, la stessa scala per tutti (erano 80 / 120 / 170; prima ancora 60 / 110 / 160: chi
+  // stava fermo a volte usciva con una vita). Ora i cani sono cinque: fuori con 2 vite è il bronzo,
+  // fuori senza spaventi (e tutti gli scatti puliti) l'oro.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   // --- vite e punti ---
   vite: 3,                 // spaventi che ti puoi permettere (al terzo la partita finisce)
   unitaMetro: 10,          // quante unità di schermo fanno un metro (il vialetto è lungo 25 metri)
-  puntiMetro: 0,           // punti per ogni metro fatto dalla macchina (era 4: chi stava fermo prendeva punti)
-  bonusSalvataggio: 10,    // per ogni cane tolto dalla zona rossa all'ultimo istante
+  // (revisione 4) i punti: VIA LIBERA, ogni scatto della macchina finito senza spaventare nessun cane
+  // (il k-esimo di fila vale k volte puntiScatto: 4, 8, 12...; uno spavento azzera la serie); i cani
+  // salvati all'ultimo valgono meno (capitano anche a chi tocca a caso); se Emilio esce dal cancello,
+  // le vite rimaste (indice = vite: con 2 +40, con 3, senza spaventi, +150).
+  // Prima: uscita 40, 20 a vita, 10 a cane salvato: chi toccava a caso usciva con una vita e prendeva il bronzo.
+  puntiScatto: 4,
+  bonusSalvataggio: 5,     // per ogni cane tolto dalla zona rossa all'ultimo istante (era 10)
   vicino: 28,              // "all'ultimo istante" = la coda era a meno di tante unità dal cane, con la macchina in moto o in partenza
   attesaSalvataggio: 2.5,  // lo stesso cane non dà un altro bonus prima di tanti secondi
-  bonusUscita: 40,         // se Emilio esce dal cancello
-  bonusVita: 20,           // per ogni vita rimasta (solo se Emilio esce dal cancello)
+  bonusUscita: 0,          // se Emilio esce dal cancello (era 40)...
+  bonusVite: [0, 0, 40, 150], // ...più tanto secondo le vite rimaste (0, 1, 2, 3)
+  viteVittoria: 2,         // per vincere: fuori dal cancello con almeno tante vite (al massimo uno spavento)
   // --- il giocatore ---
   velGiocatore: 104,       // velocità (unità/s)
   raggioSpinta: 15,        // quanto vicino devi passare a un cane per spingerlo
@@ -64,12 +72,12 @@ export default {
   arrivo: 0.84,            // Emilio conta di essere fuori a questo punto della partita (0.84 = a 29 secondi su 35)
   curvaArrivo: 1.35,       // la sua tabella di marcia: 1 = regolare, più di 1 = piano all'inizio e forte alla fine
   recupero: 5,             // se è in ritardo sulla tabella (uno spavento, una frenata) accelera: più è alto, più recupera in fretta
-  recuperoMax: 1.45,       //   ...ma mai più di tanto (1.45 = il 45% più svelto del normale)
+  recuperoMax: 1.7,        //   ...ma mai più di tanto (1.7 = il 70% più svelto del normale; era 1,45: coi cinque cani non usciva più)
   zona: 46,                // lunghezza della zona rossa dietro la macchina (unità)
   distrattoDa: 0.34,       // da che punto della partita (0 = inizio, 1 = fine) comincia a distrarsi (0.34 = 12 s: il secondo atto)
   distratto: 0.65,         // a fine partita, quanti scatti su 1 li fa da distratto (radio, bandana, telefono)
   distrattoVel: 1.3,       // da distratto va più forte di tanto
-  durataIncidente: 2.8,    // secondi persi quando tocca un cane (scende e si dispera)
+  durataIncidente: 2.4,    // secondi persi quando tocca un cane (scende e si dispera) (era 2,8)
   // --- i cani ---
   // personalita: 'pigro' (si sdraia dietro la ruota e si sposta solo a spinte), 'pallina' (rincorre
   // la pallina ovunque), 'goloso' (va solo dietro ai biscotti). Si possono rinominare, togliere o
@@ -80,14 +88,17 @@ export default {
     { nome: 'Morgan I', collare: '#e8463a', personalita: 'pigro', taglia: 1.1 },
     { nome: 'Morgan II', collare: '#3f8ae0', personalita: 'pallina', taglia: 0.9 },
     { nome: 'Morgan III', collare: '#f2c43a', personalita: 'goloso', macchia: '#8a5a2e' },
+    // (revisione 4: era troppo facile, arrivano altri due Morgan: un altro pigro e un altro goloso)
+    { nome: 'Morgan IV', collare: '#2fae6a', personalita: 'pigro', taglia: 1 },
+    { nome: 'Morgan V', collare: '#8a4fd8', personalita: 'goloso', taglia: 0.95, macchia: '#4a3020' },
   ],
   velCane: 15,             // quanto veloci vanno a spasso (unità/s): ciondolano
   velCorsa: 62,            // quando corrono dietro al biscotto o alla pallina
   sosta: [0.7, 1.8],       // quanto si fermano tra una passeggiata e l'altra (secondi): tra questo e questo
-  vogliaZonaInizio: 0.24,  // quante volte su 1 scelgono di andare proprio dietro la macchina, a inizio partita...
-  vogliaZonaFine: 0.42,    //   ...e a fine partita (erano 0,16 e 0,3)
-  sicuroInizio: 3.8,       // secondi che restano nel prato (o sotto il portico) prima di tornare sul vialetto, a inizio partita...
-  sicuroFine: 2.6,         //   ...e a fine partita (erano 5 e 3,5)
+  vogliaZonaInizio: 0.3,   // quante volte su 1 scelgono di andare proprio dietro la macchina, a inizio partita...
+  vogliaZonaFine: 0.5,     //   ...e a fine partita (erano 0,16 e 0,3, poi 0,24 e 0,42)
+  sicuroInizio: 3.2,       // secondi che restano nel prato (o sotto il portico) prima di tornare sul vialetto, a inizio partita...
+  sicuroFine: 2.2,         //   ...e a fine partita (erano 5 e 3,5, poi 3,8 e 2,6)
   pigroDietro: 18,         // il pigro si sdraia a tante unità dalla coda della macchina
   pigroVel: 1.5,           // per tornare dietro la ruota va più svelto degli altri a spasso (1 = uguale): se no la macchina lo semina
   pigroPausa: 4.5,         // dopo una spinta, quanto aspetta prima di tornare a sdraiarsi dietro la ruota, a inizio partita...
@@ -122,7 +133,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { avvisoInizio: 1.6, avvisoFine: 1.2, vogliaZonaInizio: 0.16, vogliaZonaFine: 0.3, sicuroInizio: 5, sicuroFine: 3.5 },
-    difficile: { avvisoInizio: 0.95, avvisoFine: 0.7, vogliaZonaInizio: 0.3, vogliaZonaFine: 0.5, sicuroInizio: 3, sicuroFine: 2 },
+    facile: { avvisoInizio: 1.6, avvisoFine: 1.2, vogliaZonaInizio: 0.2, vogliaZonaFine: 0.36, sicuroInizio: 4.4, sicuroFine: 3 },
+    difficile: { avvisoInizio: 0.95, avvisoFine: 0.7, vogliaZonaInizio: 0.38, vogliaZonaFine: 0.6, sicuroInizio: 2.6, sicuroFine: 1.7 },
   },
 };

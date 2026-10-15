@@ -5,24 +5,27 @@
 //  da rossa è scottata per sempre). Niente crema su occhi e bocca (se ci finisce la mano perché
 //  si è mosso lui, non è un errore).
 //  1. LA CREMA: prima che il sole salga, coprilo tutto (tenendo premuto, o col dito, la mano
-//     stende la crema). Quanta pelle copri sono punti.
+//     stende la crema). Quanta pelle copri sono punti. La crema viene da un TUBETTO che finisce
+//     (si ricarica piano da solo): ripassare dove la crema è ancora fresca la spreca.
 //  2. L'OMBRELLONE: la crema comincia a sciogliersi e una MACCHIA DI SOLE scivola sul Bota; la mano
 //     diventa l'ombrellone: tieni la sua ombra sulla macchia (il vento ogni tanto lo sposta).
-//  3. GABBIANI E ONDE: si gira a pancia in giù (la schiena è senza crema) e il sole accende le
-//     ZONE CALDE: coprile tutte per spegnerle (è il gioco di prima, che resta anche come base di
-//     un futuro Lampo da 5 secondi). I gabbiani vengono a rubare la crema (un clic, o un tocco,
-//     li scaccia) e un'onda lava via la crema dalle gambe.
+//  3. GABBIANI E ONDE: si gira a pancia in giù (la schiena è senza crema), e poi si rigira ogni
+//     cinque secondi; il sole accende le ZONE CALDE, due alla volta: coprile per spegnerle (è il
+//     gioco di prima, che resta anche come base di un futuro Lampo da 5 secondi). I gabbiani
+//     vengono a rubare il tubetto (un clic, o un tocco, li scaccia, e il tubetto torna pieno) e
+//     le onde lavano via la crema dalle gambe.
 //  Zone, macchia, vento, gabbiani e onda escono uguali per tutti i giocatori del round (seme).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { CORPO, GW, GH, PELLE, zonaVietata } from '../sprites.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, perDito, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, perDito, vibra, puntiHud, numero } from '../fx.js';
 
 const CELLA = CORPO.cella, BW = CORPO.w, BH = CORPO.h;
 const CX = 232, CY = 150;            // centro del corpo a riposo (il centro del telo)
 const SCALA = 2;                     // unità del corpo -> unità di gioco
+const TUBETTO = { x: 20, y0: 128, y1: 204, w: 9 };   // l'indicatore del tubetto, a sinistra
 const DB = CORPO.densDin;            // densità della texture di crema e scottatura
 
 export class BotaScene extends MicrogiocoBase {
@@ -41,7 +44,8 @@ export class BotaScene extends MicrogiocoBase {
     this.lati = {};
     for (const nome of ['fronte', 'retro']) {
       const n = GW * GH;
-      this.lati[nome] = { nome, pelle: PELLE[nome].celle, n: PELLE[nome].n, maschera: PELLE[nome].maschera, crema: new Float32Array(n), scotta: new Float32Array(n) };
+      // (quando: l'ultima volta che una cella ha preso la crema, per lo spreco)
+      this.lati[nome] = { nome, pelle: PELLE[nome].celle, n: PELLE[nome].n, maschera: PELLE[nome].maschera, crema: new Float32Array(n), scotta: new Float32Array(n), quando: new Float32Array(n) };
       // le celle di pelle, per pescare dove accendere una zona calda
       this.lati[nome].lista = [];
       for (let i = 0; i < n; i++) if (PELLE[nome].celle[i]) this.lati[nome].lista.push(i);
@@ -54,6 +58,9 @@ export class BotaScene extends MicrogiocoBase {
     this.tOmbra = 0;              // secondi con l'ombra sulla macchia di sole (secondo atto)
     this.cacciati = 0; this.rubate = 0;
     this.senzaCrema = 0;          // un gabbiano ha rubato la crema: per un po' non si spalma
+    this.tubetto = 1;             // quanta crema c'è nel tubetto (da 0 a 1)
+    this.tubettoDisegnato = -1; this.avvisoFinita = false;
+    this.tGira = 0; this.tOnda = 0;   // (terzo atto) quando si rigira, quando arriva l'onda
     this.gabbiani = [];
     this.tGabbiano = c.gabbiani.primo;
     this.ombra = { x: CX, y: CY + 40, vx: 0, vy: 0 };   // dove sta l'ombrellone (segue il puntatore)
@@ -118,11 +125,16 @@ export class BotaScene extends MicrogiocoBase {
     this.sole = im(this, 44, 68, 'sole_0').setDepth(30);
     this.tweens.add({ targets: this.sole, angle: { from: -7, to: 7 }, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
 
+    // il tubetto della crema, a sinistra: quanta ne resta
+    this.gTubetto = this.add.graphics().setDepth(1000);
+    this.iconaTubetto = im(this, TUBETTO.x, TUBETTO.y0 - 14, 'tubettoCrema', 0.5).setDepth(1001);
+    this.testoTubetto = txt(this, TUBETTO.x, TUBETTO.y1 + 9, 'CREMA', { size: 7, depth: 1001 });
+
     this.testoSpente = txt(this, 186, 22, '', { size: 9, depth: 1001, color: '#7dff9a' });
     this.testoScot = txt(this, 296, 22, '', { size: 9, depth: 1001 });
     this.testoAtto = txt(this, 240, 37, '', { depth: 1001, size: 7 });
     this.aiuto = txt(this, 6, 262, '', { ox: 0, size: 7, depth: 1001 });
-    this.hudBota = [pannello(this, 240, 22, 220, 18, { depth: 1000 }), this.testoSpente, this.testoScot, this.testoAtto, this.aiuto, this.sole];
+    this.hudBota = [pannello(this, 240, 22, 220, 18, { depth: 1000 }), this.testoSpente, this.testoScot, this.testoAtto, this.aiuto, this.sole, this.gTubetto, this.iconaTubetto, this.testoTubetto];
     this.aiutoAtto();
   }
 
@@ -162,7 +174,8 @@ export class BotaScene extends MicrogiocoBase {
       this.ombrellone.setVisible(false);
       this.mano.setVisible(true);
       this.gira();
-      this.time.delayedCall(c.onda.dopo * 1000, () => { if (this.inCorso) this.onda(); });
+      this.tGira = c.giraOgni;
+      this.tOnda = c.onda.dopo;
     }
     if (A.nome) { Audio.sfx('bonus'); scritta(this, 240, 74, A.nome, { size: 15, color: '#ffe14a', durata: 900 }); }
     this.aiutoAtto();
@@ -205,7 +218,7 @@ export class BotaScene extends MicrogiocoBase {
     this.fum?.destroy();
     this.fum = fumetto(this, Phaser.Math.Clamp(this.corpo.x - 104, 66, 300), this.corpo.y - 56, s, ms, 900);
     this.tFrase = Math.max(this.tFrase, 3);
-    if (!this.girato && this.espr === 'normale') this.espressione('parla', 0.8);
+    if (this.lato.nome === 'fronte' && this.espr === 'normale') this.espressione('parla', 0.8);
   }
 
   aggiorna(dt, p) {
@@ -236,7 +249,7 @@ export class BotaScene extends MicrogiocoBase {
     } else spalmo = ptr.isDown;
     if (this.tAppoggio > 0) { this.tAppoggio -= dt; spalmo = false; }
     if (this.tFermo > 0 || this.stordito > 0 || this.senzaCrema > 0 || A.ombrellone) spalmo = false;
-    this.mano.setPosition(w.x, w.y).setAngle(spalmo ? Math.sin(this.trascorso * 18) * 5 : 0).setAlpha(this.senzaCrema > 0 ? 0.4 : 1);
+    this.mano.setPosition(w.x, w.y).setAngle(spalmo ? Math.sin(this.trascorso * 18) * 5 : 0).setAlpha(this.senzaCrema > 0 || this.tubetto <= 0 ? 0.4 : 1);
     if (A.ombrellone) this.ombrelloneSegue(dt, w);
 
     const loc = this.aLocale(w.x, w.y);
@@ -263,7 +276,27 @@ export class BotaScene extends MicrogiocoBase {
       else this.smorfia();
       if (fatto && this.tSuono <= 0) { this.tSuono = 0.11; Audio.sfx('pennello'); }
       this.prec = loc;
+      // la mano che passa dove la crema è ancora fresca la spreca (quella appena stesa no)
+      const L = this.lato, T = c.tubetto;
+      let sotto = 0, fresche = 0;
+      this.perCelle(loc.x, loc.y, c.raggioMano, (i) => { if (!L.pelle[i]) return; sotto++; if (L.crema[i] >= T.giaCoperta && this.trascorso - L.quando[i] > 0.5) fresche++; });
+      if (sotto) this.tubetto = Math.max(0, this.tubetto - T.spreco * dt * (fresche / sotto));
+      if (this.tubetto <= 0 && !this.avvisoFinita) {
+        this.avvisoFinita = true;
+        Audio.sfx('vuoto');
+        scritta(this, w.x, w.y - 26, 'CREMA FINITA!', { size: 9, color: '#ff6b5a', durata: 700 });
+      }
     } else this.prec = null;
+    // il tubetto si ricarica piano
+    this.tubetto = Math.min(1, this.tubetto + c.tubetto.ricarica * dt);
+    if (this.tubetto > 0.15) this.avvisoFinita = false;
+    this.disegnaTubetto();
+    // terzo atto: si rigira ogni tanto, e arrivano le onde
+    if (this.atto === 2) {
+      this.tGira -= dt; this.tOnda -= dt;
+      if (this.tGira <= 0) { this.tGira = c.giraOgni; this.gira(); }
+      if (this.tOnda <= 0) { this.tOnda = c.onda.ogni; this.onda(); }
+    }
 
     if (A.zone) this.zoneCalde(dt, p);
     if (this.macchia) this.macchiaDiSole(dt);
@@ -278,11 +311,11 @@ export class BotaScene extends MicrogiocoBase {
     if (this.tFrase <= 0) { this.tFrase = 5 + Math.random() * 3; this.parla(caso(c.frasi)); }
 
     // contatori (si riscrivono solo quando cambiano)
-    const scot = Math.floor(this.conta().scottata), sotto = this.atto === 0 ? `COPERTO: ${Math.floor(this.coperta())}%` : this.atto === 1 ? `IN OMBRA: ${this.tOmbra.toFixed(1)} s` : `ZONE SPENTE: ${this.spente}`;
+    const scot = Math.floor(this.conta().scottata), sotto = this.atto === 0 ? `COPERTO: ${Math.floor(this.coperta())}%` : this.atto === 1 ? `IN OMBRA: ${numero(this.tOmbra, 1)} s` : `ZONE SPENTE: ${this.spente}`;
     const hud = `${Math.round(this.punti)}|${scot}|${sotto}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoSpente.setText(`PUNTI: ${Math.round(this.punti)}`);
+      this.testoSpente.setText(puntiHud(this.punti));
       this.testoScot.setText(`SCOTTATA: ${scot}%`).setColor(scot >= c.sogliaScottata ? '#ff6b5a' : scot >= c.sogliaScottata * 0.6 ? '#ffe14a' : '#ffffff');
       this.testoAtto.setText(sotto);
     }
@@ -294,17 +327,33 @@ export class BotaScene extends MicrogiocoBase {
     if (this.sporco && this.tDisegno <= 0) { this.tDisegno = 1 / 30; this.ridisegna(); }
   }
 
-  // la mano stende la crema dove passa (quanta ne serve: il tubetto non finisce mai)
+  // la mano stende la crema dove passa, finché ce n'è nel tubetto (una cella di pelle nuda costa
+  // 1 / (celle del lato x tubetto.pieno); una già unta, solo quanto le manca)
   spalma(x, y) {
-    const c = this.cfg, L = this.lato;
+    const c = this.cfg, L = this.lato, costo = 1 / (L.n * c.tubetto.pieno);
     let fatto = 0;
     this.perCelle(x, y, c.raggioMano, (i) => {
-      if (!L.pelle[i] || L.crema[i] >= c.strato) return;
+      if (!L.pelle[i] || L.crema[i] >= c.strato || this.tubetto <= 0) return;
+      this.tubetto = Math.max(0, this.tubetto - (c.strato - L.crema[i]) * costo);
       L.crema[i] = c.strato;
+      L.quando[i] = this.trascorso;
       fatto++;
     });
     if (fatto) this.sporco = true;
     return fatto;
+  }
+
+  // l'indicatore del tubetto (si ridisegna solo quando cambia di un punto)
+  disegnaTubetto() {
+    const v = Math.round(this.tubetto * 100), poco = v < 20, lampo = poco && Math.floor(this.trascorso * 4) % 2;
+    const chiave = v * 2 + (lampo ? 1 : 0);
+    if (chiave === this.tubettoDisegnato) return;
+    this.tubettoDisegnato = chiave;
+    const g = this.gTubetto, { x, y0, y1, w } = TUBETTO, h = y1 - y0;
+    g.clear();
+    g.fillStyle(0x1f1430, 0.85).fillRoundedRect(x - w / 2 - 2, y0 - 2, w + 4, h + 4, 5);
+    if (v > 0) g.fillStyle(lampo ? 0xff6b5a : poco ? 0xffb0a4 : 0xfff7e6, 1).fillRoundedRect(x - w / 2, y1 - (h * v) / 100, w, (h * v) / 100, Math.min(4, (h * v) / 200));
+    g.lineStyle(1.2, 0xffffff, 0.8).strokeRoundedRect(x - w / 2 - 2, y0 - 2, w + 4, h + 4, 5);
   }
 
   // crema su occhi o bocca: smorfia, urlo e un attimo di stop
@@ -328,13 +377,15 @@ export class BotaScene extends MicrogiocoBase {
     this.tZona -= dt;
     if (this.tZona <= 0 && this.tFermo <= 0) {
       this.tZona = lerp(c.ogniZonaInizio, c.ogniZonaFine, p);
-      const k = L.lista[Math.floor(this.rnd() * L.lista.length)];
-      const cx = ((k % GW) + 0.5) * CELLA, cy = (Math.floor(k / GW) + 0.5) * CELLA;
-      // (non sopra a occhi e bocca: lì non si può spalmare)
-      if (!this.vietato(cx, cy)) {
-        this.zone.push({ cx, cy, r: 0, eta: 0, lato: L, coperta: 0 });
-        Audio.sfx('sfrigola');
+      // (zoneInsieme alla volta, lontane tra loro; non sopra a occhi e bocca: lì non si può spalmare)
+      const quante = c.zoneInsieme ?? 1, nuove = [];
+      for (let prova = 0; prova < quante * 4 && nuove.length < quante; prova++) {
+        const k = L.lista[Math.floor(this.rnd() * L.lista.length)];
+        const cx = ((k % GW) + 0.5) * CELLA, cy = (Math.floor(k / GW) + 0.5) * CELLA;
+        if (this.vietato(cx, cy) || nuove.some((z) => Math.hypot(z.cx - cx, z.cy - cy) < c.raggioZona * 3)) continue;
+        nuove.push({ cx, cy, r: 0, eta: 0, lato: L, coperta: 0 });
       }
+      if (nuove.length) { this.zone.push(...nuove); Audio.sfx('sfrigola'); }
     }
     const g = this.zoneG;
     g.clear();
@@ -443,8 +494,10 @@ export class BotaScene extends MicrogiocoBase {
     g.via = true;
     this.cacciati++;
     this.punti += c.punti;
+    this.tubetto = 1;          // (scacciato il gabbiano, il tubetto torna pieno)
     Audio.sfx('ok');
     scritta(this, g.img.x, g.img.y - 34, `SCIÒ! +${c.punti}`, { size: 9, color: '#7dff9a', durata: 400 });
+    colpetto(this, this.iconaTubetto, 1.4, 1.4);
     this.vola(g);
   }
 
@@ -453,6 +506,7 @@ export class BotaScene extends MicrogiocoBase {
     g.via = true;
     this.rubate++;
     this.senzaCrema = c.senzaCrema;
+    this.tubetto = 0;          // si porta via il tubetto: si ricarica piano
     Audio.sfx('errore');
     vibra(40);
     scritta(this, g.img.x, g.img.y - 34, 'TI RUBA LA CREMA!', { size: 10, color: '#ff6b5a', durata: 700 });
@@ -504,7 +558,7 @@ export class BotaScene extends MicrogiocoBase {
       this.tBrucia = 2.5;
       Audio.sfx('sfrigola');
       if (this.tFrase < 3.6) this.parla(caso(c.frasiBrucia));
-      if (!this.girato && this.espr === 'normale') this.espressione('triste', 1);
+      if (this.lato.nome === 'fronte' && this.espr === 'normale') this.espressione('triste', 1);
     }
     this.tVapore -= dt;
     if (this.tVapore <= 0) {
@@ -526,24 +580,24 @@ export class BotaScene extends MicrogiocoBase {
     return { scottata: (scot / esposte) * 100 };
   }
 
-  // --- A METÀ PARTITA SI GIRA ---
+  // --- NEL TERZO ATTO SI GIRA (e poi si rigira ogni giraOgni secondi) ---
   gira() {
-    const c = this.cfg;
+    const c = this.cfg, primo = !this.girato, retro = this.lato === this.lati.fronte;
     this.girato = true;
-    this.tFermo = 0.9;
+    this.tFermo = primo ? 0.9 : 0.6;
     this.prec = null;
     this.perdonato = false;
     this.zone = [];
-    this.tZona = Math.max(this.tZona, 1.2);
+    this.tZona = Math.max(this.tZona, primo ? 1.2 : 0.8);
     Audio.sfx('scivola');
-    scritta(this, 240, 74, 'SI GIRA!', { size: 16, color: '#ffe14a', durata: 800 });
-    this.parla(caso(c.frasiGira), 1600);
+    scritta(this, 240, 74, primo ? 'SI GIRA!' : 'SI RIGIRA!', { size: 16, color: '#ffe14a', durata: 800 });
+    this.parla(caso(primo ? c.frasiGira : c.frasiGiraDinuovo), 1600);
     this.tweens.add({
       targets: this.spost, sy: 0.06, duration: 190, ease: 'Sine.in',
       onComplete: () => {
-        this.lato = this.lati.retro;
-        this.imgCorpo.setTexture('botaRetro');
-        this.imgTesta.setVisible(false);
+        this.lato = retro ? this.lati.retro : this.lati.fronte;
+        this.imgCorpo.setTexture(retro ? 'botaRetro' : 'botaFronte');
+        this.imgTesta.setVisible(!retro);
         this.sporco = true;
         this.tDisegno = 0;
         this.tweens.add({ targets: this.spost, sy: 1, duration: 220, ease: 'Back.out' });
@@ -553,9 +607,9 @@ export class BotaScene extends MicrogiocoBase {
 
   // si stiracchia o si allunga a prendere il telefono o una birra: uno scatto da inseguire
   siMuove() {
-    const c = this.cfg, cosa = caso(['telefono', 'birra', 'stira']), s = this.rnd() < 0.5 ? 1 : -1;
+    const c = this.cfg, cosa = ['telefono', 'birra', 'stira'][Math.floor(this.rnd() * 3)], s = this.rnd() < 0.5 ? 1 : -1;
     Audio.sfx('muovi');
-    const dx = cosa === 'stira' ? s * 16 : s * 9, dy = cosa === 'stira' ? -s * 6 : s * 11;
+    const dx = cosa === 'stira' ? s * c.scatto : s * 9, dy = cosa === 'stira' ? -s * 6 : s * 11;
     this.tweens.add({ targets: this.spost, x: dx, y: dy, rot: s * 0.07, duration: 170, ease: 'Quad.out', yoyo: true, hold: c.tieneMossa * 1000 });
     if (cosa !== 'stira') {
       this.parla(caso(c.frasiMuove[cosa]), 1200);
@@ -626,10 +680,10 @@ export class BotaScene extends MicrogiocoBase {
     // (se la partita finisce prima del secondo atto, come in Lampo, la crema conta lo stesso)
     const crema = this.atto === 0 ? Math.round(Math.floor(this.coperta()) * c.puntiCopertura) : 0;
     return {
-      // (la pelle sana conta solo sotto pelleSana% di scottatura: chi sta fermo non prende niente)
-      punteggio: Math.max(0, Math.round(this.punti + crema + Math.max(0, c.pelleSana - scot) * c.puntiPelle)),
+      // (la pelle sana conta solo sotto la soglia: chi si scotta, o sta fermo, non prende niente)
+      punteggio: Math.max(0, Math.round(this.punti + crema + (scot < c.sogliaScottata ? c.bonusSano + (c.sogliaScottata - scot) * c.puntiPelle : 0))),
       vittoria: scot < c.sogliaScottata,
-      riepilogo: `crema ${this.atto === 0 ? Math.floor(this.coperta()) : this.copertura}%, ombra ${this.tOmbra.toFixed(1)} s, ${quanti(this.spente, 'zona spenta', 'zone spente')}, scottata ${scot}%`,
+      riepilogo: `crema ${this.atto === 0 ? Math.floor(this.coperta()) : this.copertura}%, ombra ${numero(this.tOmbra, 1)} s, ${quanti(this.spente, 'zona spenta', 'zone spente')}, scottata ${scot}%`,
     };
   }
 
@@ -648,12 +702,12 @@ export class BotaScene extends MicrogiocoBase {
     this.time.delayedCall(800, () => {
       if (ris.vittoria) {
         Audio.sfx('vittoria');
-        txt(this, 240, 22, 'ABBRONZATURA PERFETTA!', { size: 16, color: '#7dff9a', depth: 710 });
+        txt(this, 240, 22, ris.condizione ? 'ABBRONZATURA PERFETTA!' : 'ABBRONZATO... QUASI!', { size: 16, color: '#7dff9a', depth: 710 });
         for (let i = 0; i < 4; i++) this.time.delayedCall(i * 250, () => stelle(this, 150 + Math.random() * 180, 70 + Math.random() * 130, 8, 705));
         this.tweens.add({ targets: b, scaleY: b.scaleY * 1.04, scaleX: b.scaleX * 0.97, y: 258, duration: 240, yoyo: true, repeat: -1 });
       } else {
         Audio.sfx('sconfitta');
-        txt(this, 240, 22, 'ROSSO ARAGOSTA!', { size: 16, color: '#ff6b5a', depth: 710 });
+        txt(this, 240, 22, ris.condizione ? 'POCA CREMA, POCHI PUNTI!' : 'ROSSO ARAGOSTA!', { size: 16, color: '#ff6b5a', depth: 710 });
         this.tweens.add({ targets: b, x: { from: 240, to: 296 }, duration: 1500, ease: 'Stepped', easeParams: [5], yoyo: true, repeat: -1 });
         this.tweens.add({ targets: b, angle: { from: -3, to: 3 }, duration: 150, ease: 'Stepped', easeParams: [1], yoyo: true, repeat: -1 });
         this.time.addEvent({ delay: 300, repeat: 8, callback: () => { Audio.sfx('tonk'); fumo(this, b.x + (Math.random() - 0.5) * 50, 110 + Math.random() * 60, 1, 705); } });

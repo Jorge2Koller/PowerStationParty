@@ -17,13 +17,18 @@ export default {
     'Col rasoio radi dove c\'è schiuma. PIANO!',
     'Evita naso, labbra, occhi e nei. LAMA PIENA: sciacquala nella bacinella',
   ],
-  obiettivo: "Radi almeno l'85% della barba!",
+  obiettivo: "Radi almeno il 70% della barba!",
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
-  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: percentuale rasata (+ bonus tempo oltre il 98%): l'80% per vincere è l'argento.
-  medaglie: { bronzo: 50, argento: 85, oro: 102 },   // (erano 40, 80, 100)
-  soglia: 85,          // % per vincere (era 80)
-  sogliaFine: 98,      // % a cui il microgioco finisce in anticipo (bonus tempo)
-  bonusPerSecondo: 2,  // punti per ogni secondo avanzato
+  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
+  // Revisione 4, la stessa scala per tutti (erano 50 / 85 / 102, e si vinceva con l'85%: il bronzo
+  // arrivava senza la vittoria). Ora: il 70% rasato è il bronzo; la barba finita (98%) proprio allo
+  // scadere è l'argento; finita con una dozzina di secondi d'anticipo, l'oro.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  soglia: 70,          // % per vincere (era 85)
+  sogliaFine: 98,      // % a cui il microgioco finisce in anticipo (barba finita: bonus e bonus tempo)
+  puntiPercento: 1.45, // punti per ogni % di barba rasata (era 1)
+  bonusFinita: 60,     // la barba finita (arrivata al 98%)
+  bonusPerSecondo: 8,  // punti per ogni secondo avanzato (era 2)
   // --- attrezzi (misure in unità della faccia: 1 unità = 2 px di gioco) ---
   raggio: 5.5,           // raggio del rasoio (largo come la lama che si vede)
   raggioPennello: 9,     // raggio del pennello
@@ -37,7 +42,7 @@ export default {
   margineRincorsa: 1.5,  // ...e per 0,7 secondi il limite di velocità è più largo (x1,5): si rincorre la faccia
   sopraDito: 22,         // col dito l'attrezzo sta tante unità sopra il polpastrello (si vede la lama)
   penalitaTaglio: 1,     // secondi persi per un taglietto
-  malusTaglio: 3,        // punti tolti a fine partita per ogni taglietto
+  malusTaglio: 6,        // punti tolti a fine partita per ogni taglietto (era 3)
   penalita: 1,           // secondi persi se tocchi naso, labbra, occhi, orecchie o un neo
   nei: 3,                // quanti nei spuntano (erano 2) (in posizioni casuali, sempre sulla pelle del viso)
   // ricrescita: probabilità (per tick da 0.25s) che una cella rasata confinante con barba

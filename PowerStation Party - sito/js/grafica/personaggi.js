@@ -133,6 +133,25 @@ export const PERSONAGGI = {
     occhiali: { inFronte: true, montatura: '#1a1a20', lenti: '#27324a' },
     vestito: { tipo: 'costume' }, pantaloni: '#18b3c6', fantasia: ['#ffd84a', '#ff7aa8'], corti: true, scarpe: '#ffcf3a', infradito: true,
   },
+  // il Boni ("Il Nutrizionista"): capelli scuri corti, sfumati quasi a zero ai lati e un po' più
+  // lunghi sopra, con la frangia corta a ciuffetti; sopracciglia folte e dritte, sorrisone coi
+  // denti, viso pulito; camicia bianca col colletto
+  boni: {
+    pelle: '#e8b48c', capelli: '#261a13', capelliLuce: '#5a4234', occhi: '#3a2414',
+    sopra: '#1f140d', sopraSpess: 9.5, sopraDritte: true, palpebra: [0.14, 0.14],
+    faccia: { top: 46, larg: 55, mascella: 48, mascellaY: 152, mento: 26, mentoY: 181 },
+    stile: 'sfumato', barba: 'nessuna', naso: [9, 12], orecchie: 10, sorriso: 6, sorrisone: true, labbra: true,
+    vestito: { tipo: 'camicia', colore: '#f4f5f8' }, pantaloni: '#2f3a52', scarpe: '#3a2418',
+  },
+  // Lori ("Il Cantastorie"): ricci castani corti, con le punte più chiare; sorriso largo coi denti,
+  // viso pulito; maglietta bianca col collo alla serafino (i bottoncini), niente costumi
+  lori: {
+    pelle: '#ecbd96', capelli: '#5a3a24', capelliLuce: '#a9784f', occhi: '#4a2c18',
+    sopra: '#3a2414', sopraSpess: 8,
+    faccia: { top: 46, larg: 53, mascella: 45, mascellaY: 153, mento: 22, mentoY: 182 },
+    stile: 'ricciCorti', barba: 'nessuna', naso: [9, 13], orecchie: 9.5, sorriso: 6, sorrisone: true, labbra: true,
+    vestito: { tipo: 'tshirt', colore: '#f6f4ee', collo: 'giro', bottoni: true }, pantaloni: '#3b4d6e', scarpe: '#f2f2f2',
+  },
   // il Petri ("il Piovra"): capelli scuri corti tirati su col gel, viso tondo col sorrisone, senza
   // barba; bassino (statura < 1) e appena robusto, non grasso; felpa nera col cappuccio e jeans
   petri: {
@@ -1486,6 +1505,44 @@ function capelli(c, p, fase, o) {
     return;
   }
 
+  if (p.stile === 'sfumato') {
+    // il Boni: lati e nuca sfumati quasi a zero (l'ombra dei capelli cortissimi, che si schiarisce
+    // scendendo verso le orecchie), sopra corti e un po' mossi, con la frangia a ciuffetti
+    if (fase === 'dietro') return;
+    const f = p.faccia, LG = f.larg;
+    c.save();
+    sagomaTesta(c, f); c.clip();
+    c.beginPath(); c.moveTo(CX - LG - 4, 112);
+    c.bezierCurveTo(CX - LG - 6, 30, CX + LG + 6, 30, CX + LG + 4, 112);
+    c.lineTo(CX + LG - 7, 106);
+    c.bezierCurveTo(CX + LG - 9, 84, CX + 34, 72, CX, 71);
+    c.bezierCurveTo(CX - 34, 72, CX - LG + 9, 84, CX - LG + 7, 106);
+    c.closePath();
+    c.fillStyle = gradL(c, 0, 58, 0, 112, [[0, alfa(H, 0.9)], [0.5, alfa(H, 0.55)], [1, alfa(H, 0.08)]]); c.fill();
+    c.clip();
+    const r0 = casuale(12);
+    c.fillStyle = alfa(H, 0.35);
+    for (let i = 0; i < 220; i++) { ellisse(c, CX - LG + r0() * LG * 2, 60 + r0() * 50, 0.7, 0.7); c.fill(); }
+    c.restore();
+    const forma = () => {
+      c.beginPath(); c.moveTo(CX - LG + 7, 84);
+      c.bezierCurveTo(CX - LG + 1, 52, CX - 30, 29, CX, 28);
+      c.bezierCurveTo(CX + 30, 29, CX + LG - 1, 52, CX + LG - 7, 84);
+      [[CX + 41, 73], [CX + 32, 79], [CX + 23, 69], [CX + 13, 76], [CX + 3, 66], [CX - 7, 74], [CX - 17, 67], [CX - 27, 75], [CX - 37, 71]].forEach(([x, y]) => c.lineTo(x, y));
+      c.closePath();
+    };
+    forma(); c.fillStyle = sfum(26, 86); c.fill();
+    const r = casuale(11);
+    c.globalAlpha = 0.6;
+    ciocche(c, forma, 70, () => {
+      const x = CX - LG + r() * LG * 2, y = 30 + r() * 44;
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 3, y - 4, x + 6, y - 1); tratto(c, L, 1.5);
+    });
+    c.globalAlpha = 1;
+    forma(); tratto(c, CONT, 3);
+    return;
+  }
+
   if (p.stile === 'corto') {
     const forma = () => {
       c.beginPath(); c.moveTo(37, 110);
@@ -1889,6 +1946,22 @@ const POSE = {
   tiIndico: { sx: [[33, 196], [45, 216], [36, 232]], dx: [[33, 196], [60, 199], [87, 195]], dito: true },
   // i giudici: le mani sulle orecchie (o.maniSopra le ridisegna sopra la testa)
   orecchie: [[33, 196], [70, 176], [60, 122]],
+  // "La pizza dal Boni": la pala tenuta dritta (la sinistra in basso sul manico), le mani a coppa
+  // davanti alla bocca per gridare l'ordinazione (con o.maniSopra), la corsa a pugni stretti, la
+  // caraffa alla bocca, la pala alzata sopra la testa per cacciare gli imbucati
+  pala: { sx: [[33, 196], [30, 218], [6, 226]], dx: [[33, 196], [52, 214], [46, 190]] },
+  grida: [[33, 196], [46, 184], [20, 158]],
+  corre: { sx: [[33, 196], [54, 186], [60, 164]], dx: [[33, 196], [40, 220], [56, 236]] },
+  beve: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [60, 192], [42, 164]] },
+  caccia: { sx: [[33, 196], [48, 168], [42, 126]], dx: [[33, 196], [58, 166], [62, 124]] },
+  // "La ballata del Pallaio" (Lori, il cantastorie): la mano sul cuore mentre canta, la bacchetta
+  // alzata, il braccio teso che batte sulla vignetta, la mano che gratta la testa (confuso, con
+  // o.maniSopra), l'inchino finale (un braccio che si allarga)
+  cuore: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [44, 222], [10, 206]] },
+  alza: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [60, 172], [74, 132]] },
+  batte: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 200], [88, 196]] },
+  gratta: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [68, 168], [46, 92]] },
+  inchino: { sx: [[33, 196], [30, 222], [10, 238]], dx: [[33, 196], [58, 212], [84, 226]] },
 };
 
 // quello che un personaggio tiene in mano (x, y = la mano destra; p = il personaggio)
@@ -1926,6 +1999,31 @@ function accessorio(c, tipo, x, y, p) {
       for (let i = 0; i < 8; i++) { const an = i * 0.785; c.beginPath(); c.moveTo(4 + Math.cos(an) * 3, -8 + Math.sin(an) * 3); c.lineTo(4 + Math.cos(an) * (i % 2 ? 6.5 : 9), -8 + Math.sin(an) * (i % 2 ? 6.5 : 9)); tratto(c, '#fff8c0', 1.5); }   // il flash
     }
     c.restore();
+  } else if (tipo === 'pala' || tipo === 'palaAlta') {
+    // la pala del pizzaiolo, di legno: dritta in mano (il manico scende verso l'altra mano) o
+    // alzata sopra la testa, di traverso
+    const alta = tipo === 'palaAlta';
+    const [ax, ay, bx, by] = alta ? [x + 14, y - 2, x - 92, y + 8] : [x - 58, y + 40, x + 18, y - 30];
+    const a = Math.atan2(by - ay, bx - ax);
+    c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); tratto(c, CONT, 8.4); tratto(c, '#a8743a', 5);
+    c.save(); c.translate(bx + Math.cos(a) * 16, by + Math.sin(a) * 16); c.rotate(a + Math.PI / 2);
+    const pala = () => { c.beginPath(); c.moveTo(-8, 16); c.quadraticCurveTo(-17, 8, -17, -6); c.quadraticCurveTo(-17, -19, 0, -20); c.quadraticCurveTo(17, -19, 17, -6); c.quadraticCurveTo(17, 8, 8, 16); c.closePath(); };
+    pala(); c.fillStyle = gradL(c, -17, 0, 17, 0, [[0, '#c48a46'], [0.5, '#dcab68'], [1, '#b67a38']]); c.fill(); tratto(c, CONT, 2.4);
+    for (const k of [-8, 0, 8]) { c.beginPath(); c.moveTo(k, -16); c.lineTo(k * 0.8, 12); tratto(c, 'rgba(120,70,30,0.35)', 1); }
+    c.restore();
+    if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
+  } else if (tipo === 'caraffa') {
+    // la caraffa del vino, inclinata verso la bocca
+    c.save(); c.translate(x - 2, y - 6); c.rotate(-1.05);
+    const vetro = () => { c.beginPath(); c.moveTo(-5, -26); c.lineTo(5, -26); c.lineTo(5, -14); c.quadraticCurveTo(14, -8, 13, 6); c.quadraticCurveTo(12, 16, 0, 16); c.quadraticCurveTo(-12, 16, -13, 6); c.quadraticCurveTo(-14, -8, -5, -14); c.closePath(); };
+    vetro(); c.fillStyle = 'rgba(230,240,255,0.55)'; c.fill();
+    c.save(); vetro(); c.clip(); c.fillStyle = '#8a1f2e'; c.fillRect(-14, -12, 28, 30); c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(-9, -10, 3, 22); c.restore();
+    vetro(); tratto(c, CONT, 2.2);
+    c.beginPath(); c.moveTo(12, -8); c.quadraticCurveTo(22, -4, 13, 8); tratto(c, CONT, 2);   // il manico
+    c.restore();
+    if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
   } else if (tipo === 'ventaglio') {
     // ventaglio aperto, con le stecche
     const forma = () => { c.beginPath(); c.moveTo(x, y); c.arc(x, y, 30, -2.75, -0.55); c.closePath(); };
@@ -2319,6 +2417,11 @@ function corpo(c, p, espr, o = {}) {
     else {
       ellisse(c, CX, 181, 13, 8); c.fillStyle = scuro(S, 0.1); c.fill();
       c.beginPath(); c.ellipse(CX, 181, 13, 8, 0, 0, Math.PI); tratto(c, risalto(v.colore), 3);
+    }
+    if (v.bottoni) {
+      // il collo "alla serafino": l'apertura coi bottoncini sotto il girocollo
+      c.beginPath(); c.moveTo(CX, 186); c.lineTo(CX, 206); tratto(c, scuro(v.colore, 0.22), 1.6);
+      for (const y of [192, 200]) { ellisse(c, CX + 2.6, y, 1.6, 1.6); c.fillStyle = scuro(v.colore, 0.32); c.fill(); }
     }
     if (v.logo) { ellisse(c, CX + 17, 206, 5.5, 5.5); c.fillStyle = v.logo; c.fill(); ellisse(c, CX + 17, 206, 2.5, 2.5); c.fillStyle = '#f1e9d4'; c.fill(); }
     if (v.spalle) {

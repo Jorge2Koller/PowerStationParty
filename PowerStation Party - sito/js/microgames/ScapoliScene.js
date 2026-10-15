@@ -17,7 +17,7 @@ import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { PALCO } from '../grafica/palco.js';
 import { preparaBallo } from '../sprites.js';
-import { txt, im, scalaDi, scritta, stelle, scuoti, lerp, caso, quanti, eTouch, perDito, vibra, multiTouch, puntatore, fumetto } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, scuoti, lerp, caso, quanti, eTouch, perDito, vibra, multiTouch, puntatore, fumetto, puntiHud, numero } from '../fx.js';
 
 const CORSIE = [192, 224, 256, 288];          // le quattro frecce: sinistra, giù, su, destra
 const ANGOLI = [-90, 180, 0, 90];
@@ -72,7 +72,7 @@ export class ScapoliScene extends MicrogiocoBase {
     this.barra = this.add.graphics().setDepth(1000);
     txt(this, 128, 26, 'TU', { size: 8, color: this.giocatore.colore, depth: 1001, ox: 1 });
     txt(this, 352, 26, 'MANNA', { size: 8, color: '#f6c63a', depth: 1001, ox: 0 });
-    this.testoPunti = txt(this, 474, 36, '', { size: 8, ox: 1, depth: 1001 });
+    this.testoPunti = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
 
     // lo spartito: uguale per tutti i giocatori del round
     this.note = this.spartito(casuale(Sessione.seme));
@@ -132,7 +132,7 @@ export class ScapoliScene extends MicrogiocoBase {
     b.fillStyle(Phaser.Display.Color.HexStringToColor(this.giocatore.colore).color, 1); if (m > 0.01) b.fillRoundedRect(x0, 23, W * m, 6, Math.min(3, W * m / 2));
     for (let k = 1; k < N_RAGAZZE; k++) { b.fillStyle(0x1f1430, 0.8); b.fillRect(x0 + (W * k) / N_RAGAZZE - 0.5, 23, 1, 6); }
     const molt = this.moltiplicatore();
-    this.testoPunti.setText(`${this.punti}${molt > 1 ? `  x${molt.toFixed(1)}` : ''}`);
+    this.testoPunti.setText(puntiHud(this.punti) + (molt > 1 ? `  x${numero(molt, 1)}` : ''));
   }
 
   moltiplicatore() { return Math.min(this.cfg.maxMoltiplicatore, 1 + Math.floor(this.combo / 10) * 0.5); }
@@ -176,7 +176,7 @@ export class ScapoliScene extends MicrogiocoBase {
     if (voto === 'perfetto') stelle(this, x, Y_BERSAGLIO, scelta.oro ? 6 : 3, 950);
     if (this.combo > 0 && this.combo % 10 === 0) {
       Audio.sfx('ok');
-      scritta(this, 240, 120, `SERIE DA ${this.combo}! x${this.moltiplicatore().toFixed(1)}`, { size: 11, color: '#ffe14a', durata: 500 });
+      scritta(this, 240, 120, `SERIE DA ${this.combo}! x${numero(this.moltiplicatore(), 1)}`, { size: 11, color: '#ffe14a', durata: 500 });
     }
     this.aggiornaHud();
   }
@@ -306,10 +306,10 @@ export class ScapoliScene extends MicrogiocoBase {
   risultato() {
     const c = this.cfg, mie = this.mie();
     return {
-      punteggio: this.punti + mie * c.puntiRagazza,
+      punteggio: Math.round(this.punti + c.bonusRagazze[mie]),
       vittoria: mie >= c.ragazzeVittoria,
-      riepilogo: `${quanti(mie, 'ragazza', 'ragazze')} con te (+${mie * c.puntiRagazza}), ${quanti(this.perfetti, 'perfetta', 'perfette')}, serie max ${this.comboMax}`,
-      titoloFine: mie >= c.ragazzeVittoria ? 'CHE BALLERINO!' : 'VINCE IL MANNA!',
+      riepilogo: `${quanti(mie, 'ragazza', 'ragazze')} con te (+${c.bonusRagazze[mie]}), ${quanti(this.perfetti, 'perfetta', 'perfette')}, serie max ${this.comboMax}`,
+      titoli: ['CHE BALLERINO!', 'VINCE IL MANNA!'],
     };
   }
 

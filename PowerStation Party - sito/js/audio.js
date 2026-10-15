@@ -106,7 +106,26 @@ const SFX = {
   // mani di Guerra
   schiaffo: (t) => { rumore(t, 0.09, 0.32, 3200, 'highpass'); rumore(t, 0.12, 0.2, 900); nota(1400, t, 0.06, 'square', 0.05, 500); },
   tonfo: (t) => { rumore(t, 0.12, 0.22, 300, 'lowpass'); nota(140, t, 0.14, 'triangle', 0.12, 60); },
+  // "La pizza dal Boni": il forno a legna che crepita, lo "sciaff" della pala, il Boni che sbraita
+  // (un borbottio 8-bit), il "glu glu" della caraffa, il portone della taverna che sbatte
+  crepitio: (t) => { for (let i = 0; i < 4; i++) rumore(t + i * (0.04 + Math.random() * 0.07), 0.025, 0.05 + Math.random() * 0.05, 2500 + Math.random() * 2500); },
+  pala: (t) => { rumore(t, 0.07, 0.26, 2600, 'highpass'); rumore(t + 0.02, 0.14, 0.16, 700); nota(260, t, 0.1, 'triangle', 0.1, 120); },
+  borbottio: (t) => { for (let i = 0; i < 7; i++) { const f = 150 + Math.random() * 120; nota(f, t + i * 0.075, 0.07, 'square', 0.07, f * 0.8); } },
+  caraffa: (t) => { for (const [dt, f] of [[0, 420], [0.18, 360], [0.36, 300]]) { nota(f, t + dt, 0.12, 'sine', 0.16, f * 0.55); rumore(t + dt, 0.05, 0.04, 600, 'lowpass'); } },
+  portone: (t) => { rumore(t, 0.2, 0.3, 260, 'lowpass'); nota(95, t, 0.22, 'triangle', 0.18, 50); rumore(t + 0.03, 0.06, 0.08, 3000, 'highpass'); },
   pof: (t) => { rumore(t, 0.18, 0.12, 1600); nota(700, t, 0.15, 'triangle', 0.06, 1400); },
+  // "La ballata del Pallaio": il TOC di legno della bacchetta (e le due note che salgono prima),
+  // l'"OOOH" del pubblico, le monete nel cappello, le risate, la tela che vola, la finta della
+  // bacchetta, la vignetta che si sposta
+  toc: (t) => { nota(1250, t, 0.06, 'square', 0.12, 900); nota(620, t, 0.09, 'triangle', 0.2, 420); rumore(t, 0.035, 0.22, 2600, 'bandpass'); },
+  preToc1: (t) => nota(880, t, 0.07, 'triangle', 0.08),
+  preToc2: (t) => nota(1175, t, 0.07, 'triangle', 0.09),
+  oooh: (t) => { for (const [f, v] of [[196, 0.07], [247, 0.05], [294, 0.04]]) nota(f, t, 0.75, 'triangle', v, f * 1.12); rumore(t, 0.6, 0.025, 900, 'lowpass'); },
+  monete: (t) => { for (let i = 0; i < 6; i++) nota(2600 + ((i * 7) % 5) * 260, t + i * 0.055 + Math.random() * 0.02, 0.06, 'triangle', 0.055); },
+  risate: (t) => { for (let i = 0; i < 6; i++) { const f = 330 + Math.random() * 90 - i * 12; nota(f, t + i * 0.12, 0.08, 'square', 0.06, f * 0.82); rumore(t + i * 0.12, 0.06, 0.04, 1800); } },
+  telo: (t) => { for (let i = 0; i < 5; i++) rumore(t + i * 0.07, 0.09, 0.08 - i * 0.01, 1200 + i * 300); nota(300, t, 0.4, 'triangle', 0.04, 600); },
+  fiuu: (t) => { rumore(t, 0.16, 0.08, 3200, 'highpass'); nota(500, t, 0.14, 'square', 0.04, 1500); },
+  foglio: (t) => { rumore(t, 0.05, 0.08, 4200, 'highpass'); rumore(t + 0.04, 0.05, 0.05, 2600, 'highpass'); },
   furto: (t) => { nota(500, t, 0.18, 'square', 0.05, 250); nota(380, t + 0.12, 0.2, 'square', 0.05, 180); },
   // fumogeni a casa di Sego
   lancioGranata: (t) => { rumore(t, 0.3, 0.08, 900); nota(260, t, 0.3, 'triangle', 0.06, 520); },
@@ -235,6 +254,29 @@ const TRACCE = {
            76, 0, 74, 71, 0, 74, 71, 0, 69, 0, 71, 69, 67, 0, 64, 0, 67, 0, 69, 71, 0, 74, 76, 0, 74, 71, 69, 67, 64, 0, 64, 0],
     basso: [40, 40, 43, 45, 40, 40, 45, 47],
   },
+  // l'osteria del Boni ("La pizza dal Boni"): una tarantella in La minore. Il mandolino ribatte la
+  // melodia un'ottava sopra (il tremolo), la fisarmonica fa "um-pa": basso sul battere, accordo in levare
+  osteria: {
+    bpm: 150,
+    osteria: true,
+    lead: [69, 0, 72, 0, 76, 0, 72, 0, 74, 0, 71, 0, 68, 0, 0, 0, 69, 0, 72, 0, 76, 0, 81, 0, 79, 0, 77, 0, 76, 0, 0, 0,
+           77, 0, 76, 0, 74, 0, 72, 0, 74, 0, 72, 0, 71, 0, 68, 0, 69, 0, 71, 0, 72, 0, 74, 0, 76, 0, 71, 0, 69, 0, 0, 0],
+    basso: [45, 40, 45, 40, 41, 40, 45, 45],
+    minori: [45],
+  },
+  // la ballata di Lori ("La ballata del Pallaio"), in Sol maggiore: la chitarra strimpellata in
+  // levare, il basso sull'1 e sul 3, il tamburello sul 2 e sul 4, la fisarmonica che risponde a fine
+  // frase (lead). La melodia la canta Lori (voce: la segue BallataScene con Audio.voce)
+  ballata: {
+    bpm: 120,
+    ballata: true,
+    lead: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 79, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 74, 76,
+           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 81, 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 74, 0],
+    voce: [67, 0, 67, 71, 74, 0, 74, 0, 76, 0, 74, 0, 71, 0, 0, 0, 72, 0, 72, 71, 69, 0, 69, 0, 71, 0, 67, 0, 69, 0, 0, 0,
+           67, 0, 67, 71, 74, 0, 79, 0, 78, 0, 76, 0, 74, 0, 0, 0, 72, 0, 76, 0, 74, 0, 71, 0, 69, 0, 71, 0, 67, 0, 0, 0],
+    basso: [43, 40, 48, 50, 43, 50, 48, 43],
+    minori: [40],
+  },
   // la base di "Provini a X-Factor": una canzone vera (rock, pop o rap: la sceglie il microgioco
   // col seme del round, vedi Audio.brano e suonaProvino). Niente melodia fissa: quella, piano, la
   // dà il microgioco (Audio.guida), e sopra ci cantano le voci (Audio.voce). Il bpm è del brano.
@@ -256,6 +298,20 @@ function suonaPasso(T, i, t, conta = 0) {
     // la melodia giusta, piano, come guida: chi è intonato la copre, chi stona la sente sotto
     const g = guida?.(conta);
     if (g) nota(midi(g.midi), t, Math.max(0.1, g.passi * d * 0.92), 'triangle', 0.034);
+    return;
+  }
+  if (T.osteria) {
+    if (n) nota(midi(n + 12), t + d / 2, d * 0.4, 'triangle', 0.028);                          // il tremolo del mandolino
+    if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.4, 'triangle', 0.15);                      // um...
+    if (i % 4 === 2) for (const k of [12, T.minori.includes(fond) ? 15 : 16, 19]) nota(midi(fond + k), t, d * 1.1, 'sawtooth', 0.016);   // ...pa
+    if (i % 8 === 7) rumore(t, 0.04, 0.03, 5000, 'highpass');                                  // il tamburello
+    return;
+  }
+  if (T.ballata) {
+    if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.6, 'triangle', 0.15);                                     // il basso
+    if (i % 4 === 2) [12, T.minori.includes(fond) ? 15 : 16, 19, 24].forEach((k, j) => nota(midi(fond + k), t + j * 0.018, d * 1.2, 'triangle', 0.03));   // la chitarra
+    if (i % 4 === 3) [12, T.minori.includes(fond) ? 15 : 16, 19].forEach((k, j) => nota(midi(fond + k), t + j * 0.014, d * 0.6, 'triangle', 0.018));
+    if (i % 8 === 2 || i % 8 === 6) rumore(t, 0.05, 0.035, 6000, 'highpass');                            // il tamburello
     return;
   }
   if (T.disco) {
@@ -447,6 +503,9 @@ export const Audio = {
     const dur = 60 / (TRACCE[traccia].bpm * tempo) / 2;
     return contaPassi - (prossimo - ac.currentTime) / dur;
   },
+
+  // la nota della melodia cantata (la "voce" della traccia) in quel passo, o 0: la segue chi canta
+  notaCanto(passo) { const v = TRACCE[traccia]?.voce; return v ? v[((passo % v.length) + v.length) % v.length] : 0; },
 
   // quanto dura adesso un battito della musica (secondi): serve a chi vuole andare a tempo
   get battito() { return 60 / ((TRACCE[traccia]?.bpm ?? 128) * tempo); },

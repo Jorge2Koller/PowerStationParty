@@ -60,6 +60,9 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.vite = c.vite;
     this.distrattoDetto = false;   // annuncio del secondo atto fatto
     this.salvataggi = 0;      // cani tolti dalla zona rossa all'ultimo istante
+    this.scattiPuliti = 0;    // scatti della macchina finiti senza spaventare nessun cane...
+    this.serieScatti = 0;     // ...quanti di fila (uno spavento la azzera)...
+    this.puntiScatti = 0;     // ...e quanto valgono: il k-esimo di fila vale k volte puntiScatto
     this.uscita = false;      // la macchina ha passato il cancello
     this.muni = { ...c.munizioni };
     this.armato = null;       // col dito: l'icona toccata, in attesa del punto dove lanciare
@@ -104,7 +107,7 @@ export class RetromarciaScene extends MicrogiocoBase {
         pericolo: false, tSalvo: 0, oggetto: null, salto: null, inMoto: false, rosso: null,
         ombra: this.add.ellipse(x, y, 20, 5, 0x000000, 0).setDepth(9),
         img: im(this, x, y, `cane${i}_a`, SCALA_CANE).setOrigin(CANE.ox, CANE.oy),
-        etichetta: txt(this, x, y - 25, '', { size: 5, depth: 930 }) };
+        etichetta: txt(this, x, y - 25, '', { size: 7, depth: 930 }) };
     });
 
     // --- in alto: metri e vite; in basso: biscotti e palline ---
@@ -345,7 +348,7 @@ export class RetromarciaScene extends MicrogiocoBase {
       if (Au.tScatto <= 0) Au.stato = 'frena';
     } else if (Au.stato === 'frena') {
       Au.v = Math.max(0, Au.v - c.frenata * dt);
-      if (Au.v <= 0) this.fermaAuto((lerp(c.pausaInizio, c.pausaFine, p) * this.tra(0.75, 1.25)) / (Au.ritmo ?? 1));
+      if (Au.v <= 0) { this.scattoFinito(); this.fermaAuto((lerp(c.pausaInizio, c.pausaFine, p) * this.tra(0.75, 1.25)) / (Au.ritmo ?? 1)); }
     } else if (Au.stato === 'inchiodata') {
       if (Au.t <= 0) this.fermaAuto(0.25);
     } else if (Au.stato === 'incidente' && Au.t <= 0) {
@@ -360,7 +363,7 @@ export class RetromarciaScene extends MicrogiocoBase {
         const f = im(this, this.px(A.scarico.x) + 4, this.py(A.scarico.y), 'fumo', 0.14).setAlpha(0.55).setDepth(99 + K.y);
         this.tweens.add({ targets: f, x: f.x + 9, y: f.y - 5, alpha: 0, scale: f.scale * 2.4, duration: 520, onComplete: () => f.destroy() });
       }
-      if (Au.x >= V.cancello) { Au.x = V.cancello; this.uscita = true; this.piazzaAuto(); return this.termina(); }
+      if (Au.x >= V.cancello) { Au.x = V.cancello; this.uscita = true; this.scattoFinito(); this.piazzaAuto(); return this.termina(); }
     }
     // i cani davanti alla coda: se la macchina va, è uno spavento; se è ferma fa solo da muro
     for (const k of this.cani) {
@@ -390,6 +393,7 @@ export class RetromarciaScene extends MicrogiocoBase {
     const fatto = (Au.x - V.partenza) / (V.cancello - V.partenza), atteso = Math.min(1, (p / c.arrivo) ** c.curvaArrivo);
     const ritmo = limita(1 + (atteso - fatto - 0.05) * c.recupero, 1, c.recuperoMax);
     Object.assign(Au, {
+      pulito: true,
       stato: 'avviso', t: lerp(c.avvisoInizio, c.avvisoFine, p), tBip: 0, distratto, ritmo,
       vMeta: lerp(c.velInizio, c.velFine, p) * this.tra(0.8, 1.2) * (distratto ? c.distrattoVel : 1) * ritmo,
       tScatto: this.tra(c.scatto[0], c.scatto[1]),
@@ -399,6 +403,18 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.corna.setVisible(distratto === 'radio');
     this.schermo.setVisible(distratto === 'telefono');
     if (distratto) this.parlaEmilio(caso(c.frasiDistratto[distratto]), 1200);
+  }
+
+  // uno scatto finito senza spaventare nessuno: VIA LIBERA (è il punteggio di chi tiene la corsia sgombra)
+  scattoFinito() {
+    const Au = this.auto, c = this.cfg;
+    if (!Au.pulito) return;
+    Au.pulito = false;
+    this.scattiPuliti++;
+    this.serieScatti++;
+    const vale = c.puntiScatto * this.serieScatti;
+    this.puntiScatti += vale;
+    scritta(this, limita(Au.x + 20, 60, 430), K.y - 40, `VIA LIBERA +${vale}`, { size: 7, color: '#7dff9a', durata: 450, depth: 950 });
   }
 
   fermaAuto(t) {
@@ -426,7 +442,8 @@ export class RetromarciaScene extends MicrogiocoBase {
   incidente(k) {
     const c = this.cfg, Au = this.auto;
     this.vite--;
-    Object.assign(Au, { stato: 'incidente', v: 0, t: c.durataIncidente, distratto: null });
+    this.serieScatti = 0;
+    Object.assign(Au, { stato: 'incidente', v: 0, t: c.durataIncidente, distratto: null, pulito: false });
     this.luce.setVisible(false); this.corna.setVisible(false); this.schermo.setVisible(false);
     Audio.sfx('frenata'); Audio.sfx('cai');
     scuoti(this, 240, 0.012);
@@ -457,7 +474,9 @@ export class RetromarciaScene extends MicrogiocoBase {
   // (finché la macchina va o sta per partire, la segue camminando di fianco alla corsia: sotto
   //  non ci si butta; appena è ferma, due passi e si sdraia. Se è già lì, ci resta.)
   dietroLaRuota(k) {
-    const Au = this.auto, x = Math.min(Au.x + this.cfg.pigroDietro, CAMPO.x1 - 4);
+    // (se i pigri sono più d'uno, ognuno si sdraia un po' più in là del precedente)
+    const quale = this.cani.filter((q) => q.tipo === 'pigro').indexOf(k);
+    const Au = this.auto, x = Math.min(Au.x + this.cfg.pigroDietro + Math.max(0, quale) * 16, CAMPO.x1 - 4);
     return Au.stato === 'ferma' || this.inZona(k) ? { x, y: K.y - 8 } : { x: Math.min(x + (Au.v > 0 ? 22 : 6), CAMPO.x1 - 4), y: K.y + 8 };
   }
 
@@ -556,6 +575,19 @@ export class RetromarciaScene extends MicrogiocoBase {
       }
       k.pericolo = dentro && this.attiva && k.x - Au.x < c.vicino;
       this.disegnaCane(k, dentro);
+    }
+    this.etichette();
+  }
+
+  // I nomi dei cani non si sovrappongono: se due sono vicini, resta quello che conta di più (prima
+  // chi è nella zona rossa con la macchina in moto, poi chi è più vicino alla coda della macchina)
+  etichette() {
+    const Au = this.auto, fatti = [];
+    const ordine = [...this.cani].sort((a, b) => (b.rosso ? 1 : 0) - (a.rosso ? 1 : 0) || Math.abs(a.x - Au.x) - Math.abs(b.x - Au.x));
+    for (const k of ordine) {
+      const e = k.etichetta, libero = !fatti.some((f) => Math.abs(f.x - e.x) < (f.width + e.width) / 2 + 2 && Math.abs(f.y - e.y) < 9);
+      e.setVisible(libero && k.img.visible);
+      if (libero) fatti.push(e);
     }
   }
 
@@ -802,14 +834,15 @@ export class RetromarciaScene extends MicrogiocoBase {
   //  FINE
   // ------------------------------------------------------------
   risultato() {
-    const c = this.cfg, vinto = this.uscita && this.vite > 0;
+    const c = this.cfg, fuori = this.uscita && this.vite > 0;
     const metri = Math.floor((this.auto.x - V.partenza) / c.unitaMetro);
-    // vite e uscita contano solo se Emilio esce dal cancello (chi sta fermo non prende niente)
-    const punteggio = metri * c.puntiMetro + this.salvataggi * c.bonusSalvataggio + (vinto ? c.bonusUscita + this.vite * c.bonusVita : 0);
+    // gli scatti puliti e i cani salvati sempre; uscita e vite solo se Emilio esce dal cancello
+    // (con le vite che valgono sempre di più: chi esce coi cani spaventati non prende la medaglia)
+    const punteggio = this.puntiScatti + this.salvataggi * c.bonusSalvataggio + (fuori ? c.bonusUscita + c.bonusVite[this.vite] : 0);
     return {
       punteggio,
-      vittoria: vinto,
-      riepilogo: `${quanti(metri, 'metro', 'metri')}, ${quanti(this.salvataggi, 'cane salvato', 'cani salvati')} all'ultimo, ${quanti(this.vite, 'vita', 'vite')}` + (vinto ? ` - fuori dal cancello!` : ''),
+      vittoria: fuori && this.vite >= c.viteVittoria,
+      riepilogo: `${quanti(this.scattiPuliti, 'scatto pulito', 'scatti puliti')}, ${quanti(this.salvataggi, 'cane salvato', 'cani salvati')}, ${quanti(this.vite, 'vita', 'vite')}` + (fuori ? ' - fuori dal cancello!' : ` (${quanti(metri, 'metro', 'metri')})`),
     };
   }
 
@@ -842,7 +875,7 @@ export class RetromarciaScene extends MicrogiocoBase {
       });
       this.time.delayedCall(700, () => {
         Audio.sfx('vittoria');
-        txt(this, 240, 40, "FUORI DAL CANCELLO! ROCK'N'ROLL!", { size: 14, color: '#7dff9a', depth: 710 });
+        txt(this, 240, 40, this.uscita ? "FUORI DAL CANCELLO! ROCK'N'ROLL!" : "BELLA GUIDA! ROCK'N'ROLL!", { size: 14, color: '#7dff9a', depth: 710 });
       });
     } else {
       // la macchina di traverso nel vialetto
@@ -861,7 +894,7 @@ export class RetromarciaScene extends MicrogiocoBase {
       grande(`${id}_triste`, 420, 268, 0.8);
       this.time.delayedCall(700, () => {
         Audio.sfx('sconfitta');
-        txt(this, 240, 40, this.vite > 0 ? 'TEMPO SCADUTO: EMILIO FA TARDI!' : 'TROPPI SPAVENTI!', { size: 14, color: '#ff6b5a', depth: 710 });
+        txt(this, 240, 40, this.vite <= 0 ? 'TROPPI SPAVENTI!' : this.uscita ? 'FUORI, MA CHE FATICA!' : 'TEMPO SCADUTO: EMILIO FA TARDI!', { size: 14, color: '#ff6b5a', depth: 710 });
         fumetto(this, V.porta.x + 52, V.porta.y - 44, 'Papà...', 2400, 712);
       });
     }

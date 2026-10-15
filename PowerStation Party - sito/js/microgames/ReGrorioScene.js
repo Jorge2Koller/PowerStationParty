@@ -10,7 +10,7 @@ import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
-import { txt, im, scritta, stelle, fumo, scuoti, caso, colpetto, eTouch, vibra, multiTouch } from '../fx.js';
+import { txt, im, scritta, stelle, fumo, scuoti, caso, colpetto, eTouch, vibra, multiTouch, puntiHud, numero, quanti } from '../fx.js';
 
 const CORSIE = [180, 240, 300];
 const PY = 252; // piedi del giocatore
@@ -199,7 +199,7 @@ export class ReGrorioScene extends MicrogiocoBase {
       return !via;
     });
 
-    this.testoPunti.setText('PUNTI: ' + this.punti);
+    this.testoPunti.setText(puntiHud(this.punti));
   }
 
   tesoro(tipo, x, y, vel) {
@@ -300,10 +300,10 @@ export class ReGrorioScene extends MicrogiocoBase {
     const sec = Math.floor(Math.min(this.trascorso, this.durata));
     const tesori = this.monete * this.cfg.puntiMoneta + this.corone * this.cfg.puntiCorona;
     return {
-      punteggio: sec + this.bonus,
+      punteggio: sec + this.bonus + (this.ko ? 0 : this.cfg.bonusSalvo),
       vittoria: !this.ko,
-      riepilogo: `${sec}s vivo + ${tesori} di monete e corone (${this.corone} corone) + ${this.bonus - tesori} di schivate`,
-      titoloFine: this.ko ? 'K.O.!' : 'SALVO!',
+      riepilogo: `${numero(sec)} s vivo` + (this.ko ? '' : ` (salvo +${this.cfg.bonusSalvo})`) + `, monete e corone +${numero(tesori)} (${quanti(this.corone, 'corona', 'corone')}), schivate +${numero(this.bonus - tesori)}`,
+      titoli: this.ko ? ['K.O., MA CHE BOTTINO!', 'K.O.!'] : ['SALVO!', 'SALVO, MA A MANI VUOTE!'],
     };
   }
 }

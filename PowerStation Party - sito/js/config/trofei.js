@@ -10,7 +10,7 @@ export default {
     { id: 'primoArgento', nome: 'Argenteria', descrizione: "Prendi una medaglia d'argento" },
     { id: 'primoOro', nome: 'Oro colato', descrizione: "Prendi una medaglia d'oro" },
     { id: 'filotto', nome: 'Filotto', descrizione: "Tre medaglie d'oro di fila" },
-    { id: 'tuttiGiocati', nome: 'Il giro completo', descrizione: 'Gioca tutti i 17 microgiochi' },
+    { id: 'tuttiGiocati', nome: 'Il giro completo', descrizione: 'Gioca tutti i microgiochi' },
     { id: 'tuttiBronzo', nome: 'Tuttofare', descrizione: 'Almeno il bronzo in tutti i microgiochi' },
     { id: 'tuttiArgento', nome: 'Il collezionista', descrizione: "Almeno l'argento in tutti i microgiochi" },
     { id: 'tuttiOro', nome: 'Leggenda del PowerStation', descrizione: "L'oro in tutti i microgiochi" },

@@ -22,12 +22,14 @@ export default {
   obiettivo: 'Arriva in cima prima del Passaseo!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // (tarate coi giocatori automatici: quello bravo arriva in cima in 30 s e fa circa 310, quello a
-  // caso 25-30, chi sta fermo 0)
-  medaglie: { bronzo: 110, argento: 220, oro: 290 },
+  // Revisione 4, la stessa scala per tutti (erano 110 / 220 / 290, e si prendeva la medaglia anche
+  // arrivando secondi): ora conta soprattutto battere il Passaseo, e di quanto. Vincere di un soffio
+  // è il bronzo, di un secondo l'argento, di due l'oro (il giocatore automatico che pedala perfetto
+  // arriva 2,2 s prima di lui); chi arriva secondo resta sotto i 100.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   // punti: i metri fatti, le pedalate perfette (allo sprint doppie) e, se batti il Passaseo, un
-  // premio più tanto per ogni secondo di vantaggio
-  punti: { metro: 0.2, perfetta: 2, vittoria: 50, secondo: 10 },
+  // premio più tanto per ogni secondo di vantaggio (erano 0,2, 2, 50 e 10)
+  punti: { metro: 0.1, perfetta: 0.5, vittoria: 20, secondo: 110 },
 
   // --- la salita ---
   // la lunghezza si adatta: il Passaseo, col suo passo, arriva in cima tra questi secondi (dal seme)

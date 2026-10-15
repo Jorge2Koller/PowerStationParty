@@ -1,5 +1,6 @@
 // Il Bancone: Beppe serve, le Pinte si spendono (cosa c'è in vendita: js/config/bancone.js;
-// i conti: js/progressi.js). Quattro banchi: COSTUMI, TEMI, FRASI, MODALITÀ.
+// i conti: js/progressi.js). Tre banchi: COSTUMI, TEMI, FRASI (solo cose cosmetiche: le modalità
+// sono tutte gratis).
 //  - tastiera: SINISTRA/DESTRA il banco, SU/GIÙ la voce, INVIO compra (o usa), ESC indietro;
 //    su un costume già comprato INVIO apre la fila dei personaggi: SINISTRA/DESTRA chi, INVIO
 //    glielo metti (o glielo togli), ESC chiude la fila
@@ -11,7 +12,7 @@ import { SP, ritratto, vestiPersonaggio } from '../sprites.js';
 import { txt, im, inquadra, raggi, pannello, ombra, stelle, scritta, fumetto, caso, eTouch, perDito, pulsante, annunciaTrofei } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
 
-const BANCHI = [['costumi', 'COSTUMI'], ['temi', 'TEMI'], ['frasi', 'FRASI'], ['modalita', 'MODALITÀ']];
+const BANCHI = [['costumi', 'COSTUMI'], ['temi', 'TEMI'], ['frasi', 'FRASI']];
 const X_LISTA = 290, Y_LISTA = 66, PASSO = 19;
 const FRASI_BEPPE = { compra: ['Salute!', 'Ottima scelta.', 'Offre la casa? No.', 'Alla tua!'], poche: ['Prima le Pinte.', 'Qui non si fa credito.', 'Torna più ricco.'] };
 
@@ -32,13 +33,13 @@ export class BanconeScene extends Phaser.Scene {
     // Beppe dietro al bancone
     ombra(this, 54, 262, 60);
     this.beppe = im(this, 54, 262, 'beppe_normale').setOrigin(0.5, 1).setScale(2.7 * SP);
-    // le Pinte
-    pannello(this, 438, 18, 70, 20, { alfa: 0.7, raggio: 9 });
-    im(this, 418, 18, 'iconaPinta', 0.62);
-    this.testoPinte = txt(this, 446, 18, '', { size: 10, color: '#ffe14a' });
+    // le Pinte (a sinistra del titolo: in alto a destra, sul telefono, ci sono audio e schermo intero)
+    pannello(this, 120, 18, 70, 20, { alfa: 0.7, raggio: 9 });
+    im(this, 100, 18, 'iconaPinta', 0.62);
+    this.testoPinte = txt(this, 128, 18, '', { size: 10, color: '#ffe14a' });
     // i banchi (lo sfondo giallo di quello scelto va disegnato prima delle scritte)
     this.gSchede = this.add.graphics();
-    this.schede = BANCHI.map(([, nome], i) => txt(this, 150 + i * 88, 44, nome, { size: 8 })
+    this.schede = BANCHI.map(([, nome], i) => txt(this, X_LISTA + (i - (BANCHI.length - 1) / 2) * 96, 44, nome, { size: 8 })
       .setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.chiudiFila(); this.vaiBanco(i); }));
     pannello(this, X_LISTA, 140, 352, 156, { alfa: 0.72, raggio: 10 });
     this.aiuto = txt(this, X_LISTA, 228, '', { size: 6.5, color: '#fff3d6', wrap: 350 });

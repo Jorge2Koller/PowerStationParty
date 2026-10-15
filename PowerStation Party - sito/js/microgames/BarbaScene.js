@@ -486,6 +486,7 @@ export class BarbaScene extends MicrogiocoBase {
     this.testoPct.setColor(pct >= c.soglia ? '#7dff9a' : '#ffffff');
     this.testoTagli.setText(this.tagli ? `CEROTTI: ${this.tagli}  (-${this.tagli * c.malusTaglio} punti)` : '');
     if (pct >= c.sogliaFine) {
+      this.finita = true;
       this.bonusTempo = Math.ceil(this.tempoRimasto) * c.bonusPerSecondo;
       this.termina();
     }
@@ -570,10 +571,11 @@ export class BarbaScene extends MicrogiocoBase {
 
   risultato() {
     const c = this.cfg, pct = Math.floor(this.percentuale), malus = this.tagli * c.malusTaglio;
+    const fine = this.finita ? c.bonusFinita + this.bonusTempo : 0;
     return {
-      punteggio: Math.max(0, pct + this.bonusTempo - malus),
+      punteggio: Math.max(0, Math.round(pct * c.puntiPercento) + fine - malus),
       vittoria: pct >= c.soglia,
-      riepilogo: `Rasata ${pct}%  +${this.bonusTempo} tempo  -${malus} cerotti`,
+      riepilogo: `Rasata ${pct}%` + (this.finita ? `, finita! +${fine}` : '') + (malus ? `, cerotti -${malus}` : ''),
     };
   }
 

@@ -5,14 +5,15 @@
 //  mescolati con il seme del round: nella sfida tutti e due trovano le stesse carte.
 //  Si decide in fretta: TEMPO DI DECISIONE secondi per puntare e per ogni scelta (se scade, il
 //  banco punta il minimo per te, o si sta). E conta saper giocare: ogni scelta uguale a quella
-//  della strategia di base (la tabella dei giocatori bravi) vale un bonus: MOSSA DA PRO.
+//  della strategia di base (la tabella dei giocatori bravi) vale punti, MOSSA DA PRO; una diversa
+//  ne toglie. Il punteggio: le fiches vinte (sopra le 100 di partenza) più i punti delle mosse.
 //  Quando vince il banco, l'Ingiocabile allunga il braccio piegato a 90 gradi e
 //  spazzola via le fiches con un fischio, poi commenta: «Come le leggo!»
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, perDito } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, perDito, puntiHud } from '../fx.js';
 
 const Y_TAVOLO = 100;
 const Y_BANCO = 126, Y_MIA = 206, PASSO_CARTA = 20;
@@ -42,7 +43,9 @@ export class BlackjackScene extends MicrogiocoBase {
     this.mani = 0;
     this.vinte = 0;
     this.blackjack = 0;
-    this.mosseGiuste = 0;
+    this.mosseGiuste = 0; this.mosseSbagliate = 0;
+    this.puntiMosse = 0;       // i punti delle mosse (da pro: più; sbagliate: meno)
+    this.seriePro = 0; this.serieProMax = 0;   // mosse da pro di fila
     this.tDecidi = 0;
     this.barraTempo = this.add.graphics().setDepth(700);
     this.stato = 'attesa';
@@ -68,6 +71,7 @@ export class BlackjackScene extends MicrogiocoBase {
     this.testoMio = txt(this, 240, 230, '', { size: 8, depth: 600, color: '#ffe14a' });   // (sotto: la barra del tempo)
     this.testoPuntata = txt(this, CERCHIO.x, CERCHIO.y + 21, '', { size: 8, depth: 600 });
     this.testoFiches = txt(this, BANCA.x, BANCA.y + 22, '', { size: 8, depth: 600, color: '#ffe14a' });
+    this.testoPunti = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 600 });
     this.banca = [];
     this.aggiornaBanca();
 
@@ -190,6 +194,13 @@ export class BlackjackScene extends MicrogiocoBase {
     this.testoPuntata.setText(this.puntata ? 'PUNTATA ' + this.puntata : '');
   }
 
+  // il punteggio: le fiches vinte (a mano finita o no: la puntata in gioco conta come tua) più le mosse
+  get punteggio() {
+    const c = this.cfg;
+    return Math.max(0, Math.round(Math.max(0, this.fiches + this.puntata - c.fiches) * c.puntiFiche + this.puntiMosse));
+  }
+  aggiornaPunti() { this.testoPunti.setText(puntiHud(this.punteggio)); }
+
   // --- fiches ---
   aggiornaBanca() {
     this.banca.forEach((b) => b.destroy());
@@ -200,6 +211,7 @@ export class BlackjackScene extends MicrogiocoBase {
       this.banca.push(im(this, BANCA.x - 16 + col * 16, BANCA.y + 4 - h * 2.2, ['fiche_10', 'fiche_25', 'fiche_50'][col], 1).setDepth(30 + i));
     }
     this.testoFiches.setText('FICHES ' + this.fiches);
+    this.aggiornaPunti();
   }
 
   fiche(v, da, x, y) {
@@ -278,17 +290,26 @@ export class BlackjackScene extends MicrogiocoBase {
     return m;
   }
 
-  // una scelta del giocatore: se è quella della strategia di base, bonus
+  // una scelta del giocatore: se è quella della strategia di base punti in più, se no in meno
   scegli(mossa) {
     if (!this.inCorso || this.stato !== 'gioca') return;
     if (mossa === 'raddoppia' && (this.mia.length !== 2 || this.fiches < this.puntata)) return Audio.sfx('vuoto');
+    const c = this.cfg;
     if (mossa === this.consiglio()) {
-      const c = this.cfg;
-      this.fiches += this.atto.bonus;
+      // le mosse da pro di fila valgono sempre di più
+      const vale = Math.min(c.maxPro, c.puntiPro + c.crescitaPro * this.seriePro);
+      this.seriePro++;
+      this.serieProMax = Math.max(this.serieProMax, this.seriePro);
+      this.puntiMosse += vale;
       this.mosseGiuste++;
-      this.aggiornaBanca();
-      scritta(this, BANCA.x, BANCA.y - 26, `MOSSA DA PRO +${this.atto.bonus}`, { size: 7, color: '#7dff9a', durata: 450 }).setAngle(0);
+      scritta(this, BANCA.x, BANCA.y - 26, this.seriePro > 1 ? `DA PRO x${this.seriePro} +${vale}` : `MOSSA DA PRO +${vale}`, { size: 7, color: '#7dff9a', durata: 450 }).setAngle(0);
+    } else {
+      this.puntiMosse -= c.malusSbagliata;
+      this.mosseSbagliate++;
+      this.seriePro = 0;
+      scritta(this, BANCA.x, BANCA.y - 26, `DA PRINCIPIANTE -${c.malusSbagliata}`, { size: 7, color: '#ff9a8a', durata: 450 }).setAngle(0);
     }
+    this.aggiornaPunti();
     this[mossa]();
   }
 
@@ -444,7 +465,7 @@ export class BlackjackScene extends MicrogiocoBase {
 
   // il tempo per decidere: una barra che si accorcia sopra i pulsanti; se finisce, il banco
   // punta il minimo per te (o si sta)
-  // l'atto in corso: tempo per decidere e bonus della mossa da pro
+  // l'atto in corso: tempo per decidere e punti delle mosse
   get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
 
   aggiorna(dt) {
@@ -471,11 +492,12 @@ export class BlackjackScene extends MicrogiocoBase {
 
   risultato() {
     // a tempo scaduto, una mano a metà si annulla: la puntata torna indietro
-    const fiches = this.fiches + this.puntata;
+    const c = this.cfg, fiches = this.fiches + this.puntata, punteggio = this.punteggio;
     return {
-      punteggio: fiches,
-      vittoria: fiches > this.cfg.fiches,
-      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.mosseGiuste ? `, ${quanti(this.mosseGiuste, 'mossa da pro', 'mosse da pro')}` : '') + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
+      punteggio,
+      // (la condizione è il bronzo stesso; in Lampo, più corto, in proporzione)
+      vittoria: punteggio >= c.medaglie.bronzo * Math.min(1, this.durata / c.durata),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}, ${quanti(this.mosseGiuste, 'mossa da pro', 'mosse da pro')}` + (this.serieProMax > 1 ? ` (${this.serieProMax} di fila)` : '') + (this.mosseSbagliate ? `, ${this.mosseSbagliate} no` : '') + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }

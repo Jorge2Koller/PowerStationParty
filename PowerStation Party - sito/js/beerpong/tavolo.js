@@ -19,7 +19,7 @@
 // ============================================================
 import { Audio } from '../audio.js';
 import { Salvataggio } from '../salvataggio.js';
-import { RES } from '../grafica/base.js';
+import { RES, casuale } from '../grafica/base.js';
 import { PERSONAGGI } from '../grafica/personaggi.js';
 import { SP, ritratto, preparaBevitore, FACCE_SBRONZA } from '../sprites.js';
 import { TAVOLO_IMG, RETE_IMG, BICCHIERE_IMG, PALLINA_IMG, MANO_IMG } from '../grafica/pallaio.js';
@@ -28,7 +28,7 @@ import { CAM, TAV, BIC, MANO, PALLA, proietta, specchia, sulTavolo, tiroDa, punt
 import { GAG } from './gag.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const tra = ([a, b]) => a + Math.random() * (b - a);
+const tra = ([a, b], r = Math.random) => a + r() * (b - a);
 // profondità dei disegni
 const P = { gente: 5, avv: 6, lampada: 8, tavolo: 10, lontani: 13, rete: 20, vicini: 22, ombra: 40, palla: 41, mano: 50, mira: 60, luce: 800, fx: 900, hud: 990 };
 // dove sta il pubblico (piedi) e quanto è grande; gli avversari stanno dietro al bordo in fondo
@@ -44,6 +44,9 @@ export class Tavolo {
     this.cfg = o.cfg;
     this.peso = o.peso ?? 1;                 // quanto pesa la sbronza (1 = normale)
     this.rnd = o.rnd ?? Math.random;         // il caso degli avversari (col seme del round)
+    // il caso della sbronza (HIC!, vista doppia, sobbalzi) e delle gag: anche lui dal seme del round,
+    // ma un generatore a parte, così non dipende da quanto tirano gli avversari
+    this.rndSbronza = o.rnd ? casuale(Math.floor(o.rnd() * 4294967296) >>> 0) : Math.random;
     this.attivo = false;                     // si può mirare e tirare?
     this.palle = [];
     this.inVolo = null;                      // la pallina di chi tira, finché non ha finito
@@ -56,8 +59,8 @@ export class Tavolo {
     this.tGag = 0; this.gagFino = 0;
     this.orologio = 0;
     this.dm = 0; this.dp = 0;                // di quanto la sbronza sposta la mira (lato, forza)
-    this.tHic = tra(this.cfg.sbronza.hic.ogni); this.hicT = 0; this.hicV = { m: 0, p: 0 };
-    this.tDoppio = tra(this.cfg.sbronza.doppio.ogni); this.doppioT = 0;
+    this.tHic = tra(this.cfg.sbronza.hic.ogni, this.rndSbronza); this.hicT = 0; this.hicV = { m: 0, p: 0 };
+    this.tDoppio = tra(this.cfg.sbronza.doppio.ogni, this.rndSbronza); this.doppioT = 0;
     this.tFrase = tra(this.cfg.sbronza.fraseOgni);
     this.tFiamma = 0;
     this.gesto = null; this.carica = null; this.tastiera = false; this.miraTasti = 0;
@@ -443,7 +446,7 @@ export class Tavolo {
   // un sobbalzo della mira (l'HIC! della sbronza, o un disturbo da fuori)
   sobbalzo(forza, testo, x = RITRATTO.x + 30, y = RITRATTO.y - 26) {
     const H = this.cfg.sbronza.hic;
-    this.hicV = { m: (Math.random() < 0.5 ? -1 : 1) * forza, p: (Math.random() < 0.5 ? -1 : 1) * forza * 0.7 };
+    this.hicV = { m: (this.rndSbronza() < 0.5 ? -1 : 1) * forza, p: (this.rndSbronza() < 0.5 ? -1 : 1) * forza * 0.7 };
     this.hicT = H.durata;
     if (testo) scritta(this.scene, x, y, testo, { size: 11, color: '#ffffff', durata: 300, depth: P.hud + 5 });
   }
@@ -469,8 +472,8 @@ export class Tavolo {
   // la pallina sta uscendo dal tavolo: parte una gag? (true = sì, e la pallina se la prende lei)
   gag(b) {
     const G = this.cfg.gag;
-    if (this.o.gag === false || !G.lista.length || b.dramma || this.tGag > 0 || Math.random() >= G.probabilita) return false;
-    let tot = G.lista.reduce((t, g) => t + (g.peso ?? 1), 0), r = Math.random() * tot, scelta = G.lista[0];
+    if (this.o.gag === false || !G.lista.length || b.dramma || this.tGag > 0 || this.rndSbronza() >= G.probabilita) return false;
+    let tot = G.lista.reduce((t, g) => t + (g.peso ?? 1), 0), r = this.rndSbronza() * tot, scelta = G.lista[0];
     for (const g of G.lista) { r -= g.peso ?? 1; if (r <= 0) { scelta = g; break; } }
     const fn = GAG[scelta.id];
     if (!fn) return false;
@@ -524,7 +527,7 @@ export class Tavolo {
     if (L >= 1 && this.attivo) {
       this.tHic -= dt;
       if (this.tHic <= 0) {
-        this.tHic = tra(S.hic.ogni);
+        this.tHic = tra(S.hic.ogni, this.rndSbronza);
         this.sobbalzo(S.hic.forza[L] * k, 'HIC!');
         Audio.sfx('hic');
         s.tweens.add({ targets: this.ritratto, y: { from: RITRATTO.y, to: RITRATTO.y - 5 }, duration: 70, yoyo: true });
@@ -543,7 +546,7 @@ export class Tavolo {
     let doppio = L >= 3;
     if (L === 2) {
       this.tDoppio -= dt;
-      if (this.tDoppio <= 0) { this.tDoppio = tra(S.doppio.ogni); this.doppioT = S.doppio.durata; }
+      if (this.tDoppio <= 0) { this.tDoppio = tra(S.doppio.ogni, this.rndSbronza); this.doppioT = S.doppio.durata; }
       if (this.doppioT > 0) { this.doppioT -= dt; doppio = true; }
     }
     const dist = S.doppio.distanza * Math.min(1.3, k), ax = Math.cos(t * 0.9) * dist, ay = Math.sin(t * 1.3) * dist * 0.35;

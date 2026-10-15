@@ -322,7 +322,7 @@ export class RondaScene extends MicrogiocoBase {
   risultato() {
     const n = this.salvati();
     return {
-      punteggio: Math.max(0, this.punti + n * this.cfg.puntiOmbrellone),
+      punteggio: Math.max(0, this.punti + this.cfg.bonusOmbrelloni[n]),
       vittoria: n >= this.cfg.obiettivoOmbrelloni,
       riepilogo: `${quanti(this.affondate, 'bagnarola affondata', 'bagnarole affondate')}, ${quanti(n, 'ombrellone salvato', 'ombrelloni salvati')} su 5`,
       titoloFine: n ? 'TEMPO!' : 'SPIAGGIA PERSA!',

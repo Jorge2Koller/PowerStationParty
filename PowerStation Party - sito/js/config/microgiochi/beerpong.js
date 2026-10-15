@@ -25,18 +25,18 @@ export default {
   obiettivo: 'Togli più bicchieri di quanti te ne tolgono!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Stima (giocatori simulati): in 35 s si fanno una decina di tiri. Chi tira piano e ne mette la
-  // metà fa un'ottantina di punti (bronzo), chi ne mette due su tre arriva a 110 (argento), chi
-  // finisce il triangolo va verso i 190 (oro). "zero": i punti che restano anche a chi non tira mai
-  // (5 per ogni suo bicchiere ancora in piedi).
-  // (alzate dopo la serata di prova, il gioco era giudicato facile: erano 50, 95, 150. A caso 10-30, fermo 10)
-  medaglie: { bronzo: 70, argento: 110, oro: 170, zero: 15 },
-  // punti
-  puntiCentro: 10,          // un bicchiere centrato
-  puntiRimbalzo: 20,        // ...centrato dopo un rimbalzo sul tavolo
-  bonusFiamme: 5,           // in più per ogni centro quando si è "IN FIAMME!" (dal secondo di fila)
-  bonusTriangolo: 25,       // per ogni triangolo finito
-  puntiInPiedi: 5,          // per ogni bicchiere tuo ancora in piedi alla fine
+  // Revisione 4, la stessa scala per tutti (erano 70 / 110 / 170, con lo "zero" a 15). In 35 s si
+  // fanno una decina di tiri: un bicchiere più di loro è il bronzo, otto tolti e tre persi
+  // l'argento, il triangolo finito l'oro.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  // punti: si parte da puntiPari (la partita pari); ogni bicchiere tolto aggiunge, ogni bicchiere
+  // perso toglie puntiPerso (prima erano 10 a bicchiere e 5 per ogni tuo bicchiere ancora in piedi)
+  puntiPari: 80,
+  puntiCentro: 20,          // un bicchiere centrato
+  puntiRimbalzo: 40,        // ...centrato dopo un rimbalzo sul tavolo
+  bonusFiamme: 10,          // in più per ogni centro quando si è "IN FIAMME!" (dal secondo di fila)
+  bonusTriangolo: 40,       // per ogni triangolo finito
+  puntiPerso: 20,           // per ogni tuo bicchiere che centrano i veterani
   // bicchieri
   bicchieriVeterani: 10,    // il primo triangolo dei veterani
   bicchieriDopo: 6,         // finito quello, ne rimettono uno così

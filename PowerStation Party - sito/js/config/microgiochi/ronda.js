@@ -21,7 +21,9 @@ export default {
   obiettivo: 'Salva almeno 3 ombrelloni su 5!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: 10-15 per bagnarola + 15 per ombrellone rimasto (un giocatore perfetto ne fa circa 400).
-  medaglie: { bronzo: 100, argento: 190, oro: 280 },   // (giocatore automatico con la mira perfetta: 285-340; a caso 10, fermo 0)
+  // Revisione 4, la stessa scala per tutti (erano 100 / 190 / 280): gli ombrelloni salvati valgono
+  // sempre di più (vedi bonusOmbrelloni), così salvarne 3 (l'obiettivo) va col bronzo.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoOmbrelloni: 3,
   // munizioni
   colpiMax: 5,            // (erano 6)
@@ -34,7 +36,9 @@ export default {
   bonusLontano: 5,        // ...se affondata lontano dalla riva (sopra yLontano)
   yLontano: 100,
   puntiRipreso: 5,        // ombrellone recuperato da una bagnarola in fuga
-  puntiOmbrellone: 15,    // a fine partita, per ogni ombrellone ancora piantato
+  // a fine partita, gli ombrelloni ancora piantati (da 0 a 5): sotto i 3 niente, poi sempre di più
+  // (prima 15 a ombrellone)
+  bonusOmbrelloni: [0, 0, 0, 40, 70, 100],
   // bagnarole: colpi per affondarle e lentezza rispetto alla velocità della fase
   hp: { gommone: 1, pedalo: 2, galeone: 3 },
   passo: { gommone: 1, pedalo: 0.9, galeone: 0.72 },

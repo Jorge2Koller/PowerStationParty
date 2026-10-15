@@ -21,15 +21,18 @@ export default {
   obiettivo: 'Sopravvivi alla Golf del Re!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Punti: secondi vivi + monete + corone + schivate all'ultimo. Chi sta fermo dura pochi secondi: è lo zero.
-  medaglie: { zero: 20, bronzo: 40, argento: 70, oro: 100 },   // (chi sta fermo fa 14-20 punti: è lo zero)
+  // Punti: secondi vivi + monete + corone + schivate all'ultimo, e arrivare in fondo vale bonusSalvo.
+  // Revisione 4, la stessa scala per tutti (erano 40 / 70 / 100, con lo "zero" a 20): ora arrivare
+  // in fondo è il bronzo, e chi va K.O. resta sotto anche se ha preso tante monete.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   vite: 3,
-  bonusSchivata: 2,       // punti per ogni schivata all'ultimo istante
+  bonusSalvo: 60,         // arrivato in fondo senza K.O.
+  bonusSchivata: 4,       // punti per ogni schivata all'ultimo istante (era 2)
   finestraSchivata: 0.35, // secondi: quanto "all'ultimo" deve essere
   durataSalto: 0.55,
   // --- monete e corone ---
-  puntiMoneta: 1,
-  puntiCorona: 6,
+  puntiMoneta: 2,         // (era 1)
+  puntiCorona: 12,        // (era 6)
   primeMonete: 2,         // secondi prima della prima fila di monete
   ogniMonete: [1.6, 2.6], // secondi tra una fila e l'altra
   filaMonete: [3, 5],     // quante monete in una fila

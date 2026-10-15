@@ -14,7 +14,7 @@
 
 const CHIAVE = 'powerstation-party.salvataggio';
 const VECCHIA = 'powerstation-party.giocatori';   // dove si ricordavano i personaggi prima del salvataggio
-export const VERSIONE = 1;
+export const VERSIONE = 2;
 const PREFISSO = 'PSP';                            // i codici esportati cominciano così: PSP1-...
 const MAX_REGISTRO = 60;                           // punteggi tenuti per ogni microgioco (gli ultimi)
 
@@ -46,8 +46,23 @@ const nuovo = () => ({
 });
 
 // Da una versione dei dati alla successiva: MIGRAZIONI[n](dati) porta dalla n alla n+1.
-// (Oggi c'è solo la 1. Per cambiare forma ai dati: VERSIONE = 2 e MIGRAZIONI[1] = (d) => { ... }.)
-const MIGRAZIONI = {};
+const MIGRAZIONI = {
+  // 1 -> 2 (revisione 4): i punti di tutti i microgiochi sono passati alla stessa scala (bronzo
+  // circa 100, argento 200, oro 300), quindi i punteggi di prima non si confrontano più coi nuovi.
+  // I record e i "migliore" si azzerano (lo dice la schermata Novità); trofei, medaglie, Pinte e
+  // il resto delle statistiche restano. Il registro dei punteggi non si butta: passa in
+  // registroScala1 (scala vecchia), e il registro nuovo riparte vuoto.
+  1: (d) => {
+    if (d.record && Object.keys(d.record).length) d.recordScala1 = d.record;
+    d.record = {};
+    if (d.registro && Object.keys(d.registro).length) d.registroScala1 = d.registro;
+    d.registro = {};
+    for (const g of Object.values(d.statistiche?.giochi ?? {})) if (g && typeof g === 'object') g.migliore = null;
+    // Lampo e Da solo ora sono gratis: chi le aveva comprate (30 Pinte l'una) riprende le Pinte
+    const prese = Array.isArray(d.sblocchi?.modalita) ? d.sblocchi.modalita.filter((m) => m === 'lampo' || m === 'solitario').length : 0;
+    if (prese) d.pinte = (Number(d.pinte) || 0) + prese * 30;
+  },
+};
 
 // completa i dati con quello che manca (un salvataggio vecchio o un codice incompleto non rompe niente)
 function completa(d) {
@@ -161,6 +176,16 @@ export const Salvataggio = {
     return { ok: true };
   },
 
+  // Salvataggi più sicuri: al primo avvio si chiede al browser di non cancellare i dati del gioco
+  // (Safari li può togliere ai siti aperti di rado, e con loro Pinte e trofei). Una volta sola:
+  // Firefox lo chiede a chi gioca, e non deve chiederlo a ogni avvio.
+  chiediPersistenza() {
+    if (!disponibile || dati.persistenzaChiesta || !navigator.storage?.persist) return;
+    dati.persistenzaChiesta = true;
+    this.segna();
+    navigator.storage.persisted().then((gia) => gia || navigator.storage.persist()).catch(() => {});
+  },
+
   // si ricomincia da capo: impostazioni, personaggi, registro, progressi
   azzera() {
     dati = nuovo();
@@ -170,6 +195,7 @@ export const Salvataggio = {
 };
 
 Salvataggio.carica();
+Salvataggio.chiediPersistenza();
 // app in sottofondo o chiusa: si scrive subito quello che è in sospeso
 document.addEventListener('visibilitychange', () => { if (document.hidden) Salvataggio.subito(); });
 window.addEventListener('pagehide', () => Salvataggio.subito());

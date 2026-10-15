@@ -20,7 +20,7 @@ import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { MODELLI, COLORI_AUTO, porteAuto } from '../grafica/oggetti.js';
 import { PARCHEGGIO } from '../grafica/sfondi.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, perDito, vibra, multiTouch, puntiHud, numero, quanti } from '../fx.js';
 import { ritratto } from '../sprites.js';
 import { VIALETTO } from '../grafica/vialetto.js';
 
@@ -231,7 +231,7 @@ export class GuidaScene extends MicrogiocoBase {
     const hud = `${this.punti}|${this.guidate}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punti));
       this.testoGuidate.setText(`AL VOLANTE: ${this.guidate}/${this.cfg.obiettivoGuidate}`).setColor(this.guidate >= this.cfg.obiettivoGuidate ? '#7dff9a' : '#ffe14a');
     }
   }
@@ -277,9 +277,28 @@ export class GuidaScene extends MicrogiocoBase {
       if (d > 0) { G.x += (dx / d) * passo; G.y += (dy / d) * passo; G.dir = dx < 0 ? -1 : 1; }
       G.img.setPosition(G.x, G.y - Math.abs(Math.sin(this.trascorso * 18)) * 3).setFlipX(G.dir < 0).setAngle(Math.sin(this.trascorso * 18) * 5).setDepth(G.y + 2);
       G.corsa = Math.min(1, G.corsa + passo / G.dist);
-      this.oraEmilio.setVisible(!eTouch() && G.corsa >= this.cfg.emilio.daQuando).setPosition(G.x, G.y - ALTO - 12);
-      if (d - passo <= 3) this.saleEmilio();
+      this.oraEmilio.setText('ORA! (SPAZIO)').setVisible(!eTouch() && G.corsa >= this.cfg.emilio.daQuando).setPosition(G.x, G.y - ALTO - 12);
+      if (d - passo <= 3) this.iniziaSalita(f);
+    } else if (G.stato === 'salendoEmilio') {
+      // sale da Emilio, piano: finché non chiude la portiera si può ancora tirarlo fuori
+      G.t -= dt;
+      const q = 1 - Math.max(0, G.t) / G.finestra;
+      G.img.setPosition(G.x + q * 6, G.y - q * 4 - Math.abs(Math.sin(this.trascorso * 22)) * 1.5).setAngle(Math.sin(this.trascorso * 22) * 6).setFlipX(false);
+      this.oraEmilio.setPosition(G.x, G.y - ALTO - 12);
+      if (G.t <= 0) this.saleEmilio();
     }
+  }
+
+  // Arrivato alla portiera di Emilio: la macchina si ferma ad aspettarlo e lui sale, ma ci mette
+  // quanto ci mette con le altre portiere (la finestra della fase): fin lì si tira fuori come dalle
+  // altre macchine, con un tocco su di lui (o SPAZIO). Prima saliva e partiva subito.
+  iniziaSalita(f) {
+    const G = this.G, E = this.emilio;
+    G.stato = 'salendoEmilio';
+    G.finestra = G.t = f.finestra;
+    E.stato = 'aspetta';
+    Audio.sfx('apri');
+    this.oraEmilio.setText(eTouch() ? 'TIRALO FUORI!' : 'TIRALO FUORI! (SPAZIO)').setVisible(true);
   }
 
   // ------------------------------------------------------------
@@ -318,7 +337,7 @@ export class GuidaScene extends MicrogiocoBase {
     const E = this.emilio, c = this.cfg.emilio;
     E.t += dt;
     const lenta = E.stato === 'arriva' && E.cont.x > c.ferma[0] && E.cont.x < c.ferma[1];
-    E.cont.x += E.vel * (lenta ? c.rallenta : 1) * dt;
+    E.cont.x += E.vel * (E.stato === 'aspetta' ? 0 : lenta ? c.rallenta : 1) * dt;
     E.cont.y = E.y + (Math.sin(this.trascorso * 40) > 0 ? 0.3 : 0);
     if (E.cont.x > 560) {
       E.cont.destroy();
@@ -353,16 +372,19 @@ export class GuidaScene extends MicrogiocoBase {
     });
   }
 
-  // fermato mentre corre da Emilio: vola via come dalle portiere (e intanto ci sono le chiavi)
+  // fermato mentre corre da Emilio, o tirato fuori mentre sale: vola via come dalle portiere (e
+  // intanto ci sono le chiavi); Emilio e Denny ripartono senza di lui
   fermaEmilio() {
     const c = this.cfg, G = this.G;
     this.oraEmilio.setVisible(false);
+    const giu = G.stato === 'salendoEmilio';
+    if (this.emilio?.stato === 'aspetta') this.emilio.stato = 'parte';
     this.presiEmilio++;
     this.punti += c.emilio.punti;
     Audio.sfx('schiaffo');
     vibra(30);
     scuoti(this, 90, 0.004);
-    scritta(this, G.x, G.y - ALTO - 10, `FERMATO! +${c.emilio.punti}`, { size: 10, color: '#7dff9a', durata: 600 });
+    scritta(this, G.x, G.y - ALTO - 10, `${giu ? 'TIRATO GIÙ!' : 'FERMATO!'} +${c.emilio.punti}`, { size: 10, color: '#7dff9a', durata: 600 });
     if (this.emilio) fumetto(this, Phaser.Math.Clamp(this.emilio.cont.x, 90, 390), this.emilio.y - 70, caso(c.emilio.frasiVia), 1000, 870);
     this.vola(G.x, G.y - ALTO * 0.5);
   }
@@ -490,15 +512,15 @@ export class GuidaScene extends MicrogiocoBase {
     // Giorgio felice nel finestrino di dietro, la macchina va via
     this.mettiTesta(auto, auto.dietro, G.travestito ? 'incognito_giorgio' : 'giorgioSera_felice', 'post');
     auto.casa = false;
-    this.time.delayedCall(250, () => {
+    this.time.delayedCall(150, () => {
       Audio.sfx('clacson');
       fumetto(this, auto.cont.x - 20, auto.cont.y - auto.M.tetto - 12, caso(c.frasiCiao), 1000, 860);
     });
     this.tweens.add({
-      targets: auto.cont, y: PARCHEGGIO.strada + 8, delay: 400, duration: 450, ease: 'Sine.inOut',
+      targets: auto.cont, y: PARCHEGGIO.strada + 8, delay: 250, duration: 300, ease: 'Sine.inOut',
       onStart: () => { auto.cont.setDepth(PARCHEGGIO.strada); Audio.sfx('sgommata'); },
       onComplete: () => this.tweens.add({
-        targets: auto.cont, x: 560, duration: 1100, ease: 'Quad.in',
+        targets: auto.cont, x: 560, duration: 750, ease: 'Quad.in',
         onComplete: () => this.time.delayedCall(c.rientro * 1000, () => this.torna(auto)),
       }),
     });
@@ -510,9 +532,9 @@ export class GuidaScene extends MicrogiocoBase {
     auto.dietro.setVisible(false);
     auto.cont.setPosition(-90, PARCHEGGIO.strada + 8);
     this.tweens.add({
-      targets: auto.cont, x: auto.x, duration: 1100, ease: 'Quad.out',
+      targets: auto.cont, x: auto.x, duration: 650, ease: 'Quad.out',
       onComplete: () => this.tweens.add({
-        targets: auto.cont, y: auto.y, duration: 400, ease: 'Sine.inOut',
+        targets: auto.cont, y: auto.y, duration: 250, ease: 'Sine.inOut',
         onComplete: () => {
           auto.cont.setDepth(auto.y);
           auto.casa = true;
@@ -520,7 +542,7 @@ export class GuidaScene extends MicrogiocoBase {
           const G = this.G, g = this.geometria(auto, 'post');
           G.x = auto.x + g.x; G.y = auto.y + 8;
           G.img.setPosition(G.x, G.y).setTexture(G.key('felice')).setVisible(true).setDepth(G.y + 2);
-          G.stato = 'pausa'; G.t = 0.6;
+          G.stato = 'pausa'; G.t = 0.15;
           Audio.sfx('portiera');
         },
       }),
@@ -542,8 +564,8 @@ export class GuidaScene extends MicrogiocoBase {
     }
     if (this.bloccata > 0) return;
     const extra = p.wasTouch ? this.cfg.raggioDito : 0, G = this.G;
-    // Giorgio che corre da Emilio: si ferma toccandolo
-    if (G.stato === 'emilio' && Math.abs(w.x - G.x) <= 12 + extra && w.y <= G.y + 4 + extra && w.y >= G.y - ALTO - extra) return this.fermaEmilio();
+    // Giorgio che corre da Emilio (o che ci sta salendo): si ferma toccandolo
+    if ((G.stato === 'emilio' || G.stato === 'salendoEmilio') && Math.abs(w.x - G.x) <= 12 + extra && w.y <= G.y + 4 + extra && w.y >= G.y - ALTO - extra) return this.fermaEmilio();
     for (const a of this.auto) {
       if (!a.ap || !a.casa) continue;
       const g = this.geometria(a, a.ap.porta), quanto = Math.min(1, a.ap.t / a.ap.durata);
@@ -637,6 +659,7 @@ export class GuidaScene extends MicrogiocoBase {
     if (!this.inCorso || this.bloccata > 0) return;
     // (da tastiera, Giorgio che corre da Emilio si ferma con SPAZIO: ma solo da metà corsa in poi,
     // quando sopra di lui compare ORA!; prima è un colpo a vuoto)
+    if (this.G.stato === 'salendoEmilio') return this.fermaEmilio();
     if (this.G.stato === 'emilio') return this.G.corsa >= this.cfg.emilio.daQuando ? this.fermaEmilio() : this.aVuoto({ x: this.G.x, y: this.G.y - 40 }, 'TROPPO PRESTO!');
     const a = this.auto[this.sel];
     if (a.casa && a.ap) return this.colpito(a);
@@ -681,7 +704,7 @@ export class GuidaScene extends MicrogiocoBase {
     G.img.setAngle(0).setTexture(G.travestito ? 'incognito_giorgio' : 'giorgioSera_sufficienza');
     scritta(this, G.x, G.y - ALTO - 6, 'UFFA...', { size: 9, color: '#ffe14a', durata: 450 });
     G.stato = 'versoA3';
-    G.vel = 120;
+    G.vel = this.cfg.velVersoA3;
     G.tx = a3.cont.x - g.x; G.ty = 252;
     G.dist = Math.max(1, Math.hypot(G.tx - G.x, G.ty - G.y));
     G.finta = null;
@@ -697,7 +720,7 @@ export class GuidaScene extends MicrogiocoBase {
     const salita = { q: 0 };
     this.mettiDentro(a3, 'giorgioSera_sufficienza', 'ant', 0);
     this.tweens.add({
-      targets: salita, q: 1, duration: 450,
+      targets: salita, q: 1, duration: 260,
       onUpdate: () => { if (!this.finito) this.mettiDentro(a3, 'giorgioSera_sufficienza', 'ant', salita.q); },
       onComplete: () => {
         if (this.finito) return;
@@ -708,17 +731,19 @@ export class GuidaScene extends MicrogiocoBase {
         // il motore dopo anni: tossisce, poi parte
         Audio.sfx('tossisce');
         fumo(this, a3.cont.x + a3.M.m, a3.cont.y - 8, 4, 900, 0x8a8478);
-        this.time.delayedCall(650, () => {
+        this.time.delayedCall(300, () => {
           if (this.finito) return;
           Audio.sfx('motore');
-          this.punti += c.puntiGuida;
+          // ogni guidata vale un po' di più della precedente (Giorgio è sempre più furbo)
+          const vale = c.puntiGuida + c.crescitaGuida * this.guidate;
+          this.punti += vale;
           this.guidate++;
           G.stato = 'volante';
           G.t = c.alVolante;
           vibra(80);
           scuoti(this, 200, 0.006);
           fumo(this, a3.cont.x + a3.M.m + 4, a3.cont.y - 8, 6, 900, 0x6a6458);
-          scritta(this, 150, 196, `AL VOLANTE! +${c.puntiGuida}`, { size: 14, color: '#7dff9a', durata: 900 });
+          scritta(this, 150, 196, `AL VOLANTE! +${vale}`, { size: 14, color: '#7dff9a', durata: 900 });
           scritta(this, a3.cont.x, a3.cont.y - 70, 'BRUM BRUM!', { size: 9, color: '#ffffff', durata: 600 });
           fumetto(this, a3.cont.x - 16, a3.cont.y - a3.M.tetto - 12, caso(c.frasiVolante), 1300, 860);
           Phaser.Utils.Array.Shuffle([...this.auto]).slice(0, 2).forEach((a, i) => this.time.delayedCall(200 + i * 300, () => {
@@ -740,7 +765,7 @@ export class GuidaScene extends MicrogiocoBase {
     G.x = a3.cont.x - g.x; G.y = 252;
     G.img.setTexture(G.travestito ? 'incognito_giorgio' : 'giorgioSera_normale').setPosition(G.x, G.y).setVisible(true).setDepth(270);
     fumetto(this, G.x + 10, G.y - ALTO - 8, caso(this.cfg.frasiScende), 1000, 860);
-    G.stato = 'pausa'; G.t = 0.5;
+    G.stato = 'pausa'; G.t = 0.1;   // e riparte subito di corsa
     // le chiavi tornano nell'angolo (lanciate)
     this.chiavi.setVisible(true).setPosition(G.x, G.y - 30);
     this.tweens.add({ targets: this.chiavi, x: CHIAVI.x, duration: 600, ease: 'Linear' });
@@ -752,8 +777,8 @@ export class GuidaScene extends MicrogiocoBase {
     return {
       punteggio: this.punti,
       vittoria: this.guidate >= c.obiettivoGuidate,
-      riepilogo: `al volante ${this.guidate}, tirato fuori ${this.fuori + this.presiEmilio}, passaggi scroccati ${this.scrocchi + this.saliti}`,
-      titoloFine: this.guidate ? 'TEMPO!' : 'NIENTE DA FARE!',
+      riepilogo: `al volante: ${this.guidate}, tirato fuori: ${this.fuori + this.presiEmilio}, scroccati: ${this.scrocchi + this.saliti}`,
+      titoli: ['SI VA IN DISCO!', 'NIENTE DA FARE!'],
     };
   }
 
@@ -774,7 +799,7 @@ export class GuidaScene extends MicrogiocoBase {
     const titolo = (s, col) => txt(this, 240, 24, s, { size: 17, color: col, depth: 710 });
 
     this.time.delayedCall(500, () => {
-      if (this.guidate) {
+      if (ris.vittoria) {
         const a3 = this.a3;
         titolo('SI VA IN DISCO: GUIDA GIORGIO!', '#7dff9a');
         a3.cont.setDepth(705);

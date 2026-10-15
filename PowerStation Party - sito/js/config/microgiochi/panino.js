@@ -22,16 +22,20 @@ export default {
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // (ritarate col giocatore automatico: quello bravo serve 2-3 ordini, 145-200 punti; a caso 0-14;
   // fermo 0)
-  medaglie: { bronzo: 70, argento: 150, oro: 220 },
+  // Revisione 4, la stessa scala per tutti (erano 70 / 150 / 220): 3 ordini (l'obiettivo) sono il
+  // bronzo, 4 l'argento, 5 l'oro. Ogni ordine vale più del precedente (vedi crescitaPanino).
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoPanini: 3,
   // punti
-  puntiIngrediente: 10,   // l'ingrediente giusto, al momento giusto
-  puntiPanino: 30,        // ordine servito...
-  puntiLungo: 10,         // ...più tanto per ogni ingrediente oltre i tre (gli ordini lunghi valgono di più)
+  // (revisione 4: prima 10 a ingrediente, 30 a ordine, +10 per ingrediente oltre i tre)
+  puntiIngrediente: 5,    // l'ingrediente giusto, al momento giusto
+  puntiPanino: 10,        // ordine servito: il primo vale tanto...
+  crescitaPanino: 6,      // ...poi + tanto x (ordini già serviti)²: 10, 16, 34, 64, 106...
+  puntiLungo: 0,          // ...più tanto per ogni ingrediente oltre i tre (gli ordini lunghi hanno già più ingredienti)
   bonusRapido: 10,        // ...e se fatto in meno di "secondiRapido" secondi
   secondiRapido: 8,
-  malusFuoriOrdine: 3,    // preso un ingrediente che non tocca ancora: non entra
-  malusSbagliato: 10,     // presa una schifezza: punti tolti e panino nel cestino (l'ordine resta)
+  malusFuoriOrdine: 2,    // preso un ingrediente che non tocca ancora: non entra (era 3)
+  malusSbagliato: 8,      // presa una schifezza: punti tolti e panino nel cestino (l'ordine resta) (era 10)
   lanciaGiusto: 0.5,      // quante volte su 1 Marsupino lancia proprio l'ingrediente che serve adesso
   // movimento del pane: velocità massima uguale per tastiera, mouse e dito (unità/s)
   velPane: 300,

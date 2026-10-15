@@ -18,7 +18,7 @@ import { casuale } from '../grafica/base.js';
 import { RAGAZZE } from '../grafica/personaggi.js';
 import { DISCO } from '../grafica/sfondi.js';
 import { curvaTentacolo, disegnaTentacolo } from '../grafica/tentacoli.js';
-import { txt, im, scalaDi, scritta, stelle, fumetto, scuoti, puntatore, lerp, caso, eTouch, vibra, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumetto, scuoti, puntatore, lerp, caso, eTouch, vibra, multiTouch, puntiHud, numero, quanti } from '../fx.js';
 
 const TAGLIA = 0.4;                                   // ragazze: circa 36x54 unità
 const TAGLIA_PETRI = 0.44;
@@ -182,7 +182,7 @@ export class PiovraScene extends MicrogiocoBase {
     const hud = `${this.punti}|${this.salvate}|${this.serie}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punti));
       this.testoSalvate.setText(`SALVATE: ${this.salvate}/${c.obiettivoSalvate}`).setColor(this.salvate >= c.obiettivoSalvate ? '#7dff9a' : '#ffe14a');
       this.testoSerie.setText(this.serie >= 2 ? `SERIE x${this.serie}` : '');
     }
@@ -283,11 +283,12 @@ export class PiovraScene extends MicrogiocoBase {
     this.serie++;
     this.serieMax = Math.max(this.serieMax, this.serie);
     const bonus = this.serie >= 2 ? Math.min(c.maxBonusSerie, c.bonusSerie * (this.serie - 1)) : 0;
-    this.punti += c.puntiSalvata + bonus;
+    const vale = Math.round(c.puntiSalvata * this.salvate);   // (la k-esima salvata vale k volte puntiSalvata)
+    this.punti += vale + bonus;
     if (this.sel === r) this.sel = null;
     Audio.sfx('salva');
     r.img.setTexture(`ragazza${r.v}_felice`);
-    scritta(this, r.x - 14, r.y - 64, bonus ? `SALVA! +${c.puntiSalvata} SERIE +${bonus}` : `SALVA! +${c.puntiSalvata}`, { size: 8, color: '#7dff9a', durata: 600 });
+    scritta(this, r.x - 14, r.y - 64, bonus ? `SALVA! +${vale} SERIE +${bonus}` : `SALVA! +${vale}`, { size: 8, color: '#7dff9a', durata: 600 });
     fumetto(this, r.x - 20, r.y - 76, caso(c.frasiSalva), 900, 950);
     this.tweens.add({ targets: r.img, x: 500, alpha: 0, duration: 600, ease: 'Quad.in', onComplete: () => { r.img.destroy(); this.ragazze = this.ragazze.filter((x) => x !== r); } });
   }
@@ -719,7 +720,7 @@ export class PiovraScene extends MicrogiocoBase {
       vittoria: this.salvate >= c.obiettivoSalvate,
       // (le agganciate si scrivono solo se tolgono davvero qualcosa: il totale non va sotto zero)
       riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (Math.min(this.punti, prese * c.malusAgganciata) > 0 ? `, agganciate ${prese} (-${Math.min(this.punti, prese * c.malusAgganciata)})` : ''),
-      titoloFine: this.salvate >= c.obiettivoSalvate ? 'TEMPO!' : 'IL PIOVRA HA VINTO!',
+      titoli: ['TEMPO!', 'IL PIOVRA HA VINTO!'],
     };
   }
 

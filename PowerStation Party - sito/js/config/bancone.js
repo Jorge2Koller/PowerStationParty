@@ -51,9 +51,7 @@ export default {
       'Hai visto {primo}? Impara, {ultimo}, impara.',
     ] },
   ],
-  // modalità nuove (js/config/modalita.js). Con "presto: true" si vedono ma non si comprano ancora
-  modalita: [
-    { id: 'lampo', nome: 'Modalità Lampo', costo: 30 },
-    { id: 'solitario', nome: 'Da solo: 4 vite e il boss', costo: 30 },
-  ],
+  // (Lampo e Da solo si compravano qui, 30 Pinte l'una: dalla revisione 4 sono gratis, e al
+  // Bancone restano solo le cose cosmetiche. Chi le aveva comprate riprende le Pinte: vedi la
+  // migrazione 1 -> 2 in js/salvataggio.js)
 };

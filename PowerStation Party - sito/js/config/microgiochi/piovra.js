@@ -20,14 +20,18 @@ export default {
   ],
   obiettivo: 'Fai scappare almeno 8 ragazze!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
-  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: 10 per ragazza salvata + la serie: dieci salvate (la vittoria) sono l'argento.
-  medaglie: { bronzo: 60, argento: 150, oro: 250 },
+  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
+  // Revisione 4, la stessa scala per tutti (erano 60 / 150 / 250): 8 salvate, l'obiettivo, sono il bronzo.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoSalvate: 8,
   // punti
-  puntiSalvata: 10,
-  bonusSerie: 5,           // fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla terza...
-  maxBonusSerie: 20,
-  malusAgganciata: 15,     // a fine partita, per ogni ragazza ancora agganciata (il totale non va sotto zero)
+  // (revisione 4) ogni ragazza salvata vale più della precedente: la prima puntiSalvata, la seconda il
+  // doppio... (2,5 x quante ne hai salvate, arrotondato: 3, 5, 8, 10, 13...). Così l'obiettivo, 8
+  // ragazze, fa circa 100 (il bronzo), e chi ne salva il doppio vola. Prima ognuna valeva 10.
+  puntiSalvata: 2.5,
+  bonusSerie: 2,           // fughe di fila senza nessuna agganciata nel frattempo: +2 alla seconda, +4 alla terza... (erano 5)
+  maxBonusSerie: 8,        // (era 20)
+  malusAgganciata: 10,     // a fine partita, per ogni ragazza ancora agganciata (il totale non va sotto zero) (era 15)
   // ragazze
   velSegue: 95,            // velocità lungo la strada disegnata (unità/s)
   velBalla: 22,            // mentre balla si sposta piano

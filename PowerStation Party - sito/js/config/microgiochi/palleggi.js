@@ -10,25 +10,32 @@ export default {
   comandi: [
     'FRECCE (o A/D) o il mouse: muoviti. SPAZIO o CLIC: calcia',
     'Calcia quando il pallone arriva al piede: più sei preciso, più sale dritto',
-    "Più palleggi di fila, più valgono. Il pallone d'oro vale 25!",
+    "Conta la serie più lunga: da 12 di fila in su vale tanto. Il pallone d'oro vale 20!",
   ],
   comandiTouch: [
     'Trascina il dito sul prato: ti muovi. CALCIA: calcia',
     'Calcia quando il pallone arriva al piede: più sei preciso, più sale dritto',
-    "Più palleggi di fila, più valgono. Il pallone d'oro vale 25!",
+    "Conta la serie più lunga: da 12 di fila in su vale tanto. Il pallone d'oro vale 20!",
   ],
   obiettivo: 'Fai una serie di almeno 12 palleggi!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  medaglie: { bronzo: 180, argento: 380, oro: 600 },   // (erano 100, 280, 500: troppo facili. Giocatore automatico perfetto 730, a caso 0-55)
+  // Revisione 4, la stessa scala per tutti (erano 180 / 380 / 600): una serie di 12 (l'obiettivo) è
+  // il bronzo, di 17-18 l'argento, di 22 l'oro. Conta soprattutto la serie migliore: chi fa tante
+  // serie corte, senza mai arrivare a 12, resta sotto il bronzo.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoSerie: 12,
   // punti
-  puntiPalleggio: 10,     // un palleggio, per il moltiplicatore della serie
+  puntiPalleggio: 1,      // un palleggio, per il moltiplicatore della serie (era 10)
   ogniSerie: 5,           // il moltiplicatore sale di 0,5 ogni tanti palleggi di fila...
   maxMoltiplicatore: 3,   //   ...fino a questo
-  bonusPerfetto: 5,
-  bonusSerie: 5,          // a fine partita, per ogni palleggio della serie migliore
-  puntiOro: 25,           // il pallone d'oro colpito
+  bonusPerfetto: 1,       // (era 5)
+  // a fine partita, la serie migliore: sotto l'obiettivo bonusSotto a palleggio; arrivati
+  // all'obiettivo bonusObiettivo, più bonusOltre per ogni palleggio in più (prima: 5 a palleggio)
+  bonusSotto: 4,
+  bonusObiettivo: 70,
+  bonusOltre: 15,
+  puntiOro: 20,           // il pallone d'oro colpito (era 25)
   // fisica (unità e secondi)
   gravita: 300,
   // velocità verso l'alto e spinta di lato per ogni tipo di colpo: [vy, vx minima, vx massima]

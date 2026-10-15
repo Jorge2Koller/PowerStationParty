@@ -2,16 +2,17 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.10-collaudo',
+  versione: '2026.10-boni-lori',
   titolo: 'NOVITÀ',
   voci: [
-    'IL PASSO DEL PASSASEO: la salita in bici, testa a testa. Pedala a tempo!',
-    'SPALMA IL BOTA in tre atti: crema, ombrellone, gabbiani e onde',
-    'PASSAGGIORGIO più furbo a ogni successo, e passa Emilio con Denny',
-    'PANINO: gli ordini dei clienti, in fila, e la pila che crolla',
-    'SCAPOLI: frecce dall\'alto, doppie solo alla fine, e balli anche tu',
-    'PROVINI A X-FACTOR: tre canzoni nuove (rock, pop, rap) e giudici più severi',
-    'Ritocchi dappertutto: Beppe più veloce, la lama da sciacquare, mani vere...',
-    'Impostazioni: RITARDO AUDIO per cuffie e casse Bluetooth. Pausa con due tocchi',
+    'NUOVO: LA PIZZA DAL BONI. Le pizze a memoria, e copri Oli e il Sego che si sono imbucati',
+    'NUOVO: LA BALLATA DEL PALLAIO. Riordina le vignette prima che arrivi la bacchetta di Lori',
+    'Due personaggi nuovi: il Boni (Il Nutrizionista) e Lori (Il Cantastorie)',
+    'PUNTI NUOVI: tutti i microgiochi sulla stessa scala. Bronzo 100, argento 200, oro 300',
+    'Per questo i RECORD ripartono da zero. Trofei, medaglie e Pinte restano tutti!',
+    'Vinci se prendi la medaglia: col bronzo è vittoria, senza è sconfitta',
+    'LAMPO e DA SOLO sono gratis. Le Pinte servono per costumi, temi e frasi',
+    'A fine sfida: SALVA IL PODIO e mandalo nel gruppo',
+    'Bota, Passaggiorgio, Ingiocabile e Retromarcia rifatti; più leggibile sul telefono',
   ],
 };

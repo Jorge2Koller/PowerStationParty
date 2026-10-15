@@ -18,13 +18,14 @@ import { Sessione, DOPPIONE } from '../sessione.js';
 import { CONFIG } from '../config.js';
 import { casuale } from '../grafica/base.js';
 import { ritratto } from '../sprites.js';
-import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, colpetto, fumetto, vibra } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, colpetto, fumetto, vibra, puntiHud, numero } from '../fx.js';
 
 const Y_PANE = 250;                     // dove appoggia il pane sul bancone
 const X_MIN = 36, X_MAX = 444;          // corsa del pane
 const H_PANE = 8;                       // altezza della mollica sopra il bancone
 const Y_MARS = 212, TAGLIA_MARS = 1.1;  // Marsupino, dietro al bancone (il pancione ci si appoggia sopra)
 const INGREDIENTI = ['prosciutto', 'wurstel', 'sottiletta', 'ketchup', 'maionese'];
+const BIGLIETTO = { x: 254, y: 30, passo: 36 };   // il biglietto dell'ordine, in alto: centro e passo tra le icone
 const LANCIABILI = ['prosciutto', 'wurstel', 'sottiletta'];
 const SALSE = ['ketchup', 'maionese'];
 const SBAGLIATI = ['calzino', 'lisca', 'ghiaccio', 'ciabatta'];
@@ -75,21 +76,26 @@ export class PaninoScene extends MicrogiocoBase {
     im(this, 0, 196, 'banconeBar').setOrigin(0).setDepth(10);
 
     // l'ordine del cliente, in alto: la sua faccia e il biglietto con gli ingredienti in fila
-    // (da sinistra a destra = dal basso in alto). Il prossimo da prendere ha il cerchio giallo.
-    this.hudPanino = [pannello(this, 250, 26, 196, 26, { depth: 1000 })];
+    // (da sinistra a destra = dal basso in alto). Il prossimo da prendere è il più grande, sul
+    // tondo giallo che pulsa; quelli già messi hanno la spunta, gli altri sono sbiaditi.
+    // (Grandi per il telefono: erano a 0,75 e tutti uguali.)
+    this.hudPanino = [pannello(this, BIGLIETTO.x, BIGLIETTO.y, 214, 34, { depth: 1000 })];
+    this.fondoProssimo = this.add.graphics().setDepth(1001);
+    this.hudPanino.push(this.fondoProssimo);
     this.icone = [0, 1, 2, 3, 4].map((i) => {
-      const x = 196 + i * 32;
-      const icona = im(this, x, 26, 'pan_prosciutto', 0.75).setDepth(1001);
-      const spunta = this.add.graphics().setDepth(1002).setPosition(x + 7, 31);
+      const x = BIGLIETTO.x + (i - 2) * BIGLIETTO.passo;
+      const icona = im(this, x, BIGLIETTO.y, 'pan_prosciutto', 1).setDepth(1002);
+      const spunta = this.add.graphics().setDepth(1003).setPosition(x + 9, BIGLIETTO.y + 7);
       spunta.lineStyle(2.6, 0x1f1430, 1).beginPath().moveTo(-3.5, 0).lineTo(-1, 2.5).lineTo(4, -3.5).strokePath();
       spunta.lineStyle(1.4, 0x7dff9a, 1).beginPath().moveTo(-3.5, 0).lineTo(-1, 2.5).lineTo(4, -3.5).strokePath();
-      const freccia = i ? txt(this, x - 16, 26, '›', { size: 9, color: '#ffe14a', depth: 1001 }) : null;
+      const freccia = i ? txt(this, x - BIGLIETTO.passo / 2, BIGLIETTO.y, '›', { size: 9, color: '#ffe14a', depth: 1002 }) : null;
       this.hudPanino.push(icona, spunta, ...(freccia ? [freccia] : []));
-      return { icona, spunta, freccia };
+      return { icona, spunta, freccia, scala: icona.scaleX };
     });
-    this.anello = this.add.graphics().setDepth(1001);
+    this.anello = this.add.graphics().setDepth(1002);
     this.hudPanino.push(this.anello);
     this.tweens.add({ targets: this.anello, alpha: 0.35, duration: 260, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: this.fondoProssimo, alpha: 0.55, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.avvisoPila = txt(this, 0, 0, 'OCCHIO!', { size: 8, color: '#ff6b5a', depth: 1005 }).setVisible(false);
     this.nuovoOrdine();
     this.nuovoPane();
@@ -134,7 +140,7 @@ export class PaninoScene extends MicrogiocoBase {
     this.nOrdine++;
     this.ordine = { lista, cliente: tutti[Math.floor(r() * tutti.length)], inizio: this.trascorso };
     this.faccia?.destroy();
-    this.faccia = ritratto(this, 138, 26, this.ordine.cliente, 26).setDepth(1001);
+    this.faccia = ritratto(this, BIGLIETTO.x - 126, BIGLIETTO.y, this.ordine.cliente, 30).setDepth(1001);
     colpetto(this, this.faccia, 1.3, 1.3);
     if (this.strati) this.aggiornaRicetta();
   }
@@ -159,18 +165,24 @@ export class PaninoScene extends MicrogiocoBase {
   get altezza() { return H_PANE + this.strati.reduce((h, s) => h + s.sp, 0); }
 
   aggiornaRicetta() {
-    const L = this.ordine.lista, x0 = 250 - (L.length - 1) * 16;
+    const L = this.ordine.lista, { x: xc, y, passo } = BIGLIETTO, x0 = xc - ((L.length - 1) * passo) / 2;
     this.icone.forEach((o, i) => {
       const k = L[i], c = !!k;
       o.icona.setVisible(c); o.spunta.setVisible(c && i < this.fatti); o.freccia?.setVisible(c);
       if (!c) return;
-      const x = x0 + i * 32;
-      o.icona.setTexture('pan_' + k).setPosition(x, 26).setAlpha(i < this.fatti ? 1 : i === this.fatti ? 1 : 0.45);
-      o.spunta.setPosition(x + 7, 31);
-      o.freccia?.setPosition(x - 16, 26);
+      const x = x0 + i * passo, prossimo = i === this.fatti;
+      this.tweens.killTweensOf(o.icona);
+      o.icona.setTexture('pan_' + k).setPosition(x, y).setScale(o.scala * (prossimo ? 1.3 : i < this.fatti ? 0.85 : 1)).setAlpha(i <= this.fatti ? 1 : 0.5);
+      o.spunta.setPosition(x + 9, y + 7);
+      o.freccia?.setPosition(x - passo / 2, y);
     });
     this.anello.clear();
-    if (this.fatti < L.length) { this.anello.lineStyle(2, 0xffe14a, 1); this.anello.strokeCircle(x0 + this.fatti * 32, 26, 12); }
+    this.fondoProssimo.clear();
+    if (this.fatti < L.length) {
+      const x = x0 + this.fatti * passo;
+      this.fondoProssimo.fillStyle(0xffe14a, 0.45).fillCircle(x, y, 16);
+      this.anello.lineStyle(2.2, 0xffe14a, 1).strokeCircle(x, y, 16.5);
+    }
   }
 
   aggiorna(dt, p) {
@@ -193,7 +205,7 @@ export class PaninoScene extends MicrogiocoBase {
     const hud = `${this.punti}|${this.panini}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punti));
       this.testoPanini.setText(`PANINI: ${this.panini}/${this.cfg.obiettivoPanini}`);
       this.testoPanini.setColor(this.panini >= this.cfg.obiettivoPanini ? '#7dff9a' : '#ffe14a');
     }
@@ -356,10 +368,11 @@ export class PaninoScene extends MicrogiocoBase {
   }
 
   // ordine completo: cala il pane di sopra, il panino vola al cliente e arriva il prossimo ordine.
-  // Vale di più se la ricetta è lunga (per ogni ingrediente oltre i tre) e se è stato veloce
+  // Ogni ordine vale più del precedente (puntiPanino + crescitaPanino x (ordini già serviti)²), di
+  // più se la ricetta è lunga (per ogni ingrediente oltre i tre) e se è stato veloce
   completa() {
     const c = this.cfg, rapido = this.trascorso - this.ordine.inizio <= c.secondiRapido;
-    const guadagno = c.puntiPanino + c.puntiLungo * Math.max(0, this.ordine.lista.length - 3) + (rapido ? c.bonusRapido : 0), H = this.altezza;
+    const guadagno = c.puntiPanino + c.crescitaPanino * this.panini ** 2 + c.puntiLungo * Math.max(0, this.ordine.lista.length - 3) + (rapido ? c.bonusRapido : 0), H = this.altezza;
     this.punti += guadagno;
     this.panini++;
     const fatto = this.pila.setDepth(1003);

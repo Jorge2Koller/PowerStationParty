@@ -1,4 +1,4 @@
-// Le modalità della Fase 6 (si comprano al Bancone: js/config/bancone.js, "modalita") e della Fase 7,
+// Le modalità della Fase 6 (gratis dalla revisione 4: prima Lampo e Da solo si compravano al Bancone) e della Fase 7,
 // e il BEER PONG (in fondo).
 export default {
   // LAMPO: tanti microgiochi corti, uno dopo l'altro (da 2 giocatori in su)

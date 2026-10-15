@@ -14,11 +14,11 @@ import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { livellato } from '../livelli.js';
 import { FACCE_SBRONZA } from '../sprites.js';
-import { txt, scritta, fumetto, caso, scuoti } from '../fx.js';
+import { txt, scritta, fumetto, caso, scuoti, puntiHud, numero, quanti } from '../fx.js';
 import { Tavolo } from '../beerpong/tavolo.js';
 import { triangolo, livelloSbronza } from '../beerpong/motore.js';
 
-const tra = ([a, b]) => a + Math.random() * (b - a);
+const tra = ([a, b], r) => a + r() * (b - a);
 const rastrelliera = (n) => triangolo(n).map((b) => ({ ...b, su: true }));
 
 export class BeerpongScene extends MicrogiocoBase {
@@ -27,8 +27,11 @@ export class BeerpongScene extends MicrogiocoBase {
   get atto() { return this.cfg.atti.filter((a) => this.trascorso >= a.da).pop(); }
 
   prepara() {
-    const c = this.cfg;
-    this.rnd = casuale(Sessione.seme);
+    const c = this.cfg, seme = Sessione.seme;
+    this.rnd = casuale(seme);
+    // (i disturbi di Marsupino hanno il loro generatore, sempre dal seme del round: così non
+    // dipendono da quante volte hanno tirato i veterani)
+    this.rndDisturbi = casuale((seme ^ 0x3d15b0) >>> 0);
     // il tiro al livello di chi gioca (FACILE: anteprima più lunga e bordo che perdona...)
     this.motore = livellato(CONFIG.beerpong, this.livello);
     this.punti = 0;
@@ -37,7 +40,7 @@ export class BeerpongScene extends MicrogiocoBase {
     this.nAtto = 0;
     this.tVet = c.primoTiro; // tra quanto tirano i veterani
     this.kVet = 0;           // a chi dei due tocca
-    this.tDisturbo = tra(c.disturbo.ogni);
+    this.tDisturbo = tra(c.disturbo.ogni, this.rndDisturbi);
     this.tNuovi = 0;         // tra quanto arriva il triangolo nuovo
     this.hud = null;         // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
     this.mieiBic = rastrelliera(c.bicchieriMiei);
@@ -78,7 +81,7 @@ export class BeerpongScene extends MicrogiocoBase {
     // nell'ultimo atto Marsupino disturba
     if (A.disturbo) {
       this.tDisturbo -= d;
-      if (this.tDisturbo <= 0) { this.tDisturbo = tra(c.disturbo.ogni); this.disturba(); }
+      if (this.tDisturbo <= 0) { this.tDisturbo = tra(c.disturbo.ogni, this.rndDisturbi); this.disturba(); }
     }
     // il triangolo nuovo
     if (this.tNuovi > 0) {
@@ -90,7 +93,7 @@ export class BeerpongScene extends MicrogiocoBase {
     const hud = `${this.punti}|${this.tolti}|${this.persi}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punteggio));
       this.testoConto.setText(`TOLTI: ${this.tolti}   PERSI: ${this.persi}`);
     }
   }
@@ -153,12 +156,17 @@ export class BeerpongScene extends MicrogiocoBase {
     }
   }
 
+  // Il punteggio è la partita coi veterani: a pari bicchieri vale puntiPari, poi ogni bicchiere
+  // tolto (coi suoi bonus) aggiunge e ogni bicchiere perso toglie. Così "togline più di quanti te
+  // ne tolgono" è proprio il bronzo (un bicchiere di vantaggio = 100), comunque tirino loro.
+  get punteggio() { const c = this.cfg; return Math.max(0, c.puntiPari + this.punti - this.persi * c.puntiPerso); }
+
   risultato() {
-    const c = this.cfg, inPiedi = this.T.mieiInPiedi, bonus = inPiedi * c.puntiInPiedi;
+    const inPiedi = this.T.mieiInPiedi;
     return {
-      punteggio: this.punti + bonus,
+      punteggio: this.punteggio,
       vittoria: this.tolti > this.persi,
-      riepilogo: `Bicchieri tolti: ${this.tolti}   persi: ${this.persi}` + (bonus ? `   in piedi: ${inPiedi} (+${bonus})` : ''),
+      riepilogo: `Bicchieri tolti: ${this.tolti}   persi: ${this.persi}`,
       titoloFine: inPiedi === 0 ? 'A SECCO!' : 'TEMPO!',
     };
   }

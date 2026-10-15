@@ -10,25 +10,29 @@ export default {
   comandi: [
     'Giorgio si infila nelle macchine degli altri: CLICCALO prima che chiuda!',
     'Quando è a terra TRASCINA LE CHIAVI fino a lui (tastiera: FRECCE, SPAZIO e INVIO)',
-    'Più lo fai guidare, più diventa furbo. E se passa Emilio, fermalo prima che salga!',
+    'Più lo fai guidare, più diventa furbo. Se passa Emilio, fermalo o tiralo giù dalla macchina!',
   ],
   comandiTouch: [
     'Giorgio si infila nelle macchine degli altri: TOCCALO prima che chiuda!',
     'Quando è a terra TRASCINA LE CHIAVI fino a lui: deve guidare lui!',
-    'Più lo fai guidare, più diventa furbo. E se passa Emilio, fermalo prima che salga!',
+    'Più lo fai guidare, più diventa furbo. Se passa Emilio, fermalo o tiralo giù dalla macchina!',
   ],
   obiettivo: 'Fallo guidare almeno 4 volte!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
-  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: 50 per guida + 10-15 per ogni volta che lo tiri fuori - 25 per passaggio scroccato.
-  medaglie: { bronzo: 70, argento: 160, oro: 240 },   // (giocatore automatico bravo, che reagisce subito: 240-250; a caso e fermo 0)
+  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
+  // Revisione 4, la stessa scala per tutti (erano 70 / 160 / 240): ogni guidata vale 10 più della
+  // precedente, così 4 guidate (l'obiettivo) sono il bronzo, 6 l'argento, 7 l'oro (il giocatore
+  // automatico, che reagisce subito, ne fa 6-7). A caso e fermo: 0.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoGuidate: 4,
   // punti
-  puntiFuori: 10,          // Giorgio tirato fuori da una macchina
-  bonusUltimo: 5,          // ...se era già quasi dentro (oltre "quasiDentro" della finestra)
+  puntiFuori: 2,           // Giorgio tirato fuori da una macchina (era 10)
+  bonusUltimo: 2,          // ...se era già quasi dentro (oltre "quasiDentro" della finestra) (era 5)
   quasiDentro: 0.66,
-  puntiGuida: 50,          // Giorgio si siede al volante della sua A3
-  malusPassaggio: 25,      // riesce a chiudere la portiera: passaggio scroccato (i punti non vanno sotto zero)
-  malusSbagliato: 5,       // tirata fuori la persona sbagliata (l'amico incappucciato)
+  puntiGuida: 10,          // Giorgio si siede al volante della sua A3 (la prima volta)...
+  crescitaGuida: 10,       // ...e ogni volta dopo vale tanto di più: 10, 20, 30, 40... (era sempre 50)
+  malusPassaggio: 10,      // riesce a chiudere la portiera: passaggio scroccato (i punti non vanno sotto zero) (era 25)
+  malusSbagliato: 3,       // tirata fuori la persona sbagliata (l'amico incappucciato) (era 5)
   bloccoVuoto: 0.85,        // secondi di mano ferma dopo un clic a vuoto
   // la furbizia di Giorgio: sale di furbiziaSecondo al secondo, di furbiziaGuida ogni volta che
   // lo metti al volante e di furbiziaFuori ogni volta che lo tiri fuori (o lo fermi). Le fasi qui
@@ -41,18 +45,22 @@ export default {
     vel: 70,               // la macchina (unità/s)...
     ferma: [150, 330],     // ...che tra queste x va piano (aspetta Giorgio)...
     rallenta: 0.3,         // ...a tanto della sua velocità
-    velGiorgio: 95,        // Giorgio che corre alla macchina (un po' più piano che verso le portiere: va fermato)
+    velGiorgio: 95,        // Giorgio che corre alla macchina (un po' più piano che verso le portiere: va fermato,
+                           //   o tirato fuori mentre sale: la macchina lo aspetta quanto la finestra della fase)
     daQuando: 0.4,         // da tastiera: SPAZIO lo ferma solo da questo punto della corsa (prima è a vuoto)
-    punti: 15,             // fermato
-    malus: 25,             // salito: passaggio scroccato
+    punti: 5,              // fermato (era 15)
+    malus: 10,             // salito: passaggio scroccato (era 25)
     frasiVia: ['Peccato, Giorgio!', 'Ci vediamo in disco!', 'Ciao Giorgio!'],
   },
   fraseDenny: 'Giorgio, ci porta i mi babbo, gnamo monta!',
   // tempi
   scopertoInizio: 1.9,     // secondi che Giorgio resta a terra (le chiavi vanno portate prima)
   scopertoFine: 1.3,
-  alVolante: 2.4,          // secondi al volante prima di scendere con una scusa
-  rientro: 4,              // secondi prima che torni la macchina partita con Giorgio dentro
+  // (tempi dimezzati e più, dopo la revisione 4: prima il giro tra una guidata e l'altra durava
+  // quasi 5 s, e 8 s quando la macchina partiva con lui dentro, senza niente da fare)
+  alVolante: 1,            // secondi al volante prima di scendere con una scusa (era 2,4)
+  rientro: 0.4,            // secondi prima che torni la macchina partita con Giorgio dentro (era 4)
+  velVersoA3: 190,         // Giorgio che va alla sua A3 con le chiavi (era 120)
   raggioChiavi: 22,        // quanto vicino a Giorgio vanno lasciate le chiavi (unità)
   raggioDito: 6,           // col dito si prende un po' più largo
   // Fasi di difficoltà. "da" = la furbizia da cui vale la fase (vedi sopra; una stella a fase).

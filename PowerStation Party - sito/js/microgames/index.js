@@ -17,6 +17,8 @@ import { ScapoliScene } from './ScapoliScene.js';
 import { RetromarciaScene } from './RetromarciaScene.js';
 import { BeerpongScene } from './BeerpongScene.js';
 import { XfactorScene } from './XfactorScene.js';
+import { PizzaScene } from './PizzaScene.js';
+import { BallataScene } from './BallataScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -36,4 +38,6 @@ export const MICROGIOCHI = {
   retromarcia: RetromarciaScene,
   beerpong: BeerpongScene,
   xfactor: XfactorScene,
+  pizza: PizzaScene,
+  ballata: BallataScene,
 };

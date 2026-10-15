@@ -4,7 +4,10 @@
 //  Ogni microgioco estende MicrogiocoBase e implementa:
 //    prepara()            -> crea sfondo, sprite, input (una volta, all'inizio)
 //    aggiorna(dt, p)      -> logica per frame. dt = secondi, p = avanzamento 0..1
-//    risultato()          -> { punteggio, vittoria, riepilogo, titoloFine? }
+//    risultato()          -> { punteggio, vittoria, riepilogo, titoloFine?, titoli? }
+//                            vittoria è la condizione del microgioco; poi la base applica la regola
+//                            unica: con la medaglia (bronzo o meglio) hai vinto, senza hai perso.
+//                            titoli: [se vinci, se perdi] al posto di titoloFine
 //  Facoltativi:
 //    finale(ris, fatto)   -> animazione conclusiva; chiamare fatto() alla fine
 //    pulisci()            -> chiamato quando la scena si chiude
@@ -23,6 +26,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { Salvataggio } from '../salvataggio.js';
 import { livellato } from '../livelli.js';
+import { medaglia } from '../punteggi.js';
 import { preparaGiocatore } from '../sprites.js';
 import { txt, scritta, inquadra, eTouch, pulsantePausa } from '../fx.js';
 
@@ -126,6 +130,12 @@ export class MicrogiocoBase extends Phaser.Scene {
       return;
     }
     const ris = this.risultato();
+    // Regola unica per tutti: il bronzo è la soglia della vittoria (con la medaglia vinci, senza
+    // perdi). La condizione del microgioco resta in ris.condizione (le prove la confrontano con la
+    // medaglia). In Lampo i microgiochi durano meno e le medaglie non contano: decide la condizione.
+    ris.condizione = !!ris.vittoria;
+    if (Sessione.tipo !== 'lampo' && CONFIG.microgiochi[this.id]?.medaglie) ris.vittoria = !!medaglia(this.id, ris.punteggio);
+    if (ris.titoli) ris.titoloFine = ris.titoli[ris.vittoria ? 0 : 1];
     const fatto = () => this.scene.start('Risultato', { risultato: ris });
     if (this.finale) this.finale(ris, fatto);
     else {

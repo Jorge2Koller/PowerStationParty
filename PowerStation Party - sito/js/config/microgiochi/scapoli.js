@@ -21,14 +21,17 @@ export default {
   obiettivo: 'Porta almeno 3 ragazze su 5 dalla tua parte!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // (un giocatore perfetto fa circa 2100 punti: 76 frecce perfette su 76, con la serie al massimo)
-  medaglie: { bronzo: 300, argento: 700, oro: 1300 },
+  // Revisione 4, la stessa scala per tutti (erano 300 / 700 / 1300; il giocatore automatico perfetto
+  // faceva 1800-2100): le frecce valgono un decimo, e le ragazze dalla tua parte sempre di più
+  // (vedi bonusRagazze), così portarne 3 (l'obiettivo) va col bronzo.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   ragazzeVittoria: 3,       // quante ragazze servono alla fine per vincere
   // punti: ogni freccia (le d'oro il doppio), per il moltiplicatore della serie; a fine partita
   // ogni ragazza dalla tua parte
-  puntiPerfetto: 10,
-  puntiBuono: 5,
-  puntiRagazza: 25,
+  puntiPerfetto: 1,         // (era 10)
+  puntiBuono: 0.5,          // (era 5)
+  // alla fine, le ragazze dalla tua parte (da 0 a 5): sotto le 3 niente, poi sempre di più (era 25 a ragazza)
+  bonusRagazze: [0, 0, 0, 70, 140, 200],
   maxMoltiplicatore: 3,     // la serie: +0,5 ogni 10 frecce di fila, fino a tanto
   // quanto si può sbagliare il tempo (secondi, prima o dopo): perfetto e buono; oltre è mancata
   finestre: { perfetto: 0.06, buono: 0.13 },

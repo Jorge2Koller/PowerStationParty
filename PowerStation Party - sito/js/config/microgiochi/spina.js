@@ -20,17 +20,22 @@ export default {
   obiettivo: 'Fai più punti di Beppe!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Stima: Beppe in 35 s fa da 20 a 25 pinte (120-150 punti, dipende dalla sua giornata).
-  medaglie: { bronzo: 100, argento: 150, oro: 200 },   // (erano 80, 120, 170. Giocatore automatico bravo 200-225, a caso 0)
+  // Revisione 4, la stessa scala per tutti (erano 100 / 150 / 200, e si prendeva il bronzo anche
+  // perdendo con Beppe). Ora il punteggio è la sfida con lui: a pari punti vale puntiPari (il
+  // bronzo), poi si aggiunge quanto lo batti (o si toglie quanto ti batte). Beppe in 35 s fa da 20
+  // a 25 pinte, dipende dalla sua giornata.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  puntiPari: 100,
   // i tre bicchieri: forma (largo, alto), ampiezza della zona verde (x), velocità (x) e punti
+  // (i punti sono 3 volte quelli di prima: 5, 8, 9, la PERFETTA 3 e la pinta di Beppe 6)
   bicchieri: {
-    pinta: { largo: 1, alto: 1, zona: 1, vel: 1, punti: 5 },
-    boccale: { largo: 1.25, alto: 1.1, zona: 1.1, vel: 0.7, punti: 8 },  // grande: si riempie piano
-    calice: { largo: 0.8, alto: 1.05, zona: 0.55, vel: 1.15, punti: 9 }, // zona strettissima: il rischio
+    pinta: { largo: 1, alto: 1, zona: 1, vel: 1, punti: 15 },
+    boccale: { largo: 1.25, alto: 1.1, zona: 1.1, vel: 0.7, punti: 24 },  // grande: si riempie piano
+    calice: { largo: 0.8, alto: 1.05, zona: 0.55, vel: 1.15, punti: 27 }, // zona strettissima: il rischio
   },
   perfetta: 0.18,      // PERFETTA se si rilascia entro questa frazione dal centro della zona verde (era 0.3)
-  bonusPerfetta: 3,    // punti in più per una PERFETTA
-  puntiBeppe: 6,       // punti che Beppe fa con ogni sua pinta
+  bonusPerfetta: 9,    // punti in più per una PERFETTA
+  puntiBeppe: 18,      // punti che Beppe fa con ogni sua pinta
   // la giornata di Beppe (dal seme del round: uguale per tutti nel round, diversa tra un round e
   // l'altro): i suoi secondi per pinta si moltiplicano per un numero tra questi due...
   formaBeppe: [0.88, 1.12],

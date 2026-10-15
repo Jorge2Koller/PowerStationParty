@@ -5,7 +5,7 @@ giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
 sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
 e vince il round chi fa più punti.
 
-I microgiochi sono diciassette:
+I microgiochi sono diciannove:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -26,6 +26,8 @@ I microgiochi sono diciassette:
 | `retromarcia` | Emilio in Retromarcia | Emilio (con Pastaffi e gli Shar Pei) |
 | `beerpong` | Beer Pong al Pallaio | i veterani del Pallaio (lo Zio e Marsupino) |
 | `xfactor` | Provini a X-Factor | i cantanti, Tini e Oli |
+| `pizza` | La pizza dal Boni | il Boni (con Oli e il Sego imbucati) |
+| `ballata` | La ballata del Pallaio | Lori, il cantastorie |
 
 Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
 "Modalità" e "Beer pong" qui sotto.
@@ -197,14 +199,14 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
    sul giocatore nella fila in basso) toglie l'ultima scelta.
 3. **La modalità**, in gruppi:
    - **SFIDE**
-     - **Sfida completa**: tutti e 16 i microgiochi, nell'ordine di `ordineSfida`.
+     - **Sfida completa**: tutti e 19 i microgiochi, nell'ordine di `ordineSfida`.
      - **Sfida rapida** da 3, 5 o 8 microgiochi pescati a caso (`sfidaRapida`).
      - **Al meglio di 3** o **di 5** (`alMeglioDi`): microgiochi pescati a caso, vince
        chi per primo vince 2 round (o 3). Se i microgiochi finissero prima, decide la
        classifica.
    - **PARTY**
-     - **Lampo** (si compra al Bancone): 6 microgiochi da 15 secondi, e si parte subito
-       (niente 3-2-1). I punti, più corti, non contano per medaglie e record.
+     - **Lampo**: 6 microgiochi da 15 secondi, e si parte subito (niente 3-2-1). I punti,
+       più corti, non contano per medaglie e record (si vince con la condizione del microgioco).
      - **Squadre** (da 4 giocatori): ROSSI contro BLU, in ordine di scelta (il 1°, il 3°,
        il 5°... sono rossi; il 2°, il 4°... blu). A ogni round conta la media dei punti
        sfida della squadra, così vale anche con squadre dispari. Vince la squadra con più
@@ -221,7 +223,7 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
 
    Da soli:
    - **Allenamento**: un microgioco a scelta, da rigiocare quanto si vuole.
-   - **Da solo** (si compra al Bancone): 7 microgiochi a caso e il **boss**, con 4 vite.
+   - **Da solo**: 7 microgiochi a caso e il **boss**, con 4 vite.
      Senza una medaglia si perde una vita; il boss è un microgioco a DIFFICILE e per
      batterlo serve almeno l'argento (10 Pinte in premio). Alla fine il conto e il record.
    - **Sfida del giorno**: ogni giorno 5 microgiochi, uguali per tutti quel giorno (stessi
@@ -262,12 +264,16 @@ tutti i giocatori di quel round, così nessuno parte avvantaggiato. I secondi so
 Tutto quello che il gioco ricorda sta in un **salvataggio** unico (`js/salvataggio.js`, nel
 `localStorage` del browser): impostazioni, personaggi dell'ultima partita, un registro degli
 ultimi punteggi di ogni microgioco (serve a ritarare le medaglie) e, più avanti, statistiche,
-record, trofei e Pinte. Ha un numero di versione: quando la forma dei dati cambierà, i
-salvataggi vecchi verranno aggiornati da soli. In navigazione privata, o se il browser non
-lascia salvare, il gioco funziona lo stesso ma non ricorda niente.
+record, trofei e Pinte. Ha un numero di versione: quando la forma dei dati cambia, i
+salvataggi vecchi si aggiornano da soli (dalla versione 2, con i punti di tutti i microgiochi
+sulla stessa scala, i record e i "migliore" ripartono da zero; trofei, medaglie e Pinte restano,
+e chi aveva comprato Lampo o Da solo riprende le sue 30 Pinte). Al primo avvio il gioco chiede
+al browser di non cancellare i suoi dati (`navigator.storage.persist()`: Safari li può togliere
+ai siti aperti di rado). In navigazione privata, o se il browser non lascia salvare, il gioco
+funziona lo stesso ma non ricorda niente.
 
 Sempre dalle Impostazioni, alla riga **Salvataggio**:
-- **ESPORTA**: il salvataggio diventa un codice di testo (comincia con `PSP1-`) da copiare e
+- **ESPORTA**: il salvataggio diventa un codice di testo (comincia con `PSP2-`) da copiare e
   mandarsi, per esempio su WhatsApp;
 - **IMPORTA**: sull'altro telefono si incolla il codice e si ritrova tutto (sostituisce
   quello che c'era; un codice tagliato o modificato viene rifiutato);
@@ -293,7 +299,11 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
 - **Risultati**: il punteggio sale con un ticchettio, poi arriva la **medaglia** (bronzo,
   argento o oro) col timbro; accanto, quanto manca alla prossima. Il riquadro si allunga col
   riepilogo (una o due righe) e i trofei appena presi arrivano dal basso, senza coprire
-  VITTORIA! o SCONFITTA.
+  VITTORIA! o SCONFITTA. **Vince chi prende la medaglia**: col bronzo (o meglio) è VITTORIA,
+  senza è SCONFITTA, in tutti i microgiochi (la regola è in un posto solo,
+  `MicrogiocoBase.termina`). L'obiettivo scritto nei comandi (4 guidate, 3 SÌ, 3 ragazze...) è
+  tarato per coincidere col bronzo; il finale animato e il titolo seguono sempre il risultato.
+  In Lampo, dove le medaglie non contano, decide l'obiettivo del microgioco.
 - **Premi buffi**: a fine sfida, prima della classifica finale, fino a tre premi ("Lo
   specialista", "Mani di burro", "L'eterno secondo", "Il diesel"...), calcolati dai punti
   sfida dei round (`js/premi.js`, titoli e frasi in `js/config/premi.js`).
@@ -331,9 +341,9 @@ Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più 
     dei personaggi si mettono e si tolgono). Il personaggio lo porta in tutto il gioco;
   - **temi**: il disegno dello sfondo delle schermate (raggi, pois, scacchi, strisce, cielo
     stellato), sempre coi colori di ogni schermata;
-  - **frasi**: pacchetti di sfottò in più per la classifica finale;
-  - **modalità**: Lampo e Da solo (Squadre, Torneo, Beer Pong e Sfida del giorno sono gratis).
-  I personaggi giocabili sono tutti disponibili da subito: non si comprano.
+  - **frasi**: pacchetti di sfottò in più per la classifica finale.
+  Si comprano solo cose cosmetiche: tutte le modalità sono gratis, e i personaggi giocabili
+  sono tutti disponibili da subito.
 - **PROFILO** (dal menu), quattro schede: i **personaggi** (microgiochi giocati, sfide e round
   vinti, medaglie, le partite vinte a beer pong, e la medaglia migliore in ogni microgioco), i
   **trofei** (40: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
@@ -364,13 +374,14 @@ generale con le barre, così si vede come si mette prima della fine.
 - **In due**: nella sfida completa, in quella rapida e nella partita singola vince chi fa
   più **punti sfida** (a parità, chi ha vinto più round); al meglio di 3 o 5 contano i
   **round vinti** (un round pari non conta e se ne gioca un altro; a parità, i punti sfida).
-- **Punti sfida**: ogni microgioco ha la sua scala (la Spina conta i punti delle birre, un centinaio;
-  il blackjack le fiches, centinaia). Per sommarli senza che quelli "ricchi" pesino di più,
-  ogni punteggio diventa un numero da 0 a 100 grazie alle tre **medaglie** del microgioco
-  (`medaglie: { bronzo, argento, oro }` nel suo file di configurazione): bronzo = 40,
-  argento = 70, oro = 90, e in mezzo in proporzione (`js/punteggi.js`). A schermo, durante il
-  gioco e nei risultati, si vede sempre il punteggio vero del microgioco. Dove anche chi non
-  fa niente prende punti c'è `zero` (al blackjack si parte con 100 fiches: fino a 100 vale 0).
+- **Punti sfida**: tutti i microgiochi hanno la stessa scala di punti (bronzo circa 100,
+  argento 200, oro 300; un record da campione sta sui 350-400), così lo stesso numero vuol
+  dire la stessa cosa ovunque. Per sommarli, ogni punteggio diventa comunque un numero da 0 a
+  100 grazie alle tre **medaglie** del microgioco (`medaglie: { bronzo, argento, oro }` nel suo
+  file di configurazione): bronzo = 40, argento = 70, oro = 90, e in mezzo in proporzione
+  (`js/punteggi.js`). A schermo, durante il gioco e nei risultati, si vede sempre il punteggio
+  vero del microgioco. Dove anche chi non fa niente prende punti si può mettere `zero` (fino a
+  lì vale 0).
 - **Da tre in su** contano i **punti classifica**: a ogni round, in N giocatori, il
   primo ne prende N, il secondo N-1 e così via fino all'ultimo, che ne prende 1.
   A pari punteggio, pari posizione e stessi punti (due primi, poi il terzo). La
@@ -383,7 +394,9 @@ generale con le barre, così si vede come si mette prima della fine.
 
 Alla fine: in due la schermata di sempre, da tre in su il **podio** coi primi tre
 sui gradini e gli altri in fila sotto. Da lì: **Rivincita** (stessi giocatori e
-stessa modalità; i microgiochi a caso si ripescano), **Cambia personaggi**, **Menu**.
+stessa modalità; i microgiochi a caso si ripescano), **Cambia personaggi**, **Salva il podio**
+(la foto della classifica, col nome del gioco e la data: sul telefono si condivide, per esempio
+su WhatsApp, sul computer si scarica) e **Menu**.
 Le frasi di sfottò sono in `js/config/frasi.js`: `sfotto` (con `{primo}` e `{ultimo}`) e,
 da tre giocatori in su, anche `sfottoTanti` (con `{secondo}` e `{tutti}`).
 
@@ -690,73 +703,126 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `tolleranza`,
     `grazia` e `graziaSalto` (quanto tempo c'è per arrivare sulla nota nuova),
     `scorrimento`, `atti` (durata delle note, salti, stelle) e le `soglia` dei `giudici`
+- La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli e il Sego, che si sono imbucati):
+  - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
+    la pizza va fatta A MEMORIA. Toccandolo (o TAB) lo si rivede un momento, ma si perde il bonus
+    velocità
+  - il pomodoro: col dito (o il mouse) si passa in tondo sulla pasta; da tastiera SPAZIO tenuto
+  - gli ingredienti: si tocca la ciotola e poi la pizza (o si trascina dalla ciotola alla pizza),
+    un pezzo a tocco; da tastiera da 1 a 6. L'ananas è una trappola: non è mai nell'ordinazione
+  - PRONTA! (INVIO) la consegna; RIFAI (BACKSPACE) ricomincia la pizza
+  - pizza giusta: il Boni la inforna e la porta in tavola. Sbagliata (un pezzo in più o in meno,
+    un ingrediente che non c'era, l'ananas, poco pomodoro): la butta, corre a bere dalla caraffa e
+    scopre uno degli imbucati, che caccia fuori con la pala. Al secondo errore li scopre tutti e
+    due: FUORI TUTTI!, e finisce
+  - gli imbucati stanno nascosti (sotto la tovaglia, dietro la botte, nella cesta della legna,
+    dietro la tenda della cantina, sotto i cappotti) o travestiti a tavola tra gli invitati (la
+    maschera di Giorgio, baffi finti e cappello, da cuoco). Gli invitati sono personaggi giocabili
+  - tre atti: LE PRIME PIZZE (due o tre ingredienti); dal 12° secondo GLI INVITATI ORDINANO
+    (pizze più ricche, e gli imbucati sbucano a chiedere una fetta: un tocco su di loro, o G, li
+    rimanda giù prima che il Boni si giri); dal 24° IL BONI HA FRETTA (il foglietto resta poco e
+    ogni pizza ha il suo tempo)
+  - ordini, nascondigli, travestimenti, invitati e i momenti in cui sbucano escono dal seme del
+    round: sono gli stessi per tutti i giocatori
+- La ballata del Pallaio (RIORDINA!: sei il garzone di Lori, il cantastorie, e hai appeso le
+  vignette del suo cartellone alla rinfusa):
+  - Lori canta una strofa alla volta: sopra di lui il fumetto con la scena della strofa, e la
+    casella dove cadrà la bacchetta si illumina (con l'arco tratteggiato e il cerchio che si
+    stringe). La bacchetta cade sul tempo della musica, sulla battuta forte, preceduta da due note
+    che salgono
+  - dito e mouse: trascina una vignetta su un'altra casella e le due si scambiano; col mouse anche
+    un clic sulla vignetta e uno sulla casella. Una vignetta girata dal vento (il retro bianco) si
+    tocca per rigirarla
+  - tastiera: FRECCE il cursore, SPAZIO prende la vignetta e SPAZIO la lascia (scambio), INVIO
+    rigira una vignetta girata
+  - quando la bacchetta cade: vignetta giusta, TOC, OOOH e monete nel cappello; sbagliata, Lori
+    canta quello che c'è davvero nella casella ("...le chiavi nel bicchiere?!"), il pubblico ride,
+    volano i pomodori e lui fulmina il garzone. Una vignetta battuta resta lì, bloccata
+  - tre atti: LA PRIMA STROFA (la riga in alto: quella in basso è sotto il telo); dal 12° secondo
+    IL VENTO (metà del telo vola via; le folate girano una vignetta o ne scambiano due già
+    sistemate, e la bacchetta fa qualche finta: punta una casella e all'ultimo cade su quella
+    giusta, col punto esclamativo); dal 24° IL GRAN FINALE (tutte e 8, Lori accelera, le ultime
+    due bacchettate ravvicinate). L'ultima casella è la morale: tutte giuste, il cartellone si
+    illumina e c'è il bonus
+  - ballata (cinque, nel file di configurazione), disposizione iniziale (nessuna vignetta parte al
+    posto giusto), folate e finte escono dal seme del round. In Lampo si gioca la riga in alto:
+    tre strofe e la morale
+  - si gioca anche senza audio: la casella illuminata, l'arco e il cerchio dicono dove e quando
 - ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
 brevemente il telefono.
 
-## Punteggi dei microgiochi nuovi
+## Punteggi dei microgiochi
 
-- **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana dalla
-  riva), +5 per ogni ombrellone ripreso, +15 per ogni ombrellone ancora piantato
-  alla fine. Vittoria con almeno 3 ombrelloni su 5; persi tutti, finisce prima.
-- **L'Ingiocabile** (35 s): si parte con 100 fiches, il punteggio sono le fiches
-  alla fine (una mano a metà si annulla). Ogni scelta uguale a quella della strategia di
-  base (la "MOSSA DA PRO") vale 5 fiches in più, 10 negli ultimi 11 secondi. Vittoria con più di 100; al verde,
-  finisce prima.
-- **MaraZio** (35 s): +10 per ogni palleggio, per il moltiplicatore della serie (x1,5 ogni 5
-  di fila, fino a x3), +5 se perfetto, +25 per ogni pallone d'oro, e a fine partita +5 per
-  ogni palleggio della serie migliore. Vittoria con una serie di almeno 12.
-- **Il Passo del Passaseo** (35 s): 0,2 punti per metro, 2 per pedalata perfetta (4 allo
-  sprint); se arrivi in cima prima del Passaseo, +50 e +10 per ogni secondo di vantaggio. Se
+Dalla revisione 4 tutti i microgiochi hanno la **stessa scala**: bronzo 100, argento 200, oro
+300, e un record da campione sta sui 350-400. Il bronzo è la vittoria: l'obiettivo scritto nei
+comandi è tarato per coincidere col bronzo. Dove l'obiettivo è un numero (piatti, ombrelloni,
+ragazze, guidate, ordini...) quel che lo raggiunge vale sempre di più, così sotto l'obiettivo non
+si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori automatici
+(`test/bot.py`: bravo, a caso, fermo; chi tocca a caso o sta fermo non prende mai il bronzo).
+
+- **La Spina** (35 s): pinta 15, boccale 24, calice 27, +9 se PERFETTA; Beppe fa 18 a pinta. Il
+  punteggio è la sfida con Beppe: 100 a pari punti, più quanto lo batti (o meno quanto ti batte).
+- **Arriva ReGrorio!** (35 s): 1 punto per ogni secondo vivo, 2 a moneta, 12 a corona, 4 per ogni
+  schivata all'ultimo, e +60 se arrivi in fondo senza K.O. (3 vite).
+- **La Barba**: 1,45 punti per ogni % rasata (il 70% per vincere); la barba finita (98%) vale +60
+  e 8 punti per ogni secondo avanzato; -6 per cerotto.
+- **Il Panino** (35 s): +5 per ogni ingrediente al momento giusto; ogni ordine servito vale più del
+  precedente (10, 16, 34, 64, 106...), +10 se fatto in meno di 8 s; -2 per un ingrediente fuori
+  ordine, -5 per un crollo, -8 per una schifezza (il totale non va sotto zero). Vittoria con 3 ordini.
+- **Guerra** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava trascinando via
+  un piatto, +2 per il guanto; alla fine i piatti ancora tuoi: sotto i 3 niente, 3 = +50, 4 = +80,
+  5 = +120. Persi tutti, finisce prima.
+- **Sego** (35 s): +5 per ogni fumogeno in una finestra aperta (+9 nella stanza di Franci), -3 per
+  quelli sprecati. Se Franci esce (80% di fumo in casa): +40 e +15 per ogni secondo che avanza; se
+  non esce, un quinto della percentuale di fumo.
+- **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana), +5 per ogni
+  ombrellone ripreso; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +40, 4 = +70, 5 = +100.
+- **L'Ingiocabile** (35 s): le mosse da pro (le scelte uguali alla strategia di base) di fila: la
+  prima 15, poi 10 in più ognuna (fino a 75); una mossa sbagliata toglie 20 e la serie riparte. Le
+  fiches vinte (sopra le 100 di partenza) valgono 0,2 l'una. Al verde, finisce prima.
+- **MaraZio** (35 s): 1 punto a palleggio per il moltiplicatore della serie (x1,5 ogni 5 di fila,
+  fino a x3), +1 se perfetto, +20 per il pallone d'oro; alla fine la serie migliore: 4 a palleggio
+  sotto i 12, poi 70 più 15 per ogni palleggio oltre i 12. Vittoria con una serie di 12.
+- **Il Passo del Passaseo** (35 s): 0,1 punti per metro, 0,5 per pedalata perfetta (doppia allo
+  sprint); se arrivi in cima prima del Passaseo, +20 e +110 per ogni secondo di vantaggio. Se
   nessuno arriva in cima, vince chi è più avanti allo scadere.
-- **Spalma il Bota!** (35 s): 0,8 per ogni % di pelle coperta di crema alla fine del primo atto,
-  6 al secondo con l'ombra sulla macchia di sole, +10 per ogni zona calda spenta, +5 per ogni
-  gabbiano scacciato, più 2 per ogni punto di pelle sana sotto il 40% di scottatura. Vittoria con
-  meno del 18% di pelle scottata.
-- **La Spina del PowerStation** (35 s): pinta 5, boccale 8, calice 9, +3 se PERFETTA (al centro
-  della zona verde). Beppe fa 6 punti per ogni sua pinta. Vittoria se fai più punti di Beppe.
-- **Arriva ReGrorio!** (35 s): 1 punto per ogni secondo vivo, 1 per ogni moneta, 6 per la
-  corona, 2 per ogni schivata all'ultimo. 3 vite. Vittoria se arrivi in fondo.
-
-- **Panino** (35 s): +10 per ogni ingrediente preso al momento giusto, +30 per ogni ordine
-  servito (+10 per ogni ingrediente oltre i tre, +10 se fatto in meno di 8 s), -3 per un
-  ingrediente fuori ordine, -5 per un crollo, -10 per ogni schifezza (il totale non va sotto
-  zero). Vittoria con almeno 3 ordini serviti.
-- **Mani** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava
-  trascinando via un piatto (è un recupero, vale meno: se no converrebbe lasciarli
-  prendere apposta), +2 per il guanto tolto, +15 per ogni piatto ancora tuo alla
-  fine. Vittoria con almeno 3 piatti su 5; persi tutti, finisce prima.
-- **Il Passaggiorgio** (35 s): +10 ogni volta che Giorgio viene tirato fuori (+5 se era già
-  quasi dentro), +15 se lo fermi prima che salga da Emilio, +50 ogni volta che si mette al volante
-  della sua A3, -25 per ogni passaggio scroccato (anche da Emilio), -5 se si tira fuori il sosia
-  incappucciato (i punti non vanno mai sotto zero). Vittoria se guida almeno 4 volte.
-- **Petri Tentacolari** (35 s): +10 per ogni ragazza che arriva al tavolo delle amiche, più
-  la serie (fughe di fila senza nessuna agganciata nel frattempo: +5 alla seconda, +10 alla
-  terza, fino a +20), -15 per ogni ragazza ancora agganciata alla fine (il totale non va
-  sotto zero). Vittoria con almeno 8 ragazze salvate.
-- **L'Incubo degli Scapoli** (35 s): ogni freccia perfetta 10, buona 5 (d'oro il doppio), per
-  il moltiplicatore della serie; +25 per ogni ragazza dalla tua parte alla fine. Vittoria con
-  almeno 3 ragazze su 5.
-- **Emilio in Retromarcia** (35 s): +10 per ogni cane tolto dalla zona rossa all'ultimo
-  istante; se Emilio esce dal cancello, +40 e +20 per ogni vita rimasta (sono 3). Vittoria
-  se la macchina esce dal cancello prima che scada il tempo con almeno una vita; al terzo
-  spavento finisce prima.
-- **Beer Pong al Pallaio** (35 s): +10 per ogni bicchiere centrato, +20 se di rimbalzo, +5 in più
-  quando si è IN FIAMME (dal secondo centro di fila), +25 per ogni triangolo finito, e alla fine
-  +5 per ogni bicchiere tuo ancora in piedi. Vittoria se hai tolto più bicchieri di quanti te ne
-  hanno tolti; se li perdi tutti, finisce prima.
-- **Provini a X-Factor** (35 s): 10 punti per ogni secondo intonato (si contano anche le
-  frazioni), per il moltiplicatore della serie (+0,5 ogni 3 secondi di fila intonati, fino a x3;
-  alla prima stonatura torna a x1); le note con la stella valgono doppio se tenute senza
-  stonare; +40 per l'acuto finale tenuto fino in fondo; +50 per ogni SÌ dei giudici. Ogni giudice
-  dice SÌ se sei stato intonato almeno per la sua soglia (la percentuale del tempo cantato: 55%
-  il Commosso, 62% la Diva, 68% MC Catena, 86% il Produttore). Vittoria con almeno 3 SÌ su 4:
-  chi passa prende almeno l'argento. In Lampo (15 secondi) l'acuto non c'è e le soglie, che sono
-  percentuali, restano quelle.
-- **Sego** (35 s): +3 per ogni fumogeno in una finestra aperta (+6 nella stanza di
-  Franci), -2 per quelli sprecati. Se Franci esce (80% di fumo in casa): +50 e +2
-  per ogni secondo che avanza; se non esce, metà della percentuale di fumo.
+- **Spalma il Bota!** (35 s): 0,4 per ogni % di pelle coperta di crema alla fine del primo atto, 3 al
+  secondo con l'ombra sulla macchia di sole, +5 per ogni zona calda spenta, +3 per ogni gabbiano
+  scacciato; se finisci sotto il 20% di pelle scottata, +50 e 10 per ogni punto sotto il 20.
+- **Il Passaggiorgio** (35 s): ogni guidata vale 10 più della precedente (10, 20, 30, 40...), +2 ogni
+  volta che Giorgio viene tirato fuori (+2 se era già quasi dentro), +5 se lo fermi o lo tiri giù
+  dalla macchina di Emilio, -10 per ogni passaggio scroccato, -3 per il sosia (mai sotto zero).
+  Vittoria con 4 guidate.
+- **Petri Tentacolari** (35 s): ogni ragazza salvata vale più della precedente (2,5 x quante ne hai
+  salvate: 3, 5, 8, 10...), più la serie (+2 alla seconda di fila, fino a +8); -10 per ogni ragazza
+  ancora agganciata alla fine. Vittoria con 8 ragazze.
+- **L'Incubo degli Scapoli** (35 s): freccia perfetta 1, buona 0,5 (d'oro il doppio), per il
+  moltiplicatore della serie; alla fine le ragazze dalla tua parte: sotto le 3 niente, 3 = +70,
+  4 = +140, 5 = +200.
+- **Emilio in Retromarcia** (35 s): VIA LIBERA, ogni scatto della macchina finito senza spaventare
+  nessun cane: il primo di fila vale 4, il secondo 8, il terzo 12... (uno spavento azzera la serie);
+  +5 per ogni cane tolto dalla zona rossa all'ultimo; se Emilio esce dal cancello, le vite rimaste
+  (2 = +40, 3 = +150). Vittoria se esce con almeno 2 vite. I cani sono cinque (Morgan I-V: due
+  pigri, uno della pallina, due golosi).
+- **Beer Pong al Pallaio** (35 s): si parte da 80 (la partita pari): +20 per ogni bicchiere centrato,
+  +40 se di rimbalzo, +10 in più quando si è IN FIAMME, +40 per ogni triangolo finito; -20 per ogni
+  bicchiere tuo che ti centrano. Un bicchiere più di loro è il bronzo.
+- **Provini a X-Factor** (35 s): 10 punti per ogni secondo intonato (sul tempo della canzone), per
+  il moltiplicatore della serie (+0,5 ogni 3 secondi di fila, fino a x3); le note con la stella
+  valgono doppio se tenute senza stonare; +40 per l'acuto finale tenuto fino in fondo. I giudici
+  votano sui punti: il Commosso dice SÌ da 0,6 volte il bronzo, la Diva da 0,8, MC Catena dal
+  bronzo, il Produttore da 1,8; con 3 SÌ su 4 si passa, cioè proprio col bronzo. In Lampo (15
+  secondi) l'acuto non c'è e le soglie dei giudici sono in proporzione.
+- **La pizza dal Boni** (35 s): ogni pizza giusta vale più della precedente (30, 35, 40, 45...),
+  +5 se consegnata entro 6 secondi senza rivedere il foglietto, +2 per ogni pizza giusta di fila
+  dopo la prima. Vittoria con 3 pizze giuste (il bronzo; 6 pizze perfette sono l'oro) senza farsi
+  scoprire tutti e due: se il Boni li scopre tutti e due, FUORI TUTTI! e i punti si fermano a 90.
+- **La ballata del Pallaio** (35 s): ogni strofa giusta vale più della precedente (10, 15, 20,
+  25...), per la serie (+10% per ogni strofa giusta di fila dopo la prima); +60 per la morale se
+  sono giuste tutte e 8. Vittoria con 5 strofe giuste su 8 (il bronzo); 7 giuste di fila sono
+  l'argento, tutte e 8 l'oro. In Lampo (la riga in alto: 4 strofe) bastano 3 giuste.
 
 Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono nei file di configurazione:
 `js/config/microgiochi/<id>.js`, uno per microgioco.
@@ -774,13 +840,13 @@ giocatori automatici (`test/bot.py`, per tarare le medaglie) e alla prova delle 
 (`test/prestazioni.py`, con la CPU rallentata come un telefono). Le prove da fare a mano sono
 in `note/test-manuali.md`.
 La cartella `test/` non fa parte del gioco: non va caricata sul sito.
-(Il beer pong, microgioco e modalità, è arrivato dopo e in quelle prove non c'è ancora: va
-aggiunto alle prove di ogni microgioco, a quelle delle modalità e ai giocatori automatici di
-`test/bot.py`. Per chi li scrive: il tiro si può dare anche dal codice, `scena.T.tira(m, p)`, e
-`gestoPer(x, y, tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere.
-Lo stesso vale per "Provini a X-Factor" e per i due personaggi nuovi, Tini e Oli. Per chi scrive
-il suo giocatore automatico: la melodia è in `scena.note` (`da` e `a` in ottavi, `pos` da 0 a 6),
-il tempo in `scena.pos`, e il cursore si sposta con `scena.diUnaNota(+1 o -1)`.)
+Tutti i microgiochi sono nelle prove e hanno il loro giocatore automatico in `test/bot.py`
+(la modalità Beer Pong, la partita vera a tiri alternati, non ancora). Per chi scrive un giocatore
+automatico: nel beer pong il tiro si può dare dal codice, `scena.T.tira(m, p)`, e `gestoPer(x, y,
+tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere; nel provino la melodia è
+in `scena.note` (`da` e `a` in ottavi, `pos` da 0 a 6), il tempo in `scena.pos`, e il cursore si
+sposta con `scena.diUnaNota(+1 o -1)`; nella ballata la strofa in corso è `scena.armata`, la casella
+illuminata `scena.bersaglio`, e le vignette si scambiano con `scena.scambia(a, b)`.
 
 ## Struttura
 
@@ -828,7 +894,8 @@ js/
   sessione.js            stato della partita per N giocatori: chi gioca, turni, record,
                          classifica del round e generale, "contro se stesso"
   audio.js               effetti 8-bit e musica (Web Audio API); per il provino anche la
-                         melodia guida e le voci continue dei cantanti (guida, vaiA, voce)
+                         melodia guida e le voci continue dei cantanti (guida, vaiA, voce);
+                         la melodia cantata da Lori nella ballata (notaCanto)
   sprites.js             crea tutte le texture all'avvio; preparaGiocatore (calci e
                          doppione di chi sta per giocare), ritratto (la testa di un
                          personaggio, per selezione e classifiche)
@@ -836,8 +903,8 @@ js/
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES)
-    personaggi.js        i diciannove personaggi (con Emilio, Pastaffi e i cantanti Tini e
-                         Oli), le ragazze delle due discoteche, il buttafuori e i quattro
+    personaggi.js        i ventuno personaggi (con Emilio, Pastaffi, i cantanti Tini e
+                         Oli, il Boni e Lori), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
@@ -868,6 +935,13 @@ js/
     provino.js           il palco del talent (inventato) di "Provini a X-Factor": la grande
                          X luminosa, i fari, il tavolo dei giudici, il pubblico con gli
                          accendini, la pianola, la chiave di violino e la nota del cursore
+    taverna.js           "La pizza dal Boni": la taverna col forno a legna, la tavola lunga
+                         con la tovaglia a quadri, il bancone con la pasta e le ciotole, gli
+                         ingredienti, il foglietto, i nascondigli e i travestimenti
+    piazzetta.js         "La ballata del Pallaio": la piazzetta davanti al Pallaio di sera
+                         con le lucine, il cartellone del cantastorie, il telo, i tavolini,
+                         e le vignette (vignetta(): piccole scene coi personaggi e gli
+                         oggetti del gioco, composte all'inizio di ogni ballata)
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
@@ -896,6 +970,7 @@ js/
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
     RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
+    PizzaScene.js  BallataScene.js
 ```
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
@@ -910,12 +985,13 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
 - `stile` dei capelli: `ricci` (Passaseo), `ricciMedi` (Riccardo: gli stessi riccioli ma
   più raccolti), `indietroLungo` (Giorgio: all'indietro, ai lati fino al lobo),
   `spuntato` (il Petri: corti, tirati su a punte), `indietro`, `corto`, `ciuffo`, `grigio`, `rasato` (Marsupino),
-  `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale, l'Ingiocabile),
+  `stempiato` (Guerra), `spettinato` (Sego), `ricciCorti` (il Generale, l'Ingiocabile, Lori),
   `lunghiBagnati` (lo Zio); per le ragazze della disco `lunghi`, `caschetto`, `ricciLunghi`,
   `coda`, `chignon`; con `rasato`, `rasatoScuro: true` fa vedere la rasatura (il Bota);
   `mossi` (il Manna: corti e spettinati, con le ciocche sulla fronte); `taglio` (le ragazze
   del Manna, con `taglio`: `lisci`, `ricci`, `caschetto`, `coda`, `chignon`); `rasta` (Tini: i
-  rasta lunghi sulle spalle) e `ricciLunghetti` (Oli: ricci scuri fino al collo)
+  rasta lunghi sulle spalle) e `ricciLunghetti` (Oli: ricci scuri fino al collo); `sfumato` (il
+  Boni: corti sopra, coi lati e la nuca sfumati quasi a zero)
 - `barba`: `nessuna`, `accenno`, `ispida`, `pizzetto`, `pizzettoBaffi`, `piena`, `folta`, `corta`
 - `occhiali: { montatura, lenti, tartaruga? }` sul viso (a Marsupino scivolano sul
   naso quando si spaventa), oppure con `inMaglietta: true` appesi alla maglietta;
@@ -947,13 +1023,14 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   bottoni grossi, con `camicia`, `quadretti` e `bottoni`), `piumino` (con `camicia` a
   righe e `catenina`), `mimetica`,
   `croupier` (gilet con `manica` e `papillon`), `scout` (con `fazzoletto` a righe),
-  `camicia` (Giorgio vestito da sera), `felpa` (col cappuccio abbassato: il Petri),
+  `camicia` (Giorgio vestito da sera, il Boni), `felpa` (col cappuccio abbassato: il Petri),
   `abito` (il vestito a bretelline delle ragazze: con `pantaloni` del colore della pelle),
   `vestitino` (il vestito delle ragazze del Manna), `canottiera` (il Manna: con `catenina`,
   `cintura` e `fibbia`), `chiodo` (il giubbotto di pelle di Emilio: `sotto` = colore della
   maglietta, `borchie` = colore delle borchie),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
+  con `tshirt`, `bottoni: true` fa i bottoncini sotto il collo (Lori);
   `corti: true` per i pantaloncini, `calzettoni` per i calzettoni, `infradito: true`
   per i piedi nudi nelle infradito
 
@@ -986,6 +1063,17 @@ con le braccia al cielo, `tini_indica` col dito puntato, e lo stesso per `oli_`)
 giudici inventati `giudice0_normale` ... `giudice3_normale` (anche `_felice`, `_orecchie` con le
 mani sulle orecchie e `_no`): sono in `GIUDICI`, in fondo a `js/grafica/personaggi.js`. Le pose
 nuove (`microfono`, `tiIndico`, `orecchie`) e l'espressione `canta` si possono dare a chiunque.
+Per "La pizza dal Boni" il Boni con la pala (`boni_pala`), che grida l'ordinazione con le mani a
+coppa (`boni_grida`), che corre arrabbiato (`boni_corre`), che beve dalla caraffa (`boni_beve`),
+"vi ho beccati!" (`boni_beccati`), che caccia gli imbucati con la pala alzata (`boni_caccia`) e
+furioso (`boni_rabbia`); Oli e il Sego che fanno l'occhiolino sotto la tovaglia
+(`oli_occhiolino`, `sego_occhiolino`). Per "La ballata del Pallaio" Lori che canta con la mano sul
+cuore (`lori_canta`), che alza la bacchetta (`lori_alza`), che batte (`lori_batte`), confuso
+(`lori_confuso`), che fulmina il garzone (`lori_fulmina`), che si ripara dai pomodori
+(`lori_ripara`) e l'inchino (`lori_inchino`); la bacchetta, lunga, la disegna la scena (va dalla
+mano alla casella). Le pose sono in `POSE` (`pala`, `grida`, `corre`, `beve`, `caccia`, `cuore`,
+`alza`, `batte`, `gratta`, `inchino`), gli oggetti in mano (`pala`, `palaAlta`, `caraffa`) in
+`accessorio()`.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
 `bgDisco` (vista dall'alto) e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo
@@ -996,7 +1084,7 @@ disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno r
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`) apre subito quel microgioco, in
+`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`, `pizza`, `ballata`) apre subito quel microgioco, in
 allenamento, col primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per
 esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
 "contro se stesso").
@@ -1004,7 +1092,7 @@ esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto d
 ## Aggiungere un personaggio giocabile
 
 I personaggi che si possono scegliere sono quelli dell'elenco `personaggiGiocabili` in
-`js/config.js` (oggi quindici). Per renderne giocabile uno che c'è già tra i
+`js/config.js` (oggi diciassette). Per renderne giocabile uno che c'è già tra i
 `PERSONAGGI` di `js/grafica/personaggi.js` basta **una riga**:
 
 ```js
@@ -1027,7 +1115,8 @@ Per un personaggio del tutto nuovo, prima lo si disegna: una voce in `PERSONAGGI
 coi parametri descritti qui sopra (le cinque espressioni si creano da sole
 all'avvio), poi la riga in `personaggiGiocabili`.
 
-La griglia ha sei colonne e posto per tre righe (diciassette personaggi più "A
+La griglia ha cinque colonne (così nella cella ci sta il nome breve, `breve` nella riga del
+personaggio, se il nome è lungo) e posto per quattro righe (diciannove personaggi più "A
 CASO"): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
 `js/scenes/partita.js`). Al Bancone la fila dei personaggi si stringe da sola. Ognuno ha un personaggio diverso, quindi non si può essere
 più dei personaggi giocabili: `maxGiocatori` va tenuto entro quel numero.

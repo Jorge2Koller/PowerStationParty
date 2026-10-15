@@ -25,16 +25,15 @@ export default {
   obiettivo: 'Almeno 3 SÌ su 4 dai giudici!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
-  // Ritarate dopo la serata di prova (era più facile: 150, 250, 650) col giocatore automatico:
-  // quello bravo (segue la melodia leggendo il pentagramma) fa 530-545 con 4 SÌ, chi muove a caso
-  // 40-45, chi sta fermo 25. Chi passa il provino (3 SÌ, almeno il 62-68% intonato) prende l'argento.
-  medaglie: { bronzo: 150, argento: 280, oro: 480 },
+  // Revisione 4, la stessa scala per tutti (erano 150 / 280 / 480, con 50 punti per ogni SÌ): il
+  // giocatore automatico che segue la melodia fa 330-355 con l'acuto, chi muove a caso poche decine.
+  // I giudici votano sui punti (vedi giudici): 3 SÌ su 4 sono proprio il bronzo.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
 
   // --- punti ---
   puntiSecondo: 10,         // per ogni secondo intonato (si contano le frazioni), per il moltiplicatore
   serie: { ogni: 3, passo: 0.5, max: 3 },   // il moltiplicatore: +0,5 ogni 3 secondi di fila intonati, fino a x3
   bonusAcuto: 40,           // l'acuto finale tenuto fino in fondo (intonato per almeno "tenuta" del tempo)
-  bonusSi: 50,              // per ogni SÌ dei giudici
   // (le note d'oro valgono doppio: a fine nota, se non l'hai mai stonata, si riprendono i suoi punti)
 
   // --- la nota di chi gioca ---
@@ -85,27 +84,29 @@ export default {
   vibrato: { dopo: 0.45, cent: 16, acuto: 2.4 },      // sulla nota giusta, tenuta: un po' di vibrato (sull'acuto, tanto di più)
   stonata: { cala: [55, 120], secondi: 0.9, tremolo: 48, crepa: 0.6 },   // sbagliata: calante (in cent, sempre di più), tremolio largo, la voce si incrina
 
-  // --- i giudici (inventati), nell'ordine in cui siedono. soglia = quanto bisogna essere stati
-  // intonati (da 0 a 1, sul tempo cantato) perché dica SÌ: è una percentuale, quindi vale uguale
-  // nelle partite corte (Lampo). La lucina sul tavolo dice già come la sta pensando.
-  // (Nessuna soglia sotto 0.4: chi muove a caso, o resta fermo su una nota di mezzo, azzecca per
-  // sbaglio un quarto del tempo, e non deve strappare neanche un SÌ. Alzate dopo la serata di
-  // prova: prima 0,47, 0,55, 0,78, 0,4. Il produttore resta il più severo.)
+  // --- i giudici (inventati), nell'ordine in cui siedono. soglia = quanti punti vogliono per
+  // dire SÌ, in proporzione al bronzo (1 = i punti del bronzo). Con 3 SÌ su 4 si vince, e il terzo
+  // giudice più facile (MC CATENA) sta proprio sul bronzo: così il verdetto coincide sempre con la
+  // medaglia (la regola di tutti i microgiochi: bronzo = vittoria). In Lampo, più corto, le soglie
+  // scalano con la durata. La lucina sul tavolo diventa verde quando i tuoi punti passano la sua
+  // soglia, e la barra degli applausi si riempie coi punti.
+  // (Prima guardavano la percentuale di intonazione, 0,62, 0,68, 0,86 e 0,55, e ogni SÌ dava 50
+  // punti: si poteva avere il bronzo col NO dei giudici, o il SÌ senza il bronzo.)
   siPerVincere: 3,
   giudici: [
-    { nome: 'LA DIVA', soglia: 0.62, si: ['Tesoro, sei una stella!', 'Mi hai fatto venire i brividi.', 'Divino. Quasi come me.'], no: ['Per me è no, tesoro.', 'Mi si è sciolto il trucco.', 'Ho sentito di meglio in ascensore.'] },
-    { nome: 'MC CATENA', soglia: 0.68, si: ['Bro, spacca!', 'Bootcamp!', 'Flow pulito, rispetto.'], no: ['Bro... no.', 'Zero flow.', 'Non ho parole... in senso brutto.'] },
-    { nome: 'IL PRODUTTORE', soglia: 0.86, si: ['Si può lavorare.', 'Non male. Ho detto non male.', 'Firmate qui.'], no: ['Per me è no.', 'Ho un aereo da prendere.', 'Avanti il prossimo.'] },
-    { nome: 'IL COMMOSSO', soglia: 0.55, si: ['Sto piangendo! Sì!', 'Mi avete toccato il cuore.', 'Che emozione, ragazzi!'], no: ['Piango... ma di dispiacere.', 'Mi dispiace tanto, è no.'] },
+    { nome: 'LA DIVA', soglia: 0.8, si: ['Tesoro, sei una stella!', 'Mi hai fatto venire i brividi.', 'Divino. Quasi come me.'], no: ['Per me è no, tesoro.', 'Mi si è sciolto il trucco.', 'Ho sentito di meglio in ascensore.'] },
+    { nome: 'MC CATENA', soglia: 1, si: ['Bro, spacca!', 'Bootcamp!', 'Flow pulito, rispetto.'], no: ['Bro... no.', 'Zero flow.', 'Non ho parole... in senso brutto.'] },
+    { nome: 'IL PRODUTTORE', soglia: 1.8, si: ['Si può lavorare.', 'Non male. Ho detto non male.', 'Firmate qui.'], no: ['Per me è no.', 'Ho un aereo da prendere.', 'Avanti il prossimo.'] },
+    { nome: 'IL COMMOSSO', soglia: 0.6, si: ['Sto piangendo! Sì!', 'Mi avete toccato il cuore.', 'Che emozione, ragazzi!'], no: ['Piango... ma di dispiacere.', 'Mi dispiace tanto, è no.'] },
   ],
   frasiVittoria: ['SEI AI BOOTCAMP!'],
   frasiSconfitta: ['È UN NO PER ME'],
   frasiColpa: ['È colpa sua!', 'Ci ha dato la nota sbagliata!', 'Suonava un\'altra canzone!'],
 
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
-  // questi valori. Un oggetto al posto di un elenco (atti, giudici) moltiplica quei campi in ogni voce.
+  // questi valori. Un oggetto al posto di un elenco (atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { tolleranza: 0.26, grazia: 0.24, graziaSalto: 0.08, scorrimento: 14, atti: { durate: 1.4, salto: 0.75 }, giudici: { soglia: 0.88 }, acuto: { tremoli: 2 } },
-    difficile: { tolleranza: 0.16, grazia: 0.13, graziaSalto: 0.045, scorrimento: 18, atti: { durate: 0.8, salto: 1.2 }, giudici: { soglia: 1.06 }, acuto: { tremoli: 5 } },
+    facile: { tolleranza: 0.26, grazia: 0.24, graziaSalto: 0.08, scorrimento: 14, atti: { durate: 1.4, salto: 0.75 }, acuto: { tremoli: 2 } },
+    difficile: { tolleranza: 0.16, grazia: 0.13, graziaSalto: 0.045, scorrimento: 18, atti: { durate: 0.8, salto: 1.2 }, acuto: { tremoli: 5 } },
   },
 };

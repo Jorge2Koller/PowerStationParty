@@ -19,8 +19,9 @@ export default {
   ],
   obiettivo: 'Salva almeno 3 piatti su 5!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
-  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: schiaffi da 5-8 punti + 15 per piatto rimasto.
-  medaglie: { bronzo: 70, argento: 150, oro: 240 },   // (stima per 35 s)
+  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
+  // Revisione 4 (stessa scala per tutti: bronzo 100, argento 200, oro 300): erano 70 / 150 / 240.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   piattiMinimi: 3,
   // punti
   puntiSchiaffo: 5,      // schiaffo normale
@@ -28,7 +29,9 @@ export default {
   puntiSalvato: 4,       // ...se stava già trascinando via un piatto: è un recupero, vale meno
                          //    (altrimenti converrebbe lasciarli prendere apposta)
   puntiGuanto: 2,        // guanto da forno tolto (primo schiaffo)
-  puntiPiatto: 15,       // per ogni piatto ancora tuo alla fine
+  // alla fine, i piatti ancora tuoi (da 0 a 5): sotto i 3 niente, poi sempre di più. Così salvarne
+  // 3 è proprio il bronzo (prima: 15 punti a piatto, e si prendeva il bronzo anche con 2)
+  bonusPiatti: [0, 0, 0, 50, 80, 120],
   vicino: 30,
   // schiaffi
   raggioSchiaffo: 15,    // quanto vicino al palmo bisogna cliccare (unità)

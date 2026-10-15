@@ -23,6 +23,8 @@ import scapoli from './config/microgiochi/scapoli.js';
 import retromarcia from './config/microgiochi/retromarcia.js';
 import beerpongMicro from './config/microgiochi/beerpong.js';
 import xfactor from './config/microgiochi/xfactor.js';
+import pizza from './config/microgiochi/pizza.js';
+import ballata from './config/microgiochi/ballata.js';
 import beerpong from './config/beerpong.js';
 import { sfotto, sfottoTanti, frasiPareggio } from './config/frasi.js';
 import premi from './config/premi.js';
@@ -49,23 +51,26 @@ export const CONFIG = {
   //   soprannome = la riga sotto il nome nella selezione, colore = il colore del giocatore
   //   (diverso da tutti gli altri), esulta / perde = le sue frasi quando vince e quando perde.
   // Chi non è in questo elenco (Marsupino, Beppe, lo Zio, Emilio) resta solo ospite del suo microgioco.
+  // (breve: il nome nelle celle piccole, come la griglia della selezione, dove quello intero non entra)
   personaggiGiocabili: [
     { id: 'riccardo', nome: 'Riccardo', soprannome: 'Mister PowerStation', colore: '#ff6b5a', esulta: 'Stasera offro io. Forse.', perde: 'Era solo riscaldamento.' },
     { id: 'giorgio', nome: 'Giorgio', soprannome: 'Il Passaggiorgio', colore: '#5ab4ff', esulta: 'E adesso chi mi riporta a casa?', perde: 'Tanto guidava qualcun altro.' },
-    { id: 'marco', nome: "O'Sfurnacchiat", soprannome: 'Marco De Luca', colore: '#ffb02e', esulta: 'Liscio come una barba fatta bene!', perde: 'Mi sono tagliato da solo.' },
+    { id: 'marco', nome: "O'Sfurnacchiat", breve: 'Marco', soprannome: 'Marco De Luca', colore: '#ffb02e', esulta: 'Liscio come una barba fatta bene!', perde: 'Mi sono tagliato da solo.' },
     { id: 'greg', nome: 'ReGrorio', soprannome: 'Greg, il re della Golf', colore: '#b06aff', esulta: 'Largo, passa il re!', perde: 'Mi si è ingolfata la Golf.' },
     { id: 'guerra', nome: 'Guerra', soprannome: 'Mani lunghe', colore: '#4ade80', esulta: 'E ora si mangia!', perde: 'A stomaco vuoto non rendo.' },
     { id: 'sego', nome: 'Sego', soprannome: 'Franci', colore: '#ff7ac8', esulta: 'Scendo, scendo... a festeggiare!', perde: 'Io stavo ancora dormendo.' },
-    { id: 'generale', nome: 'Il Generale', soprannome: 'Torricelli', colore: '#9fb86a', esulta: 'Missione compiuta, soldati!', perde: 'Ritirata strategica.' },
-    { id: 'ingiocabile', nome: "L'Ingiocabile", soprannome: 'Il banco vince sempre', colore: '#2dd4bf', esulta: 'Il banco vince. Sempre.', perde: 'Avete barato, lo so.' },
+    { id: 'generale', nome: 'Il Generale', breve: 'Generale', soprannome: 'Torricelli', colore: '#9fb86a', esulta: 'Missione compiuta, soldati!', perde: 'Ritirata strategica.' },
+    { id: 'ingiocabile', nome: "L'Ingiocabile", breve: 'Ingiocabile', soprannome: 'Il banco vince sempre', colore: '#2dd4bf', esulta: 'Il banco vince. Sempre.', perde: 'Avete barato, lo so.' },
     { id: 'passaseo', nome: 'Passaseo', soprannome: 'Il ciclista', colore: '#ffe14a', esulta: 'In volata!', perde: 'Ho bucato.' },
-    { id: 'bota', nome: 'Il Bota', soprannome: 'Mister abbronzatura', colore: '#ff8a3a', esulta: 'Abbronzato e vincente.', perde: 'Mi sono scottato.' },
+    { id: 'bota', nome: 'Il Bota', breve: 'Bota', soprannome: 'Mister abbronzatura', colore: '#ff8a3a', esulta: 'Abbronzato e vincente.', perde: 'Mi sono scottato.' },
     { id: 'petri', nome: 'Petri', soprannome: 'Il Piovra', colore: '#8fa8ff', esulta: 'Ci ho messo le mani, tutte!', perde: 'Mi sono impigliato.' },
-    { id: 'manna', nome: 'Il Manna', soprannome: 'La Calamita', colore: '#f6c63a', esulta: 'Ovviamente.', perde: 'Era bianca! BIANCA!' },
+    { id: 'manna', nome: 'Il Manna', breve: 'Manna', soprannome: 'La Calamita', colore: '#f6c63a', esulta: 'Ovviamente.', perde: 'Era bianca! BIANCA!' },
     { id: 'pastaffi', nome: 'Pastaffi', soprannome: 'Il figlio di Emilio', colore: '#c98a4e', esulta: 'Papà, hai visto?', perde: 'Papà, non guardare.' },
     // i due cantanti di "Provini a X-Factor"
     { id: 'tini', nome: 'Tini', soprannome: 'Social Tedio', colore: '#b6f23c', esulta: 'Questa finisce nel disco.', perde: 'Il pubblico non era pronto.' },
     { id: 'oli', nome: 'Oli', soprannome: 'Vanz', colore: '#4d7cff', esulta: 'Sold out, ragazzi!', perde: 'Avevo il microfono spento.' },
+    { id: 'boni', nome: 'Boni', soprannome: 'Il Nutrizionista', colore: '#e5383b', esulta: 'Pizza per tutti: è dietetica, lo dico io!', perde: 'Troppi carboidrati. Mi ritiro.' },
+    { id: 'lori', nome: 'Lori', soprannome: 'Il Cantastorie', colore: '#f4e3c1', esulta: 'E vissero tutti felici e contenti!', perde: 'Il pubblico non capisce l\'arte.' },
   ],
 
   // Punti classifica per posizione nel round, da tre giocatori in su (in due si contano i punti dei
@@ -79,10 +84,10 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata'],
 
   // un file per microgioco, nell'ordine della raccolta (vedi js/config/microgiochi/)
-  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor },
+  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor, pizza, ballata },
 
   // il beer pong: il tiro, la sbronza, le gag e le reazioni, in comune tra il microgioco qui sopra
   // e la modalità BEER PONG (js/config/beerpong.js)

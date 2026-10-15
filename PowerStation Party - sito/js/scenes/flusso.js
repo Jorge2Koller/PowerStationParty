@@ -482,20 +482,57 @@ export class FinaleScene extends Phaser.Scene {
     const P = Progressi.dopoSfida(Sessione);
     if (P.pinte) this.time.delayedCall(1800, () => scritta(this, 240, 132, `+${P.pinte} PINTE`, { size: 14, color: '#ffe14a', durata: 1200, depth: 4000 }));
     annunciaTrofei(this, P.trofei, 2600);
-    if (Sessione.tipo === 'squadre') { finaleSquadre(this); this.pulsanti((i) => [[152, 240, 328][i], 258], { larghezza: 84 }); }
+    if (Sessione.tipo === 'squadre') { finaleSquadre(this); this.pulsanti((i) => [[86, 186, 294, 394][i], 258], { larghezza: 88 }); }
     else if (Sessione.n >= 3) this.podio(); else this.aDue();
     pulsantiAngolo(this);
   }
 
-  // i tre pulsanti di fine partita: stessi giocatori e stessa modalità, altri personaggi, menu
+  // i pulsanti di fine partita: stessi giocatori e stessa modalità, altri personaggi, menu, e la
+  // foto del podio da mandare nel gruppo
   pulsanti(pos, o = {}) {
     const S = Sessione;
-    menuLista(this, [
+    this.menuFine = menuLista(this, [
       { label: 'RIVINCITA', azione: () => { S.rivincita(); this.scene.start('Intro'); } },
       { label: 'CAMBIA PERSONAGGI', azione: () => this.scene.start('Personaggi', { n: S.n }) },
+      { label: 'SALVA IL PODIO', azione: () => this.salvaPodio() },
       { label: 'MENU', azione: () => this.scene.start('Menu') },
     ], 0, 0, o.passo ?? 18, o.size ?? 7.5, { pos, larghezza: o.larghezza ?? 110, orizzontale: true });
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+  }
+
+  // La foto della classifica (senza i pulsanti), con il nome del gioco e la data: sul telefono si
+  // condivide (WhatsApp...) con la condivisione del sistema, sul computer si scarica.
+  salvaPodio() {
+    if (this.inFoto) return;
+    this.inFoto = true;
+    const via = [...(this.menuFine ?? []), this.menuFine?.evid, this.pannelloPulsanti].filter(Boolean);
+    via.forEach((o) => o.setVisible(false));
+    this.game.renderer.snapshot((img) => {
+      via.forEach((o) => o.setVisible(true));
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      const k = c.getContext('2d'), h = Math.round(c.height * 0.045);
+      k.drawImage(img, 0, 0);
+      k.font = `bold ${h}px sans-serif`; k.textAlign = 'right'; k.lineWidth = h * 0.22; k.strokeStyle = '#1f1430'; k.fillStyle = '#ffe14a';
+      const firma = `PowerStation Party  ·  ${new Date().toLocaleDateString('it-IT')}`;
+      k.strokeText(firma, c.width - h * 0.6, c.height - h * 0.6); k.fillText(firma, c.width - h * 0.6, c.height - h * 0.6);
+      c.toBlob(async (blob) => {
+        this.inFoto = false;
+        if (!blob) return;
+        const nome = `podio-powerstation-${new Date().toISOString().slice(0, 10)}.png`, file = new File([blob], nome, { type: 'image/png' });
+        try {
+          if (eTouch() && navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'PowerStation Party', text: 'Com\'è finita stasera:' });
+            return;
+          }
+        } catch (e) { if (e?.name === 'AbortError') return; }   // (condivisione annullata: va bene così)
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = nome;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        if (this.scene.isActive()) scritta(this, 240, 136, 'PODIO SALVATO!', { size: 14, color: '#7dff9a', durata: 900, depth: 4000 });
+      }, 'image/png');
+    });
   }
 
   // coriandoli che scendono dall'alto
@@ -573,7 +610,7 @@ export class FinaleScene extends Phaser.Scene {
     f.setScale(0);
     this.tweens.add({ targets: f, scale: 1, delay: 800, duration: 400, ease: 'Back.out' });
 
-    this.pulsanti((i) => [[152, 240, 328][i], 258], { larghezza: 84 });
+    this.pulsanti((i) => [[86, 186, 294, 394][i], 258], { larghezza: 88 });
   }
 
   // --- da tre in su: il podio, gli altri in fila sotto, l'ultimo disperato ---
@@ -632,7 +669,7 @@ export class FinaleScene extends Phaser.Scene {
     const f = txt(this, 66, 112, `"${frase}"`, { size: 6.4, wrap: 108 });
     f.setScale(0);
     this.tweens.add({ targets: f, scale: 1, delay: 700, duration: 400, ease: 'Back.out' });
-    pannello(this, 414, 96, 118, 78, { alfa: 0.55, bordo: null, raggio: 9 });
-    this.pulsanti((i) => [414, 74 + i * 22], { passo: 20, size: 7 });
+    this.pannelloPulsanti = pannello(this, 414, 106, 118, 98, { alfa: 0.55, bordo: null, raggio: 9 });
+    this.pulsanti((i) => [414, 73 + i * 22], { passo: 20, size: 7 });
   }
 }

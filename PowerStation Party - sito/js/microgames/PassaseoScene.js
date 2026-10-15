@@ -17,12 +17,12 @@ import { Sessione } from '../sessione.js';
 import { CONFIG } from '../config.js';
 import { casuale } from '../grafica/base.js';
 import { ritratto, aspettoDi } from '../sprites.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, perDito, multiTouch, puntatore } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, perDito, multiTouch, puntatore, puntiHud, numero } from '../fx.js';
 
 const XP = 150, YP = 196;      // dove sta chi gioca sullo schermo (il punto della strada sotto le ruote)
 const SCALA = 2.2;             // unità di schermo per metro, in orizzontale
 const RIPIDO = 3.2;            // le pendenze si disegnano più ripide di così (6% vero -> 19% a schermo)
-const RITMO = { x: 240, y: 252, mezza: 44 };   // la barra del ritmo, in basso
+const RITMO = { x: 240, y: 248, mezza: 68 };   // la barra del ritmo, in basso (grande: si gioca guardando lei)
 const BARRA = { x0: 140, x1: 340, y: 22 };     // la salita in alto: chi è dove
 const col = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
 
@@ -53,29 +53,34 @@ export class PassaseoScene extends MicrogiocoBase {
     // le due bici: il Passaseo un filo più in là (l'altra corsia), poi chi gioca
     const io = aspettoDi(this.giocatore.id), lui = aspettoDi('passaseo');
     this.ciclisti = [
-      { id: 'passaseo', ...this.colori(lui, '#f2c43a'), g: this.add.graphics().setDepth(18), testa: ritratto(this, 0, 0, 'passaseo', 25).setDepth(19), dy: -5 },
-      { id: this.giocatore.id, ...this.colori(io, this.giocatore.colore), g: this.add.graphics().setDepth(20), testa: ritratto(this, 0, 0, this.giocatore.id, 25).setDepth(21), dy: 0 },
+      { id: 'passaseo', ...this.colori(lui, '#f2c43a'), g: this.add.graphics().setDepth(18), testa: this.testaDi('passaseo', 25).setDepth(19), dy: -5 },
+      { id: this.giocatore.id, ...this.colori(io, this.giocatore.colore), g: this.add.graphics().setDepth(20), testa: this.testaDi(this.giocatore.id, 25).setDepth(21), dy: 0 },
     ];
-    this.indicatore = txt(this, 466, 120, '', { size: 7, ox: 1, color: '#f2c43a', depth: 40 });
+    // il Passaseo fuori dallo schermo: sul bordo, la sua faccia con la freccia e il distacco
+    this.indicatore = this.add.container(0, 0).setDepth(40).setVisible(false);
+    this.gIndicatore = this.add.graphics();
+    this.testoIndicatore = txt(this, 0, 11, '', { size: 8, color: '#ffe14a' });
+    this.indicatore.add([this.gIndicatore, this.testaDi('passaseo', 18).setPosition(0, -5), this.testoIndicatore]);
+    this.latoIndicatore = 0;
 
     // in alto: la salita col traguardo e le due facce; il distacco e la velocità
     pannello(this, 240, BARRA.y, 236, 18, { depth: 1000 });
     this.gBarra = this.add.graphics().setDepth(1001);
-    this.facce = [ritratto(this, 0, BARRA.y, 'passaseo', 13).setDepth(1002), ritratto(this, 0, BARRA.y, this.giocatore.id, 13).setDepth(1003)];
+    this.facce = [this.testaDi('passaseo', 13).setPosition(0, BARRA.y).setDepth(1002), this.testaDi(this.giocatore.id, 13).setPosition(0, BARRA.y).setDepth(1003)];
     this.testoDistacco = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
     this.testoVel = txt(this, 474, 49, '', { size: 7, ox: 1, depth: 1001, color: '#fff3d6' });
     this.hud = '';
 
     // in basso: la barra del ritmo (la pallina va da un pedale all'altro) e, col dito, le due metà
     this.gRitmo = this.add.graphics().setDepth(1000);
-    this.pedali = [im(this, RITMO.x - RITMO.mezza - 18, RITMO.y, 'pedaleSx', 0.62).setDepth(1001), im(this, RITMO.x + RITMO.mezza + 18, RITMO.y, 'pedaleDx', 0.62).setDepth(1001)];
+    this.pedali = [im(this, RITMO.x - RITMO.mezza - 24, RITMO.y, 'pedaleSx', 0.9).setDepth(1001), im(this, RITMO.x + RITMO.mezza + 24, RITMO.y, 'pedaleDx', 0.9).setDepth(1001)];
     if (eTouch()) {
       for (const [x, k, s] of [[52, 'pedaleSx', 'SINISTRO'], [428, 'pedaleDx', 'DESTRO']]) {
         im(this, x, 232, k, 1).setDepth(1001).setAlpha(0.85);
         txt(this, x, 256, s, { size: 7, color: '#ffe14a', depth: 1001 });
       }
     }
-    this.voto = txt(this, RITMO.x, RITMO.y - 18, '', { size: 8, depth: 1002 });
+    this.voto = txt(this, RITMO.x, RITMO.y - 22, '', { size: 9, depth: 1002 });
 
     // comandi
     const k = this.input.keyboard;
@@ -84,6 +89,10 @@ export class PassaseoScene extends MicrogiocoBase {
     this.input.on('pointerdown', (p) => { if (this.inCorso) this.pedala(puntatore(this, p).x < 240 ? 0 : 1); });
     this.disegna(0);
   }
+
+  // Una testa da spostare e ruotare intorno al suo centro. (ritratto() mette l'immagine col suo
+  // angolo in alto a sinistra: spostata con setPosition, la testa finiva di lato e sembrava staccata)
+  testaDi(id, lato) { return this.add.container(0, 0, [ritratto(this, 0, 0, id, lato)]); }
 
   // i colori di una bici: maglia, pantaloni, pelle, scarpe e telaio
   colori(p, telaio) {
@@ -325,11 +334,20 @@ export class PassaseoScene extends MicrogiocoBase {
     const xr = this.xPassaseo(this.trascorso);
     this.bici(this.ciclisti[0], xr, this.fasePassaseo(xr));
     this.bici(this.ciclisti[1], this.x, this.fase);
-    // il Passaseo fuori dallo schermo: la freccia col distacco
-    const q = this.aSchermo(xr), d = Math.round(xr - this.x);
-    this.indicatore.setVisible(q.x > 470 || q.x < 10);
-    if (q.x > 470) this.indicatore.setText(`PASSASEO ▶ +${d} m`).setPosition(474, Phaser.Math.Clamp(q.y - 40, 70, 200)).setOrigin(1, 0.5);
-    else if (q.x < 10) this.indicatore.setText(`◀ PASSASEO ${d} m`).setPosition(6, Phaser.Math.Clamp(q.y - 40, 70, 200)).setOrigin(0, 0.5);
+    // il Passaseo fuori dallo schermo: la sua faccia sul bordo, con la freccia e il distacco
+    const q = this.aSchermo(xr), d = Math.round(xr - this.x), lato = q.x > 462 ? 1 : q.x < 18 ? -1 : 0;
+    this.indicatore.setVisible(lato !== 0);
+    if (lato) {
+      if (lato !== this.latoIndicatore) {
+        const g = this.gIndicatore.clear();
+        g.fillStyle(0x1f1430, 0.88).fillRoundedRect(-21, -18, 42, 38, 8);
+        g.lineStyle(1.6, 0xf2c43a, 1).strokeRoundedRect(-21, -18, 42, 38, 8);
+        g.fillStyle(0xf2c43a, 1).fillTriangle(lato * 22, -8, lato * 22, 8, lato * 30, 0);
+      }
+      this.latoIndicatore = lato;
+      this.indicatore.setPosition(lato > 0 ? 448 : 32, Phaser.Math.Clamp(q.y - 40, 76, 192));
+      this.testoIndicatore.setText(`${d > 0 ? '+' : ''}${d} m`);
+    }
     this.disegnaHud(xr);
   }
 
@@ -355,7 +373,12 @@ export class PassaseoScene extends MicrogiocoBase {
     // la pedivella: mezzo giro a ogni pedalata (la pedalata sinistra spinge giù il pedale sinistro)
     const a = Math.PI * fase + Math.PI / 2, mov = P(0, -9);
     const pedale = (s) => P(Math.cos(a + (s ? Math.PI : 0)) * 4.6, -9 + Math.sin(a + (s ? Math.PI : 0)) * 4.6);
-    const anca = P(-5, -31), spalla = P(6, -43), manubrio = P(13, -31);
+    // Chi pedala non si inclina quanto la bici: la bici segue la strada, il corpo resta quasi dritto
+    // (ruota solo di un quarto della pendenza) e chino in avanti sul manubrio. Il corpo si misura
+    // dall'anca, sulla sella.
+    const anca = P(-5, -30), manubrio = P(13, -31), aB = ang * 0.25, cB = Math.cos(aB), sB = Math.sin(aB);
+    const Q = (dx, dy) => ({ x: anca.x + dx * cB - dy * sB, y: anca.y + dx * sB + dy * cB });
+    const spalla = Q(11, -11);
     const gamba = (s, scura) => {
       // il ginocchio: a metà tra anca e pedale, spostato in avanti (verso il manubrio) quanto serve
       const f = pedale(s), dx = f.x - anca.x, dy = f.y - anca.y, lungo = Math.hypot(dx, dy) || 1, L = 11.2;
@@ -377,14 +400,18 @@ export class PassaseoScene extends MicrogiocoBase {
     g.fillStyle(0x8a8e96, 1).fillCircle(mov.x, mov.y, 2.6);
     linea(mov, pedale(1), 1.4, 0x6a6e78); linea(mov, pedale(0), 1.4, 0x8a8e96);
     gamba(0, false);                       // la gamba di qua
-    // il busto chino sul manubrio, il braccio teso
+    // il busto chino sul manubrio (col contorno, come i personaggi), il collo e il braccio teso
+    linea(anca, spalla, 12, 0x2b1b17);
+    g.fillStyle(0x2b1b17, 1).fillCircle(spalla.x, spalla.y, 6.2).fillCircle(anca.x, anca.y, 5.6);
     linea(anca, spalla, 10, C.maglia);
-    g.fillStyle(C.maglia, 1).fillCircle(spalla.x, spalla.y, 5.2);
-    g.fillStyle(C.maglia, 1).fillCircle(anca.x, anca.y, 4.6);
+    g.fillStyle(C.maglia, 1).fillCircle(spalla.x, spalla.y, 5.2).fillCircle(anca.x, anca.y, 4.6);
+    const collo = Q(12, -14);
+    g.fillStyle(C.pelle, 1).fillCircle(collo.x, collo.y, 3.4);
     linea(spalla, manubrio, 3.2, C.pelle);
     g.fillStyle(C.pelle, 1).fillCircle(manubrio.x, manubrio.y, 1.8);
-    const testa = P(10, -55);
-    C.testa.setPosition(testa.x, testa.y).setRotation(ang * 0.6);
+    // la testa sta SULLE spalle: il mento appoggia sul collo (prima era più avanti e sembrava staccata)
+    const testa = Q(13, -22);
+    C.testa.setPosition(testa.x, testa.y).setRotation(aB);
   }
 
   disegnaHud(xr) {
@@ -398,10 +425,10 @@ export class PassaseoScene extends MicrogiocoBase {
     // il ritmo: la pallina va da un pedale all'altro; il pedale che tocca si accende
     const r = this.gRitmo, f = this.fase, px = RITMO.x - Math.cos(Math.PI * f) * RITMO.mezza, vicino = Math.abs(f - Math.round(f)) < 0.18;
     r.clear();
-    r.fillStyle(0x1f1430, 0.75).fillRoundedRect(RITMO.x - RITMO.mezza - 6, RITMO.y - 5, RITMO.mezza * 2 + 12, 10, 5);
-    for (const s of [-1, 1]) r.fillStyle(0x7dff9a, 0.35).fillRoundedRect(RITMO.x + s * RITMO.mezza - 6, RITMO.y - 4, 12, 8, 4);
-    r.fillStyle(this.tArrivo != null ? 0x8a8e96 : 0xffe14a, 1).fillCircle(px, RITMO.y, 4.2);
-    r.lineStyle(1.2, 0x1c1c22, 1).strokeCircle(px, RITMO.y, 4.2);
+    r.fillStyle(0x1f1430, 0.8).fillRoundedRect(RITMO.x - RITMO.mezza - 10, RITMO.y - 8, RITMO.mezza * 2 + 20, 16, 8);
+    for (const s of [-1, 1]) r.fillStyle(0x7dff9a, vicino && (s > 0) === (Math.round(f) % 2 === 1) ? 0.75 : 0.35).fillRoundedRect(RITMO.x + s * RITMO.mezza - 9, RITMO.y - 6.5, 18, 13, 6.5);
+    r.fillStyle(this.tArrivo != null ? 0x8a8e96 : 0xffe14a, 1).fillCircle(px, RITMO.y, 6.5);
+    r.lineStyle(1.6, 0x1c1c22, 1).strokeCircle(px, RITMO.y, 6.5);
     const lato = Math.round(f) % 2;
     this.pedali.forEach((p, i) => p.setAlpha(vicino && lato === i ? 1 : 0.55));
     // il distacco e la velocità (si riscrivono solo quando cambiano)
@@ -422,8 +449,8 @@ export class PassaseoScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, Math.round(this.x * P.metro + this.perfette * P.perfetta + (vittoria ? P.vittoria + vantaggio * P.secondo : 0))),
       vittoria,
-      riepilogo: `${Math.round(this.x)} m su ${Math.round(this.lunghezza)}, ${quanti(this.perfette, 'pedalata perfetta', 'pedalate perfette')}` + (arrivato ? `, in cima in ${t.toFixed(1)} s` : '') + (this.larghi ? `, ${quanti(this.larghi, 'tornante largo', 'tornanti larghi')}` : ''),
-      titoloFine: vittoria ? 'IN CIMA PER PRIMO!' : 'TI HA STACCATO!',
+      riepilogo: `${Math.round(this.x)} m su ${Math.round(this.lunghezza)}, ${quanti(this.perfette, 'pedalata perfetta', 'pedalate perfette')}` + (arrivato ? `, in cima in ${numero(t, 1)} s` : '') + (this.larghi ? `, ${quanti(this.larghi, 'tornante largo', 'tornanti larghi')}` : ''),
+      titoli: ['IN CIMA PER PRIMO!', 'TI HA STACCATO!'],
     };
   }
 
@@ -435,7 +462,9 @@ export class PassaseoScene extends MicrogiocoBase {
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });
     const vince = ris.vittoria ? this.giocatore.id : 'passaseo', perde = ris.vittoria ? 'passaseo' : this.giocatore.id;
     this.time.delayedCall(450, () => {
-      txt(this, 240, 26, ris.vittoria ? 'IN CIMA PER PRIMO!' : 'IL PASSASEO TI HA STACCATO!', { size: 17, color: ris.vittoria ? '#7dff9a' : '#ff6b5a', depth: 710 });
+      // (il titolo dice chi è arrivato su per primo solo se va d'accordo con la medaglia)
+      const titolo = ris.vittoria ? (ris.condizione ? 'IN CIMA PER PRIMO!' : 'BELLA SALITA!') : ris.condizione ? 'PRIMO, MA CHE FATICA!' : 'IL PASSASEO TI HA STACCATO!';
+      txt(this, 240, 26, titolo, { size: 17, color: ris.vittoria ? '#7dff9a' : '#ff6b5a', depth: 710 });
       Audio.sfx(ris.vittoria ? 'vittoria' : 'sconfitta');
       const v = im(this, 220, 290, `${vince}_felice`, 0.5).setOrigin(0.5, 1).setDepth(705);
       this.tweens.add({ targets: v, y: 262, scale: scalaDi(`${vince}_felice`, 1.45), duration: 420, ease: 'Back.out' });

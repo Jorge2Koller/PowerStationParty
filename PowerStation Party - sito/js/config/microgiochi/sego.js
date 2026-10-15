@@ -20,14 +20,17 @@ export default {
   obiettivo: 'Fai uscire Franci di casa!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: Franci fuori vale 50 + 2 al secondo avanzato + i fumogeni a segno.
-  medaglie: { bronzo: 40, argento: 110, oro: 170 },
+  // Revisione 4, la stessa scala per tutti (erano 40 / 110 / 170): far uscire Franci è il bronzo;
+  // con 6 secondi d'anticipo l'argento, con 12 l'oro. Se non esce, il fumo conta poco.
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
   soglia: 80,             // % di fumo in casa a cui Franci esce
   // punti
-  puntiFinestra: 3,       // fumogeno entrato da una finestra
-  puntiFranci: 6,         // ...nella stanza dove c'è Franci
-  malusSprecato: 2,       // fumogeno sul muro, sulle persiane chiuse o nel cortile
-  bonusUscita: 50,        // Franci esce
-  bonusSecondo: 2,        // ...più 2 punti per ogni secondo che avanza
+  puntiFinestra: 5,       // fumogeno entrato da una finestra (era 3)
+  puntiFranci: 9,         // ...nella stanza dove c'è Franci (era 6)
+  malusSprecato: 3,       // fumogeno sul muro, sulle persiane chiuse o nel cortile (era 2)
+  bonusUscita: 40,        // Franci esce (era 50)...
+  bonusSecondo: 15,       // ...più tanti punti per ogni secondo che avanza (erano 2)
+  puntiFumo: 0.2,         // se non esce: punti per ogni % di fumo in casa (era metà della %)
   // fumo (1 = stanza piena)
   fumoGranata: 0.6,       // quanto fumo porta un fumogeno nella stanza
   fumoVicine: 0.15,       // ...e nelle stanze accanto

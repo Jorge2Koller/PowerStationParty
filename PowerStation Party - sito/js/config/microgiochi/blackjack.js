@@ -10,24 +10,35 @@ export default {
   comandi: [
     '1, 2, 3 (o le fiches): punta. Poi C carta, S stai, D raddoppia (o i pulsanti)',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'Gioca come un pro: ogni mossa giusta vale fiches in più',
+    'Gioca come un pro: le mosse giuste di fila valgono sempre di più',
   ],
   comandiTouch: [
     'Tocca una fiche per puntare, poi CARTA, STAI o RADDOPPIA',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'Gioca come un pro: ogni mossa giusta vale fiches in più',
+    'Gioca come un pro: le mosse giuste di fila valgono sempre di più',
   ],
-  obiettivo: 'Finisci con più di 100 fiches!',
+  obiettivo: 'Mosse da pro e fiches vinte: fai almeno 100 punti!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: le fiches: si parte con 100, quindi sotto le 100 vale zero.
-  medaglie: { zero: 110, bronzo: 130, argento: 170, oro: 240 },   // (chi sta fermo: il banco punta il minimo per lui, finisce tra 90 e 110)
+  medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  // Il punteggio (revisione 4): le mosse da pro DI FILA (la prima vale puntiPro, ognuna dopo
+  // crescitaPro in più, fino a maxPro; una mossa sbagliata toglie malusSbagliata e la serie
+  // riparte) più le fiches VINTE, che contano poco (sono fortuna: puntiFiche a fiche, solo quelle
+  // sopra le 100 di partenza). Chi tocca a caso ne azzecca qualcuna, ma quasi mai tante di fila.
+  // Prima il punteggio erano le fiches in mano, con le 100 di partenza, e la mossa da pro dava
+  // fiches: toccando a caso si arrivava a 100, col bronzo a 130.
   fiches: 100,
+  puntiFiche: 0.2,
+  puntiPro: 15,
+  crescitaPro: 10,
+  maxPro: 75,
+  malusSbagliata: 20,
   // i tre atti: da quando (secondi), annuncio, secondi per puntare e per ogni scelta (poi il banco
-  // punta il minimo per te, o stai) e fiches in più per ogni scelta uguale alla strategia di base
+  // punta il minimo per te, o stai)
   atti: [
-    { da: 0, tempo: 3, bonus: 5 },
-    { da: 12, nome: 'IL BANCO ACCELERA!', tempo: 2.3, bonus: 5 },
-    { da: 24, nome: 'MOSSE DA PRO x2!', tempo: 2, bonus: 10 },
+    { da: 0, tempo: 3 },
+    { da: 12, nome: 'IL BANCO ACCELERA!', tempo: 2.3 },
+    { da: 24, nome: 'ULTIME MANI!', tempo: 2 },
   ],
   puntate: [10, 25, 50],
   mazzi: 2,

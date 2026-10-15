@@ -23,7 +23,11 @@ export const FONT = 'Fredoka, "Trebuchet MS", "Segoe UI", sans-serif';
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const caso = (arr) => arr[Math.floor(Math.random() * arr.length)];
 // numero + parola al singolare o al plurale: quanti(1, 'panino', 'panini') -> "1 panino"
-export const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
+// I numeri nei testi, all'italiana: virgola per i decimali (0,3 s), niente puntini delle migliaia
+export const numero = (x, decimali = 0) => Number(x).toLocaleString('it-IT', { minimumFractionDigits: decimali, maximumFractionDigits: decimali, useGrouping: false });
+export const quanti = (n, uno, tanti) => `${numero(n)} ${n === 1 ? uno : tanti}`;
+// i punti nell'HUD dei microgiochi: mai sotto zero (come il risultato)
+export const puntiHud = (n) => 'PUNTI: ' + numero(Math.max(0, Math.round(n)));
 
 // Ogni scena lavora in unità logiche (480x270): la telecamera ingrandisce di RES
 // volte, così si disegna a 1920x1080 senza cambiare le coordinate di gioco.
@@ -290,5 +294,6 @@ export function menuLista(scene, voci, x, y, passo = 20, size = 8, o = {}) {
   kb.on('keydown-ENTER', ok);
   kb.on('keydown-SPACE', ok);
   agg();
+  testi.evid = evid;     // (l'evidenziatore: chi vuole nascondere il menu, per esempio per una foto)
   return testi;
 }

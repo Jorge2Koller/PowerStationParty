@@ -16,7 +16,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { PARCO } from '../grafica/sfondi.js';
 import { casuale } from '../grafica/base.js';
-import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, multiTouch, colpetto } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, multiTouch, colpetto, puntiHud, numero } from '../fx.js';
 
 const TERRA = PARCO.terra;
 const Y_PIEDE = TERRA - 12;                 // altezza del pallone quando lo colpisci
@@ -237,9 +237,9 @@ export class PalleggiScene extends MicrogiocoBase {
   aggiornaHud() {
     const m = this.moltiplicatore;
     this.testoPalleggi.setText(String(this.serie));
-    this.testoMolt.setText(m > 1 ? 'x' + String(m).replace('.', ',') : '');
+    this.testoMolt.setText(m > 1 ? 'x' + numero(m, 1) : '');
     this.testoSerie.setText('SERIE MIGLIORE: ' + this.serieMigliore);
-    this.testoPunti.setText('PUNTI: ' + this.punti);
+    this.testoPunti.setText(puntiHud(this.punti));
   }
 
   caduta() {
@@ -379,11 +379,12 @@ export class PalleggiScene extends MicrogiocoBase {
   }
 
   risultato() {
-    const c = this.cfg;
+    const c = this.cfg, s = this.serieMigliore;
+    const serie = s >= c.obiettivoSerie ? c.bonusObiettivo + c.bonusOltre * (s - c.obiettivoSerie) : c.bonusSotto * s;
     return {
-      punteggio: this.punti + this.serieMigliore * c.bonusSerie,
+      punteggio: this.punti + serie,
       vittoria: this.serieMigliore >= c.obiettivoSerie,
-      riepilogo: `${quanti(this.palleggi, 'palleggio', 'palleggi')}, serie migliore ${this.serieMigliore}, ${quanti(this.perfetti, 'perfetto', 'perfetti')}` + (this.ori ? `, ${quanti(this.ori, "pallone d'oro", "palloni d'oro")}` : ''),
+      riepilogo: `${quanti(this.palleggi, 'palleggio', 'palleggi')}, serie migliore ${this.serieMigliore} (+${serie}), ${quanti(this.perfetti, 'perfetto', 'perfetti')}` + (this.ori ? `, ${quanti(this.ori, "pallone d'oro", "palloni d'oro")}` : ''),
     };
   }
 

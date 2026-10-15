@@ -14,7 +14,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { CASA } from '../grafica/sfondi.js';
 import { RES, casuale } from '../grafica/base.js';
-import { txt, im, scalaDi, scritta, fumo, pannello, lerp, caso, colpetto, fumetto, vibra, eTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, fumo, pannello, lerp, caso, colpetto, fumetto, vibra, eTouch, puntiHud, numero, quanti } from '../fx.js';
 
 const MANO = { x: 240, y: 240 };          // da dove parte il fumogeno
 const Y_BASSO = 230, Y_ALTO = 34;          // forza 0 = piede della casa, forza 1 = sotto il tetto
@@ -251,7 +251,7 @@ export class SegoScene extends MicrogiocoBase {
       g.fillStyle(pct >= c.soglia ? 0x7dff9a : 0xb06aff, 1);
       if (pct > 2) g.fillRoundedRect(152, 30, (w * Math.min(100, pct)) / 100, 6, 3);
       g.fillStyle(0xffe14a, 1); g.fillRect(152 + (w * c.soglia) / 100 - 0.75, 28, 1.5, 10);
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punti));
       this.testoGranate.setText('FUMOGENI: ' + this.lanciate);
     }
     if (!this.uscito && this.percentuale >= c.soglia) {
@@ -285,7 +285,8 @@ export class SegoScene extends MicrogiocoBase {
     Audio.sfx(s ? 'tonk' : 'tonfo');
     vibra(25);
     scritta(this, P.x, P.y - 12, s ? 'TONK!' : caso(['MURO!', 'TUNF!']), { size: 9, color: '#ff9a8a', durata: 350 });
-    const g = v.g, xa = Phaser.Math.Clamp(P.x + Phaser.Math.Between(-30, 30), 60, 420);
+    // (dove cade dipende solo dal tiro: la nebbia che lascia davanti alla casa è uguale per tutti)
+    const g = v.g, xa = Phaser.Math.Clamp(P.x + ((Math.round(P.x * 7 + P.y * 13) % 61) - 30), 60, 420);
     this.tweens.add({
       targets: g, x: xa, y: 238, angle: g.angle + 300, duration: 450 + (238 - P.y) * 1.2, ease: 'Bounce.out',
       onComplete: () => { g.destroy(); if (this.inCorso) this.nebbia(xa, v.colore); },
@@ -401,7 +402,7 @@ export class SegoScene extends MicrogiocoBase {
 
   risultato() {
     const c = this.cfg, pct = Math.floor(this.percentuale);
-    const bonus = this.uscito ? c.bonusUscita + c.bonusSecondo * this.secondiRimasti : Math.floor(pct / 2);
+    const bonus = this.uscito ? c.bonusUscita + c.bonusSecondo * this.secondiRimasti : Math.floor(pct * c.puntiFumo);
     return {
       punteggio: Math.max(0, this.punti + bonus),
       vittoria: this.uscito,

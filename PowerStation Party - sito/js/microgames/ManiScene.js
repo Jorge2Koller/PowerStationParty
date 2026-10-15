@@ -11,7 +11,7 @@ import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
-import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch, eTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch, eTouch, puntiHud, numero } from '../fx.js';
 
 const PIATTI = [
   { cibo: 'spaghetti', x: 84, y: 214 },
@@ -119,7 +119,7 @@ export class ManiScene extends MicrogiocoBase {
     const rimasti = this.piatti.filter((x) => x.stato !== 'perso').length, hud = `${this.punti}|${rimasti}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText('PUNTI: ' + this.punti);
+      this.testoPunti.setText(puntiHud(this.punti));
       this.testoPiatti.setText(`PIATTI: ${rimasti}/${PIATTI.length}`).setColor(rimasti >= c.piattiMinimi ? '#7dff9a' : '#ff9a8a');
     }
   }
@@ -315,9 +315,9 @@ export class ManiScene extends MicrogiocoBase {
   risultato() {
     const c = this.cfg, rimasti = this.piatti.filter((p) => p.stato !== 'perso').length;
     return {
-      punteggio: this.punti + rimasti * c.puntiPiatto,
+      punteggio: this.punti + c.bonusPiatti[rimasti],
       vittoria: rimasti >= c.piattiMinimi,
-      riepilogo: `${quanti(this.schiaffi, 'schiaffo', 'schiaffi')}, ${quanti(rimasti, 'piatto salvato', 'piatti salvati')} su ${PIATTI.length} (+${rimasti * c.puntiPiatto})`,
+      riepilogo: `${quanti(this.schiaffi, 'schiaffo', 'schiaffi')}, ${quanti(rimasti, 'piatto salvato', 'piatti salvati')} su ${PIATTI.length} (+${c.bonusPiatti[rimasti]})`,
       titoloFine: rimasti ? 'TEMPO!' : 'TUTTO SPARITO!',
     };
   }
@@ -337,9 +337,10 @@ export class ManiScene extends MicrogiocoBase {
     const titolo = (s, col) => txt(this, 240, 24, s, { size: 17, color: col, depth: 710 });
 
     this.time.delayedCall(700, () => {
-      if (this.rubati.length) {
+      // (Guerra ride se si è mangiato qualcosa o se hai perso; a bocca asciutta solo se hai vinto)
+      if (this.rubati.length || !ris.vittoria) {
         this.guerra.setTexture('guerra_felice');
-        titolo(ris.vittoria ? 'CENA SALVA! (QUASI)' : 'TI HA SVUOTATO LA TAVOLA!', ris.vittoria ? '#7dff9a' : '#ff6b5a');
+        titolo(ris.vittoria ? 'CENA SALVA! (QUASI)' : this.rubati.length ? 'TI HA SVUOTATO LA TAVOLA!' : 'TROPPO MOLLE: GUERRA RIDE!', ris.vittoria ? '#7dff9a' : '#ff6b5a');
         this.rubati.slice(0, 5).forEach((cibo, i) => this.time.delayedCall(i * 450, () => {
           const p = im(this, 240 + (i % 2 ? 60 : -60), 230, 'piatto_' + cibo, 1.3).setDepth(705);
           this.tweens.add({ targets: p, x: 240, y: 150, scale: p.scale * 0.4, alpha: 0, duration: 380, ease: 'Quad.in', onComplete: () => p.destroy() });

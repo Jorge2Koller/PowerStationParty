@@ -18,7 +18,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { PROVINO } from '../grafica/provino.js';
-import { txt, im, scritta, stelle, fumetto, lerp, caso, eTouch, vibra, puntatore } from '../fx.js';
+import { txt, im, scritta, stelle, fumetto, lerp, caso, eTouch, vibra, puntatore, puntiHud, numero, quanti } from '../fx.js';
 
 const OTTAVO_120 = 0.25;                              // le durate in configurazione sono in ottavi a 120 bpm (0,25 s)
 const PENTA = { x0: 18, x1: 462, cima: 48, salto: 7, cursore: 84 };   // il pentagramma: la riga in cima, quanto dista una nota dall'altra, dove sta il cursore
@@ -174,10 +174,10 @@ export class XfactorScene extends MicrogiocoBase {
       const x = 14 + i * 26.5 + (i % 3) * 4, a = im(this, x, 268, 'accendino').setOrigin(0.5, 0).setDepth(34).setAlpha(0);
       this.accendini.push({ img: a, x, fase: i * 1.7, soglia: ((i * 7) % 18) / 18 });   // (si accendono in ordine sparso)
     }
-    // i punti e la barra degli applausi (quanto sei stato intonato, con le tacche dei quattro giudici)
+    // i punti e la barra degli applausi (si riempie coi punti, con le tacche dei quattro giudici)
     this.barraApplausi = this.add.graphics().setDepth(1001);
     this.etichettaApplausi = txt(this, 148, 22, 'APPLAUSI', { size: 5.5, ox: 1, depth: 1001, color: '#fff3d6' });
-    this.testoPunti = txt(this, 474, 36, '', { size: 8, ox: 1, depth: 1001 });
+    this.testoPunti = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
     this.testoSerie = txt(this, PENTA.cursore, 116, '', { size: 7, depth: 105, color: '#ffe14a' });
     if (eTouch()) {
       // sul telefono: dove si trascina (la metà destra, sotto i pulsanti)
@@ -244,12 +244,16 @@ export class XfactorScene extends MicrogiocoBase {
   // quanto sei stato intonato finora (da 0 a 1), sul tempo cantato: è quello che guardano i giudici
   get intonazione() { const t = this.tOk + this.tNo; return t > 0 ? this.tOk / t : 0; }
 
+  // i punti che vuole un giudice per dire SÌ (in Lampo, più corto, in proporzione)
+  sogliaGiudice(q) { return q.soglia * this.cfg.medaglie.bronzo * Math.min(1, this.durata / this.cfg.durata); }
+
   // i voti dei giudici e l'esito (si calcolano una volta sola: il verdetto è quello del risultato)
   verdetto() {
     if (!this._verdetto) {
-      const c = this.cfg, into = this.intonazione, voti = c.giudici.map((g) => into >= g.soglia), si = voti.filter(Boolean).length;
-      const acuto = this.conAcuto && this.tAcuto > 0 && this.tAcutoOk / this.tAcuto >= c.acuto.tenuta;
-      this._verdetto = { into, voti, si, acuto, vittoria: si >= c.siPerVincere };
+      const c = this.cfg, acuto = this.conAcuto && this.tAcuto > 0 && this.tAcutoOk / this.tAcuto >= c.acuto.tenuta;
+      const punteggio = Math.round(this.punti) + (acuto ? c.bonusAcuto : 0);
+      const voti = this.giudici.map((q) => punteggio >= this.sogliaGiudice(q)), si = voti.filter(Boolean).length;
+      this._verdetto = { into: this.intonazione, punteggio, voti, si, acuto, vittoria: si >= c.siPerVincere };
     }
     return this._verdetto;
   }
@@ -257,16 +261,16 @@ export class XfactorScene extends MicrogiocoBase {
   risultato() {
     const c = this.cfg, v = this.verdetto();
     return {
-      punteggio: Math.round(this.punti) + (v.acuto ? c.bonusAcuto : 0) + v.si * c.bonusSi,
+      punteggio: v.punteggio,
       vittoria: v.vittoria,
       riepilogo: `Intonato al ${Math.round(v.into * 100)}%   SÌ: ${v.si} su ${c.giudici.length}` + (v.acuto ? '   acuto tenuto!' : ''),
-      titoloFine: v.vittoria ? c.frasiVittoria[0] : c.frasiSconfitta[0],
+      titoli: [c.frasiVittoria[0], c.frasiSconfitta[0]],
     };
   }
 
   // ---------- a ogni fotogramma ----------
   aggiorna(dt) {
-    const c = this.cfg;
+    const c = this.cfg, pos0 = this.pos;
     // il tempo della canzone: il proprio orologio, tenuto agganciato a quello dell'audio quando c'è
     this.pos += dt / this.passo;
     // (col ritardo audio misurato nelle Impostazioni: quello che si sente è un po' indietro rispetto
@@ -277,6 +281,14 @@ export class XfactorScene extends MicrogiocoBase {
       if (!this.agganciato || Math.abs(ap - this.pos) > 1.5) { this.agganciato = true; Audio.vaiA(this.pos + rit); }
       else this.pos += (ap - this.pos) * Math.min(1, dt * 3);
     }
+    // Il tempo della partita È quello della canzone. L'orologio dei microgiochi salta i fotogrammi
+    // lenti (oltre 50 ms) e la pausa, la musica no: prima, con un telefono che rallenta o dopo
+    // qualche pausa, la canzone finiva fino a 4 secondi prima della partita e il pentagramma
+    // restava vuoto. Così finiscono insieme.
+    this.trascorso = Math.max(0, this.pos * this.passo);
+    // (e i punti si contano sul tempo della canzone, non su quello dei fotogrammi: se l'audio di un
+    // telefono affaticato va più piano, la partita dura di più ma non vale di più)
+    const dtc = Math.max(0, Math.min(0.1, (this.pos - pos0) * this.passo));
 
     // gli atti si annunciano
     const atto = c.atti.filter((a) => this.trascorso >= a.da).length - 1;
@@ -309,19 +321,19 @@ export class XfactorScene extends MicrogiocoBase {
     else if (Math.abs(this.cur - n.pos) <= c.tolleranza) this.stato = 'ok';
     else this.stato = (this.pos - n.da) * this.passo < n.grazia ? 'attesa' : 'no';
     if (this.stato === 'ok') {
-      const guadagno = dt * c.puntiSecondo * this.moltiplicatore;
-      this.punti += guadagno; n.punti += guadagno; n.ok += dt;
-      this.tOk += dt; this.serie += dt; this.serieMax = Math.max(this.serieMax, this.serie);
+      const guadagno = dtc * c.puntiSecondo * this.moltiplicatore;
+      this.punti += guadagno; n.punti += guadagno; n.ok += dtc;
+      this.tOk += dtc; this.serie += dtc; this.serieMax = Math.max(this.serieMax, this.serie);
       this.tStonata = 0;
       this.calore = Math.min(1, this.calore + dt * 0.11);
       const liv = Math.floor(this.serie / c.serie.ogni);
       if (liv > this.livelloSerie) { this.livelloSerie = liv; this.gasati(); }
     } else if (this.stato === 'no') {
-      this.tNo += dt; n.err += dt; this.tStonata += dt;
+      this.tNo += dtc; n.err += dtc; this.tStonata += dtc;
       this.calore = Math.max(0, this.calore - dt * 0.45);
       if (prima !== 'no') this.stona(n);
     }
-    if (n?.acuto && this.stato !== 'attesa') { this.tAcuto += dt; if (this.stato === 'ok') this.tAcutoOk += dt; }
+    if (n?.acuto && this.stato !== 'attesa') { this.tAcuto += dtc; if (this.stato === 'ok') this.tAcutoOk += dtc; }
 
     this.canta(n);
     this.reazioni(dt, n);
@@ -354,7 +366,7 @@ export class XfactorScene extends MicrogiocoBase {
   gasati() {
     const P = PROVINO;
     Audio.sfx(this.livelloSerie >= 4 ? 'applauso' : 'ok');
-    scritta(this, PENTA.cursore + 34, 122, `SERIE! x${this.moltiplicatore.toFixed(1)}`, { size: 8.5, color: '#7dff9a', durata: 500, depth: 960 }).setAngle(0);
+    scritta(this, PENTA.cursore + 34, 122, `SERIE! x${numero(this.moltiplicatore, 1)}`, { size: 8.5, color: '#7dff9a', durata: 500, depth: 960 }).setAngle(0);
     this.tContenti = 0.9;
     this.calore = Math.min(1, this.calore + 0.2);
     for (const g of this.giudici) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI + 3, duration: 110, yoyo: true, repeat: 1 });
@@ -480,16 +492,16 @@ export class XfactorScene extends MicrogiocoBase {
       f.fillStyle(col, this.inAcuto ? 0.2 : 0.1); f.fillTriangle(x, 27, verso - 24, P.piedi + 12, verso + 24, P.piedi + 12);
     });
 
-    // le lucine dei giudici: verde se per ora direbbe sì, rossa se no (quella del produttore
-    // lampeggia quando stoni). Spente finché non hai cantato almeno un po'
-    const into = this.intonazione, acceso = this.tOk + this.tNo > 1;
-    const stato = `${this.giudici.map((q) => (into >= q.soglia ? 1 : 0)).join('')}${acceso}${stonato && Math.floor(this.trascorso * 8) % 2}`;
+    // le lucine dei giudici: verde quando i tuoi punti passano la sua soglia, rossa se no (quella
+    // del produttore lampeggia quando stoni). Spente finché non hai cantato almeno un po'
+    const punti = this.punti, acceso = this.tOk + this.tNo > 1;
+    const stato = `${this.giudici.map((q) => (punti >= this.sogliaGiudice(q) ? 1 : 0)).join('')}${acceso}${stonato && Math.floor(this.trascorso * 8) % 2}`;
     if (stato !== this.lucineDisegnate) {
       this.lucineDisegnate = stato;
       const l = this.lucine;
       l.clear();
       this.giudici.forEach((q, i) => {
-        const si = into >= q.soglia, spenta = !acceso || (i === 2 && stonato && Math.floor(this.trascorso * 8) % 2);
+        const si = punti >= this.sogliaGiudice(q), spenta = !acceso || (i === 2 && stonato && Math.floor(this.trascorso * 8) % 2);
         const col = spenta ? 0x3a3350 : i === 2 && stonato ? 0xff3a2e : si ? 0x4ade80 : 0xff5a4a;
         if (!spenta) { l.fillStyle(col, 0.3); l.fillCircle(q.x, P.lucine, 5.5); }
         l.fillStyle(col, 1); l.fillCircle(q.x, P.lucine, 2.8);
@@ -498,17 +510,20 @@ export class XfactorScene extends MicrogiocoBase {
     }
 
     // punti, serie, barra degli applausi
-    const molt = this.moltiplicatore, hud = `${Math.floor(this.punti)}|${molt}|${Math.round(into * 50)}|${acceso}`;
+    const molt = this.moltiplicatore, hud = `${Math.floor(this.punti)}|${molt}|${acceso}`;
     if (hud !== this.hud) {
       this.hud = hud;
-      this.testoPunti.setText(`${Math.floor(this.punti)}${molt > 1 ? `  x${molt.toFixed(1)}` : ''}`);
-      this.testoSerie.setText(molt > 1 ? `x${molt.toFixed(1)}` : '');
+      this.testoPunti.setText(puntiHud(Math.floor(this.punti)));
+      this.testoSerie.setText(molt > 1 ? `x${numero(molt, 1)}` : '');
       const b = this.barraApplausi, x0 = 152, W = 176;
       b.clear();
       b.fillStyle(0x1f1430, 0.9); b.fillRoundedRect(x0 - 2, 17, W + 4, 10, 5);
-      b.fillStyle(into >= c.giudici[1].soglia ? 0x4ade80 : into >= c.giudici[3].soglia ? 0xfacc15 : 0xf87171, 1);
-      if (acceso && into > 0.02) b.fillRoundedRect(x0, 19, W * Math.min(1, into), 6, 3);
-      for (const q of c.giudici) { b.fillStyle(0xffffff, 0.9); b.fillRect(x0 + W * Math.min(1, q.soglia) - 0.6, 17.5, 1.2, 9); }
+      // (piena = il giudice più severo e un po' di più; verde da quando i SÌ bastano per passare)
+      const soglie = this.giudici.map((q) => this.sogliaGiudice(q)), pieno = Math.max(...soglie) * 1.12;
+      const si = soglie.filter((v) => punti >= v).length;
+      b.fillStyle(si >= c.siPerVincere ? 0x4ade80 : si ? 0xfacc15 : 0xf87171, 1);
+      if (acceso && punti > 0) b.fillRoundedRect(x0, 19, Math.max(6, W * Math.min(1, punti / pieno)), 6, 3);
+      for (const v of soglie) { b.fillStyle(0xffffff, 0.9); b.fillRect(x0 + W * (v / pieno) - 0.6, 17.5, 1.2, 9); }
     }
   }
 

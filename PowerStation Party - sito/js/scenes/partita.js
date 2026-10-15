@@ -3,10 +3,9 @@
 import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { LIVELLI, NOMI_LIVELLI } from '../livelli.js';
-import { Progressi } from '../progressi.js';
 import { Sessione } from '../sessione.js';
 import { SP, ritratto } from '../sprites.js';
-import { txt, im, inquadra, raggi, pannello, ombra, menuLista, molleggia, stelle, caso, eTouch, perDito, pulsante, scritta } from '../fx.js';
+import { txt, im, inquadra, raggi, pannello, ombra, menuLista, molleggia, stelle, caso, eTouch, perDito, pulsante } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
 
 const colore = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
@@ -65,8 +64,9 @@ export class GiocatoriScene extends Phaser.Scene {
 //  ritratti (chi è già preso resta spento, con la sigla di chi l'ha scelto) e la casella
 //  "A CASO"; sotto, i giocatori già fatti. dati.n = quanti giocatori.
 // ------------------------------------------------------------
-// (sei colonne per tre righe: c'è posto per diciassette personaggi più "A CASO")
-const COL = 6, CELLA = { w: 46, h: 49, x0: 215, y0: 68 };
+// (cinque colonne per quattro righe: c'è posto per diciannove personaggi più "A CASO"; nelle
+// celle il nome breve, quello intero e il soprannome nell'anteprima a sinistra)
+const COL = 5, CELLA = { w: 52, h: 40, x0: 222, y0: 64 };
 
 export class PersonaggiScene extends Phaser.Scene {
   constructor() { super('Personaggi'); }
@@ -82,7 +82,8 @@ export class PersonaggiScene extends Phaser.Scene {
     let cur = Math.max(0, celle.findIndex((c) => c.p && !scelti.includes(c.p.id)));
     const completo = () => scelti.length >= n;
 
-    txt(this, 330, 20, n === 1 ? 'SCEGLI IL PERSONAGGIO' : 'SCEGLIETE I PERSONAGGI', { size: 13, color: '#ffe14a' });
+    // (il titolo un po' a sinistra: sul telefono in alto a destra ci sono audio e schermo intero)
+    txt(this, 312, 22, n === 1 ? 'SCEGLI IL PERSONAGGIO' : 'SCEGLIETE I PERSONAGGI', { size: 11, color: '#ffe14a' });
     pannello(this, 92, 148, 172, 232, { alfa: 0.5, bordo: null, raggio: 12 });
     const chi = txt(this, 92, 44, '', { size: 10 });
     ombra(this, 92, 212, 64);
@@ -90,16 +91,16 @@ export class PersonaggiScene extends Phaser.Scene {
     molleggia(this, anteprima, 360);
     const dubbio = txt(this, 92, 140, '?', { size: 70, color: '#ffe14a' }).setVisible(false);
     const nome = txt(this, 92, 225, '', { size: 11 });
-    const soprannome = txt(this, 92, 238, '', { size: 6.5, color: '#fff3d6' });
-    const motto = txt(this, 92, 251, '', { size: 5.6, color: '#ffe14a', wrap: 168 });
+    const soprannome = txt(this, 92, 238, '', { size: 7, color: '#fff3d6' });
+    const motto = txt(this, 92, 252, '', { size: 7, color: '#ffe14a', wrap: 168 });
 
     // la griglia
     const g = this.add.graphics(), cursore = this.add.graphics().setDepth(6);
     const caselle = celle.map((c, i) => {
       const [x, y] = posto(i);
-      const cosa = { x, y, sigla: txt(this, x + 14, y - 15, '', { size: 6, depth: 5 }) };
-      if (c.caso) { cosa.img = txt(this, x, y - 5, '?', { size: 22, color: '#ffe14a' }); cosa.nome = txt(this, x, y + 16, 'A CASO', { size: 4.8 }); }
-      else { cosa.img = ritratto(this, x, y - 5, c.p.id, 30); cosa.nome = txt(this, x, y + 16, c.p.nome, { size: c.p.nome.length > 11 ? 4.2 : 4.8, color: c.p.colore }); }
+      const cosa = { x, y, sigla: txt(this, x + 17, y - 12, '', { size: 7, depth: 5 }) };
+      if (c.caso) { cosa.img = txt(this, x, y - 5, '?', { size: 18, color: '#ffe14a' }); cosa.nome = txt(this, x, y + 13, 'A CASO', { size: 7 }); }
+      else { cosa.img = ritratto(this, x, y - 5, c.p.id, 24); cosa.nome = txt(this, x, y + 13, c.p.breve ?? c.p.nome, { size: 7, color: c.p.colore }); }
       this.add.rectangle(x, y, CELLA.w - 2, CELLA.h - 2, 0x000000, 0.001).setInteractive({ useHandCursor: true })
         .on('pointerover', () => { if (cur !== i) { cur = i; Audio.sfx('muovi'); agg(); } })
         .on('pointerdown', () => { cur = i; prendi(); });
@@ -109,7 +110,7 @@ export class PersonaggiScene extends Phaser.Scene {
     const fatti = this.add.container(0, 0);
     const avanti = txt(this, 330, 258, '', { size: 9.5, color: '#ffe14a' }).setInteractive({ useHandCursor: true }).on('pointerdown', () => conferma());
     this.tweens.add({ targets: avanti, alpha: 0.35, duration: 400, yoyo: true, repeat: -1 });
-    const aiuto = txt(this, 330, 246, '', { size: 5.6, color: '#fff3d6' });
+    const aiuto = txt(this, 330, 245, '', { size: 7, color: '#fff3d6' });
 
     const agg = () => {
       const c = celle[cur], libero = (id) => !scelti.includes(id), col = c.p ? colore(c.p.colore) : 0xffffff;
@@ -142,9 +143,9 @@ export class PersonaggiScene extends Phaser.Scene {
       scelti.forEach((id, i) => {
         const p = P.find((q) => q.id === id), x = 330 + (i - (n - 1) / 2) * passo;
         const zona = this.add.rectangle(x, 219, passo - 2, 30, 0x000000, 0.001).setInteractive({ useHandCursor: true }).on('pointerdown', () => togli(i));
-        fatti.add([ritratto(this, x, 216, id, 18), txt(this, x, 230, sigla(i), { size: 5, color: p.colore }), zona]);
+        fatti.add([ritratto(this, x, 216, id, 18), txt(this, x, 230, sigla(i), { size: 7, color: p.colore }), zona]);
       });
-      for (let i = scelti.length; i < n; i++) fatti.add(txt(this, 330 + (i - (n - 1) / 2) * passo, 219, sigla(i), { size: 6, color: '#8a7aa8' }));
+      for (let i = scelti.length; i < n; i++) fatti.add(txt(this, 330 + (i - (n - 1) / 2) * passo, 219, sigla(i), { size: 7, color: '#8a7aa8' }));
       avanti.setText(completo() ? perDito('INVIO: avanti', 'TOCCA QUI: AVANTI') : '');
       aiuto.setText(completo() ? perDito('BACKSPACE: togli l\'ultimo     ESC: indietro', 'Tocca un giocatore qui sopra per cambiarlo')
         : perDito('FRECCE e INVIO, oppure il mouse     BACKSPACE: togli l\'ultimo', 'Tocca un personaggio'));
@@ -229,15 +230,13 @@ export class ModalitaScene extends Phaser.Scene {
       txt(this, x, 67, g.nome, { size: n > 6 || g.nome.length > 10 ? 4.6 : 5.6, color: g.colore });
     });
     const via = (fn) => () => { fn(); this.scene.start('Intro'); };
-    // le modalità del Bancone: se non sono ancora tue, si dice dove comprarle
-    const delBancone = (id, label, fn) => Progressi.comprato('modalita', id) ? { label, azione: via(fn) }
-      : { label: `${label.split(':')[0]}  (al Bancone)`, azione: () => { Audio.sfx('vuoto'); scritta(this, 240, 238, 'SI COMPRA AL BANCONE, CON LE PINTE!', { size: 9, color: '#ffe14a', durata: 900 }).setAngle(0); } };
+    // (Lampo e Da solo sono gratis: al Bancone si comprano solo cose cosmetiche)
     const MO = CONFIG.modalita, gruppo = dati?.gruppo ?? null, apri = (g) => () => this.scene.restart({ gruppo: g });
     const indietro = { label: 'Indietro', azione: apri(null) };
     let voci;
     if (n === 1) voci = [
       { label: 'ALLENAMENTO: un microgioco a scelta', azione: () => this.scene.start('Allenamento') },
-      delBancone('solitario', `DA SOLO: ${MO.solitario.vite} vite, ${MO.solitario.microgiochi} microgiochi e il boss`, () => S.nuovoSolitario(0)),
+      { label: `DA SOLO: ${MO.solitario.vite} vite, ${MO.solitario.microgiochi} microgiochi e il boss`, azione: via(() => S.nuovoSolitario(0)) },
       { label: `SFIDA DEL GIORNO: ${MO.giorno.microgiochi} microgiochi, uguali per tutti oggi`, azione: via(() => S.nuovaSfidaDelGiorno(0)) },
       { label: `LIVELLO: ${livelliInBreve(G).replace('tutti ', '')}`, azione: () => this.scene.start('Livelli') },
       { label: 'Cambia personaggio', azione: () => this.scene.start('Personaggi', { n }) },
@@ -249,7 +248,7 @@ export class ModalitaScene extends Phaser.Scene {
       indietro,
     ];
     else if (gruppo === 'party') voci = [
-      delBancone('lampo', `LAMPO: ${MO.lampo.microgiochi} microgiochi da ${MO.lampo.durata} secondi`, () => S.nuovoLampo()),
+      { label: `LAMPO: ${MO.lampo.microgiochi} microgiochi da ${MO.lampo.durata} secondi`, azione: via(() => S.nuovoLampo()) },
       ...(n >= MO.squadre.minimo ? [{ label: `SQUADRE: ${MO.squadre.nomi[0]} (1°, 3°...) contro ${MO.squadre.nomi[1]} (2°, 4°...)`, azione: via(() => S.nuoveSquadre()) }] : []),
       ...(n >= MO.torneo.minimo ? [{ label: 'TORNEO: tabellone a eliminazione, sfide a due', azione: via(() => S.nuovoTorneo()) }] : []),
       // il beer pong vero, a tiri alternati (da 2 a 6: con 3 o 5 l'ultimo scelto fa l'arbitro)

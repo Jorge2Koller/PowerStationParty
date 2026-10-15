@@ -14,6 +14,8 @@ import { creaMedaglie } from './grafica/medaglie.js';
 import { creaVialetto } from './grafica/vialetto.js';
 import { creaPallaio, manoPong, MANO_IMG } from './grafica/pallaio.js';
 import { creaProvino } from './grafica/provino.js';
+import { creaTaverna } from './grafica/taverna.js';
+import { creaPiazzetta } from './grafica/piazzetta.js';
 import { creaMontagna } from './grafica/montagna.js';
 
 export { RES, Q, SP } from './grafica/base.js';
@@ -178,6 +180,29 @@ export function creaTexture(scene) {
     personaggio(`giudice${i}_orecchie`, g, 'shock', { posa: 'orecchie', maniSopra: true, accessorio: 'niente' });
     personaggio(`giudice${i}_no`, g, 'sufficienza');
   });
+  // "La pizza dal Boni": con la pala (inforna), che grida l'ordinazione, arrabbiato che corre, che
+  // beve dalla caraffa, "vi ho beccati!" (indica, sconvolto), che caccia gli imbucati con la pala
+  const boni = PERSONAGGI.boni;
+  personaggio('boni_pala', boni, 'felice', { posa: 'pala', accessorio: 'pala' });
+  personaggio('boni_grida', boni, 'urlo', { posa: 'grida', maniSopra: true, accessorio: 'niente' });
+  personaggio('boni_corre', boni, 'rabbia', { posa: 'corre' });
+  personaggio('boni_beve', boni, 'rabbia', { posa: 'beve', accessorio: 'caraffa' });
+  personaggio('boni_beccati', boni, 'sconvolto', { posa: 'tiIndico' });
+  personaggio('boni_caccia', boni, 'rabbia', { posa: 'caccia', accessorio: 'palaAlta' });
+  personaggio('boni_rabbia', boni, 'rabbia');
+  // "La ballata del Pallaio": Lori che canta a bocca spalancata con la mano sul cuore, che alza
+  // la bacchetta, che batte (TOC), che si blocca confuso, che fulmina il garzone, che si ripara
+  // dai pomodori, l'inchino finale. (La bacchetta la disegna la scena: va dalla mano alla casella.)
+  const lori = PERSONAGGI.lori;
+  personaggio('lori_canta', lori, 'canta', { posa: 'cuore' });
+  personaggio('lori_alza', lori, 'canta', { posa: 'alza' });
+  personaggio('lori_batte', lori, 'felice', { posa: 'batte' });
+  personaggio('lori_confuso', lori, 'sconvolto', { posa: 'gratta', maniSopra: true, accessorio: 'niente' });
+  personaggio('lori_fulmina', lori, 'rabbia', { posa: 'tiIndico' });
+  personaggio('lori_ripara', lori, 'shock', { posa: 'maniInTesta', maniSopra: true, accessorio: 'niente' });
+  personaggio('lori_inchino', lori, 'felice', { posa: 'inchino' });
+  // gli imbucati che, sotto la tovaglia, si passano la fetta e fanno l'occhiolino
+  for (const id of ['oli', 'sego']) personaggio(`${id}_occhiolino`, PERSONAGGI[id], 'occhiolino');
   creaMarco(scene);
   creaOggetti(scene);
   creaSfondi(scene);
@@ -188,5 +213,7 @@ export function creaTexture(scene) {
   creaVialetto(scene);
   creaPallaio(scene);
   creaProvino(scene);
+  creaTaverna(scene);
+  creaPiazzetta(scene);
   creaMontagna(scene);
 }
