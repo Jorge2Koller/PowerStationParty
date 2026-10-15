@@ -13,9 +13,10 @@
 //  - PRONTA!: giusta, il Boni la inforna e la porta in tavola; sbagliata (un pezzo in più o in
 //    meno, un ingrediente sbagliato, l'ananas, poco pomodoro) la butta, corre a bere dalla caraffa
 //    e scopre un imbucato. Al secondo errore li scopre tutti e due: FUORI TUTTI!, e finisce.
-//  Dal secondo atto gli imbucati sbucano (o gli scivola il travestimento): vanno rimandati giù con
-//  un tocco (G) prima che il Boni si giri. Nel terzo il Boni ha fretta: il tempo per pizza è contato.
-//  Ordini, nascondigli, travestimenti, invitati e i momenti in cui sbucano escono dal seme del round.
+//  Nel terzo atto il Boni ha fretta: il tempo per pizza è contato. (Gli imbucati che sbucano a
+//  chiedere una fetta, da rimandare giù con un tocco o G prima che il Boni si giri, ci sono ancora qui
+//  sotto, ma sono spenti: negli atti della configurazione non c'è più "sbuca". Troppo difficile.)
+//  Ordini, nascondigli, travestimenti e invitati escono dal seme del round.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione, DOPPIONE } from '../sessione.js';

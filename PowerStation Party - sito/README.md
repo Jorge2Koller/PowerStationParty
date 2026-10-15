@@ -722,11 +722,13 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     dietro la tenda della cantina, sotto i cappotti) o travestiti a tavola tra gli invitati (la
     maschera di Giorgio, baffi finti e cappello, da cuoco). Gli invitati sono personaggi giocabili
   - tre atti: LE PRIME PIZZE (due o tre ingredienti); dal 12° secondo GLI INVITATI ORDINANO
-    (pizze più ricche, e gli imbucati sbucano a chiedere una fetta: un tocco su di loro, o G, li
-    rimanda giù prima che il Boni si giri); dal 24° IL BONI HA FRETTA (il foglietto resta poco e
-    ogni pizza ha il suo tempo)
-  - ordini, nascondigli, travestimenti, invitati e i momenti in cui sbucano escono dal seme del
-    round: sono gli stessi per tutti i giocatori
+    (pizze più ricche, il foglietto resta meno); dal 24° IL BONI HA FRETTA (il foglietto resta
+    poco e ogni pizza ha il suo tempo)
+  - ordini, nascondigli, travestimenti e invitati escono dal seme del round: sono gli stessi per
+    tutti i giocatori
+  - (gli imbucati che sbucano a chiedere una fetta, da rimandare giù con un tocco, ci sono ancora
+    nel codice ma sono spenti: troppo difficile. Si riaccendono con `sbuca` e `avviso` negli
+    `atti` di `js/config/microgiochi/pizza.js`)
 - La ballata del Pallaio (RIORDINA!: sei il garzone di Lori, il cantastorie, e hai appeso le
   vignette del suo cartellone alla rinfusa):
   - Lori canta una strofa alla volta: sopra di lui il fumetto con la scena della strofa, e la

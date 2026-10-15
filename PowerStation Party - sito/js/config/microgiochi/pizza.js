@@ -12,12 +12,12 @@ export default {
   comandi: [
     'Leggi la pizza sul foglietto: poi si gira, va fatta A MEMORIA (TAB: la rivedi, ma niente bonus)',
     'SPAZIO tenuto: il pomodoro. Da 1 a 6 (o clic sulla ciotola, poi sulla pizza): un pezzo',
-    'INVIO: PRONTA! Niente ananas. G: rimanda giù l\'imbucato che sbuca, prima che il Boni si giri',
+    'INVIO: PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al secondo, FUORI!',
   ],
   comandiTouch: [
     'Leggi la pizza sul foglietto: poi si gira, va fatta A MEMORIA (toccalo: la rivedi, ma niente bonus)',
     'Passa il dito in tondo sulla pasta: il pomodoro. Tocca la ciotola e poi la pizza: un pezzo',
-    'Poi PRONTA! Niente ananas. Tocca l\'imbucato che sbuca, prima che il Boni si giri',
+    'Poi PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al secondo, FUORI!',
   ],
   obiettivo: 'Fai 3 pizze giuste senza far scoprire tutti e due!',
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 3 pizze giuste
@@ -57,12 +57,14 @@ export default {
     ],
   ],
   // i tre atti: da quando (secondi), annuncio, quale parte del menu, quanti secondi resta visibile
-  // il foglietto, ogni quanti secondi sbuca un imbucato (o gli cade il travestimento: dal secondo
-  // atto), quanti secondi per rimandarlo giù, tempo per ogni pizza (solo nel terzo: il Boni ha fretta)
+  // il foglietto, tempo per ogni pizza (solo nel terzo: il Boni ha fretta). Gli imbucati che sbucano a
+  // chiedere una fetta (da rimandare giù con un tocco prima che il Boni si giri) sono tolti: troppo
+  // difficile, scelta dell'utente. Per rimetterli, negli atti: sbuca: [3.5, 5.5] (ogni quanti secondi)
+  // e avviso: 1.6 (quanti secondi per rimandarlo giù)
   atti: [
     { da: 0, nome: 'LE PRIME PIZZE', menu: 0, foglietto: 3.2 },
-    { da: 12, nome: 'GLI INVITATI ORDINANO', menu: 1, foglietto: 2, sbuca: [3.5, 5.5], avviso: 1.6 },
-    { da: 24, nome: 'IL BONI HA FRETTA', menu: 1, foglietto: 0.8, sbuca: [3.5, 5], avviso: 1.4, tempo: 6.5 },
+    { da: 12, nome: 'GLI INVITATI ORDINANO', menu: 1, foglietto: 2 },
+    { da: 24, nome: 'IL BONI HA FRETTA', menu: 1, foglietto: 0.8, tempo: 6.5 },
   ],
   sbirciata: 1.1,           // secondi che il foglietto resta girato quando lo si rivede
   // gli imbucati: dove si nascondono e come si travestono (il seme del round sceglie per ognuno
