@@ -10,29 +10,26 @@ export default {
   comandi: [
     '1, 2, 3 (o le fiches): punta. Poi C carta, S stai, D raddoppia (o i pulsanti)',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'Gioca come un pro: le mosse giuste di fila valgono sempre di più',
+    'I punti sono le fiches vinte. Mano vinta giocata da pro (le mosse giuste): paga doppio',
   ],
   comandiTouch: [
     'Tocca una fiche per puntare, poi CARTA, STAI o RADDOPPIA',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'Gioca come un pro: le mosse giuste di fila valgono sempre di più',
+    'I punti sono le fiches vinte. Mano vinta giocata da pro (le mosse giuste): paga doppio',
   ],
-  obiettivo: 'Mosse da pro e fiches vinte: fai almeno 100 punti!',
+  obiettivo: 'Vinci almeno 100 fiches!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: le fiches: si parte con 100, quindi sotto le 100 vale zero.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
-  // Il punteggio (revisione 4): le mosse da pro DI FILA (la prima vale puntiPro, ognuna dopo
-  // crescitaPro in più, fino a maxPro; una mossa sbagliata toglie malusSbagliata e la serie
-  // riparte) più le fiches VINTE, che contano poco (sono fortuna: puntiFiche a fiche, solo quelle
-  // sopra le 100 di partenza). Chi tocca a caso ne azzecca qualcuna, ma quasi mai tante di fila.
-  // Prima il punteggio erano le fiches in mano, con le 100 di partenza, e la mossa da pro dava
-  // fiches: toccando a caso si arrivava a 100, col bronzo a 130.
+  // Il punteggio sono le fiches VINTE (quelle sopra le 100 di partenza: 1 punto a fiche). La mano
+  // vinta paga la puntata (il blackjack 3 a 2, il raddoppio il doppio), quella persa se la porta
+  // via: quanto punti conta. Se vinci una mano giocandola tutta da pro (almeno una scelta, tutte
+  // uguali alla strategia di base) il banco paga premioPro in più (1 = la vincita due volte). Mosse
+  // giuste e mani perse: niente punti. Puntare forte rende di più, ma al verde la partita finisce.
+  // (Revisione 4: contavano le mosse da pro di fila, e le fiches pochissimo. L'utente: "non è che
+  // se fai mosse giuste ma perdi sempre le mani vinci comunque", e la puntata deve contare.)
   fiches: 100,
-  puntiFiche: 0.2,
-  puntiPro: 15,
-  crescitaPro: 10,
-  maxPro: 75,
-  malusSbagliata: 20,
+  premioPro: 1,             // (con 0,5 il giocatore automatico bravo vinceva 2 partite su 8: troppa fortuna)
   // i tre atti: da quando (secondi), annuncio, secondi per puntare e per ogni scelta (poi il banco
   // punta il minimo per te, o stai)
   atti: [
@@ -41,6 +38,9 @@ export default {
     { da: 24, nome: 'ULTIME MANI!', tempo: 2 },
   ],
   puntate: [10, 25, 50],
+  // le attese del banco (dare le carte, tirare, pagare) per tanto: con 0,7 in 35 secondi si giocano
+  // 9-10 mani invece di 6-7, e la fortuna di una mano pesa meno
+  ritmoTavolo: 0.7,
   mazzi: 2,
   rimescola: 20,          // sotto queste carte rimaste, il sabot si rimescola
   stai: 17,               // il banco tira finché non arriva almeno a questo

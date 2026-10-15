@@ -336,6 +336,7 @@ function sfondoLido(c) {
   // l'ombra del Bota sul telo (disegnata a parte e stampata in un colpo solo: le parti si sovrappongono)
   const ombra = fuoriSchermo(CORPO.w, CORPO.h, 2, (k) => { k.fillStyle = '#000000'; for (const [nome, s] of ARTI) { SAGOME[nome](k, s); k.fill(); } });
   c.globalAlpha = 0.2; c.drawImage(ombra, -CORPO.w + 3, -CORPO.h + 4, CORPO.w * 2, CORPO.h * 2); c.globalAlpha = 1;
+  ombra.width = ombra.height = 1;   // (stampata: si libera la memoria)
   c.restore();
   telo(); tratto(c, CONT, 1.2);
   c.restore();
@@ -363,8 +364,9 @@ export function creaBota(scene) {
   tela(scene, 'botaFronte', w, h, (c) => corpoBota(c, false), dens);
   tela(scene, 'botaRetro', w, h, (c) => corpoBota(c, true), dens);
   for (const e of ESPR_BOTA) tela(scene, 'botaTesta_' + e, R.w, R.h, (c) => { c.translate(-R.x, -R.y); inTesta(c); disegnaTesta(c, P, e); }, dens);
-  PELLE.fronte = creaPelle(false);
-  PELLE.retro = creaPelle(true);
+  // (le maschere della pelle una volta sola: il gruppo del Bota si rifà a ogni partita)
+  PELLE.fronte ??= creaPelle(false);
+  PELLE.retro ??= creaPelle(true);
   tela(scene, 'tubettoCrema', 18, 40, tubettoCrema, 8);
   tela(scene, 'manoCrema', 40, 57, manoCrema, 6);
   tela(scene, 'gocciaCrema', 12, 12, gocciaCrema, 10);

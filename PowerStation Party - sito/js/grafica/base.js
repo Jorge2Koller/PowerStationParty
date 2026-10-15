@@ -32,6 +32,54 @@ export function tela(scene, key, w, h, fn, dens = RES) {
   return t;
 }
 
+// ------------------------------------------------------------
+//  TEXTURE CHE SI CREANO SOLO QUANDO SERVONO
+//  Tutte le immagini del gioco, create all'avvio, sul telefono superavano i 300 MB, e Safari su
+//  iPhone ha un tetto per la memoria dei canvas: oltre, i disegni nuovi restavano vuoti (lo sfondo
+//  del Bota, la schiuma della Barba). Così gli sfondi e le immagini che servono a un microgioco solo
+//  stanno in "gruppi": all'avvio ogni gruppo si disegna una volta (per sapere che texture crea) e si
+//  butta; poi si rifà quando parte il suo microgioco (usaGruppi, in MicrogiocoBase) e si butta
+//  quando ne parte un altro. Quali gruppi servono a ogni microgioco: GRUPPI_MICROGIOCHI in sprites.js.
+// ------------------------------------------------------------
+const GRUPPI = {};                 // nome -> { fn, chiavi }
+export const GRUPPO_DI = {};       // chiave di una texture -> nome del suo gruppo
+const PRONTI = new Set();          // i gruppi che adesso hanno le texture
+
+export function gruppoPigro(scene, nome, fn) {
+  const tex = scene.textures, orig = tex.createCanvas, chiavi = [];
+  tex.createCanvas = function (k, ...resto) { chiavi.push(k); return orig.call(this, k, ...resto); };
+  try { fn(scene); } finally { tex.createCanvas = orig; }
+  GRUPPI[nome] = { fn, chiavi };
+  for (const k of chiavi) GRUPPO_DI[k] = nome;
+  PRONTI.add(nome);
+  libera(scene, nome);
+}
+
+function libera(scene, nome) {
+  if (!PRONTI.has(nome)) return;
+  for (const k of GRUPPI[nome].chiavi) {
+    if (!scene.textures.exists(k)) continue;
+    const img = scene.textures.get(k).getSourceImage();
+    scene.textures.remove(k);
+    // (il canvas torna nella riserva di Phaser: lo si rimpicciolisce, così non tiene la memoria)
+    if (img && img.width) { img.width = 1; img.height = 1; }
+  }
+  PRONTI.delete(nome);
+}
+
+// crea i gruppi che mancano
+export function assicura(scene, nomi) {
+  for (const n of nomi) if (GRUPPI[n] && !PRONTI.has(n)) { GRUPPI[n].fn(scene); PRONTI.add(n); }
+}
+// tiene (o crea) solo i gruppi elencati, e butta gli altri
+export function usaGruppi(scene, nomi) {
+  for (const n of [...PRONTI]) if (!nomi.includes(n)) libera(scene, n);
+  assicura(scene, nomi);
+}
+export function liberaGruppi(scene, nomi) { for (const n of nomi) libera(scene, n); }
+// i gruppi che contengono queste texture
+export const gruppiDi = (chiavi) => [...new Set(chiavi.map((k) => GRUPPO_DI[k]).filter(Boolean))];
+
 // canvas fuori schermo (per "arte" da comporre a runtime, es. la barba)
 export function fuoriSchermo(w, h, dens, fn) {
   const cv = document.createElement('canvas');

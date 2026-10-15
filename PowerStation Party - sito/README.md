@@ -561,8 +561,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     lo stesso mazzo
   - poco tempo per decidere (la barra sotto le carte: 3 secondi, poi 2,3 dal 12° secondo,
     2 dal 24°): poi il banco punta il minimo per te, o ti fa stare
-  - MOSSA DA PRO: ogni scelta uguale alla strategia di base vale 5 fiches in più (10 negli
-    ultimi 11 secondi)
+  - i punti sono le fiches vinte (sopra le 100 di partenza): la mano vinta paga la puntata,
+    quella persa se la porta via, quindi quanto punti conta (al verde, finisce prima)
+  - MOSSA DA PRO: la scelta uguale alla strategia di base. Una mano VINTA giocata tutta da pro il
+    banco la paga il doppio; con una mossa da principiante niente premio. Mosse giuste e
+    mani perse non danno punti
   - al tavolo, spettatore, c'è lo Zio: quando perdi ride ("Popone"), e ogni tanto sogna
 - MaraZio (PALLEGGIA!):
   - FRECCE SINISTRA/DESTRA (o A/D) o il mouse per muoversi, SPAZIO o clic per calciare;
@@ -729,7 +732,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - Lori canta una strofa alla volta: sopra di lui il fumetto con la scena della strofa, e la
     casella dove cadrà la bacchetta si illumina (con l'arco tratteggiato e il cerchio che si
     stringe). La bacchetta cade sul tempo della musica, sulla battuta forte, preceduta da due note
-    che salgono
+    che salgono. Ogni strofa cade su una casella diversa, che si scopre solo quando si illumina:
+    lì ci va la scena del fumetto (chi conosce la storia la riconosce prima, ma il cartellone non
+    si può sistemare in anticipo)
   - dito e mouse: trascina una vignetta su un'altra casella e le due si scambiano; col mouse anche
     un clic sulla vignetta e uno sulla casella. Una vignetta girata dal vento (il retro bianco) si
     tocca per rigirarla
@@ -740,12 +745,12 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     volano i pomodori e lui fulmina il garzone. Una vignetta battuta resta lì, bloccata
   - tre atti: LA PRIMA STROFA (la riga in alto: quella in basso è sotto il telo); dal 12° secondo
     IL VENTO (metà del telo vola via; le folate girano una vignetta o ne scambiano due già
-    sistemate, e la bacchetta fa qualche finta: punta una casella e all'ultimo cade su quella
-    giusta, col punto esclamativo); dal 24° IL GRAN FINALE (tutte e 8, Lori accelera, le ultime
-    due bacchettate ravvicinate). L'ultima casella è la morale: tutte giuste, il cartellone si
-    illumina e c'è il bonus
-  - ballata (cinque, nel file di configurazione), disposizione iniziale (nessuna vignetta parte al
-    posto giusto), folate e finte escono dal seme del round. In Lampo si gioca la riga in alto:
+    sistemate, e la bacchetta fa qualche finta: punta una casella, di solito lì accanto, e
+    all'ultimo cade su quella giusta, col punto esclamativo); dal 24° IL GRAN FINALE (tutte e 8,
+    Lori accelera, le ultime due bacchettate ravvicinate). L'ultima strofa è la morale: tutte
+    giuste, il cartellone si illumina e c'è il bonus
+  - ballata (cinque, nel file di configurazione), caselle delle strofe, disposizione iniziale
+    (nessuna vignetta parte al posto giusto), folate e finte escono dal seme del round. In Lampo si gioca la riga in alto:
     tre strofe e la morale
   - si gioca anche senza audio: la casella illuminata, l'arco e il cerchio dicono dove e quando
 - ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
@@ -766,8 +771,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   punteggio è la sfida con Beppe: 100 a pari punti, più quanto lo batti (o meno quanto ti batte).
 - **Arriva ReGrorio!** (35 s): 1 punto per ogni secondo vivo, 2 a moneta, 12 a corona, 4 per ogni
   schivata all'ultimo, e +60 se arrivi in fondo senza K.O. (3 vite).
-- **La Barba**: 1,45 punti per ogni % rasata (il 70% per vincere); la barba finita (98%) vale +60
-  e 8 punti per ogni secondo avanzato; -6 per cerotto.
+- **La Barba**: 1,34 punti per ogni % rasata (il 75% per vincere); la barba finita (98%) vale +60
+  e 8 punti per ogni secondo avanzato; -6 per cerotto. La schiuma si secca in 8 secondi, la lama
+  si intasa ogni 75 celle (quattro sciacqui per una barba intera), quattro nei.
 - **Il Panino** (35 s): +5 per ogni ingrediente al momento giusto; ogni ordine servito vale più del
   precedente (10, 16, 34, 64, 106...), +10 se fatto in meno di 8 s; -2 per un ingrediente fuori
   ordine, -5 per un crollo, -8 per una schifezza (il totale non va sotto zero). Vittoria con 3 ordini.
@@ -779,9 +785,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   non esce, un quinto della percentuale di fumo.
 - **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana), +5 per ogni
   ombrellone ripreso; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +40, 4 = +70, 5 = +100.
-- **L'Ingiocabile** (35 s): le mosse da pro (le scelte uguali alla strategia di base) di fila: la
-  prima 15, poi 10 in più ognuna (fino a 75); una mossa sbagliata toglie 20 e la serie riparte. Le
-  fiches vinte (sopra le 100 di partenza) valgono 0,2 l'una. Al verde, finisce prima.
+- **L'Ingiocabile** (35 s): 1 punto per ogni fiche vinta (sopra le 100 di partenza). Le mani vinte
+  giocate tutte da pro (le scelte uguali alla strategia di base) il banco le paga il doppio.
+  Vittoria con 100 fiches vinte. Al verde, finisce prima.
 - **MaraZio** (35 s): 1 punto a palleggio per il moltiplicatore della serie (x1,5 ogni 5 di fila,
   fino a x3), +1 se perfetto, +20 per il pallone d'oro; alla fine la serie migliore: 4 a palleggio
   sotto i 12, poi 70 più 15 per ogni palleggio oltre i 12. Vittoria con una serie di 12.
@@ -790,7 +796,7 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   nessuno arriva in cima, vince chi è più avanti allo scadere.
 - **Spalma il Bota!** (35 s): 0,4 per ogni % di pelle coperta di crema alla fine del primo atto, 3 al
   secondo con l'ombra sulla macchia di sole, +5 per ogni zona calda spenta, +3 per ogni gabbiano
-  scacciato; se finisci sotto il 20% di pelle scottata, +50 e 10 per ogni punto sotto il 20.
+  scacciato; se finisci sotto il 16% di pelle scottata, +50 e 10 per ogni punto sotto il 16.
 - **Il Passaggiorgio** (35 s): ogni guidata vale 10 più della precedente (10, 20, 30, 40...), +2 ogni
   volta che Giorgio viene tirato fuori (+2 se era già quasi dentro), +5 se lo fermi o lo tiri giù
   dalla macchina di Emilio, -10 per ogni passaggio scroccato, -3 per il sosia (mai sotto zero).
@@ -902,7 +908,8 @@ js/
   fx.js                  inquadratura, testi, immagini, stelline, fumo, menu,
                          pulsanti a schermo, eTouch/perDito, vibrazione
   grafica/               tutta la grafica, vettoriale e disegnata via codice
-    base.js              strumenti di disegno, risoluzione (RES)
+    base.js              strumenti di disegno, risoluzione (RES), e i gruppi di immagini che si
+                         creano solo quando servono (gruppoPigro, usaGruppi): vedi sotto
     personaggi.js        i ventuno personaggi (con Emilio, Pastaffi, i cantanti Tini e
                          Oli, il Boni e Lori), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
@@ -972,6 +979,13 @@ js/
     RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
     PizzaScene.js  BallataScene.js
 ```
+
+Le immagini sono tutte disegnate dal codice, all'avvio. Gli sfondi e le immagini che servono a un
+microgioco solo stanno in **gruppi** (`gruppoPigro` in `js/grafica/base.js`): si creano quando parte
+il loro microgioco e si buttano quando ne parte un altro. Senza, sul telefono le immagini di tutto
+il gioco superavano i 300 MB, e Safari su iPhone ha un tetto: oltre, i disegni restavano vuoti (lo
+sfondo del Bota, la schiuma della Barba). Ora all'avvio sono circa 140 MB, e durante un microgioco
+al massimo 180. Quali gruppi servono a ogni microgioco: `GRUPPI_MICROGIOCHI` in `js/sprites.js`.
 
 Le coordinate di gioco sono in unità logiche su uno schermo 480x270; il disegno
 vero avviene a `RES` volte (4 = 1920x1080 sul computer, 3 = 1440x810 sul telefono). Per aggiungere un'immagine a grandezza naturale
@@ -1170,6 +1184,11 @@ export class MioGiocoScene extends MicrogiocoBase {
 
 Partita singola, schermata comandi (a pagine), introduzione, turni per tutti i
 giocatori, risultati e classifiche lo prendono da soli.
+
+Se il microgioco ha immagini sue (uno sfondo, i suoi oggetti), conviene metterle in un gruppo che
+si crea solo quando serve: in `js/sprites.js` un `gruppoPigro(scene, 'miogioco', creaMioGioco)` al
+posto di `creaMioGioco(scene)`, e in `GRUPPI_MICROGIOCHI` la riga `miogioco: ['miogioco']` (con gli
+eventuali sfondi di `sfondi.js` che usa, per nome).
 
 La pausa a schermo sul telefono (coi due tocchi, `pulsantePausa` di `fx.js`) la mette già
 `MicrogiocoBase`. Per il resto:

@@ -27,7 +27,8 @@ import { Sessione } from '../sessione.js';
 import { Salvataggio } from '../salvataggio.js';
 import { livellato } from '../livelli.js';
 import { medaglia } from '../punteggi.js';
-import { preparaGiocatore } from '../sprites.js';
+import { preparaGiocatore, GRUPPI_MICROGIOCHI } from '../sprites.js';
+import { usaGruppi } from '../grafica/base.js';
 import { txt, scritta, inquadra, eTouch, pulsantePausa } from '../fx.js';
 
 export class MicrogiocoBase extends Phaser.Scene {
@@ -59,6 +60,9 @@ export class MicrogiocoBase extends Phaser.Scene {
 
   create() {
     inquadra(this);
+    // le immagini di questo microgioco (sfondo e compagnia): si creano adesso, e si buttano quelle
+    // del microgioco di prima (vedi gruppoPigro in grafica/base.js)
+    usaGruppi(this, GRUPPI_MICROGIOCHI[this.id] ?? []);
     this.prepara();
     this.creaHud();
     this.input.keyboard.on('keydown-ESC', () => this.pausa());

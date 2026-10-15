@@ -1,6 +1,6 @@
 // Crea tutte le texture del gioco. La grafica è vettoriale, disegnata via
 // codice su canvas ad alta risoluzione (cartella js/grafica): nessuna immagine esterna.
-import { tela, DENS } from './grafica/base.js';
+import { tela, DENS, gruppoPigro } from './grafica/base.js';
 import { DOPPIONE } from './sessione.js';
 import { Progressi } from './progressi.js';
 import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, GIUDICI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
@@ -203,17 +203,32 @@ export function creaTexture(scene) {
   personaggio('lori_inchino', lori, 'felice', { posa: 'inchino' });
   // gli imbucati che, sotto la tovaglia, si passano la fetta e fanno l'occhiolino
   for (const id of ['oli', 'sego']) personaggio(`${id}_occhiolino`, PERSONAGGI[id], 'occhiolino');
-  creaMarco(scene);
   creaOggetti(scene);
-  creaSfondi(scene);
-  creaBota(scene);
-  creaPista(scene);
-  creaPalco(scene);
   creaMedaglie(scene);
-  creaVialetto(scene);
-  creaPallaio(scene);
-  creaProvino(scene);
-  creaTaverna(scene);
-  creaPiazzetta(scene);
-  creaMontagna(scene);
+  // gli sfondi e le immagini di un microgioco solo: si creano quando servono (vedi gruppoPigro in
+  // grafica/base.js e GRUPPI_MICROGIOCHI qui sotto)
+  creaSfondi(scene);
+  gruppoPigro(scene, 'marco', creaMarco);
+  gruppoPigro(scene, 'bota', creaBota);
+  gruppoPigro(scene, 'disco', creaPista);
+  gruppoPigro(scene, 'palco', creaPalco);
+  gruppoPigro(scene, 'vialetto', creaVialetto);
+  gruppoPigro(scene, 'pallaio', creaPallaio);
+  gruppoPigro(scene, 'provino', creaProvino);
+  gruppoPigro(scene, 'taverna', creaTaverna);
+  gruppoPigro(scene, 'piazzetta', creaPiazzetta);
+  gruppoPigro(scene, 'montagna', creaMontagna);
 }
+
+// I gruppi di immagini che servono a ogni microgioco (gli sfondi di sfondi.js sono un gruppo per
+// sfondo, col nome della texture). Quando parte un microgioco si creano i suoi e si buttano gli
+// altri (MicrogiocoBase). Un microgioco nuovo con immagini sue: un gruppoPigro qui sopra e una riga
+// qui. (Il Passaggiorgio usa la station wagon di Emilio, la Retromarcia il telefono del Bota, il beer
+// pong il cane del Vialetto per la gag; la ballata prende anche i gruppi delle sue vignette.)
+export const GRUPPI_MICROGIOCHI = {
+  spina: ['bgPub', 'bancone'], regrorio: ['bgStrada'], barba: ['marco', 'bgBarbiere'], panino: ['bgBar', 'banconeBar'],
+  mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
+  palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
+  scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
+  pizza: ['taverna'], ballata: ['piazzetta'],
+};

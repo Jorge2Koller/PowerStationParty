@@ -6,7 +6,9 @@
 //  a posto prima che la bacchetta ci arrivi sopra.
 //  - LA STROFA: sopra Lori il fumetto con la scena che sta cantando; la casella dove cadrà la
 //    bacchetta si illumina, con l'arco tratteggiato e il cerchio che si stringe. La bacchetta cade
-//    sul tempo della musica (sulla battuta forte), una strofa per casella, in ordine.
+//    sul tempo della musica (sulla battuta forte), ogni strofa su una casella diversa, che si scopre
+//    solo quando si illumina (la sceglie il seme): conoscere la storia aiuta a riconoscere la scena,
+//    ma il cartellone non si può sistemare in anticipo.
 //  - IL GESTO: si trascina una vignetta su un'altra casella e le due si scambiano (o si clicca la
 //    vignetta e poi la casella; da tastiera FRECCE, SPAZIO prende e SPAZIO lascia).
 //  - IL COLPO: vignetta giusta, TOC, OOOH e monete nel cappello (la serie aumenta i punti);
@@ -16,15 +18,15 @@
 //  le folate girano una vignetta, da toccare per rigirarla, o ne scambiano due già sistemate, e la
 //  bacchetta fa qualche finta); il gran finale (tutte e 8, Lori accelera, due colpi ravvicinati e la
 //  morale: tutte giuste, il cartellone si illumina e c'è il bonus).
-//  La ballata, la disposizione iniziale (nessuna vignetta parte al posto giusto), le folate e le
-//  finte escono dal seme del round. Il tempo è quello della musica (Audio.posizione), come negli
+//  La ballata, le caselle delle strofe, la disposizione iniziale (nessuna vignetta parte al posto
+//  giusto), le folate e le finte escono dal seme del round. Il tempo è quello della musica (Audio.posizione), come negli
 //  Scapoli; senza audio si va col proprio orologio.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione, DOPPIONE } from '../sessione.js';
 import { CONFIG } from '../config.js';
-import { casuale } from '../grafica/base.js';
-import { PIAZZA as P, centroCella, vignetta } from '../grafica/piazzetta.js';
+import { casuale, assicura, liberaGruppi, gruppiDi } from '../grafica/base.js';
+import { PIAZZA as P, centroCella, vignetta, texDellaVignetta } from '../grafica/piazzetta.js';
 import { txt, im, scalaDi, scritta, stelle, fumetto, scuoti, puntatore, colpetto, caso, vibra, puntiHud, numero, lerp } from '../fx.js';
 
 const TAGLIA_LORI = 0.78;
@@ -65,7 +67,7 @@ export class BallataScene extends MicrogiocoBase {
     this.strofa = (k) => this.ballata.strofe[this.sequenza[k]];
     this.punti = 0; this.giuste = 0; this.serie = 0; this.serieMax = 0;
     this.pos = 0; this.offsetAudio = null;
-    this.h = 0;                       // la prossima strofa (= la casella della prossima bacchettata)
+    this.h = 0;                       // la prossima strofa
     this.armata = -1;                 // la strofa per cui la bacchetta è alzata
     this.bersaglio = null;            // la casella illuminata (durante una finta, quella sbagliata)
     this.finta = false;
@@ -82,7 +84,15 @@ export class BallataScene extends MicrogiocoBase {
     // --- la piazzetta, il cartellone, le vignette ---
     im(this, 0, 0, 'bgPiazzetta').setOrigin(0).setDepth(0);
     this.cartellone = im(this, P.cornice.x, P.cornice.y, 'cartellone').setOrigin(0).setDepth(10);
+    // le vignette si disegnano con le immagini degli altri microgiochi: si creano i loro gruppi, e
+    // finite le vignette si buttano (vedi gruppoPigro)
+    const altri = gruppiDi(this.sequenza.flatMap((s) => texDellaVignetta(this.ballata.strofe[s].vignetta))).filter((g) => g !== 'piazzetta');
+    assicura(this, altri);
     this.sequenza.forEach((s, k) => vignetta(this, `vign_${k}`, this.ballata.strofe[s].vignetta));
+    liberaGruppi(this, altri);
+    // dove cade la bacchetta a ogni strofa (la casella della strofa k: this.dove[k]), e dove sono
+    // appese le vignette all'inizio
+    this.dove = this.caselleStrofe(casuale((seme ^ 0x0d0e5a) >>> 0));
     const posto = this.disponi(this.rnd);
     this.celle = [...Array(8).keys()].map((i) => {
       const { x, y } = centroCella(i);
@@ -187,8 +197,23 @@ export class BallataScene extends MicrogiocoBase {
     super.termina();
   }
 
-  // La disposizione iniziale: nessuna vignetta al posto giusto, e ognuna in una casella che si può
-  // usare almeno 2 secondi prima della sua bacchettata (così ogni strofa si può sempre azzeccare).
+  // La casella di ogni strofa: una a caso tra quelle scoperte quando la bacchetta si alza (nel primo
+  // atto la riga in alto), mai la stessa due volte; l'ultima strofa (la morale) prende l'ultima rimasta.
+  caselleStrofe(r) {
+    const usate = new Set();
+    return this.colpi.map((p, k) => {
+      const aperte = this.caselleA(this.secondoDi(Math.max(0, p - this.preavviso(k))));
+      let scelte = [...Array(aperte).keys()].filter((i) => !usate.has(i));
+      if (!scelte.length) scelte = [...Array(this.n).keys()].filter((i) => !usate.has(i));
+      const i = scelte[Math.floor(r() * scelte.length)];
+      usate.add(i);
+      return i;
+    });
+  }
+
+  // La disposizione iniziale: nessuna vignetta al posto giusto (la casella della sua strofa), e ognuna
+  // in una casella che si può usare almeno 2 secondi prima della sua bacchettata (così ogni strofa si
+  // può sempre azzeccare).
   disponi(r) {
     const n = this.n, ammesse = this.colpi.map((p) => this.caselleA(Math.max(0, this.secondoDi(p) - 2)));
     const ordine = [...Array(n).keys()].sort((a, b) => ammesse[a] - ammesse[b] || a - b);
@@ -196,14 +221,14 @@ export class BallataScene extends MicrogiocoBase {
       const libere = new Set(Array.from({ length: n }, (_x, i) => i)), posto = new Array(n);
       let ok = true;
       for (const k of ordine) {
-        const scelte = [...libere].filter((i) => i < ammesse[k] && i !== k);
+        const scelte = [...libere].filter((i) => i < ammesse[k] && i !== this.dove[k]);
         if (!scelte.length) { ok = false; break; }
         const i = scelte[Math.floor(r() * scelte.length)];
         posto[k] = i; libere.delete(i);
       }
       if (ok) return posto;
     }
-    return Array.from({ length: n }, (_x, k) => (k + 1) % n);
+    return Array.from({ length: n }, (_x, k) => this.dove[(k + 1) % n]);
   }
 
   // ---------- le caselle ----------
@@ -333,15 +358,18 @@ export class BallataScene extends MicrogiocoBase {
   }
 
   // la bacchetta si alza sulla strofa h: il fumetto con la scena, la casella illuminata (o una
-  // finta: quella dopo, e all'ultimo la bacchetta cambia casella)
+  // finta: un'altra casella, di solito lì accanto, e all'ultimo la bacchetta cambia casella)
   arma(h) {
     const a = this.attoA(this.secondoDi(this.colpi[h]));
     this.armata = h;
     this.preToc = 0;
     this.daArma = this.pos;
-    const vicina = h + 1 < this.caselleA(this.secondoDi(this.colpi[h] - this.preavviso(h)));
-    this.finta = !!a.finta && vicina && this.rFinte() < a.finta;
-    this.bersaglio = this.finta ? h + 1 : h;
+    const vera = this.dove[h], col = vera % 4, riga = Math.floor(vera / 4);
+    const libere = this.celle.filter((C) => C.i !== vera && this.mobile(C.i));
+    const accanto = libere.filter((C) => Math.abs((C.i % 4) - col) + Math.abs(Math.floor(C.i / 4) - riga) === 1);
+    const tra = accanto.length ? accanto : libere;
+    this.finta = !!a.finta && tra.length > 0 && this.rFinte() < a.finta;
+    this.bersaglio = this.finta ? tra[Math.floor(this.rFinte() * tra.length)].i : vera;
     this.fase = 'alzata';
     this.mettiPosa('lori_alza');
     // il fumetto: la scena della strofa, grande
@@ -352,11 +380,11 @@ export class BallataScene extends MicrogiocoBase {
     this.sottotitolo(this.strofa(h).inizio + '...', '#fff3d6');
   }
 
-  // la bacchetta cade sulla casella h
+  // la bacchetta cade sulla casella della strofa h
   colpisci(h) {
-    const c = this.cfg, C = this.celle[h];
-    if (this.trascina?.i === h) { C.img.setPosition(C.x, C.y).setScale(this.scala); this.trascina = null; }
-    if (this.selezione === h) this.selezione = null;
+    const c = this.cfg, C = this.celle[this.dove[h]];
+    if (this.trascina?.i === C.i) { C.img.setPosition(C.x, C.y).setScale(this.scala); this.trascina = null; }
+    if (this.selezione === C.i) this.selezione = null;
     const eraGirata = C.girata;
     C.bloccata = true;
     this.tweens.killTweensOf(C.img);
@@ -516,7 +544,7 @@ export class BallataScene extends MicrogiocoBase {
 
   // ---------- il vento ----------
   folata() {
-    const r = this.rFolate, via = new Set([this.bersaglio, this.armata, this.trascina?.i, this.selezione]);
+    const r = this.rFolate, via = new Set([this.bersaglio, this.armata >= 0 ? this.dove[this.armata] : null, this.trascina?.i, this.selezione]);
     const cand = this.celle.filter((C) => this.mobile(C.i) && !C.girata && !via.has(C.i));
     // le strisce del vento sul cartellone
     Audio.sfx('vento');
@@ -525,7 +553,7 @@ export class BallataScene extends MicrogiocoBase {
       this.tweens.add({ targets: l, x: P.cornice.x + P.cornice.w - 10, alpha: 0, delay: k * 40, duration: 420, onComplete: () => l.destroy() });
     }
     if (!cand.length) return;
-    const giuste = cand.filter((C) => C.v === C.i);
+    const giuste = cand.filter((C) => this.dove[C.v] === C.i);
     if (giuste.length && cand.length >= 2 && r() < 0.5) {
       const a = giuste[Math.floor(r() * giuste.length)], altre = cand.filter((C) => C !== a), b = altre[Math.floor(r() * altre.length)];
       this.scambia(a.i, b.i, true);
@@ -570,9 +598,9 @@ export class BallataScene extends MicrogiocoBase {
         if (this.preToc === 1 && this.pos >= colpo - 1) { this.preToc = 2; Audio.sfx('preToc2'); }
         if (this.finta && this.pos >= colpo - c.finta) {
           this.finta = false;
-          this.bersaglio = h;
+          this.bersaglio = this.dove[h];
           Audio.sfx('fiuu');
-          const C = this.celle[h];
+          const C = this.celle[this.bersaglio];
           scritta(this, C.x, C.y - 30, '!', { size: 18, color: '#ff9a3a', durata: 400, depth: 972 });
         }
         if (this.pos >= colpo) { this.colpisci(h); this.h++; }
@@ -632,7 +660,7 @@ export class BallataScene extends MicrogiocoBase {
       gA.lineStyle(1.6, 0xffffff, 0.85);
       for (let i = 0; i < 12; i += 2) { const a = arco(i / 12), b = arco((i + 1) / 12); gA.lineBetween(a.x, a.y, b.x, b.y); }
       // la casella illuminata e il cerchio che si stringe
-      const { w, h } = P.cella, vero = this.bersaglio === this.armata;
+      const { w, h } = P.cella, vero = this.bersaglio === this.dove[this.armata];
       gL.fillStyle(vero ? GIALLO : 0xff9a3a, 0.12 + 0.22 * k).fillRoundedRect(C.x - w / 2, C.y - h / 2, w, h, 4);
       gL.lineStyle(2.6, vero ? GIALLO : 0xff9a3a, 0.6 + 0.4 * k).strokeRoundedRect(C.x - w / 2 - 1.5, C.y - h / 2 - 1.5, w + 3, h + 3, 5);
       gL.lineStyle(2, 0xffffff, 0.35 + 0.55 * k).strokeCircle(C.x, C.y, lerp(44, 9, k));

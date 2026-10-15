@@ -10,7 +10,8 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { Progressi } from '../progressi.js';
 import { livellato } from '../livelli.js';
-import { SP, ritratto, preparaBevitore, FACCE_SBRONZA, aspettoDi } from '../sprites.js';
+import { SP, ritratto, preparaBevitore, FACCE_SBRONZA, aspettoDi, GRUPPI_MICROGIOCHI } from '../sprites.js';
+import { usaGruppi } from '../grafica/base.js';
 import { TAVOLO_IMG, RETE_IMG, creaAccasciato } from '../grafica/pallaio.js';
 import { txt, im, scalaDi, inquadra, raggi, pannello, stelle, scritta, fumetto, caso, eTouch, perDito, pulsante, pulsantePausa, menuLista, annunciaTrofei } from '../fx.js';
 import { pulsantiAngolo } from './menu.js';
@@ -90,6 +91,7 @@ export class BeerPongScene extends Phaser.Scene {
     Audio.musica(R.musica ?? 'festa');
     Audio.tempo(1);
     this.P = new Partita(S.giocatori, R, CONFIG.beerpong.sbronza.soglie);
+    usaGruppi(this, GRUPPI_MICROGIOCHI.beerpong);   // il Pallaio (e il cane della gag): vedi gruppoPigro
     for (const g of S.giocatori) preparaBevitore(this, g.id);
     this.file = {};            // i centri di fila di ogni giocatore (per "IN FIAMME!")
     this.attesa = null;        // cosa fare al prossimo tocco (il passaggio di mano)

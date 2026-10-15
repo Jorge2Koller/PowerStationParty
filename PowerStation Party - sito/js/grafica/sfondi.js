@@ -1,5 +1,5 @@
 // Sfondi dei microgiochi, disegnati in unità logiche (480x270).
-import { tela, CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, alone, casuale } from './base.js';
+import { tela, gruppoPigro, CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, alone, casuale } from './base.js';
 
 // ------------------------------------------------------------
 //  POWERSTATION: pub in stile irlandese, ma chiaramente in Italia
@@ -888,24 +888,18 @@ function sfondoDisco(c) {
   c.fillStyle = gradR(c, 240, 160, 150, 330, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(5,0,20,0.45)']]); c.fillRect(0, 0, 480, 270);
 }
 
+// ogni sfondo (e il suo bancone o tavolo) è un gruppo a sé: si crea quando serve (vedi gruppoPigro)
+const SFONDI = [
+  ['bgPub', 480, 270, sfondoPub], ['bancone', 480, 112, bancone], ['bgStrada', 480, 270, sfondoStrada],
+  ['bgBarbiere', 480, 270, sfondoBarbiere], ['bgBar', 480, 270, sfondoBar], ['banconeBar', 480, 74, banconeBar],
+  ['bgSala', 480, 270, sfondoSala], ['tavola', 480, 190, tavola], ['bgCortile', 480, 270, sfondoCortile],
+  ['portoneAperto', 60, 54, (c) => portone(c, 12, 2, true)], ['bgSpiaggia', 480, 270, sfondoSpiaggia],
+  ['bgCasino', 480, 270, sfondoCasino], ['tavoloVerde', 480, 170, tavoloVerde], ['bgParco', 480, 270, sfondoParco],
+  ['bgStradaToscana', 480, 270, sfondoStradaToscana], ['bgParcheggio', 480, 270, sfondoParcheggio], ['bgDisco', 480, 270, sfondoDisco],
+];
+
 export function creaSfondi(scene) {
-  tela(scene, 'bgPub', 480, 270, sfondoPub);
-  tela(scene, 'bancone', 480, 112, bancone);
-  tela(scene, 'bgStrada', 480, 270, sfondoStrada);
-  tela(scene, 'bgBarbiere', 480, 270, sfondoBarbiere);
-  tela(scene, 'bgBar', 480, 270, sfondoBar);
-  tela(scene, 'banconeBar', 480, 74, banconeBar);
-  tela(scene, 'bgSala', 480, 270, sfondoSala);
-  tela(scene, 'tavola', 480, 190, tavola);
-  tela(scene, 'bgCortile', 480, 270, sfondoCortile);
-  tela(scene, 'portoneAperto', 60, 54, (c) => portone(c, 12, 2, true));
-  tela(scene, 'bgSpiaggia', 480, 270, sfondoSpiaggia);
-  tela(scene, 'bgCasino', 480, 270, sfondoCasino);
-  tela(scene, 'tavoloVerde', 480, 170, tavoloVerde);
-  tela(scene, 'bgParco', 480, 270, sfondoParco);
-  tela(scene, 'bgStradaToscana', 480, 270, sfondoStradaToscana);
-  tela(scene, 'bgParcheggio', 480, 270, sfondoParcheggio);
-  tela(scene, 'bgDisco', 480, 270, sfondoDisco);
+  for (const [k, w, h, fn] of SFONDI) gruppoPigro(scene, k, (sc) => tela(sc, k, w, h, fn));
   // vignettatura per le schermate di menu
   tela(scene, 'vignetta', 480, 270, (c) => {
     c.fillStyle = gradR(c, 240, 135, 60, 310, [[0, 'rgba(255,255,255,0.16)'], [0.45, 'rgba(0,0,0,0)'], [1, 'rgba(20,0,30,0.55)']]);

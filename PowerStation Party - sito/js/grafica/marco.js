@@ -64,6 +64,7 @@ export const zonaDelicata = (x, y, espr = 'normale') =>
 export const ARTE = {};
 
 function creaArte() {
+  if (ARTE.barba) return;   // (una volta sola: il gruppo della Barba si rifà a ogni partita)
   const D = FACCIA.densDin, r = casuale(42);
   const peli = (c, base, luce, luce2) => {
     c.fillStyle = base; c.fillRect(0, 0, 96, 104);

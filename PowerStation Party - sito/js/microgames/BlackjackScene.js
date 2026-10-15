@@ -4,9 +4,11 @@
 //  Il banco tira fino a 17, il blackjack paga 3 a 2. Il sabot ha due mazzi
 //  mescolati con il seme del round: nella sfida tutti e due trovano le stesse carte.
 //  Si decide in fretta: TEMPO DI DECISIONE secondi per puntare e per ogni scelta (se scade, il
-//  banco punta il minimo per te, o si sta). E conta saper giocare: ogni scelta uguale a quella
-//  della strategia di base (la tabella dei giocatori bravi) vale punti, MOSSA DA PRO; una diversa
-//  ne toglie. Il punteggio: le fiches vinte (sopra le 100 di partenza) più i punti delle mosse.
+//  banco punta il minimo per te, o si sta). Il punteggio sono le fiches vinte (sopra le 100 di
+//  partenza): la mano vinta paga la puntata, quella persa se la porta via, quindi quanto punti
+//  conta. E conta saper giocare: ogni scelta uguale a quella della strategia di base (la tabella
+//  dei giocatori bravi) è una MOSSA DA PRO, e una mano VINTA giocata tutta da pro il banco la paga
+//  di più (premioPro). Mosse giuste e mani perse: niente punti.
 //  Quando vince il banco, l'Ingiocabile allunga il braccio piegato a 90 gradi e
 //  spazzola via le fiches con un fischio, poi commenta: «Come le leggo!»
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -44,8 +46,10 @@ export class BlackjackScene extends MicrogiocoBase {
     this.vinte = 0;
     this.blackjack = 0;
     this.mosseGiuste = 0; this.mosseSbagliate = 0;
-    this.puntiMosse = 0;       // i punti delle mosse (da pro: più; sbagliate: meno)
-    this.seriePro = 0; this.serieProMax = 0;   // mosse da pro di fila
+    this.manoPro = true;       // la mano in corso, finora giocata tutta da pro (con almeno una scelta)
+    this.scelteMano = 0;
+    this.maniPro = 0;          // mani vinte giocate da pro (premiate)
+    this.premi = 0;            // fiches avute in premio per le mani da pro
     this.tDecidi = 0;
     this.barraTempo = this.add.graphics().setDepth(700);
     this.stato = 'attesa';
@@ -128,7 +132,8 @@ export class BlackjackScene extends MicrogiocoBase {
     if (quali === 'gioco') this.bottoniGioco[2].cont.setAlpha(this.mia.length === 2 && this.fiches >= this.puntata ? 1 : 0.3);
   }
 
-  dopo(ms, fn) { return this.time.delayedCall(ms, () => { if (this.inCorso) fn(); }); }
+  // (le attese del banco, dare le carte, tirare, pagare, vanno al ritmo del tavolo: ritmoTavolo)
+  dopo(ms, fn) { return this.time.delayedCall(ms * (this.cfg.ritmoTavolo ?? 1), () => { if (this.inCorso) fn(); }); }
 
   espr(e) { this.dealer.setTexture('ingiocabile_' + e); }
 
@@ -194,10 +199,10 @@ export class BlackjackScene extends MicrogiocoBase {
     this.testoPuntata.setText(this.puntata ? 'PUNTATA ' + this.puntata : '');
   }
 
-  // il punteggio: le fiches vinte (a mano finita o no: la puntata in gioco conta come tua) più le mosse
+  // il punteggio: le fiches vinte, sopra quelle di partenza (a mano finita o no: la puntata in gioco
+  // conta come tua). Ci sono dentro anche i premi delle mani vinte da pro
   get punteggio() {
-    const c = this.cfg;
-    return Math.max(0, Math.round(Math.max(0, this.fiches + this.puntata - c.fiches) * c.puntiFiche + this.puntiMosse));
+    return Math.max(0, this.fiches + this.puntata - this.cfg.fiches);
   }
   aggiornaPunti() { this.testoPunti.setText(puntiHud(this.punteggio)); }
 
@@ -236,6 +241,8 @@ export class BlackjackScene extends MicrogiocoBase {
     if (this.fiches < v) return Audio.sfx('vuoto');
     this.fiches -= v;
     this.puntata = v;
+    this.manoPro = true;
+    this.scelteMano = 0;
     this.aggiornaBanca();
     this.pila.push(this.fiche(v, BANCA, CERCHIO.x, CERCHIO.y));
     Audio.sfx('fiches');
@@ -290,26 +297,20 @@ export class BlackjackScene extends MicrogiocoBase {
     return m;
   }
 
-  // una scelta del giocatore: se è quella della strategia di base punti in più, se no in meno
+  // una scelta del giocatore: uguale alla strategia di base, MOSSA DA PRO (se vinci la mano, il banco
+  // paga il premio); diversa, DA PRINCIPIANTE (niente premio per questa mano)
   scegli(mossa) {
     if (!this.inCorso || this.stato !== 'gioca') return;
     if (mossa === 'raddoppia' && (this.mia.length !== 2 || this.fiches < this.puntata)) return Audio.sfx('vuoto');
-    const c = this.cfg;
+    this.scelteMano++;
     if (mossa === this.consiglio()) {
-      // le mosse da pro di fila valgono sempre di più
-      const vale = Math.min(c.maxPro, c.puntiPro + c.crescitaPro * this.seriePro);
-      this.seriePro++;
-      this.serieProMax = Math.max(this.serieProMax, this.seriePro);
-      this.puntiMosse += vale;
       this.mosseGiuste++;
-      scritta(this, BANCA.x, BANCA.y - 26, this.seriePro > 1 ? `DA PRO x${this.seriePro} +${vale}` : `MOSSA DA PRO +${vale}`, { size: 7, color: '#7dff9a', durata: 450 }).setAngle(0);
+      scritta(this, BANCA.x, BANCA.y - 26, this.manoPro ? 'MOSSA DA PRO' : 'DA PRO (ma tardi)', { size: 7, color: '#7dff9a', durata: 450 }).setAngle(0);
     } else {
-      this.puntiMosse -= c.malusSbagliata;
       this.mosseSbagliate++;
-      this.seriePro = 0;
-      scritta(this, BANCA.x, BANCA.y - 26, `DA PRINCIPIANTE -${c.malusSbagliata}`, { size: 7, color: '#ff9a8a', durata: 450 }).setAngle(0);
+      if (this.manoPro) scritta(this, BANCA.x, BANCA.y - 26, 'DA PRINCIPIANTE: NIENTE PREMIO', { size: 7, color: '#ff9a8a', durata: 600 }).setAngle(0);
+      this.manoPro = false;
     }
-    this.aggiornaPunti();
     this[mossa]();
   }
 
@@ -368,9 +369,18 @@ export class BlackjackScene extends MicrogiocoBase {
     scritta(this, 240, 206, scritte[tipo], { size: tipo === 'bancoBJ' ? 11 : 14, color: buono ? '#7dff9a' : tipo === 'pari' ? '#ffffff' : '#ff6b5a', durata: 900, depth: 960 });
     if (buono || tipo === 'pari') {
       const vincita = tipo === 'blackjack' ? Math.round(this.puntata * 2.5) : tipo === 'vince' ? this.puntata * 2 : this.puntata;
+      let vincitaPro = 0;
       if (buono) {
         this.vinte++;
         if (tipo === 'blackjack') this.blackjack++;
+        // la mano vinta giocata da pro (almeno una scelta, tutte giuste): il banco paga il premio
+        if (this.manoPro && this.scelteMano > 0) {
+          const premio = Math.round((vincita - this.puntata) * this.cfg.premioPro);
+          vincitaPro = premio;
+          this.maniPro++;
+          this.premi += premio;
+          this.dopo(250, () => scritta(this, CERCHIO.x + 40, CERCHIO.y - 30, `DA PRO! +${premio}`, { size: 10, color: '#7dff9a', durata: 700, depth: 961 }));
+        }
         Audio.sfx(tipo === 'blackjack' ? 'bonus' : 'ok');
         stelle(this, CERCHIO.x, CERCHIO.y - 6, 6, 950);
         this.espr(tipo === 'blackjack' ? 'shock' : 'triste');
@@ -379,7 +389,7 @@ export class BlackjackScene extends MicrogiocoBase {
         const paga = vincita - this.puntata;
         for (let i = 0; i < Math.max(1, Math.round(paga / 25)); i++) this.pila.push(this.fiche(paga >= 50 ? 50 : paga >= 25 ? 25 : 10, { x: 240, y: Y_TAVOLO + 4 }, CERCHIO.x + 20 + (i % 3) * 3, CERCHIO.y - Math.floor(i / 3) * 2));
       }
-      this.fiches += vincita;
+      this.fiches += vincita + vincitaPro;
       this.puntata = 0;
       this.dopo(700, () => {
         Audio.sfx('fiches');
@@ -497,7 +507,7 @@ export class BlackjackScene extends MicrogiocoBase {
       punteggio,
       // (la condizione è il bronzo stesso; in Lampo, più corto, in proporzione)
       vittoria: punteggio >= c.medaglie.bronzo * Math.min(1, this.durata / c.durata),
-      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}, ${quanti(this.mosseGiuste, 'mossa da pro', 'mosse da pro')}` + (this.serieProMax > 1 ? ` (${this.serieProMax} di fila)` : '') + (this.mosseSbagliate ? `, ${this.mosseSbagliate} no` : '') + (this.blackjack ? `, ${this.blackjack} blackjack` : ''),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.maniPro ? ` (${this.maniPro} da pro, +${this.premi})` : '') + (this.blackjack ? `, ${quanti(this.blackjack, 'blackjack', 'blackjack')}` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }

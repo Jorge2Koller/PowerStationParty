@@ -268,6 +268,10 @@ function morale(c, W, H) {
   c.fillText('MORALE', W / 2, 11.5);
 }
 
+// le texture che servono a una vignetta (per creare prima i loro gruppi: vedi gruppoPigro)
+export const texDellaVignetta = (v) => [v.sfondo?.[0], ...[...(v.chi ?? []), ...(v.cosa ?? []), ...(v.sopra ?? [])].map((o) => o[0]),
+  ...(v.maschera ? ['giorgio_normale', 'bordoMaschera'] : [])].filter(Boolean);
+
 export function vignetta(scene, key, v, W = PIAZZA.cella.w, H = PIAZZA.cella.h) {
   tela(scene, key, W, H, (c) => {
     c.save();

@@ -31,8 +31,8 @@ export default {
   bonusMorale: 60,
   // la canzone (120 battiti al minuto: un ottavo è 1/4 di secondo; nel terzo atto Lori accelera fino a
   // tempoFinale). Le bacchettate, in ottavi dall'inizio, sempre sul primo o sul terzo battito della
-  // battuta (la battuta forte): una strofa per casella, in ordine. Il terzo atto comincia all'ottavo 96
-  // (24 secondi), e le ultime due bacchettate sono ravvicinate
+  // battuta (la battuta forte): ogni strofa su una casella diversa, scelta col seme. Il terzo atto
+  // comincia all'ottavo 96 (24 secondi), e le ultime due bacchettate sono ravvicinate
   colpi: [16, 32, 44, 64, 80, 104, 120, 128],
   tempoFinale: 1.15,
   // in Lampo (15 secondi, i primi due atti) la ballata si accorcia: si gioca solo la riga in alto, con
