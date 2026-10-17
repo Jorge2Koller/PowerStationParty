@@ -1,6 +1,6 @@
 // Crea tutte le texture del gioco. La grafica è vettoriale, disegnata via
 // codice su canvas ad alta risoluzione (cartella js/grafica): nessuna immagine esterna.
-import { tela, DENS, gruppoPigro } from './grafica/base.js';
+import { tela, DENS, gruppoPigro, RES } from './grafica/base.js';
 import { DOPPIONE } from './sessione.js';
 import { Progressi } from './progressi.js';
 import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, GIUDICI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
@@ -84,6 +84,14 @@ export function preparaGiocatore(scene, id, doppione = false) {
     for (const e of ESPRESSIONI) figura(scene, `${bis}_${e}`, finto, e);
     calci(scene, bis, finto);
   }
+}
+
+// Una posa in più di un personaggio (col suo costume del Bancone), creata da un microgioco quando
+// serve e buttata da lui alla fine (le Perle di Denny): chiave della texture, chi, espressione,
+// opzioni del disegno (posa...) e densità (più alta se si vede in grande)
+export function preparaPosa(scene, key, id, espr, o = {}, dens = RES) {
+  const [p, op] = vestito(id);
+  tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, p, espr, { ...op, ...o }); }, dens);
 }
 
 // Le due pose del ballo (L'Incubo degli Scapoli) di chi gioca, felice: create quando servono
@@ -230,5 +238,5 @@ export const GRUPPI_MICROGIOCHI = {
   mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
   palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
   scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
-  pizza: ['taverna'], ballata: ['piazzetta'],
+  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: ['pallaio'],
 };
