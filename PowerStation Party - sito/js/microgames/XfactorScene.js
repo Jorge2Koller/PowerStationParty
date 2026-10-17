@@ -1,151 +1,122 @@
-// Microgioco 17: "Provini a X-Factor" - dai la nota giusta a Tini e Oli. INTONA!
+// Microgioco 17: "Provini a X-Factor" - suona "Cambiare Aria" del Tini e dell'Oli sui pad. SUONA!
 //
-//  Il palco di un talent show (inventato): i due cantanti ai lati col microfono, tu al centro alla
-//  pianola, davanti i quattro giudici. Sopra il palco c'è il pentagramma: la melodia scorre da
-//  destra a sinistra (del colore di chi canta) e tu tieni la nota (il cursore, fisso a sinistra)
-//  all'altezza giusta mentre passa. I cantanti cantano la TUA nota: se è giusta la voce è piena,
-//  se è sbagliata stona davvero (calante, tremolante, incrinata) e si sente sotto la melodia guida.
-//  Si vede anche senza audio: la linea diventa rossa, il cantante ti guarda malissimo, i giudici si
-//  tappano le orecchie. Le lucine sul tavolo dicono già come la pensa ogni giudice: alla fine votano.
-//  Tre atti: LA STROFA (un cantante alla volta, note lunghe), IL RITORNELLO (si alternano, salti
-//  più grandi), L'ACUTO (passaggi veloci e la nota più alta tenuta fino in fondo).
-//  La canzone (rock, pop o rap: config.canzoni), la melodia, l'alternanza dei cantanti e le note
-//  d'oro escono dal seme del round: uguali per tutti i giocatori. Nel ritornello si sale di un
-//  tono. Il tempo è quello della base (Audio.posizione); senza audio si va col proprio orologio.
+//  Il palco di un talent show (inventato): i due cantanti ai lati col microfono, che cantano a
+//  tempo; al centro, dietro la console coi 4 pad luminosi, chi gioca fa la base. La canzone è vera
+//  (un ritaglio di 35 secondi, 15 in Lampo): le note scendono verso i pad, a tempo coi battiti e gli
+//  attacchi della canzone (la mappa è in xfactor-mappa.json, una per livello: la fa
+//  strumenti/beatmap.py). Si colpiscono quando toccano il pad: PERFETTO, BUONO, MANCATO; le note
+//  lunghe si tengono finché finisce la scia.
+//  L'errore si sente sulla canzone: a ogni nota mancata si ovatta e il disco graffia; con 3 errori
+//  di fila resta ovattata e rallenta, finché non si torna a prendere le note. Davanti, i quattro
+//  giudici (inventati): le lucine dicono già come la pensano, e alla fine votano la precisione.
+//  Tre atti, allineati alla canzone: LA STROFA (il crescendo), IL PEZZO FORTE!, IL GRAN FINALE!.
+//  Il tempo è quello della canzone (l'orologio dell'audio, meno la latenza e il ritardo audio delle
+//  Impostazioni); senza audio si va col proprio orologio. La canzone è la stessa per tutti: nella
+//  sfida, a pari livello, tutti suonano la stessa mappa.
+//  Il ritaglio si carica e si decodifica quando parte il microgioco e si butta quando finisce.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
-import { CONFIG } from '../config.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
-import { casuale } from '../grafica/base.js';
 import { PROVINO } from '../grafica/provino.js';
-import { txt, im, scritta, stelle, fumetto, lerp, caso, eTouch, vibra, puntatore, puntiHud, numero, quanti } from '../fx.js';
+import { txt, im, scritta, stelle, fumetto, caso, vibra, multiTouch, puntatore, puntiHud, numero } from '../fx.js';
 
-const OTTAVO_120 = 0.25;                              // le durate in configurazione sono in ottavi a 120 bpm (0,25 s)
-const PENTA = { x0: 18, x1: 462, cima: 48, salto: 7, cursore: 84 };   // il pentagramma: la riga in cima, quanto dista una nota dall'altra, dove sta il cursore
-const ALTA = 6;                                       // la nota più alta (la riga in cima)
-const yNota = (p) => PENTA.cima + (ALTA - p) * PENTA.salto;
-const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
-const clamp = Phaser.Math.Clamp;
-const int = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
-const TAGLIA = { cantante: 0.56, io: 0.5, giudice: 0.42 };
+const TAGLIA = { cantante: 0.56, io: 0.48, giudice: 0.42 };
 const PIEDI_GIUDICI = 263;
-const ENTRAMBI = 2;
+// i pad sulla console (in fila, da sinistra) e da dove scendono le note
+const PAD = { y: 201, w: 30, h: 12, passo: 36, cima: 36 };
+const xPad = (k) => 240 + (k - 1.5) * PAD.passo;
+const COLORI = [0xff4fb8, 0x3ae0ff, 0xffe14a, 0x7dff9a];
+const CODICI = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
+const ESITI = { perfetto: ['PERFETTO!', '#7dff9a'], buono: ['BUONO', '#ffe14a'], mancato: ['MANCATO', '#ff6b5a'], vuoto: ['A VUOTO', '#ff9a8a'], mollata: ['MOLLATA!', '#ff9a8a'], tenuta: ['TENUTA!', '#7dff9a'] };
+let MAPPA = null;   // la mappa delle note: si scarica la prima volta e resta (è piccola, 5 KB)
 
 export class XfactorScene extends MicrogiocoBase {
   constructor() { super('xfactor'); }
 
-  // la base non accelera: la canzone è scritta sul suo tempo (MicrogiocoBase lo chiede a ogni fotogramma)
+  // la musichetta non accelera (suona la canzone vera)
   tempoMusica() { return 1; }
 
   prepara() {
-    const c = this.cfg, seme = Sessione.seme;
-    this.colori = c.cantanti.map((id) => int(CONFIG.personaggiGiocabili.find((p) => p.id === id)?.colore ?? '#ffffff'));
-    // la canzone del round (col suo tempo: un passo = un ottavo) e la base che la suona
-    this.brano = c.canzoni[Math.floor(casuale((seme ^ 0x51ab1e) >>> 0)() * c.canzoni.length)];
-    this.passo = 60 / this.brano.bpm / 2;
-    this.note = this.canzone(casuale(seme));
-    const sezioni = [0, ...c.atti.slice(1).map((a) => Math.round(a.da / this.passo))];
-    Audio.brano({ ...this.brano, sezioni, tono: c.tono, radici: c.armonia.radici, triadi: c.armonia.triadi });
-    this.iNota = 0;                 // la nota che sta passando (o la prossima)
-    this.pos = 0;                   // dove siamo nella canzone, in ottavi
-    this.agganciato = false;        // la base è stata allineata alla partita?
-    // (si parte dalla nota più bassa: chi non tocca niente non si trova intonato per caso)
-    this.meta = 0;                  // la nota su cui deve andare il cursore
-    this.metaF = 0;                 // ...e dove punta il mouse o il dito (anche a metà tra due note)
-    this.puntato = false;           // l'ultimo comando è arrivato da mouse o dito (se no dalla tastiera)
-    this.cur = 0;                   // dov'è il cursore adesso (scivola verso la meta)
-    this.dito = null;
-    this.tenuto = { d: 0, t: 0 };
-    this.stato = 'attesa';          // 'ok' intonato | 'no' stonato | 'attesa' (pausa, o appena cambiata la nota)
-    this.punti = 0; this.serie = 0; this.serieMax = 0; this.livelloSerie = 0; this.ori = 0;
-    this.tOk = 0; this.tNo = 0; this.tStonata = 0; this.tAcuto = 0; this.tAcutoOk = 0;
-    this.calore = 0;                // quanto è caldo il pubblico (accendini)
-    this.tOrecchie = 0; this.tContenti = 0; this.tCuore = 1.5;
-    this.facce = [null, null]; this.tStona = [0, 0]; this.male = [false, false];
-    this.atto = 0;
-    this.inAcuto = false; this.tIo = 0;
-    // (la scena viene riusata: quello che si disegna solo quando cambia va riscritto da capo)
-    this.hud = null; this.ultimaFaccia = ''; this.statoDisegnato = null; this.lucineDisegnate = null;
-    this._verdetto = null;
-
+    this.lampo = Sessione.tipo === 'lampo';
+    this.pronto = false;
+    // (la scena si riusa da un turno all'altro: si riparte da zero)
+    this.song = null; this._verdetto = null; this.fuoriTempo = false; this.atti = null; this.battiti = null;
+    this.note = []; this.iProssima = 0;
+    this.pos = 0;                   // dove siamo nella canzone (secondi): quello che si sente
+    this.punti = 0; this.serie = 0; this.serieMax = 0;
+    this.perfetti = 0; this.buoni = 0; this.mancati = 0; this.mancatiFila = 0; this.lunghe = 0;
+    this.premuti = [false, false, false, false];
+    this.accesi = [0, 0, 0, 0];     // quanto brilla ogni pad (si spegne piano)
+    this.dita = new Map();          // dito (o mouse) -> pad
+    this.ovattata = false;
+    this.nAtto = -1; this.nBattito = -1;
     this.scena();
-    this.pentagramma();
     this.comandi();
+    this.alPausa = () => this.song?.pausa();
+    this.events.on('pause', this.alPausa);
+    this.carica();
+  }
 
-    // la melodia guida, piano, nella base: a ogni passo dell'audio, la nota che comincia lì
-    const inizi = new Map(this.note.map((n) => [n.da, n]));
-    Audio.guida((passo) => {
-      const n = this.inCorso ? inizi.get(passo) : null;
-      return n ? { midi: c.scala[n.pos] + n.tono + (n.chi === 1 ? c.voci[1].ottava * 12 : 0), passi: n.a - n.da } : null;
-    });
-    // in pausa le voci tacciono; al rientro la base si riallinea alla partita
-    this.suPausa = () => Audio.vociZitte();
-    this.suRientro = () => { this.agganciato = false; };
-    this.events.on('pause', this.suPausa);
-    this.events.on('resume', this.suRientro);
+  alRientro() {
+    for (let k = 0; k < 4; k++) this.rilascia(k, true);
+    this.dita.clear();
+    this.song?.riprendi();
   }
 
   pulisci() {
-    Audio.guida(null);
-    Audio.brano(null);
-    Audio.vociZitte();
-    this.events.off('pause', this.suPausa);
-    this.events.off('resume', this.suRientro);
+    this.events.off('pause', this.alPausa);
+    this.song?.chiudi();      // (e la canzone decodificata si butta)
+    this.song = null;
   }
 
-  alRientro() { this.dito = null; this.tenuto = { d: 0, t: 0 }; }
-
-  // quando il microgioco finisce (anche la prova lampo, che non ha il verdetto) i cantanti tacciono
   termina() {
-    if (!this.finito) { Audio.guida(null); Audio.vociZitte(); }
+    this.song?.ovatta(20000);
     super.termina();
   }
 
-  // ---------- la canzone ----------
-  // Le note: { da, a (ottavi), pos (0..6 sul pentagramma), chi (0 Tini, 1 Oli, 2 tutti e due), oro,
-  // acuto }. Si scrive tutta all'inizio, dal seme del round.
-  canzone(rnd) {
-    const c = this.cfg, P = this.passo, k120 = OTTAVO_120 / P, tot = Math.round(this.durata / P), ultimo = c.atti[c.atti.length - 1];
-    const attoDi = (n) => c.atti.filter((a) => n * P >= a.da).pop();
-    // l'acuto c'è solo se la partita arriva al terzo atto (in Lampo, 15 secondi, no)
-    this.conAcuto = this.durata >= ultimo.da + c.acuto.secondi + 1;
-    const pAcuto = this.conAcuto ? Math.round(c.acuto.secondi / P) : 0, fine = tot - pAcuto;
-    const note = [];
-    let n = Math.min(Math.round(c.primoPasso * k120), Math.max(0, fine - 4)), pos = 3, chi = rnd() < 0.5 ? 0 : 1, cambio = -1;
-    while (n < fine) {
-      const a = attoDi(n), k = c.atti.indexOf(a), finoA = (c.atti[k + 1]?.da ?? this.durata) / P, daA = a.da / P;
-      let dur = Math.max(1, Math.round(a.durate[Math.floor(rnd() * a.durate.length)] * k120));
-      if (fine - n - dur < 2) dur = fine - n;                 // niente moncherini in fondo
-      if (note.length) {
-        // la nota dopo: entro "salto" da quella di prima, meglio se è una nota dell'accordo della battuta
-        const salto = Math.max(1, Math.round(a.salto)), accordo = c.accordi[this.brano.giro[Math.floor(n / 8) % this.brano.giro.length]], cand = [];
-        for (let p = Math.max(0, pos - salto); p <= Math.min(ALTA, pos + salto); p++) if (p !== pos) for (let w = accordo.includes(p) ? 3 : 1; w > 0; w--) cand.push(p);
-        pos = cand[Math.floor(rnd() * cand.length)];
-        // il cantante cambia ogni tanto: sempre più spesso verso la fine dell'atto
-        if (n >= cambio) { if (cambio >= 0) chi = 1 - chi; cambio = n + Math.round(lerp(a.cambio[0], a.cambio[1], clamp((n - daA) / Math.max(1, finoA - daA), 0, 1)) * k120); }
-      } else cambio = n + Math.round(a.cambio[0] * k120);
-      note.push({ da: n, a: n + dur, pos, chi, oro: dur >= 2 && rnd() < a.oro, tono: c.tono[k] ?? 0 });
-      n += dur;
+  // ---------- la canzone e la mappa ----------
+  async carica() {
+    const c = this.cfg;
+    this.attesa = txt(this, 240, 118, 'SI ACCENDONO LE LUCI...', { size: 12, color: '#ffe14a', depth: 1000 });
+    this.tweens.add({ targets: this.attesa, alpha: 0.4, duration: 380, yoyo: true, repeat: -1 });
+    try { if (!MAPPA) MAPPA = await (await fetch(c.canzone.mappa)).json(); } catch (e) { MAPPA = null; }
+    const R = MAPPA?.ritagli?.[this.lampo ? 'lampo' : 'intero'] ?? null;
+    const buffer = R ? await Audio.carica(R.file) : null;
+    // (la scena può essersi chiusa nel frattempo)
+    if (!this.sys.isActive() && !this.sys.isPaused()) return;
+    this.avvia(R, buffer);
+  }
+
+  avvia(R, buffer) {
+    const c = this.cfg, fine = this.durata - 0.15, off = c.canzone.offset ?? 0;
+    // senza mappa (non si è potuta scaricare): una nota ogni due battiti, sui quattro pad in giro
+    if (!R) {
+      const b = 60 / 129.2;
+      R = { atti: this.lampo ? [null, 0, 11.7] : [0, 12.19, 23.89], battiti: [], forti: [], mappe: {} };
+      for (let t = 0; t < this.durata; t += b) { R.battiti.push(t); R.forti.push(R.battiti.length % 4 === 1 ? 1 : 0); }
+      R.mappe.normale = R.battiti.filter((t, i) => t > 1.3 && i % 2 === 0).map((t, i) => [t, i % 4, 0]);
     }
-    if (this.conAcuto) {
-      // l'acuto: la nota più alta fino alla fine, con qualche tremolo (due ottavi sulla nota sotto)
-      const tono = c.tono[c.tono.length - 1] ?? 0, posti = [], scelti = [];
-      for (let q = 2; q + 2 <= pAcuto - 5; q += 3) posti.push(q);
-      for (let i = Math.min(Math.round(c.acuto.tremoli), posti.length); i > 0; i--) scelti.push(posti.splice(Math.floor(rnd() * posti.length), 1)[0]);
-      scelti.sort((x, y) => x - y);
-      let p = 0;
-      for (const s of scelti) {
-        if (s > p) note.push({ da: fine + p, a: fine + s, pos: ALTA, chi: ENTRAMBI, acuto: true, tono });
-        note.push({ da: fine + s, a: fine + s + 2, pos: ALTA - 1, chi: ENTRAMBI, acuto: true, tono });
-        p = s + 2;
-      }
-      note.push({ da: fine + p, a: tot, pos: ALTA, chi: ENTRAMBI, acuto: true, tono });
-      this.inizioAcuto = fine;
-    }
-    // l'attimo di grazia di ogni nota (per arrivarci senza che conti come stonatura): più lungo
-    // se il salto dalla nota di prima è grande
-    note.forEach((x, i) => Object.assign(x, { ok: 0, err: 0, punti: 0, chiusa: false, grazia: c.grazia + c.graziaSalto * Math.max(0, Math.abs(x.pos - (note[i - 1]?.pos ?? 0)) - 1) }));   // (alla prima ci si arriva dal fondo, dove parte il cursore)
-    return note;
+    this.ritaglio = R;
+    const mappa = (R.mappe[this.livello] ?? R.mappe.normale).filter((n) => n[0] < fine);
+    this.note = mappa.map(([t, pad, dur]) => ({ t: t + off, pad, dur: Math.min(dur, fine - t), esito: null, tenuta: false }));
+    // a FACILE le note sono meno e valgono di più (e a DIFFICILE il contrario): in tutto, i punti di NORMALE
+    const rif = (R.mappe.normale ?? mappa).filter((n) => n[0] < fine).length;
+    this.fattore = rif / Math.max(1, this.note.length);
+    // ...e anche la serie: con meno note il moltiplicatore arriva prima (10 di fila a NORMALE sono 5 a FACILE)
+    this.soglieSerie = c.serie.map(([n, k]) => [Math.max(3, Math.round(n / this.fattore)), k]);
+    this.atti = R.atti;
+    this.battiti = R.battiti.map((t) => t + off);
+    this.forti = R.forti;
+    this.attesa.destroy();
+    this.song = Audio.canzone(buffer);
+    this.song?.avvia(0);
+    this.pronto = true;
+  }
+
+  // Il tempo del microgioco non parte finché la canzone non è pronta; poi è quello della canzone.
+  update(ora, delta) {
+    if (!this.pronto) return;
+    super.update(ora, delta);
   }
 
   // ---------- il palco ----------
@@ -154,387 +125,375 @@ export class XfactorScene extends MicrogiocoBase {
     im(this, 0, 0, 'bgProvino').setOrigin(0);
     this.fasci = this.add.graphics().setDepth(2).setBlendMode(Phaser.BlendModes.ADD);
     this.buio = this.add.rectangle(0, 0, 480, 270, 0x05020c, 0).setOrigin(0).setDepth(15);
-    // i due cantanti (Oli, a destra, è girato verso il centro) e chi suona, alla pianola
+    // i due cantanti (Oli, a destra, è girato verso il centro) e chi suona, dietro la console
     this.cantanti = c.cantanti.map((id, k) => im(this, P.cantanti[k], P.piedi, `${id}_palco`, TAGLIA.cantante).setOrigin(0.5, 1).setDepth(20).setFlipX(k === 1));
-    this.io = im(this, P.io, P.piedi - 2, `${this.giocatore.id}_normale`, TAGLIA.io).setOrigin(0.5, 1).setDepth(20);
-    im(this, P.io, P.piedi - 24, 'pianola').setOrigin(0.5, 0).setDepth(21);
+    this.faccia = [0, 0];           // fino a quando un cantante tiene la faccia di una reazione
+    this.io = im(this, P.io, P.piedi + 4, `${this.giocatore.id}_normale`, TAGLIA.io).setOrigin(0.5, 1).setDepth(19);
     // il fumo sul pavimento
     for (let i = 0; i < 7; i++) {
       const f = im(this, 30 + i * 70, P.piedi + 6 + (i % 3) * 5, 'fumo', 2.6 + (i % 2)).setDepth(26).setAlpha(0.14 + (i % 3) * 0.04);
       this.tweens.add({ targets: f, x: f.x + (i % 2 ? 50 : -50), duration: 5200 + i * 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
-    // i giudici al tavolo, con la lucina davanti a ognuno
-    this.giudici = c.giudici.map((g, i) => ({ ...g, x: P.giudici[i], img: im(this, P.giudici[i], PIEDI_GIUDICI, `giudice${i}_normale`, TAGLIA.giudice).setOrigin(0.5, 1).setDepth(30), faccia: 'normale', voto: null }));
+    // la console coi pad (disegnata), le corsie delle note, le note
+    this.gCorsie = this.add.graphics().setDepth(22);
+    this.disegnaCorsie();
+    this.gConsole = this.add.graphics().setDepth(24);
+    this.disegnaConsole();
+    this.gPad = this.add.graphics().setDepth(25);
+    this.gNote = this.add.graphics().setDepth(30.5);   // (davanti alle teste dei giudici, dietro al tavolo)
+    this.esiti = [0, 1, 2, 3].map((k) => txt(this, xPad(k), PAD.y - 18, '', { size: 7, depth: 40 }).setAlpha(0));
+    this.testoSerie = txt(this, 240, PAD.y + 22, '', { size: 8, color: '#ffe14a', depth: 40 });
+    // i giudici al tavolo, con la lucina davanti a ognuno, e il NO del produttore
+    this.giudici = c.giudici.map((g, i) => ({ ...g, x: P.giudici[i], img: im(this, P.giudici[i], PIEDI_GIUDICI, `giudice${i}_normale`, TAGLIA.giudice).setOrigin(0.5, 1).setDepth(30), voto: null }));
     im(this, P.banco.x, P.banco.y, 'bancoGiudici').setOrigin(0.5, 0).setDepth(31);
     this.lucine = this.add.graphics().setDepth(32);
-    // il pubblico al buio, con gli accendini
+    this.lucineDi = null;
+    this.no = this.add.container(P.giudici[2] + 22, P.lucine, [this.add.graphics(), txt(this, 0, 0.5, 'NO', { size: 7, color: '#ffe1dc', thick: 0 })]).setDepth(33);
+    this.disegnaNo(false);
+    // il pubblico al buio, con gli accendini (si alzano con la serie)
     im(this, 0, 247, 'pubblicoProvino').setOrigin(0).setDepth(33);
     this.accendini = [];
     for (let i = 0; i < 18; i++) {
       const x = 14 + i * 26.5 + (i % 3) * 4, a = im(this, x, 268, 'accendino').setOrigin(0.5, 0).setDepth(34).setAlpha(0);
-      this.accendini.push({ img: a, x, fase: i * 1.7, soglia: ((i * 7) % 18) / 18 });   // (si accendono in ordine sparso)
+      this.accendini.push({ img: a, x, fase: i * 1.7, soglia: ((i * 7) % 18) / 18 });
     }
-    // i punti e la barra degli applausi (si riempie coi punti, con le tacche dei quattro giudici)
-    this.barraApplausi = this.add.graphics().setDepth(1001);
-    this.etichettaApplausi = txt(this, 148, 22, 'APPLAUSI', { size: 5.5, ox: 1, depth: 1001, color: '#fff3d6' });
-    this.testoPunti = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
-    this.testoSerie = txt(this, PENTA.cursore, 116, '', { size: 7, depth: 105, color: '#ffe14a' });
-    if (eTouch()) {
-      // sul telefono: dove si trascina (la metà destra, sotto i pulsanti)
-      const g = this.add.graphics().setDepth(900);
-      g.fillStyle(0xffffff, 0.14); g.fillRoundedRect(463, 132, 11, 62, 5.5);
-      g.fillStyle(0xffffff, 0.55); g.fillTriangle(468.5, 136, 465, 142, 472, 142); g.fillTriangle(468.5, 190, 465, 184, 472, 184);
+    this.testoPunti = txt(this, 474, 36, puntiHud(0), { size: 9, ox: 1, depth: 1001 });
+    this.testoPrecisione = txt(this, 474, 48, '', { size: 7, ox: 1, depth: 1001, color: '#fff3d6' });
+  }
+
+  disegnaCorsie() {
+    const g = this.gCorsie;
+    g.clear();
+    for (let k = 0; k < 4; k++) {
+      const x = xPad(k);
+      g.fillStyle(0x0a0518, 0.34); g.fillRect(x - PAD.w / 2, PAD.cima - 6, PAD.w, PAD.y - PAD.cima + 6);
+      g.lineStyle(1, COLORI[k], 0.22); g.lineBetween(x, PAD.cima - 6, x, PAD.y - 8);
     }
   }
 
-  // il pentagramma: cinque righe vere, la chiave di violino, il bemolle in chiave; la melodia e il
-  // cursore si ridisegnano a ogni fotogramma
-  pentagramma() {
-    const g = this.add.graphics().setDepth(100), w = PENTA.x1 - PENTA.x0;
-    g.fillStyle(0x0a0518, 0.8); g.fillRoundedRect(PENTA.x0, PENTA.cima - 8, w, 8 * PENTA.salto + 16, 8);
-    g.lineStyle(1, 0x9a7aff, 0.55); g.strokeRoundedRect(PENTA.x0, PENTA.cima - 8, w, 8 * PENTA.salto + 16, 8);
-    for (let r = 0; r < 5; r++) { g.lineStyle(1, 0xffffff, r === 4 ? 0.3 : 0.62); g.lineBetween(PENTA.x0 + 5, PENTA.cima + r * 2 * PENTA.salto, PENTA.x1 - 5, PENTA.cima + r * 2 * PENTA.salto); }
-    // dove "arriva" la melodia: la colonna del cursore
-    g.fillStyle(0xffffff, 0.1); g.fillRect(PENTA.cursore - 5, PENTA.cima - 5, 10, 8 * PENTA.salto + 10);
-    const chiave = im(this, PENTA.x0 + 16, PENTA.cima + 4 * PENTA.salto + 1, 'chiaveViolino', 1.18).setDepth(101);
-    const bemolle = im(this, PENTA.x0 + 34, yNota(2) - 2.5, 'bemolle', 0.95).setDepth(101);
-    this.gMelodia = this.add.graphics().setDepth(102);
-    this.cursore = im(this, PENTA.cursore, yNota(this.cur), 'notaCursore', 1).setOrigin(8 / 20, 18 / 24).setDepth(104);
-    this.alone = this.add.ellipse(PENTA.cursore, yNota(this.cur), 16, 12, 0xffffff, 0.22).setDepth(103);
-    this.penta = [g, chiave, bemolle, this.gMelodia, this.cursore, this.alone];   // (per il verdetto si toglie tutto)
+  disegnaConsole() {
+    const g = this.gConsole, x0 = xPad(0) - PAD.w / 2 - 10, x1 = xPad(3) + PAD.w / 2 + 10;
+    g.clear();
+    g.fillStyle(0x000000, 0.3); g.fillRoundedRect(x0 + 2, PAD.y - 9, x1 - x0, 30, 6);
+    g.fillStyle(0x2b2f3d, 1); g.fillRoundedRect(x0, PAD.y - 11, x1 - x0, 30, 6);
+    g.fillStyle(0x3d4254, 1); g.fillRoundedRect(x0 + 2, PAD.y - 9, x1 - x0 - 4, 7, 4);
+    g.lineStyle(1.5, 0x12141c, 1); g.strokeRoundedRect(x0, PAD.y - 11, x1 - x0, 30, 6);
+    // le manopole e i led della console (finti)
+    for (let i = 0; i < 6; i++) { g.fillStyle(0x12141c, 1); g.fillCircle(x0 + 12 + i * 24, PAD.y + 13, 2.4); g.fillStyle([0x7dff9a, 0xffe14a, 0xff6b5a][i % 3], 0.9); g.fillCircle(x0 + 20 + i * 24, PAD.y + 13, 1.2); }
   }
 
-  // ---------- comandi ----------
+  disegnaNo(acceso) {
+    const g = this.no.list[0];
+    g.clear();
+    g.fillStyle(acceso ? 0xff2a2a : 0x6a1a1a, 1); g.fillRoundedRect(-9, -5, 18, 10, 3);
+    g.lineStyle(1, 0x2b1b17, 1); g.strokeRoundedRect(-9, -5, 18, 10, 3);
+    if (acceso) { g.fillStyle(0xff4a3a, 0.35); g.fillCircle(0, 0, 13); }
+    this.no.list[1].setAlpha(acceso ? 1 : 0.5);
+  }
+
+  // ---------- i comandi ----------
   comandi() {
-    const c = this.cfg;
-    // tastiera: SU/GIÙ (o W/S) di una nota alla volta; tenendo premuto si scorre (vedi aggiorna)
-    this.tasti = this.input.keyboard.addKeys({ su: 'UP', giu: 'DOWN', w: 'W', s: 'S' });
+    const quando = (ts) => {
+      // (il momento vero del tasto, non quello del fotogramma: conta anche per i millesimi)
+      const ora = this.song?.suona ? this.song.posizione : this.pos;
+      return ora - Math.max(0, (performance.now() - (ts ?? performance.now())) / 1000);
+    };
     this.input.keyboard.on('keydown', (e) => {
-      if (e.repeat || !this.inCorso) return;
-      const d = e.code === 'ArrowUp' || e.code === 'KeyW' ? 1 : e.code === 'ArrowDown' || e.code === 'KeyS' ? -1 : 0;
-      if (d) this.diUnaNota(d);
+      const k = CODICI[e.code];
+      if (k == null || e.repeat) return;
+      e.preventDefault?.();
+      this.premi(k, quando(e.timeStamp));
     });
-    // mouse: il cursore segue il mouse in verticale. Dito: si trascina nella metà destra, sotto i
-    // pulsanti di pausa e audio, e il cursore si sposta di quanto si muove il dito
-    const zona = (w) => w.x >= 240 && w.y >= PENTA.cima - 6;
+    this.input.keyboard.on('keyup', (e) => { const k = CODICI[e.code]; if (k != null) this.rilascia(k); });
+    // dito e mouse: si tocca il pad, o la sua corsia nella metà bassa (più dita insieme)
+    multiTouch(this, 4);
+    const corsia = (p) => {
+      const w = puntatore(this, p);
+      if (w.y < 110) return null;
+      const k = Math.round((w.x - xPad(0)) / PAD.passo);
+      return k >= 0 && k <= 3 && Math.abs(w.x - xPad(k)) <= PAD.passo / 2 + 8 ? k : null;
+    };
     this.input.on('pointerdown', (p) => {
-      if (!p.wasTouch) return;
-      const w = puntatore(this, p);
-      if (!this.dito && zona(w)) this.dito = { id: p.id, y0: w.y, v0: this.puntato ? this.metaF : this.meta };
+      const k = corsia(p);
+      if (k == null) return;
+      this.dita.set(p.id, k);
+      this.premi(k, quando(p.event?.timeStamp));
     });
-    this.input.on('pointermove', (p) => {
-      const w = puntatore(this, p);
-      if (p.wasTouch) {
-        if (this.dito?.id !== p.id) return;
-        this.metaF = clamp(this.dito.v0 + (this.dito.y0 - w.y) / c.ditoPasso, 0, ALTA);
-      } else this.metaF = clamp((yNota(0) - w.y) / PENTA.salto, 0, ALTA);
-      this.puntato = true;
-    });
-    for (const ev of ['pointerup', 'pointerupoutside']) this.input.on(ev, (p) => { if (this.dito?.id === p.id) this.dito = null; });
+    const su = (p) => { const k = this.dita.get(p.id); if (k == null) return; this.dita.delete(p.id); this.rilascia(k); };
+    this.input.on('pointerup', su);
+    this.input.on('pointerupoutside', su);
   }
 
-  diUnaNota(d) {
-    this.puntato = false;
-    this.meta = clamp(Math.round(this.meta) + d, 0, ALTA);
-    this.metaF = this.meta;
-  }
+  molt() { return (this.soglieSerie ?? this.cfg.serie).reduce((m, [n, k]) => (this.serie >= n ? k : m), 1); }
 
-  // ---------- conti ----------
-  get moltiplicatore() { const S = this.cfg.serie; return Math.min(S.max, 1 + Math.floor(this.serie / S.ogni) * S.passo); }
-  // quanto sei stato intonato finora (da 0 a 1), sul tempo cantato: è quello che guardano i giudici
-  get intonazione() { const t = this.tOk + this.tNo; return t > 0 ? this.tOk / t : 0; }
-
-  // i punti che vuole un giudice per dire SÌ (in Lampo, più corto, in proporzione)
-  sogliaGiudice(q) { return q.soglia * this.cfg.medaglie.bronzo * Math.min(1, this.durata / this.cfg.durata); }
-
-  // i voti dei giudici e l'esito (si calcolano una volta sola: il verdetto è quello del risultato)
-  verdetto() {
-    if (!this._verdetto) {
-      const c = this.cfg, acuto = this.conAcuto && this.tAcuto > 0 && this.tAcutoOk / this.tAcuto >= c.acuto.tenuta;
-      const punteggio = Math.round(this.punti) + (acuto ? c.bonusAcuto : 0);
-      const voti = this.giudici.map((q) => punteggio >= this.sogliaGiudice(q)), si = voti.filter(Boolean).length;
-      this._verdetto = { into: this.intonazione, punteggio, voti, si, acuto, vittoria: si >= c.siPerVincere };
+  // un pad premuto (quando = il momento, in secondi di canzone)
+  premi(k, quando) {
+    if (!this.inCorso || !this.pronto) return;
+    const F = this.cfg.finestre;
+    this.premuti[k] = true;
+    this.accesi[k] = Math.max(this.accesi[k], 0.45);
+    let meglio = null;
+    for (let i = this.iProssima; i < this.note.length; i++) {
+      const n = this.note[i];
+      if (n.t - quando > F.vuoto) break;
+      if (n.esito || n.pad !== k) continue;
+      const d = Math.abs(n.t - quando);
+      if (d <= F.buono && (!meglio || d < Math.abs(meglio.t - quando))) meglio = n;
     }
+    if (!meglio) {
+      // a vuoto: se c'era una nota lì vicino (troppo presto o troppo tardi) la serie si azzera
+      if (this.note.some((n, i) => i >= this.iProssima && !n.esito && n.pad === k && Math.abs(n.t - quando) <= F.vuoto)) { this.serie = 0; this.mostra(k, 'vuoto'); Audio.sfx('tsk'); this.hud(); }
+      return;
+    }
+    this.colpita(meglio, Math.abs(meglio.t - quando) <= F.perfetto ? 'perfetto' : 'buono');
+  }
+
+  rilascia(k, pausa = false) {
+    this.premuti[k] = false;
+    // una nota lunga lasciata prima della fine della scia
+    for (const n of this.note) {
+      if (!n.tenuta || n.pad !== k) continue;
+      n.tenuta = false;
+      if (!pausa && this.pos < n.t + n.dur - this.cfg.finestre.buono) { this.mostra(k, 'mollata'); this.serie = 0; this.hud(); }
+      else this.finitaLunga(n);
+    }
+  }
+
+  colpita(n, esito) {
+    const c = this.cfg;
+    n.esito = esito;
+    if (n.dur > 0) n.tenuta = true;
+    const v = c.punti[esito] * this.molt() * this.fattore;
+    this.punti += v;
+    this.serie++; this.serieMax = Math.max(this.serieMax, this.serie);
+    if (esito === 'perfetto') this.perfetti++; else this.buoni++;
+    this.mancatiFila = 0;
+    // la canzone torna pulita (e a tempo giusto)
+    if (this.ovattata) { this.ovattata = false; this.song?.ovatta(20000); this.song?.velocita(1); }
+    this.accesi[n.pad] = 1;
+    this.mostra(n.pad, esito);
+    if (this.soglieSerie?.some(([n]) => n === this.serie)) { scritta(this, 392, 112, `${this.serie} DI FILA!`, { size: 10, color: '#ffe14a', durata: 500 }); stelle(this, 392, 112, 6, 960); }
+    // i cantanti si gasano, i giudici annuiscono
+    if (this.serie >= 5 && this.serie % 5 === 0) this.reagisci('gasato', 0.5);
+    for (const g of this.giudici) if (g.precisa && Math.random() < 0.3) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI + 2, duration: 90, yoyo: true });
+    this.hud();
+  }
+
+  finitaLunga(n) {
+    if (n.chiusa) return;
+    n.chiusa = true;
+    this.punti += this.cfg.punti.lunga * this.molt() * this.fattore;
+    this.lunghe++;
+    this.mostra(n.pad, 'tenuta');
+    this.hud();
+  }
+
+  mancata(n) {
+    const c = this.cfg, E = c.errori;
+    n.esito = 'mancato';
+    this.mancati++; this.mancatiFila++;
+    this.serie = 0;
+    this.mostra(n.pad, 'mancato');
+    vibra(40);
+    // l'errore si sente sulla canzone: ovattata e graffiata; con tre errori di fila resta così e rallenta
+    if (this.mancatiFila >= E.fila) { this.ovattata = true; this.song?.ovatta(E.taglio); this.song?.velocita(E.lento); }
+    else this.song?.ovatta(E.taglio, E.ovatta);
+    this.song?.graffio();
+    if (!this.song) Audio.sfx('errore');
+    if (this.mancatiFila >= 2) Audio.sfx('buu');
+    // il cantante più vicino si gira e guarda malissimo; il produttore preme NO
+    this.reagisci('male', 0.7, n.pad < 2 ? 0 : 1);
+    this.disegnaNo(true);
+    this.time.delayedCall(260, () => this.disegnaNo(false));
+    this.time.delayedCall(420, () => { if (this.mancatiFila) this.disegnaNo(true); });
+    this.time.delayedCall(640, () => this.disegnaNo(false));
+    this.hud();
+  }
+
+  // una faccia per un po': 'gasato' (tutti e due) o 'male' (quello di quel lato, girato verso chi suona)
+  reagisci(faccia, secondi, chi = null) {
+    const c = this.cfg;
+    this.cantanti.forEach((img, k) => {
+      if (chi != null && k !== chi) return;
+      img.setTexture(`${c.cantanti[k]}_${faccia}`).setFlipX(k === 1);
+      this.faccia[k] = this.pos + secondi;
+    });
+  }
+
+  mostra(k, esito) {
+    const t = this.esiti[k], [s, col] = ESITI[esito];
+    this.tweens.killTweensOf(t);
+    t.setText(s).setColor(col).setAlpha(1).setY(PAD.y - 18).setScale(esito === 'perfetto' ? 1.15 : 1);
+    this.tweens.add({ targets: t, y: PAD.y - 30, alpha: 0, duration: 520, delay: 120 });
+  }
+
+  get precisione() {
+    const fatte = this.perfetti + this.buoni + this.mancati;
+    return fatte ? (this.perfetti + this.cfg.pesoBuono * this.buoni) / fatte : 0;
+  }
+
+  hud() {
+    this.testoPunti.setText(puntiHud(this.punti));
+    const m = this.molt();
+    this.testoSerie.setText(this.serie >= 3 ? `SERIE ${this.serie}${m > 1 ? `  x${numero(m, m % 1 ? 1 : 0)}` : ''}` : '');
+    const fatte = this.perfetti + this.buoni + this.mancati;
+    this.testoPrecisione.setText(fatte ? `PRECISIONE ${Math.round(this.precisione * 100)}%` : '');
+    // le lucine dei giudici: verdi se la precisione passa la loro soglia (si ridisegnano solo se cambiano)
+    const chiave = this.giudici.map((g) => (g.precisa = fatte >= 4 && this.precisione >= g.soglia) ? 1 : 0).join('');
+    if (chiave !== this.lucineDi) {
+      this.lucineDi = chiave;
+      const L = this.lucine, y = PROVINO.lucine;
+      L.clear();
+      this.giudici.forEach((g, i) => {
+        const col = fatte < 4 ? 0x8a7aa8 : chiave[i] === '1' ? 0x4ade80 : 0xff3a2e;
+        L.fillStyle(col, 0.3).fillCircle(g.x, y, 6).fillStyle(col, 1).fillCircle(g.x, y, 2.8);
+      });
+    }
+  }
+
+  // ---------- a ogni fotogramma ----------
+  aggiorna(dt) {
+    const c = this.cfg, F = c.finestre;
+    // il tempo: quello della canzone; se l'audio non c'è (o è fermo), il proprio orologio
+    if (this.song?.suona && Audio.inFunzione) {
+      if (this.fuoriTempo) { this.fuoriTempo = false; this.song.vaiA(this.pos); }
+      else this.pos = this.song.posizione;
+    } else {
+      if (this.song?.suona) this.fuoriTempo = true;     // (l'audio si è fermato: al ritorno si riallinea)
+      this.pos += dt * (this.ovattata ? c.errori.lento : 1);
+    }
+    this.trascorso = this.pos;
+
+    // le note passate senza essere prese, e le lunghe tenute fino in fondo
+    for (let i = this.iProssima; i < this.note.length; i++) {
+      const n = this.note[i];
+      if (n.t - this.pos > F.vuoto) break;
+      if (!n.esito && this.pos > n.t + F.buono) this.mancata(n);
+      if (n.tenuta && this.pos >= n.t + n.dur) { n.tenuta = false; this.finitaLunga(n); }
+    }
+    while (this.iProssima < this.note.length) {
+      const n = this.note[this.iProssima];
+      if (n.esito && !n.tenuta && this.pos > n.t + n.dur + F.vuoto) this.iProssima++;
+      else break;
+    }
+
+    // gli atti
+    const atto = this.atti ? this.atti.reduce((a, da, i) => (da != null && this.pos >= da ? i : a), 0) : 0;
+    if (atto !== this.nAtto) {
+      const primo = this.nAtto < 0;
+      this.nAtto = atto;
+      if (!primo || atto > 0 || !this.lampo) {
+        Audio.sfx('bonus');
+        // (sopra le corsie, in alto: non deve coprire le note che scendono)
+        scritta(this, 240, 27, c.atti[atto].nome, { size: 13, color: atto === 2 ? '#ff6b5a' : '#ffe14a', durata: 900, depth: 950 });
+      }
+      // (in piedi di poco: le teste non devono arrivare a metà dei pad, dove si colpisce)
+      if (c.atti[atto].inPiedi) for (const g of this.giudici) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI - 4, duration: 300, ease: 'Back.out' });
+    }
+    this.battito();
+    this.disegna(dt);
+  }
+
+  // i cantanti cantano a tempo: a ogni battito aprono la bocca e molleggiano (di più sui battiti forti)
+  battito() {
+    if (!this.battiti) return;
+    let b = this.nBattito;
+    while (b + 1 < this.battiti.length && this.pos >= this.battiti[b + 1]) b++;
+    if (b === this.nBattito) return;
+    this.nBattito = b;
+    const c = this.cfg, forte = this.forti[b];
+    this.cantanti.forEach((img, k) => {
+      if (this.pos < this.faccia[k]) return;
+      const tocca = this.nAtto === 0 ? b % 4 < 2 === (k === 0) : true;     // nella strofa cantano a turno
+      img.setTexture(`${c.cantanti[k]}_${tocca ? (this.nAtto === 2 && forte ? 'acuto' : 'canta') : 'palco'}`).setFlipX(k === 1);
+      const sy = img.scaleY, k0 = forte ? 0.94 : 0.97;
+      this.tweens.add({ targets: img, scaleY: { from: sy * k0, to: sy }, duration: 180, ease: 'Quad.out' });
+    });
+    this.tweens.add({ targets: this.io, y: { from: PROVINO.piedi + 6, to: PROVINO.piedi + 4 }, duration: 160 });
+  }
+
+  disegna(dt) {
+    const c = this.cfg, P = PROVINO, A = c.atti[this.nAtto] ?? c.atti[0], v = this.pos;
+    // i fasci delle luci: girano a tempo; nel finale i riflettori puntano i cantanti
+    const g = this.fasci, luci = A.luci * (this.ovattata ? 0.4 : 1);
+    g.clear();
+    const fasci = [[60, 0xff4fb8], [170, 0x3ae0ff], [310, 0xffe14a], [420, 0x7a3aff]];
+    fasci.forEach(([x, col], i) => {
+      const a = Math.sin(v * (1.2 + i * 0.3) + i * 1.7) * 0.45, lung = 230;
+      const tx = A.riflettori ? P.cantanti[i % 2] : x + Math.sin(a) * lung;
+      g.fillStyle(col, 0.07 * luci);
+      g.fillTriangle(x, -4, tx - 34, lung, tx + 34, lung);
+    });
+    // i pad: accesi del colore della nota quando li colpisci, e un po' quando li premi
+    const p = this.gPad;
+    p.clear();
+    for (let k = 0; k < 4; k++) {
+      this.accesi[k] = Math.max(this.premuti[k] ? 0.35 : 0, this.accesi[k] - dt * 3);
+      const x = xPad(k) - PAD.w / 2, a = this.accesi[k];
+      p.fillStyle(COLORI[k], 0.25 + a * 0.75); p.fillRoundedRect(x, PAD.y - PAD.h / 2, PAD.w, PAD.h, 3);
+      p.lineStyle(1.5, COLORI[k], 1); p.strokeRoundedRect(x, PAD.y - PAD.h / 2, PAD.w, PAD.h, 3);
+      if (a > 0.5) { p.fillStyle(COLORI[k], (a - 0.5) * 0.5); p.fillCircle(xPad(k), PAD.y, 18 + a * 6); }
+    }
+    // le note: cerchi che scendono verso il loro pad; quelle lunghe con la scia
+    const n = this.gNote, vel = (PAD.y - PAD.cima) / c.anticipo;
+    n.clear();
+    for (let i = this.iProssima; i < this.note.length; i++) {
+      const q = this.note[i];
+      if (q.t - v > c.anticipo) break;
+      if (q.esito && !q.tenuta && q.esito !== 'mancato') continue;
+      const x = xPad(q.pad), yT = Math.min(PAD.y, PAD.y - (q.t - v) * vel), col = COLORI[q.pad];
+      if (q.dur > 0) {
+        const yF = PAD.y - (q.t + q.dur - v) * vel;
+        if (yF < PAD.y) { n.fillStyle(col, q.esito === 'mancato' ? 0.18 : q.tenuta ? 0.75 : 0.5); n.fillRect(x - 4.5, Math.max(PAD.cima - 6, yF), 9, Math.min(PAD.y, q.tenuta ? PAD.y : yT) - Math.max(PAD.cima - 6, yF)); }
+      }
+      // (la mancata, grigia, affonda appena nel pad e sparisce: sotto ci sono le facce dei giudici)
+      if (q.esito === 'mancato') { const yM = PAD.y - (q.t - v) * vel; if (yM < PAD.y + 6) { n.fillStyle(0x5a5470, 0.6); n.fillCircle(x, yM, 7); } continue; }
+      if (q.tenuta) continue;
+      const y = PAD.y - (q.t - v) * vel;
+      if (y < PAD.cima - 8) continue;
+      n.fillStyle(0x12101a, 0.9); n.fillCircle(x, y, 9.5);
+      n.fillStyle(col, 1); n.fillCircle(x, y, 8);
+      n.fillStyle(0xffffff, 0.75); n.fillCircle(x - 2.5, y - 2.5, 2.4);
+    }
+    // gli accendini: più è lunga la serie, più se ne alzano
+    const quanti = Math.min(1, this.serie / 25);
+    for (const a of this.accendini) {
+      const su = quanti > a.soglia, al = a.img.alpha + ((su ? 1 : 0) - a.img.alpha) * Math.min(1, dt * 4);
+      a.img.setAlpha(al).setY(268 - al * 16 + Math.sin(v * 2 + a.fase) * 1.2).setAngle(Math.sin(v * 1.6 + a.fase) * 8);
+    }
+  }
+
+  // ---------- la fine ----------
+  verdetto() {
+    if (this._verdetto) return this._verdetto;
+    const c = this.cfg, totale = Math.max(1, this.note.length);
+    // la precisione su tutte le note della canzone (quelle mai arrivate contano come mancate)
+    const pr = (this.perfetti + c.pesoBuono * this.buoni) / totale;
+    const voti = c.giudici.map((g) => pr >= g.soglia);
+    const si = voti.filter(Boolean).length;
+    this._verdetto = { precisione: pr, voti, si, vittoria: si >= c.siPerVincere };
     return this._verdetto;
   }
 
   risultato() {
     const c = this.cfg, v = this.verdetto();
+    let p = this.punti + v.si * c.punti.si;
+    // la scala comune: senza il provino passato niente bronzo, col provino passato almeno il bronzo
+    // (in Lampo le medaglie non contano: i punti e basta)
+    if (!this.lampo) p = v.vittoria ? Math.max(c.medaglie.bronzo, p) : Math.min(c.tettoPrima, p);
     return {
-      punteggio: v.punteggio,
+      punteggio: Math.round(p),
       vittoria: v.vittoria,
-      riepilogo: `Intonato al ${Math.round(v.into * 100)}%   SÌ: ${v.si} su ${c.giudici.length}` + (v.acuto ? '   acuto tenuto!' : ''),
-      titoli: [c.frasiVittoria[0], c.frasiSconfitta[0]],
+      riepilogo: `Precisione ${Math.round(v.precisione * 100)}%   SÌ: ${v.si} su ${c.giudici.length}`,
+      titoloFine: v.vittoria ? c.frasiVittoria[0] : c.frasiSconfitta[0],
     };
   }
 
-  // ---------- a ogni fotogramma ----------
-  aggiorna(dt) {
-    const c = this.cfg, pos0 = this.pos;
-    // il tempo della canzone: il proprio orologio, tenuto agganciato a quello dell'audio quando c'è
-    this.pos += dt / this.passo;
-    // (col ritardo audio misurato nelle Impostazioni: quello che si sente è un po' indietro rispetto
-    // a quello che l'audio sta suonando, e le note vanno a tempo con quello che si sente)
-    const rit = Audio.ritardo / this.passo, ap0 = Audio.posizione, ap = ap0 == null ? null : ap0 - rit;
-    if (ap != null) {
-      // (all'inizio, dopo una pausa o se si sono persi di vista: è la base che si riallinea alla partita)
-      if (!this.agganciato || Math.abs(ap - this.pos) > 1.5) { this.agganciato = true; Audio.vaiA(this.pos + rit); }
-      else this.pos += (ap - this.pos) * Math.min(1, dt * 3);
-    }
-    // Il tempo della partita È quello della canzone. L'orologio dei microgiochi salta i fotogrammi
-    // lenti (oltre 50 ms) e la pausa, la musica no: prima, con un telefono che rallenta o dopo
-    // qualche pausa, la canzone finiva fino a 4 secondi prima della partita e il pentagramma
-    // restava vuoto. Così finiscono insieme.
-    this.trascorso = Math.max(0, this.pos * this.passo);
-    // (e i punti si contano sul tempo della canzone, non su quello dei fotogrammi: se l'audio di un
-    // telefono affaticato va più piano, la partita dura di più ma non vale di più)
-    const dtc = Math.max(0, Math.min(0.1, (this.pos - pos0) * this.passo));
-
-    // gli atti si annunciano
-    const atto = c.atti.filter((a) => this.trascorso >= a.da).length - 1;
-    if (atto !== this.atto) {
-      this.atto = atto;
-      Audio.sfx('bonus');
-      scritta(this, 240, 150, c.atti[atto].nome, { size: 15, color: atto === c.atti.length - 1 ? '#ff6b9a' : '#ffe14a', durata: 900, depth: 950 });
-    }
-
-    // tastiera, tenendo premuto: si scorre di nota in nota
-    const d = (this.tasti.su.isDown || this.tasti.w.isDown ? 1 : 0) - (this.tasti.giu.isDown || this.tasti.s.isDown ? 1 : 0);
-    if (d && d === this.tenuto.d) {
-      this.tenuto.t -= dt;
-      if (this.tenuto.t <= 0) { this.tenuto.t = c.ripeti[1]; this.diUnaNota(d); }
-    } else this.tenuto = { d, t: c.ripeti[0] };
-
-    // la nota che sta passando: quelle finite si chiudono (le note d'oro pagano qui)
-    while (this.iNota < this.note.length && this.pos >= this.note[this.iNota].a) this.chiudi(this.note[this.iNota++]);
-    const n = this.iNota < this.note.length && this.pos >= this.note[this.iNota].da ? this.note[this.iNota] : null;
-
-    // mouse e dito: il cursore si aggancia alla nota più vicina (nessun aiuto verso quella giusta)
-    if (this.puntato) this.meta = Math.round(clamp(this.metaF, 0, ALTA));
-    // il cursore scivola verso la sua nota: morbido, ma senza inerzia
-    this.cur += (this.meta - this.cur) * Math.min(1, dt * c.scivola);
-    if (Math.abs(this.meta - this.cur) < 0.02) this.cur = this.meta;
-
-    // intonato, stonato, o appena cambiata la nota (un attimo di grazia per arrivarci)
-    const prima = this.stato;
-    if (!n) this.stato = 'attesa';
-    else if (Math.abs(this.cur - n.pos) <= c.tolleranza) this.stato = 'ok';
-    else this.stato = (this.pos - n.da) * this.passo < n.grazia ? 'attesa' : 'no';
-    if (this.stato === 'ok') {
-      const guadagno = dtc * c.puntiSecondo * this.moltiplicatore;
-      this.punti += guadagno; n.punti += guadagno; n.ok += dtc;
-      this.tOk += dtc; this.serie += dtc; this.serieMax = Math.max(this.serieMax, this.serie);
-      this.tStonata = 0;
-      this.calore = Math.min(1, this.calore + dt * 0.11);
-      const liv = Math.floor(this.serie / c.serie.ogni);
-      if (liv > this.livelloSerie) { this.livelloSerie = liv; this.gasati(); }
-    } else if (this.stato === 'no') {
-      this.tNo += dtc; n.err += dtc; this.tStonata += dtc;
-      this.calore = Math.max(0, this.calore - dt * 0.45);
-      if (prima !== 'no') this.stona(n);
-    }
-    if (n?.acuto && this.stato !== 'attesa') { this.tAcuto += dtc; if (this.stato === 'ok') this.tAcutoOk += dtc; }
-
-    this.canta(n);
-    this.reazioni(dt, n);
-    this.disegna(n);
-  }
-
-  // una nota è finita: se era d'oro e non l'hai mai stonata, vale doppio
-  chiudi(n) {
-    const c = this.cfg;
-    n.chiusa = true;
-    if (!n.oro || n.err > 0 || n.ok < ((n.a - n.da) * this.passo - n.grazia) * 0.85) return;
-    this.punti += n.punti;
-    this.ori++;
-    Audio.sfx('ding');
-    scritta(this, PENTA.cursore + 26, yNota(n.pos) - 2, `ORO! +${Math.round(n.punti)}`, { size: 7.5, color: '#ffe14a', durata: 380, depth: 960 }).setAngle(0);
-    stelle(this, PENTA.cursore, yNota(n.pos), 4, 950);
-  }
-
-  // una stonatura (la prima dopo che andava bene): la serie si azzera e se ne accorgono tutti
-  stona(n) {
-    this.serie = 0; this.livelloSerie = 0;
-    this.tOrecchie = 0.85;
-    for (const k of n.chi === ENTRAMBI ? [0, 1] : [n.chi]) { this.tStona[k] = 0.4; this.male[k] = true; }
-    this.io.setTexture(`${this.giocatore.id}_shock`); this.tIo = 0.5;
-    Audio.sfx('buu');
-    vibra(30);
-  }
-
-  // la serie sale di un gradino: i cantanti si gasano, i giudici annuiscono, cuoricini e accendini
-  gasati() {
-    const P = PROVINO;
-    Audio.sfx(this.livelloSerie >= 4 ? 'applauso' : 'ok');
-    scritta(this, PENTA.cursore + 34, 122, `SERIE! x${numero(this.moltiplicatore, 1)}`, { size: 8.5, color: '#7dff9a', durata: 500, depth: 960 }).setAngle(0);
-    this.tContenti = 0.9;
-    this.calore = Math.min(1, this.calore + 0.2);
-    for (const g of this.giudici) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI + 3, duration: 110, yoyo: true, repeat: 1 });
-    this.io.setTexture(`${this.giocatore.id}_felice`); this.tIo = 0.6;
-    const da = caso([0, 3]);
-    for (let i = 0; i < 2; i++) this.cuore(P.giudici[da] + (i ? 10 : -8), 204 - i * 6, i * 120);
-  }
-
-  cuore(x, y, ritardo = 0) {
-    const h = im(this, x, y, 'cuore', 0.9).setDepth(40).setAlpha(0);
-    this.tweens.add({ targets: h, alpha: { from: 1, to: 0 }, y: y - 30, x: x + (Math.random() - 0.5) * 14, delay: ritardo, duration: 900, onComplete: () => h.destroy() });
-  }
-
-  // La voce: chi canta, canta la nota su cui sta il cursore. Giusta: piena, col vibrato sulle note
-  // tenute. Sbagliata: calante (sempre di più), col tremolio largo, incrinata. A metà tra due note:
-  // un glissato brutto.
-  canta(n) {
-    const c = this.cfg, S = c.stonata;
-    const giu = Math.floor(clamp(this.cur, 0, ALTA)), su = Math.min(ALTA, giu + 1), inMezzo = Math.abs(this.cur - Math.round(this.cur)) > 0.16;
-    const base = lerp(c.scala[giu], c.scala[su], this.cur - giu) + (n?.tono ?? 0);
-    c.voci.forEach((V, k) => {
-      if (!n || !(n.chi === k || n.chi === ENTRAMBI)) return Audio.voce('cantante' + k, null);
-      let midi = base + V.ottava * 12, vibrato = 0, vibratoHz = 5.5, crepa = inMezzo ? 0.3 : 0, vol = 1;
-      if (this.stato === 'ok') { if (n.ok > c.vibrato.dopo) vibrato = c.vibrato.cent * (n.acuto ? c.vibrato.acuto : 1); }
-      else if (this.stato === 'no') {
-        midi -= lerp(S.cala[0], S.cala[1], Math.min(1, this.tStonata / S.secondi)) / 100;
-        vibrato = S.tremolo; vibratoHz = 8.5; crepa = S.crepa; vol = 0.92;
-      }
-      Audio.voce('cantante' + k, { tipo: V.tipo, taglio: V.taglio, freq: hz(midi), vol, vibrato, vibratoHz, crepa });
-    });
-  }
-
-  // le facce di cantanti, giudici e pubblico, secondo come sta andando
-  reazioni(dt, n) {
-    const c = this.cfg, P = PROVINO, battito = Math.floor(this.pos / 2);
-    // i cantanti: chi canta a bocca aperta (gasato se la serie va), chi ha appena stonato ti guarda malissimo
-    this.cantanti.forEach((img, k) => {
-      const tocca = !!n && (n.chi === k || n.chi === ENTRAMBI);
-      if (this.tStona[k] > 0) this.tStona[k] -= dt;
-      if (this.male[k] && this.stato === 'ok' && n.ok > 0.35) this.male[k] = false;
-      const f = this.tStona[k] > 0 ? 'stona' : this.male[k] ? 'male' : n?.acuto ? 'acuto' : tocca ? (this.serie >= c.serie.ogni && battito % 2 ? 'gasato' : 'canta') : 'palco';
-      if (f !== this.facce[k]) { this.facce[k] = f; img.setTexture(`${c.cantanti[k]}_${f}`).setFlipX((k === 1) !== (f === 'male')); }
-      // a tempo: chi canta molleggia
-      img.y = P.piedi - (tocca && this.stato === 'ok' ? Math.abs(Math.sin(this.pos * Math.PI / 2)) * 3 : 0);
-    });
-    if (this.tIo > 0) { this.tIo -= dt; if (this.tIo <= 0) this.io.setTexture(`${this.giocatore.id}_normale`); }
-    this.io.y = P.piedi - 2 - Math.abs(Math.sin(this.pos * Math.PI / 2)) * 1.5;
-
-    // i giudici: mani sulle orecchie quando stoni, contenti quando la serie sale
-    if (this.tOrecchie > 0) this.tOrecchie -= dt;
-    if (this.tContenti > 0) this.tContenti -= dt;
-    const f = this.tOrecchie > 0 ? 'orecchie' : this.tContenti > 0 ? 'felice' : 'normale';
-    if (f !== this.ultimaFaccia) { this.ultimaFaccia = f; this.giudici.forEach((g, i) => g.img.setTexture(`giudice${i}_${f}`)); }
-    // ogni tanto un cuoricino, se va bene
-    if (this.stato === 'ok' && this.serie > c.serie.ogni) {
-      this.tCuore -= dt;
-      if (this.tCuore <= 0) { this.tCuore = 1.1 + Math.random() * 1.2; this.cuore(P.giudici[caso([0, 3])] + (Math.random() - 0.5) * 16, 204); }
-    }
-    // l'acuto: riflettori puntati, tutti in piedi
-    const inAcuto = !!n?.acuto;
-    if (inAcuto !== this.inAcuto) {
-      this.inAcuto = inAcuto;
-      if (inAcuto) {
-        Audio.sfx('applauso');
-        scritta(this, 240, 150, 'TIENILA!', { size: 15, color: '#ffffff', durata: 700, depth: 950 });
-        for (const g of this.giudici) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI - 7, duration: 260, ease: 'Back.out' });
-        this.tweens.add({ targets: this.buio, fillAlpha: 0.45, duration: 300 });
-      }
-    }
-    // gli accendini: più il pubblico è caldo, più se ne accendono e più salgono
-    const caldo = inAcuto ? 1 : this.calore;
-    for (const a of this.accendini) {
-      const su = caldo > a.soglia ? 1 : 0;
-      a.k = (a.k ?? 0) + (su - (a.k ?? 0)) * Math.min(1, dt * 5);
-      a.img.setAlpha(a.k).setPosition(a.x + Math.sin(this.pos * 0.8 + a.fase) * 3 * a.k, 268 - a.k * (15 + caldo * 5));
-    }
-  }
-
-  // la melodia che scorre, il cursore, le lucine, i fasci di luce, i punti
-  disegna(n) {
-    // (scorrimento è in unità per ottavo a 120: così la melodia scorre alla stessa velocità con ogni canzone)
-    const c = this.cfg, g = this.gMelodia, PX = c.scorrimento * this.passo / OTTAVO_120, X = (passo) => PENTA.cursore + (passo - this.pos) * PX;
-    const sx = PENTA.x0 + 44, dx = PENTA.x1 - 4, colore = (x) => (x.chi === ENTRAMBI ? 0xffe14a : this.colori[x.chi]);
-    g.clear();
-    for (let i = Math.max(0, this.iNota - 6); i < this.note.length; i++) {
-      const x = this.note[i], x0 = X(x.da), x1 = X(x.a), y = yNota(x.pos);
-      if (x1 < sx) continue;
-      if (x0 > dx) break;
-      const a0 = Math.max(sx, x0), a1 = Math.min(dx, x1), col = colore(x), ora = x === n;
-      // la parte già passata: spenta, rossa dove si è stonato; quella che deve arrivare: accesa
-      const meta = clamp(PENTA.cursore, a0, a1);
-      if (meta > a0) { g.fillStyle(x.err > 0.05 ? 0xff5a4a : col, x.err > 0.05 ? 0.75 : 0.3); g.fillRoundedRect(a0, y - 2.4, meta - a0, 4.8, 2.4); }
-      if (a1 > meta) {
-        if (x.oro) { g.fillStyle(0xffe14a, 1); g.fillRoundedRect(meta - 0.8, y - 4, a1 - meta + 1.6, 8, 4); }
-        g.fillStyle(0x0a0518, 1); g.fillRoundedRect(meta - 0.2, y - 3.4, a1 - meta + 0.4, 6.8, 3.4);
-        g.fillStyle(ora && this.stato === 'no' ? 0xff5a4a : col, 1); g.fillRoundedRect(meta, y - 2.6, a1 - meta, 5.2, 2.6);
-      }
-      // la linea che la unisce alla nota dopo
-      const poi = this.note[i + 1];
-      if (poi && x1 > sx && x1 < dx) { g.lineStyle(1.8, colore(poi), x1 < PENTA.cursore ? 0.3 : 0.95); g.lineBetween(x1, y, x1, yNota(poi.pos)); }
-      // la stella delle note d'oro
-      if (x.oro && x0 > PENTA.cursore - 4 && x0 < dx - 6) {
-        const pts = [];
-        for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 2 : 4.6; pts.push({ x: x0 + 5 + Math.cos(a) * r, y: y - 8 + Math.sin(a) * r }); }
-        g.fillStyle(0xffe14a, 1); g.fillPoints(pts, true); g.lineStyle(0.7, 0x7a5a00, 1); g.strokePoints(pts, true);
-      }
-    }
-    // il cursore: verde se è intonato, rosso (e tremante) se stona
-    const yc = yNota(this.cur), stonato = this.stato === 'no';
-    this.cursore.setPosition(PENTA.cursore + (stonato ? Math.sin(this.trascorso * 60) * 1.2 : 0), yc);
-    this.alone.setPosition(PENTA.cursore, yc);
-    if (this.stato !== this.statoDisegnato) {
-      this.statoDisegnato = this.stato;
-      this.cursore.setTint(this.stato === 'ok' ? 0x9dffb0 : stonato ? 0xff8a7a : 0xffffff);
-      this.alone.setFillStyle(this.stato === 'ok' ? 0x7dff9a : stonato ? 0xff5a4a : 0xffffff, this.stato === 'attesa' ? 0.2 : 0.42);
-    }
-
-    // i fasci dei fari: girano a tempo; sull'acuto puntano tutti i cantanti
-    const f = this.fasci, P = PROVINO;
-    f.clear();
-    [0x3ae0ff, 0xff4fb8, 0xffe14a, 0x7dff9a, 0xff4fb8, 0x3ae0ff].forEach((col, i) => {
-      const x = 60 + i * 72, verso = this.inAcuto ? (i < 3 ? P.cantanti[0] + 30 : P.cantanti[1] - 30) + (i % 3 - 1) * 26 : x + Math.sin(this.pos * 0.4 + i * 1.3) * 90;
-      f.fillStyle(col, this.inAcuto ? 0.2 : 0.1); f.fillTriangle(x, 27, verso - 24, P.piedi + 12, verso + 24, P.piedi + 12);
-    });
-
-    // le lucine dei giudici: verde quando i tuoi punti passano la sua soglia, rossa se no (quella
-    // del produttore lampeggia quando stoni). Spente finché non hai cantato almeno un po'
-    const punti = this.punti, acceso = this.tOk + this.tNo > 1;
-    const stato = `${this.giudici.map((q) => (punti >= this.sogliaGiudice(q) ? 1 : 0)).join('')}${acceso}${stonato && Math.floor(this.trascorso * 8) % 2}`;
-    if (stato !== this.lucineDisegnate) {
-      this.lucineDisegnate = stato;
-      const l = this.lucine;
-      l.clear();
-      this.giudici.forEach((q, i) => {
-        const si = punti >= this.sogliaGiudice(q), spenta = !acceso || (i === 2 && stonato && Math.floor(this.trascorso * 8) % 2);
-        const col = spenta ? 0x3a3350 : i === 2 && stonato ? 0xff3a2e : si ? 0x4ade80 : 0xff5a4a;
-        if (!spenta) { l.fillStyle(col, 0.3); l.fillCircle(q.x, P.lucine, 5.5); }
-        l.fillStyle(col, 1); l.fillCircle(q.x, P.lucine, 2.8);
-        l.lineStyle(0.8, 0x0a0518, 1); l.strokeCircle(q.x, P.lucine, 2.8);
-      });
-    }
-
-    // punti, serie, barra degli applausi
-    const molt = this.moltiplicatore, hud = `${Math.floor(this.punti)}|${molt}|${acceso}`;
-    if (hud !== this.hud) {
-      this.hud = hud;
-      this.testoPunti.setText(puntiHud(Math.floor(this.punti)));
-      this.testoSerie.setText(molt > 1 ? `x${numero(molt, 1)}` : '');
-      const b = this.barraApplausi, x0 = 152, W = 176;
-      b.clear();
-      b.fillStyle(0x1f1430, 0.9); b.fillRoundedRect(x0 - 2, 17, W + 4, 10, 5);
-      // (piena = il giudice più severo e un po' di più; verde da quando i SÌ bastano per passare)
-      const soglie = this.giudici.map((q) => this.sogliaGiudice(q)), pieno = Math.max(...soglie) * 1.12;
-      const si = soglie.filter((v) => punti >= v).length;
-      b.fillStyle(si >= c.siPerVincere ? 0x4ade80 : si ? 0xfacc15 : 0xf87171, 1);
-      if (acceso && punti > 0) b.fillRoundedRect(x0, 19, Math.max(6, W * Math.min(1, punti / pieno)), 6, 3);
-      for (const v of soglie) { b.fillStyle(0xffffff, 0.9); b.fillRect(x0 + W * (v / pieno) - 0.6, 17.5, 1.2, 9); }
-    }
-  }
-
-  // ---------- il verdetto ----------
   // I quattro voti uno dietro l'altro, con un colpo di tamburo ciascuno, poi l'esito. Al massimo
   // quattro secondi; si salta con un tocco, INVIO o SPAZIO.
   finale(ris, fatto) {
     const c = this.cfg, P = PROVINO, v = this.verdetto();
-    Audio.guida(null);
-    Audio.vociZitte();
-    for (const o of [...this.penta, this.testoSerie, this.testoPunti, this.barraApplausi, this.etichettaApplausi]) o.setVisible(false);
+    for (const o of [this.gNote, this.gPad, this.gCorsie, this.testoSerie, this.testoPunti, this.testoPrecisione, this.no, ...this.esiti]) o.setVisible(false);
     this.tweens.killTweensOf(this.buio);
     this.tweens.add({ targets: this.buio, fillAlpha: 0.5, duration: 250 });
     this.cantanti.forEach((img, k) => img.setTexture(`${c.cantanti[k]}_palco`).setFlipX(k === 1).setY(P.piedi));
@@ -547,7 +506,6 @@ export class XfactorScene extends MicrogiocoBase {
     });
     const titolo = txt(this, 240, 72, 'IL VERDETTO...', { size: 16, color: '#ffe14a', depth: 960 });
     const frase = txt(this, 240, 100, '', { size: 8, color: '#ffffff', depth: 960, wrap: 380 });
-    // i voti
     const cartelli = [];
     v.voti.forEach((si, i) => this.time.delayedCall(280 + i * 500, () => {
       const g = this.giudici[i];
@@ -560,11 +518,9 @@ export class XfactorScene extends MicrogiocoBase {
       this.lucine.fillStyle(si ? 0x4ade80 : 0xff3a2e, 0.35).fillCircle(g.x, P.lucine, 6.5).fillStyle(si ? 0x4ade80 : 0xff3a2e, 1).fillCircle(g.x, P.lucine, 3.2);
       frase.setText(`${g.nome}: "${caso(si ? g.si : g.no)}"`).setColor(si ? '#c8ffd4' : '#ffc8c0');
     }));
-    // l'esito
     this.time.delayedCall(280 + v.voti.length * 500 + 120, () => {
       titolo.setText(ris.titoloFine).setColor(ris.vittoria ? '#7dff9a' : '#ff6b5a').setFontSize(22 * 1.3);
       this.tweens.add({ targets: titolo, scale: { from: 1.6, to: 1 }, duration: 220, ease: 'Back.out' });
-      // i voti si fanno piccoli e vanno sul tavolo, davanti a chi li ha dati: il palco resta libero
       cartelli.forEach((t, i) => this.tweens.add({ targets: t, x: this.giudici[i].x + 15, y: P.lucine + 1, scale: 0.5, duration: 220, ease: 'Quad.out' }));
       if (ris.vittoria) this.festa(); else this.colpa();
     });
@@ -581,13 +537,12 @@ export class XfactorScene extends MicrogiocoBase {
       this.tweens.add({ targets: r, y: 280, x: r.x + (Math.random() - 0.5) * 70, angle: r.angle + 500, duration: 1300 + Math.random() * 700, onComplete: () => r.destroy() });
     } });
     this.cantanti.forEach((img, k) => {
-      img.setTexture(`${c.cantanti[k]}_gasato`);
+      img.setTexture(`${c.cantanti[k]}_gasato`).setDepth(28);   // (davanti alla console)
       this.tweens.add({ targets: img, x: P.io + (k ? 58 : -58), duration: 420, ease: 'Quad.out' });
       this.tweens.add({ targets: img, y: P.piedi - 9, duration: 180, yoyo: true, repeat: 5, delay: 420 });
     });
     this.io.setTexture(`${this.giocatore.id}_felice`);
-    this.tweens.add({ targets: this.io, y: P.piedi - 12, duration: 190, yoyo: true, repeat: 5 });
-    // la fontana di lacrime del commosso
+    this.tweens.add({ targets: this.io, y: P.piedi - 8, duration: 190, yoyo: true, repeat: 5 });
     const g = this.giudici[3];
     this.time.addEvent({ delay: 40, repeat: 40, callback: () => {
       for (const s of [-1, 1]) {

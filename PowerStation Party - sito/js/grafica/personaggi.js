@@ -190,11 +190,11 @@ export const PERSONAGGI = {
     vestito: { tipo: 'chiodo', colore: '#1c1c21', sotto: '#8f1f22', borchie: '#d2d6dd' },
     pantaloni: '#2b3040', catenaPortafoglio: '#d2d6dd', scarpe: '#1a1512', stivali: true,
   },
-  // Pastaffi (il figlio di Emilio): capelli castani corti, barba corta e fitta, sopracciglia folte,
-  // l'anellino sotto il naso (septum) e gli occhiali da sole tirati su; giacca color tabacco su una
-  // maglietta bianca, jeans chiari
+  // Pastaffi (Denny, il figlio di Emilio): capelli biondo scuro corti (e la barba, che prende il
+  // colore dei capelli), barba corta e fitta, sopracciglia folte, l'anellino sotto il naso (septum) e
+  // gli occhiali da sole tirati su; giacca color tabacco su una maglietta bianca, jeans chiari
   pastaffi: {
-    pelle: '#f0c2a2', capelli: '#4a3020', capelliLuce: '#8a6a4c', occhi: '#4a5a6a',
+    pelle: '#f0c2a2', capelli: '#9a7442', capelliLuce: '#d2ad70', occhi: '#4a5a6a',
     sopra: '#3a2416', sopraSpess: 9, palpebra: [0.3, 0.3],
     faccia: { top: 46, larg: 58, mascella: 54, mascellaY: 153, mento: 33, mentoY: 182 },
     stile: 'corto', barba: 'corta', naso: [10, 12], orecchie: 9.5, sorriso: 2, septum: '#dfe3ea',
@@ -1946,6 +1946,8 @@ const POSE = {
   tiIndico: { sx: [[33, 196], [45, 216], [36, 232]], dx: [[33, 196], [60, 199], [87, 195]], dito: true },
   // i giudici: le mani sulle orecchie (o.maniSopra le ridisegna sopra la testa)
   orecchie: [[33, 196], [70, 176], [60, 122]],
+  // il grande saggio (Denny, "Le Perle di Denny"): una mano sul petto, l'altra alzata col dito in su
+  saggio: { sx: [[33, 196], [44, 224], [12, 204]], dx: [[33, 196], [58, 194], [62, 160]], dito: true },
   // "La pizza dal Boni": la pala tenuta dritta (la sinistra in basso sul manico), le mani a coppa
   // davanti alla bocca per gridare l'ordinazione (con o.maniSopra), la corsa a pugni stretti, la
   // caraffa alla bocca, la pala alzata sopra la testa per cacciare gli imbucati

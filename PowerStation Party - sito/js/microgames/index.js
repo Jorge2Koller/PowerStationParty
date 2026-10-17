@@ -19,6 +19,7 @@ import { BeerpongScene } from './BeerpongScene.js';
 import { XfactorScene } from './XfactorScene.js';
 import { PizzaScene } from './PizzaScene.js';
 import { BallataScene } from './BallataScene.js';
+import { ProverbiScene } from './ProverbiScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -40,4 +41,5 @@ export const MICROGIOCHI = {
   xfactor: XfactorScene,
   pizza: PizzaScene,
   ballata: BallataScene,
+  proverbi: ProverbiScene,
 };

@@ -1,7 +1,7 @@
 // "Provini a X-Factor": il palco di un talent show televisivo INVENTATO (luci, muro di led, una
 // grande X luminosa di fantasia: non è il logo di nessun programma vero), il tavolo dei giudici,
-// il pubblico al buio con gli accendini, la pianola di chi accompagna, la chiave di violino e la
-// nota che fa da cursore sul pentagramma. I giudici e i cantanti sono in personaggi.js.
+// il pubblico al buio con gli accendini. La console coi pad la disegna XfactorScene; i giudici e i
+// cantanti sono in personaggi.js.
 import { tela, CONT, casuale, riemp, tratto, ellisse, rrect, poli, gradL, gradR, alfa, alone } from './base.js';
 
 // dove stanno le cose sul palco (unità di schermo): le usa XfactorScene
@@ -9,10 +9,10 @@ export const PROVINO = {
   pavimento: 200,                       // dove comincia il pavimento del palco
   piedi: 214,                           // i piedi dei cantanti e di chi suona
   cantanti: [58, 422],                  // Tini a sinistra, Oli a destra
-  io: 240,                              // chi suona la pianola, al centro
+  io: 240,                              // chi suona i pad, al centro, dietro la console
   x: { cx: 240, cy: 156, r: 44 },       // la grande X
   banco: { x: 240, y: 238, w: 340, h: 26 },
-  giudici: [112, 190, 290, 368],        // i quattro posti al tavolo (in mezzo resta libera la vista sulla pianola)
+  giudici: [112, 190, 290, 368],        // i quattro posti al tavolo (in mezzo resta libera la vista sulla console)
   lucine: 247,                          // l'altezza delle lucine sul tavolo
 };
 
@@ -99,50 +99,10 @@ function accendino(c) {
   riemp(c, gradL(c, 0, 0, 0, 6.4, [[0, '#fff8c0'], [1, '#ff9a2e']]));
 }
 
-// la pianola elettrica sul suo cavalletto a X
-function pianola(c) {
-  for (const s of [-1, 1]) { c.beginPath(); c.moveTo(42 + s * 24, 16); c.lineTo(42 - s * 22, 40); tratto(c, CONT, 5); tratto(c, '#4a4c5a', 3); }
-  rrect(c, 2, 3, 80, 15, 3.5); riemp(c, gradL(c, 0, 3, 0, 18, [[0, '#e0353f'], [1, '#93161f']])); tratto(c, CONT, 1.6);
-  rrect(c, 6, 9, 72, 7.4, 1); riemp(c, '#f7f4ea'); tratto(c, CONT, 0.8);
-  for (let x = 6 + 72 / 21; x < 77; x += 72 / 21) { c.beginPath(); c.moveTo(x, 9); c.lineTo(x, 16.4); tratto(c, 'rgba(30,26,40,0.55)', 0.4); }
-  for (let i = 0; i < 21; i++) if (![2, 6, 9, 13, 16, 20].includes(i)) { c.fillStyle = '#17131c'; c.fillRect(6 + (i + 0.72) * (72 / 21), 9, 2.1, 4.4); }
-  for (const x of [9, 14, 19]) { ellisse(c, x, 6, 1.3, 1.3); riemp(c, '#f6c63a'); }
-  c.fillStyle = '#7dff9a'; c.fillRect(64, 5, 11, 2.2);
-}
-
-// la chiave di violino (stilizzata) e il bemolle, bianchi, per il pentagramma
-function chiave(c) {
-  const via = () => {
-    c.beginPath(); c.moveTo(6.6, 51);
-    c.quadraticCurveTo(2.8, 51.5, 3.2, 48); c.quadraticCurveTo(4.4, 45.4, 7.2, 47.4);
-    c.quadraticCurveTo(10.2, 50, 9.4, 40); c.lineTo(7.2, 9);
-    c.quadraticCurveTo(7, 2, 10.6, 2.4); c.quadraticCurveTo(13.4, 5, 11.4, 11.6);
-    c.quadraticCurveTo(8.6, 18, 4.6, 23.6); c.quadraticCurveTo(0.6, 30, 3, 36.4);
-    c.quadraticCurveTo(6.6, 42.4, 12.4, 38.6); c.quadraticCurveTo(15.6, 34.4, 12.6, 30);
-    c.quadraticCurveTo(9.2, 26.4, 6, 30); c.quadraticCurveTo(4.4, 33.4, 7.4, 35.6);
-  };
-  via(); tratto(c, 'rgba(20,12,40,0.9)', 3.6); via(); tratto(c, '#ffffff', 1.7);
-}
-function bemolle(c) {
-  const via = () => { c.beginPath(); c.moveTo(2, 1); c.lineTo(2, 15); c.quadraticCurveTo(8.4, 11.6, 6.6, 8.2); c.quadraticCurveTo(4.6, 6.2, 2, 9.4); };
-  via(); tratto(c, 'rgba(20,12,40,0.9)', 3); via(); tratto(c, '#ffffff', 1.4);
-}
-
-// il cursore: una nota (la testa sta sulla riga o nello spazio), bianca, col gambo
-function notaCursore(c) {
-  c.beginPath(); c.moveTo(12.4, 17.4); c.lineTo(12.4, 3); tratto(c, CONT, 3.4); tratto(c, '#ffffff', 1.6);
-  c.beginPath(); c.moveTo(12.4, 3); c.quadraticCurveTo(17.4, 5, 16.2, 10.6); tratto(c, CONT, 3.2); tratto(c, '#ffffff', 1.5);
-  ellisse(c, 8, 18, 5.6, 4.2, -0.38); riemp(c, gradR(c, 6.6, 16.8, 0.5, 6, [[0, '#ffffff'], [1, '#d8dcec']])); tratto(c, CONT, 1.5);
-}
-
 export function creaProvino(scene) {
   const B = PROVINO.banco;
   tela(scene, 'bgProvino', 480, 270, sfondo);
   tela(scene, 'bancoGiudici', B.w, B.h, banco);
   tela(scene, 'pubblicoProvino', 480, 26, pubblico);
   tela(scene, 'accendino', 9, 18, accendino, 8);
-  tela(scene, 'pianola', 84, 42, pianola, 6);
-  tela(scene, 'chiaveViolino', 17, 54, chiave, 8);
-  tela(scene, 'bemolle', 9, 16, bemolle, 8);
-  tela(scene, 'notaCursore', 20, 24, notaCursore, 8);
 }
