@@ -3,7 +3,7 @@
 import { tela, DENS, gruppoPigro, RES } from './grafica/base.js';
 import { DOPPIONE } from './sessione.js';
 import { Progressi } from './progressi.js';
-import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, GIUDICI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio } from './grafica/personaggi.js';
+import { PERSONAGGI, RAGAZZE, TIPE, BUTTAFUORI, GIUDICI, ESPRESSIONI, BOTA_ABBRONZATO, BOTA_ARAGOSTA, disegnaPersonaggio, disegnaTesta } from './grafica/personaggi.js';
 import { creaMarco } from './grafica/marco.js';
 import { creaOggetti } from './grafica/oggetti.js';
 import { creaSfondi } from './grafica/sfondi.js';
@@ -17,6 +17,7 @@ import { creaProvino } from './grafica/provino.js';
 import { creaTaverna } from './grafica/taverna.js';
 import { creaPiazzetta } from './grafica/piazzetta.js';
 import { creaMontagna } from './grafica/montagna.js';
+import { creaPizzeria } from './grafica/pizzeria.js';
 
 export { RES, Q, SP } from './grafica/base.js';
 export { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from './grafica/marco.js';
@@ -88,10 +89,24 @@ export function preparaGiocatore(scene, id, doppione = false) {
 
 // Una posa in più di un personaggio (col suo costume del Bancone), creata da un microgioco quando
 // serve e buttata da lui alla fine (le Perle di Denny): chiave della texture, chi, espressione,
-// opzioni del disegno (posa...) e densità (più alta se si vede in grande)
-export function preparaPosa(scene, key, id, espr, o = {}, dens = RES) {
+// opzioni del disegno (posa...), densità (più alta se si vede in grande) e ritocchi all'aspetto (il
+// sudore, le palpebre strette...)
+export function preparaPosa(scene, key, id, espr, o = {}, dens = RES, altro = {}) {
   const [p, op] = vestito(id);
-  tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, p, espr, { ...op, ...o }); }, dens);
+  tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, { ...p, ...altro }, espr, { ...op, ...o }); }, dens);
+}
+
+// Un personaggio a due pezzi, per chi cambia faccia senza cambiare posa (Michele alla cassa, in
+// "Scontrino, prego!"): il corpo in una posa, senza testa (96x144, come una figura intera), e la testa
+// con un'espressione (96x100: la parte di sopra della stessa figura; altro = ritocchi all'aspetto,
+// come le guance rosse e il sudore). Messi uno sull'altro con la stessa origine in alto, si combaciano.
+export function preparaCorpo(scene, key, id, o = {}, dens = RES) {
+  const [p, op] = vestito(id);
+  tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, p, 'normale', { ...op, ...o, senzaTesta: true }); }, dens);
+}
+export function preparaTesta(scene, key, id, espr, altro = {}, dens = RES) {
+  const [p] = vestito(id);
+  tela(scene, key, 96, 100, (c) => { c.scale(0.5, 0.5); disegnaTesta(c, { ...p, ...altro }, espr); }, dens);
 }
 
 // Le due pose del ballo (L'Incubo degli Scapoli) di chi gioca, felice: create quando servono
@@ -226,6 +241,7 @@ export function creaTexture(scene) {
   gruppoPigro(scene, 'taverna', creaTaverna);
   gruppoPigro(scene, 'piazzetta', creaPiazzetta);
   gruppoPigro(scene, 'montagna', creaMontagna);
+  gruppoPigro(scene, 'pizzeria', creaPizzeria);
 }
 
 // I gruppi di immagini che servono a ogni microgioco (gli sfondi di sfondi.js sono un gruppo per
@@ -238,5 +254,5 @@ export const GRUPPI_MICROGIOCHI = {
   mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
   palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
   scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
-  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: ['pallaio'],
+  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: ['pallaio'], scontrino: ['pizzeria'],
 };

@@ -26,6 +26,7 @@ import xfactor from './config/microgiochi/xfactor.js';
 import pizza from './config/microgiochi/pizza.js';
 import ballata from './config/microgiochi/ballata.js';
 import proverbi from './config/microgiochi/proverbi.js';
+import scontrino from './config/microgiochi/scontrino.js';
 import beerpong from './config/beerpong.js';
 import { sfotto, sfottoTanti, frasiPareggio } from './config/frasi.js';
 import premi from './config/premi.js';
@@ -72,6 +73,9 @@ export const CONFIG = {
     { id: 'oli', nome: 'Oli', soprannome: 'Vanz', colore: '#4d7cff', esulta: 'Sold out, ragazzi!', perde: 'Avevo il microfono spento.' },
     { id: 'boni', nome: 'Boni', soprannome: 'Il Nutrizionista', colore: '#e5383b', esulta: 'Pizza per tutti: è dietetica, lo dico io!', perde: 'Troppi carboidrati. Mi ritiro.' },
     { id: 'lori', nome: 'Lori', soprannome: 'Il Cantastorie', colore: '#f4e3c1', esulta: 'E vissero tutti felici e contenti!', perde: 'Il pubblico non capisce l\'arte.' },
+    // i due di "Scontrino, prego!"
+    { id: 'michele', nome: 'Michele', soprannome: 'Il Pizzaiolo', colore: '#b8c4d4', esulta: 'Offre la casa! Senza scontrino.', perde: 'Dopo te lo faccio, dopo!' },
+    { id: 'giso', nome: 'Il Giso', breve: 'Giso', soprannome: 'Paladino degli scontrini', colore: '#b0204e', esulta: 'Lo scontrino è un diritto!', perde: 'Mi appello. Ricorrerò.' },
   ],
 
   // Punti classifica per posizione nel round, da tre giocatori in su (in due si contano i punti dei
@@ -85,10 +89,10 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino'],
 
   // un file per microgioco, nell'ordine della raccolta (vedi js/config/microgiochi/)
-  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor, pizza, ballata, proverbi },
+  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor, pizza, ballata, proverbi, scontrino },
 
   // il beer pong: il tiro, la sbronza, le gag e le reazioni, in comune tra il microgioco qui sopra
   // e la modalità BEER PONG (js/config/beerpong.js)

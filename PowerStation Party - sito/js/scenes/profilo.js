@@ -118,13 +118,15 @@ export class ProfiloScene extends Phaser.Scene {
       this.t(140, 172 + k * passoRighe, String(b), { size: 6.5, ox: 1 });
     });
     // la griglia dei microgiochi: celle tutte uguali, 5 per riga (il verbo più lungo, PALLEGGIA!,
-    // ci sta con un po' di spazio prima del vicino)
+    // ci sta con un po' di spazio prima del vicino). Con più di quattro righe (oltre 20 microgiochi)
+    // le righe si stringono e le medaglie si fanno un po' più piccole: tutto resta dentro il riquadro
     this.t(310, 70, 'LA MEDAGLIA MIGLIORE', { size: 7, color: '#ffe14a' });
-    const tutti = Object.keys(CONFIG.microgiochi), COL = 5, largo = 56, alto = 38;
+    const tutti = Object.keys(CONFIG.microgiochi), COL = 5, largo = 56, file = Math.ceil(tutti.length / COL);
+    const alto = Math.min(38, 152 / file), k0 = alto / 38, y0 = file > 4 ? 88 : 94;
     tutti.forEach((id, k) => {
-      const x = 198 + (k % COL) * largo, y = 94 + Math.floor(k / COL) * alto, liv = Progressi.medagliaMigliore(id, G.id);
-      this.i(x, y, MEDAGLIA[liv], 0.6).setAlpha(liv ? 1 : 0.6);
-      this.t(x, y + 16, CONFIG.microgiochi[id].verbo ?? id, { size: 7, color: liv ? '#ffffff' : '#b8b0c8' });
+      const x = 198 + (k % COL) * largo, y = y0 + Math.floor(k / COL) * alto, liv = Progressi.medagliaMigliore(id, G.id);
+      this.i(x, y, MEDAGLIA[liv], 0.6 * k0).setAlpha(liv ? 1 : 0.6);
+      this.t(x, y + 16 * k0, CONFIG.microgiochi[id].verbo ?? id, { size: 7, color: liv ? '#ffffff' : '#b8b0c8' });
     });
   }
 

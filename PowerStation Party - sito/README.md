@@ -5,7 +5,7 @@ giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
 sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
 e vince il round chi fa più punti.
 
-I microgiochi sono venti:
+I microgiochi sono ventuno:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -29,6 +29,7 @@ I microgiochi sono venti:
 | `pizza` | La pizza dal Boni | il Boni (con Oli e il Sego imbucati) |
 | `ballata` | La ballata del Pallaio | Lori, il cantastorie |
 | `proverbi` | Le Perle di Denny | Denny (Pastaffi, il figlio di Emilio) |
+| `scontrino` | Scontrino, prego! | Michele, alla cassa (col Giso, il paladino degli scontrini) |
 
 Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
 "Modalità" e "Beer pong" qui sotto.
@@ -347,7 +348,7 @@ Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più 
   sono tutti disponibili da subito.
 - **PROFILO** (dal menu), quattro schede: i **personaggi** (microgiochi giocati, sfide e round
   vinti, medaglie, le partite vinte a beer pong, e la medaglia migliore in ogni microgioco), i
-  **trofei** (40: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
+  **trofei** (44: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
   (punteggio, chi e quando) e l'**albo d'oro** delle ultime sfide (chi ha vinto).
 - Dopo ogni turno: le Pinte guadagnate accanto alla medaglia e, se è il caso, NUOVO RECORD!;
   i trofei appena presi scendono dall'alto. Tutto sta nel salvataggio (e quindi si esporta e
@@ -411,7 +412,9 @@ il suo **doppione**: lo stesso personaggio travestito con occhiali finti, nasone
 baffi, così i due non si confondono. Il microgioco non cambia di una virgola.
 Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
 microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Factor"). Pastaffi è anche
-Denny, l'ospite di "Le Perle di Denny": chi lo sceglie lì gioca contro se stesso.
+Denny, l'ospite di "Le Perle di Denny": chi lo sceglie lì gioca contro se stesso. In "Scontrino,
+prego!" giocano contro se stessi Michele (l'ospite, alla cassa) e il Giso (nel `cast`): il vice
+del Giso, lì, è il doppione.
 
 ### Beer pong
 
@@ -779,6 +782,31 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - i proverbi sono in `proverbi` di `js/config/microgiochi/proverbi.js`: una riga ciascuno, il
     proverbio giusto con tra [quadre] la parola da scrivere, `dice` la parola sbagliata di Denny,
     `perla: true` se è un suo sbaglio vero. L'ordine esce dal seme del round, senza ripetizioni
+- Scontrino, prego! (SCONTRINO!: nella pizzeria al taglio "Da Michele" chi gioca è il vice del
+  Giso, il paladino degli scontrini, e tiene d'occhio Michele alla cassa):
+  - i clienti entrano dall'arco, scelgono, pagano alla cassa ("cling") e vanno verso la porta. Se
+    Michele non ha battuto lo scontrino: SPAZIO, clic o tocco (in qualsiasi punto; sul telefono
+    c'è anche il pulsante SCONTRINO!) prima che il cliente arrivi alla porta. Il Giso fischia e lo
+    blocca, Michele diventa rosso, suda e lo batte di corsa. Se lo scontrino c'era è un falso
+    allarme ("Eccolo, contento?"); se nessuno lo ferma, la porta si chiude e Michele fischietta
+  - SCONTRINO! vale per il cliente più vicino alla porta tra quelli che hanno già pagato:
+    l'anello giallo ai piedi e la freccia sotto
+  - lo scontrino vero: i tasti, il prezzo sul display, il "trrr" della stampante e lo scontrino
+    bianco in mano al cliente. I trucchetti di Michele: IL CLASSICO (niente tasti, niente
+    stampante), LA FINTA (batte sui tasti, ma il display resta a zero e la stampante tace), LO
+    STRAPPO (lo scontrino esce, ma lui lo strappa e se lo mette in tasca), L'ANNULLO (lo dà, il
+    cliente si gira e lui lo annulla: bip basso e display rosso), IL CONTO A VOCE ("Fanno 6 euro,
+    lascia stare!", senza toccare la cassa)
+  - tre atti: SI APRE! (un cliente alla volta, solo il classico e la finta); dal 12° secondo ORA
+    DI PUNTA! (il locale si riempie, due clienti alla cassa che si accavallano, arrivano lo
+    strappo e l'annullo); dal 24° SABATO SERA DA MICHELE! (la coda all'arco, i cartoni da asporto,
+    tutti i trucchi, e le distrazioni: la teglia fumante, il telefono degli ordini, la birra
+    rovesciata, "Ce l'ha la margherita?"). A FACILE Michele è più lento, la finestra più lunga e
+    lo scontrino in mano più grande; a DIFFICILE più veloce, la finestra corta e più clienti
+    insieme. In Lampo si parte dall'ora di punta
+  - clienti, trucchi e distrazioni escono dal seme del round: nella stessa sfida tutti trovano
+    gli stessi clienti negli stessi momenti (Sfida del giorno compresa). Il nome del locale
+    (sull'insegna, sulla polo di Michele e nei testi) è `nomeLocale` nella configurazione
 - ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -866,6 +894,17 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   sesto lo porta almeno a 100 e da lì non si scende più sotto. Coi giocatori simulati: chi è
   bravo arriva all'argento (una decina di proverbi), l'oro vuole 13-14 proverbi quasi tutti
   veloci. In Lampo (15 secondi) bastano 3 giusti e i punti sono quelli e basta.
+- **Scontrino, prego!** (35 s): +10 per ogni imbroglio scoperto, +5 se lo becchi entro 0,6 secondi
+  da quando il cliente si gira verso la porta, per il moltiplicatore della serie (x1,5 dopo 3
+  presi di fila, x2 dopo 5; un falso allarme o uno che scappa la azzerano); -5 per ogni falso
+  allarme (mai sotto zero). Ogni serata ha i suoi imbrogli (tra 9 e 12 a NORMALE, con almeno 4
+  clienti onesti): i punti degli imbrogli si contano in proporzione, così una serata perfetta
+  (tutti presi subito, nessun falso allarme) fa sempre 360. Vittoria con 6 imbrogli scoperti e al
+  massimo 2 falsi allarmi, che sono il bronzo: finché non ci sei il totale si ferma a 90, quando
+  ci sei sale almeno a 100. Coi giocatori simulati: chi è lento passa quasi sempre, chi è medio
+  arriva all'argento una volta su due, l'oro vuole quasi tutto preso subito; chi preme sempre o
+  a caso fa troppi falsi allarmi e non passa mai. In Lampo (15 secondi, dall'ora di punta)
+  bastano 3 imbrogli con al massimo 1 falso allarme, e i punti sono quelli e basta.
 
 Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono nei file di configurazione:
 `js/config/microgiochi/<id>.js`, uno per microgioco.
@@ -892,7 +931,11 @@ pad si premono con `scena.premi(pad, quando)` e si lasciano con `scena.rilascia(
 illuminata `scena.bersaglio`, e le vignette si scambiano con `scena.scambia(a, b)`; nelle Perle di
 Denny il proverbio è `scena.prov` (`giusta`, `dice`), si risponde con `scena.risposta(testo)` (come
 INVIO) quando `scena.stato` è `'risposta'`, e `scena.tProv` è il tempo passato sul proverbio.
-(Le Perle di Denny, arrivate dopo, nelle prove non ci sono ancora.)
+In Scontrino, prego! i clienti sono in `scena.clienti` (`trucco`: null se è onesto; `t.P` quando
+paga, `t.G` quando si gira verso la porta, `t.D` quando ci arriva), `scena.bersaglio()` dice per
+chi vale SCONTRINO! e `scena.premi()` lo preme; `programma` e `serata` di `ScontrinoScene.js`
+dicono in anticipo com'è la serata di un seme.
+(Le Perle di Denny e Scontrino, prego!, arrivati dopo, nelle prove non ci sono ancora.)
 
 ## La canzone di X-Factor
 
@@ -986,8 +1029,8 @@ js/
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES), e i gruppi di immagini che si
                          creano solo quando servono (gruppoPigro, usaGruppi): vedi sotto
-    personaggi.js        i ventuno personaggi (con Emilio, Pastaffi, i cantanti Tini e
-                         Oli, il Boni e Lori), le ragazze delle due discoteche, il buttafuori e i quattro
+    personaggi.js        i ventitré personaggi (con Emilio, Pastaffi, i cantanti Tini e
+                         Oli, il Boni, Lori, Michele e il Giso), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
@@ -1025,6 +1068,10 @@ js/
                          con le lucine, il cartellone del cantastorie, il telo, i tavolini,
                          e le vignette (vignetta(): piccole scene coi personaggi e gli
                          oggetti del gioco, composte all'inizio di ogni ballata)
+    pizzeria.js          "Scontrino, prego!": la pizzeria al taglio di Michele vista di fronte
+                         (lavagna, orologio, arco, insegna col nome del locale, porta d'uscita),
+                         il banco con la vetrina e la cassa (display e stampante), i clienti a
+                         pezzi da ricolorare col tint, lo scontrino, il cappello dei finanzieri
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
@@ -1053,7 +1100,7 @@ js/
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
     RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
-    PizzaScene.js  BallataScene.js  ProverbiScene.js
+    PizzaScene.js  BallataScene.js  ProverbiScene.js  ScontrinoScene.js
 ```
 
 Le immagini sono tutte disegnate dal codice, all'avvio. Gli sfondi e le immagini che servono a un
@@ -1105,6 +1152,10 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   'fulmine'` (con `stampaColore`) sulla maglietta, `collo: 'v'` e `spalle: colore` (le maniche
   di un altro colore: Oli), `tartan: colore` (i quadri sui pantaloni), `strappi: true` (i
   jeans strappati al ginocchio)
+- di Michele e del Giso: `tempie: colore` (con `corto`: i lati brizzolati), `occhiaie` (da 0 a
+  1), `barba: 'pizzettoPieno'` (il pizzetto coi baffi folti, con `barbaGrigi` = i fili grigi),
+  `grembiule: colore`, `sudore: true` (le gocce di chi è beccato); `fischietto: colore` (appeso
+  al collo) e `fascia: { colore, testo }` (al braccio, con la scritta CONTROLLO SCONTRINI)
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -1119,6 +1170,9 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `vestitino` (il vestito delle ragazze del Manna), `canottiera` (il Manna: con `catenina`,
   `cintura` e `fibbia`), `chiodo` (il giubbotto di pelle di Emilio: `sotto` = colore della
   maglietta, `borchie` = colore delle borchie),
+  `polo` (Michele: col colletto, i due bottoni e `ricamo` = le righe del nome ricamato sul petto,
+  che vengono da `nomeLocale` nella configurazione del suo microgioco), `maglione` (il Giso: lana
+  a coste, girocollo e polsini),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
   con `tshirt`, `bottoni: true` fa i bottoncini sotto il collo (Lori);
@@ -1167,7 +1221,12 @@ mano alla casella). Le pose sono in `POSE` (`pala`, `grida`, `corre`, `beve`, `c
 `accessorio()`. Per "Le Perle di Denny" Denny da grande saggio (la posa `saggio`: dito alzato e
 mano sul petto, con la faccia di sufficienza), offeso, che gongola, che si arrende e che proclama
 dalla sedia: le crea la scena quando parte e le butta alla fine (`preparaPosa` in `js/sprites.js`,
-densità più alta perché si vede in grande).
+densità più alta perché si vede in grande). Per "Scontrino, prego!" Michele è a due pezzi, corpo
+e testa (`preparaCorpo` e `preparaTesta` in `js/sprites.js`), così cambia faccia senza cambiare
+posa: le pose alla cassa (`cassa`, `taglia` con la `mezzaluna`, `strappa`, `aVoce`, `tasca`) e le
+facce (`fischia`, l'espressione nuova di chi fischietta guardando altrove, `occhiolino`, `parla`,
+beccato con `gote` e `sudore`); il Giso con la cartellina e la lente (la posa `conti`,
+l'accessorio `lente`). Anche queste le crea la scena e le butta alla fine.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
 `bgDisco` (vista dall'alto) e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo
@@ -1178,7 +1237,7 @@ disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno r
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`, `pizza`, `ballata`) apre subito quel microgioco, in
+`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`, `pizza`, `ballata`, `proverbi`, `scontrino`) apre subito quel microgioco, in
 allenamento, col primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per
 esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
 "contro se stesso").
@@ -1186,7 +1245,7 @@ esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto d
 ## Aggiungere un personaggio giocabile
 
 I personaggi che si possono scegliere sono quelli dell'elenco `personaggiGiocabili` in
-`js/config.js` (oggi diciassette). Per renderne giocabile uno che c'è già tra i
+`js/config.js` (oggi diciannove). Per renderne giocabile uno che c'è già tra i
 `PERSONAGGI` di `js/grafica/personaggi.js` basta **una riga**:
 
 ```js
@@ -1211,7 +1270,7 @@ all'avvio), poi la riga in `personaggiGiocabili`.
 
 La griglia ha cinque colonne (così nella cella ci sta il nome breve, `breve` nella riga del
 personaggio, se il nome è lungo) e posto per quattro righe (diciannove personaggi più "A
-CASO"): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
+CASO": con Michele e il Giso è piena): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
 `js/scenes/partita.js`). Al Bancone la fila dei personaggi si stringe da sola. Ognuno ha un personaggio diverso, quindi non si può essere
 più dei personaggi giocabili: `maxGiocatori` va tenuto entro quel numero.
 

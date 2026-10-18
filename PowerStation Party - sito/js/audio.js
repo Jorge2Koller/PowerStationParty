@@ -170,7 +170,15 @@ const SFX = {
   // L'Ingiocabile
   carta: (t) => { rumore(t, 0.07, 0.12, 5000, 'highpass'); rumore(t + 0.03, 0.05, 0.06, 1800); },
   gira: (t) => { rumore(t, 0.05, 0.1, 3500, 'highpass'); nota(1200, t, 0.04, 'triangle', 0.04); },
-  fiches: (t) => { for (let i = 0; i < 4; i++) { nota(2600 + i * 180, t + i * 0.035, 0.06, 'triangle', 0.05); rumore(t + i * 0.035, 0.02, 0.06, 6000, 'highpass'); } },
+  fiches: (t) => { for (let i = 0; i < 4; i++) { nota(2600 + i * 180, t + i * 0.035, 0.06, 'triangle', 0.05); rumore(t + i * 0.035, 0.02, 0.06, 6000, 'highpass'); } },  // Scontrino, prego!: i tasti della cassa, il cassetto ("cling"), la stampante degli scontrini
+  // ("trrr"), lo strappo, il bip basso dell'annullo, Michele che fischietta, la sirenetta dei finanzieri
+  tasti: (t) => { for (let i = 0; i < 3; i++) { nota(1700 + i * 140, t + i * 0.08, 0.03, 'square', 0.035); rumore(t + i * 0.08, 0.02, 0.05, 4500, 'highpass'); } },
+  cassa: (t) => { rumore(t, 0.1, 0.12, 1400); nota(2093, t + 0.04, 0.3, 'triangle', 0.1); nota(2637, t + 0.09, 0.35, 'triangle', 0.08); },
+  stampante: (t) => { for (let i = 0; i < 16; i++) rumore(t + i * 0.026, 0.02, 0.1, 2600); nota(140, t, 0.42, 'sawtooth', 0.03, 130); },
+  strappo: (t) => { rumore(t, 0.17, 0.24, 3400, 'highpass'); rumore(t + 0.05, 0.12, 0.14, 1300); },
+  annullo: (t) => { nota(233, t, 0.16, 'square', 0.1); nota(156, t + 0.17, 0.32, 'square', 0.1); },
+  fischiettio: (t) => { [[0, 1568], [0.13, 1760], [0.26, 1976], [0.46, 1760], [0.6, 1568], [0.74, 1319]].forEach(([d, f]) => nota(f, t + d, 0.12, 'sine', 0.09, f * 1.03)); },
+  sirena: (t) => { for (let i = 0; i < 4; i++) nota(i % 2 ? 620 : 830, t + i * 0.2, 0.19, 'triangle', 0.08); },
   // un fischio solo, lungo quanto la spazzolata del braccio: sale mentre il braccio tira a sé le fiches
   fischio: (t) => {
     const o = ac.createOscillator(), g = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), d = 1.15;

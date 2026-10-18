@@ -2,8 +2,13 @@
 // Tutto è disegnato in uno spazio di 192x288 unità, testa centrata su x = 96.
 // I tratti di ognuno sono parametri: forma del viso, capelli, barba, occhi, vestiti.
 import { CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, mix, risalto, alfa, casuale } from './base.js';
+import scontrino from '../config/microgiochi/scontrino.js';
 
 const CX = 96;
+// il nome della pizzeria di Michele (in configurazione: nomeLocale), ricamato sulla sua polo
+// in due righe: "DA" e "MICHELE"
+const LOCALE = scontrino.nomeLocale.toUpperCase().split(' ');
+const RICAMO = LOCALE.length > 1 ? [LOCALE[0], LOCALE.slice(1).join(' ')] : LOCALE;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export const PERSONAGGI = {
@@ -226,6 +231,31 @@ export const PERSONAGGI = {
     vestito: { tipo: 'tshirt', colore: '#2452c4', collo: 'v', spalle: '#ffffff' },
     pantaloni: '#2b2d38', strappi: true, catenaPortafoglio: '#d2d6dd', scarpe: '#17171b', stivali: true,
   },
+  // I due di "Scontrino, prego!".
+  // Michele, il pizzaiolo: viso tondo e pieno, capelli scuri corti brizzolati ai lati, pizzetto pieno
+  // coi baffi (scuro, coi fili grigi), occhi stanchi con le occhiaie, sorrisetto da furbetto. Polo
+  // bianca col nome del locale ricamato in blu, grembiule bianco
+  michele: {
+    pelle: '#eab792', capelli: '#2a2320', capelliLuce: '#5f5550', occhi: '#3a2414',
+    sopra: '#28201c', sopraSpess: 8.5, palpebra: [0.32, 0.32], occhiaie: 0.85,
+    faccia: { top: 47, larg: 60, mascella: 56, mascellaY: 150, mento: 37, mentoY: 181 },
+    stile: 'corto', tempie: '#aaa59f', barba: 'pizzettoPieno', barbaGrigi: '#b9b3ab',
+    naso: [11, 13], orecchie: 10.5, sorriso: 2, ghigno: true,
+    corporatura: 1.12, pancia: 5,
+    vestito: { tipo: 'polo', colore: '#f7f7f3', ricamo: RICAMO, ricamoColore: '#2448b8' }, grembiule: '#fdfdfa',
+    pantaloni: '#3a3e4a', scarpe: '#2a2a30',
+  },
+  // il Giso, il paladino degli scontrini: testa rasata, sopracciglia scure e folte, occhi castani,
+  // barba corta appena accennata, sorrisetto furbo. Maglione rosso a coste, il fischietto appeso al
+  // collo, la fascia al braccio "CONTROLLO SCONTRINI" (lente e cartellina le ha nel suo microgioco)
+  giso: {
+    pelle: '#e9b892', capelli: '#2a1c14', capelliLuce: '#5a4436', occhi: '#5e3a1c',
+    sopra: '#1c120c', sopraSpess: 10.5, sopraDritte: true, palpebra: [0.22, 0.22],
+    faccia: { top: 44, larg: 53, mascella: 47, mascellaY: 155, mento: 25, mentoY: 184 },
+    stile: 'rasato', rasatoScuro: true, barba: 'accenno', naso: [9.5, 13], orecchie: 10, sorriso: 3, ghigno: true, labbra: true,
+    vestito: { tipo: 'maglione', colore: '#c8202c' }, fischietto: '#d4d9e2', fascia: { colore: '#f2c43a', testo: '#1f1430' },
+    pantaloni: '#2f3a52', scarpe: '#1e1e24',
+  },
 };
 
 // Le ragazze della disco (Petri Tentacolari): personaggi generici, diversi per capelli e vestito.
@@ -431,6 +461,12 @@ function rughe(c, p) {
 
 function occhio(c, p, s, espr) {
   const x = CX + s * 26, y = 113, D = CONT;
+  // le occhiaie (occhiaie, da 0 a 1: Michele, che dorme poco): l'ombra violacea sotto l'occhio e la
+  // piega della borsa
+  if (p.occhiaie) {
+    c.beginPath(); c.ellipse(x, y + 4, 14.5, 13, 0, 0.1 * Math.PI, 0.9 * Math.PI); tratto(c, alfa('#7a4a5e', 0.3 * p.occhiaie), 6);
+    c.beginPath(); c.ellipse(x, y + 7, 12.5, 11.5, 0, 0.22 * Math.PI, 0.78 * Math.PI); tratto(c, alfa(scuro(p.pelle, 0.5), 0.6 * p.occhiaie), 1.6);
+  }
   const arco = (su) => {
     c.beginPath();
     if (su) { c.moveTo(x - 11, y + 3); c.quadraticCurveTo(x, y - 12, x + 11, y + 3); }
@@ -453,14 +489,16 @@ function occhio(c, p, s, espr) {
   c.fillStyle = 'rgba(70,40,60,0.13)'; c.fillRect(x - 20, y - 20, 40, 12);
   const sg = p.sguardo?.[s < 0 ? 0 : 1] ?? [0, 0];
   const ir = sgranato ? 5 : 7.5;
-  const ix = x + sg[0] + (espr === 'sufficienza' ? -3 : 0), iy = y + sg[1] + (sgranato ? 0 : 1);
+  // ('fischia': chi fischietta facendo finta di niente guarda in alto, altrove)
+  const fischia = espr === 'fischia';
+  const ix = x + sg[0] + (espr === 'sufficienza' ? -3 : fischia ? 4 : 0), iy = y + sg[1] + (sgranato ? 0 : fischia ? -4 : 1);
   ellisse(c, ix, iy, ir, ir);
   c.fillStyle = gradR(c, ix - 1.5, iy - 1.5, 0.5, ir, [[0, chiaro(p.occhi, 0.3)], [0.65, p.occhi], [1, scuro(p.occhi, 0.5)]]);
   c.fill();
   ellisse(c, ix, iy, ir * 0.48, ir * 0.48); c.fillStyle = '#140d0c'; c.fill();
   ellisse(c, ix - ir * 0.36, iy - ir * 0.4, ir * 0.28, ir * 0.28); c.fillStyle = '#ffffff'; c.fill();
   ellisse(c, ix + ir * 0.35, iy + ir * 0.36, ir * 0.13, ir * 0.13); c.fill();
-  const palp = espr === 'sufficienza' ? 0.5 : espr === 'rabbia' ? 0.3 : sgranato ? 0 : (p.palpebra?.[s < 0 ? 0 : 1] ?? 0);
+  const palp = espr === 'sufficienza' ? 0.5 : espr === 'rabbia' ? 0.3 : sgranato ? 0 : fischia ? 0.2 : (p.palpebra?.[s < 0 ? 0 : 1] ?? 0);
   if (palp > 0) {
     const yl = y - ry + ry * 2 * palp;
     c.fillStyle = scuro(p.pelle, 0.1); c.fillRect(x - 20, y - ry - 2, 40, yl - (y - ry - 2));
@@ -490,6 +528,7 @@ function sopracciglio(c, p, s, espr) {
   if (espr === 'urlo' || espr === 'starnuto') { yi = 5; ye = -6; arco = 0; }
   if (espr === 'rabbia') { yi = 10; ye = -9; arco = 1; }   // a V stretta, sopra gli occhi
   if (espr === 'sufficienza') { if (s < 0) { yi = -8; ye = -7; arco = -6; } else { yi = 3; ye = 1; arco = 0; } }
+  if (espr === 'fischia') { yi = -3; ye = -9; arco = -5; }   // l'aria innocente
   const xi = x - s * 13, xe = x + s * 15, ym = y + (yi + ye) / 2 + arco;
   c.beginPath();
   c.moveTo(xi, y + yi - t / 2);
@@ -578,6 +617,11 @@ function bocca(c, p, espr) {
     case 'sbadiglio': aperta(12, 17, y + 7, true, true); break;
     case 'starnuto': aperta(6, 5, y + 2, false, false); break;
     case 'parla': aperta(10, 7, y + 3, true, false); break;
+    case 'fischia':
+      // le labbra a cerchietto, un po' di lato: fischietta facendo finta di niente
+      ellisse(c, CX + 6, y + 3, 7.5, 6.5); c.fillStyle = mix(scuro(p.pelle, 0.15), '#c9786c', 0.6); c.fill(); tratto(c, D, 2.6);
+      ellisse(c, CX + 6, y + 3, 2.8, 2.6); c.fillStyle = B; c.fill();
+      break;
     case 'sufficienza':
       c.beginPath(); c.moveTo(CX - 12, y + 2); c.quadraticCurveTo(CX + 2, y + 3, CX + 14, y - 3); tratto(c, D, 3.4);
       break;
@@ -670,6 +714,33 @@ function barba(c, p) {
     c.globalAlpha = 1;
     c.restore();
     forma(); tratto(c, CONT, 3);
+    return;
+  }
+  if (p.barba === 'pizzettoPieno') {
+    // pizzetto pieno coi baffi (Michele): i baffi folti scendono ai lati della bocca e si uniscono
+    // alla barba del mento, tonda, che scende un po' sotto; scura, coi fili grigi (barbaGrigi)
+    const forma = () => {
+      c.beginPath();
+      c.moveTo(CX - 25, 151);
+      c.quadraticCurveTo(CX - 13, 139, CX, 142); c.quadraticCurveTo(CX + 13, 139, CX + 25, 151);
+      c.quadraticCurveTo(CX + 30, 168, CX + 25, 181); c.quadraticCurveTo(CX + 15, 197, CX, 198);
+      c.quadraticCurveTo(CX - 15, 197, CX - 25, 181); c.quadraticCurveTo(CX - 30, 168, CX - 25, 151);
+      c.closePath();
+      // (il buco per la bocca e il labbro di sotto: col pari e dispari resta vuoto)
+      c.moveTo(CX - 16, 158); c.quadraticCurveTo(CX, 154, CX + 16, 158); c.quadraticCurveTo(CX + 14, 172, CX, 173); c.quadraticCurveTo(CX - 14, 172, CX - 16, 158); c.closePath();
+    };
+    forma(); c.fillStyle = gradL(c, 0, 140, 0, 198, [[0, H], [1, scuro(H, 0.25)]]); c.fill('evenodd');
+    c.save(); forma(); c.clip('evenodd');
+    c.globalAlpha = 0.8;
+    for (let i = 0; i < 130; i++) {
+      const x = CX - 28 + r() * 56, y = 141 + r() * 56;
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + (x - CX) * 0.07, y + 3 + r() * 3); tratto(c, i % 3 ? (p.barbaGrigi ?? p.capelliLuce) : p.capelliLuce, 1.2);
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    forma(); tratto(c, CONT, 2.4);
+    // la barba di qualche giorno sulle guance, appena
+    c.save(); sagomaTesta(c, f); c.clip(); puntini(160, CX - 56, 132, 112, 40, 0.16); c.restore();
     return;
   }
   if (p.barba === 'nessuna') return;
@@ -1555,6 +1626,15 @@ function capelli(c, p, fase, o) {
       c.closePath();
     };
     forma(); c.fillStyle = sfum(30, 100); c.fill();
+    if (p.tempie) {
+      // brizzolati: i lati e le tempie grigi (tempie = il colore), sempre più verso le orecchie
+      c.save(); forma(); c.clip();
+      for (const s of [-1, 1]) {
+        c.fillStyle = gradL(c, CX + s * 28, 0, CX + s * 60, 0, [[0, alfa(p.tempie, 0)], [1, alfa(p.tempie, 0.9)]]);
+        c.fillRect(s < 0 ? 0 : CX + 28, 58, 68, 60);
+      }
+      c.restore();
+    }
     const r = casuale(3);
     c.globalAlpha = 0.6;
     ciocche(c, forma, 70, () => {
@@ -1860,6 +1940,8 @@ export function disegnaTesta(c, p, espr = 'normale', o = {}) {
     // sopracciglia sopra la frangia, se no le espressioni non si vedono
     if (p.sopraDavanti) for (const s of [-1, 1]) sopracciglio(c, p, s, espr);
     lacrime(c, espr);
+    // il sudore di chi è stato beccato (Michele, quando non batte lo scontrino)
+    if (p.sudore) { goccia(c, CX - 52, 86, 5.5); goccia(c, CX + 55, 98, 5); goccia(c, CX + 46, 70, 3.8); }
     if (p.occhiali) occhiali(c, p, espr);
     if (p.travestimento) travestimento(c, p);
   }
@@ -1964,6 +2046,16 @@ const POSE = {
   batte: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 200], [88, 196]] },
   gratta: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [68, 168], [46, 92]] },
   inchino: { sx: [[33, 196], [30, 222], [10, 238]], dx: [[33, 196], [58, 212], [84, 226]] },
+  // "Scontrino, prego!": Michele che batte alla cassa (il braccio teso verso i tasti), che taglia con
+  // la mezzaluna a due mani, che tiene lo scontrino davanti al petto (per strapparlo), che fa il conto
+  // a voce (la mano alzata: "lascia stare!"), che si mette i soldi in tasca; il Giso con la cartellina
+  // sotto il braccio e la lente alzata
+  cassa: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [60, 210], [86, 212]] },
+  taglia: [[33, 196], [46, 220], [24, 230]],
+  strappa: [[33, 196], [46, 214], [12, 202]],
+  aVoce: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 192], [80, 168]] },
+  tasca: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [46, 222], [34, 240]] },
+  conti: { sx: [[33, 196], [48, 220], [26, 228]], dx: [[33, 196], [62, 200], [72, 176]] },
 };
 
 // quello che un personaggio tiene in mano (x, y = la mano destra; p = il personaggio)
@@ -2035,6 +2127,27 @@ function accessorio(c, tipo, x, y, p) {
     for (let i = 0; i <= 6; i++) { const a = -2.75 + i * 0.367; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * 31, y + Math.sin(a) * 31); tratto(c, '#b8926a', 1.3); }
     c.restore();
     forma(); tratto(c, CONT, 2.2);
+  } else if (tipo === 'mezzaluna') {
+    // la mezzaluna del pizzaiolo, tenuta a due mani: la lama curva d'acciaio e i due pomelli di
+    // legno, uno per mano (la destra è in x, y; la sinistra è alla stessa altezza, dall'altra parte)
+    const sx = 2 * CX - x, mx = (x + sx) / 2, w = (x - sx) / 2 + 6, ly = y + 9;
+    const lama = () => { c.beginPath(); c.moveTo(mx - w, ly); c.quadraticCurveTo(mx, ly + 30, mx + w, ly); c.quadraticCurveTo(mx, ly + 12, mx - w, ly); c.closePath(); };
+    lama(); c.fillStyle = gradL(c, 0, ly, 0, ly + 22, [[0, '#eef2f6'], [0.6, '#a9b2bc'], [1, '#6e7782']]); c.fill(); tratto(c, CONT, 2.2);
+    c.beginPath(); c.moveTo(mx - w + 6, ly + 4); c.quadraticCurveTo(mx, ly + 22, mx + w - 6, ly + 4); tratto(c, 'rgba(255,255,255,0.75)', 1.4);
+    for (const hx of [sx, x]) {
+      rrect(c, hx - 4, ly - 15, 8, 17, 3.5); c.fillStyle = gradL(c, hx - 4, 0, hx + 4, 0, [[0, '#8a5428'], [0.5, '#c58a4c'], [1, '#7a4620']]); c.fill(); tratto(c, CONT, 2);
+      if (p) { ellisse(c, hx, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    }
+    return;
+  } else if (tipo === 'lente') {
+    // la lente d'ingrandimento alzata: il manico nel pugno, la lente in alto, col riflesso
+    const lx = x - 4, ly = y - 27;
+    c.beginPath(); c.moveTo(x + 2, y + 9); c.lineTo(lx + 1, ly + 13); tratto(c, CONT, 8); tratto(c, '#3a2a22', 4.6);
+    ellisse(c, lx, ly, 15, 15); c.fillStyle = 'rgba(214,236,255,0.55)'; c.fill();
+    ellisse(c, lx - 5, ly - 5, 5, 3.4, -0.6); c.fillStyle = 'rgba(255,255,255,0.8)'; c.fill();
+    ellisse(c, lx, ly, 15, 15); tratto(c, CONT, 6.4); ellisse(c, lx, ly, 15, 15); tratto(c, '#c8a43a', 3.4);
+    if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
   }
 }
 
@@ -2051,7 +2164,7 @@ export function fiori(c, p, x0, y0, w, h, seme, k = 1) {
 }
 
 function braccio(c, p, punti, pollice) {
-  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo'].includes(v.tipo) || v.maniche === 'lunghe';
+  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione'].includes(v.tipo) || v.maniche === 'lunghe';
   const manica = v.manica ?? v.colore;
   const linea = (a, b, m) => { c.beginPath(); c.moveTo(...a); c.lineTo(...b); if (m) c.lineTo(...m); };
   // palestrato: braccio più grosso, e il bicipite gonfio tra spalla e gomito
@@ -2061,10 +2174,19 @@ function braccio(c, p, punti, pollice) {
   if (M) { bicipite(); tratto(c, CONT, 31); }
   linea(...punti); tratto(c, lunga ? manica : p.pelle, 13 + M);
   if (M) { bicipite(); tratto(c, lunga ? manica : p.pelle, 25); }
-  if (v.tipo === 'cardigan') {
+  if (v.tipo === 'cardigan' || v.tipo === 'maglione') {
     // polsino a coste, più scuro
     const a = punti[1], b = punti[2];
     linea([lerp(a[0], b[0], 0.7), lerp(a[1], b[1], 0.7)], b); tratto(c, scuro(manica, 0.22), 13);
+  }
+  if (p.fascia && punti[0][0] < CX) {
+    // la fascia al braccio (il Giso, sul braccio a sinistra): gialla, con la scritta CONTROLLO SCONTRINI
+    const [a, b] = punti, ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    c.save(); c.translate(lerp(a[0], b[0], 0.5), lerp(a[1], b[1], 0.5)); c.rotate(ang - Math.PI / 2);
+    rrect(c, -9.5, -6.5, 19, 13, 2); c.fillStyle = p.fascia.colore; c.fill(); tratto(c, CONT, 1.8);
+    c.font = 'bold 3.3px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = p.fascia.testo;
+    c.fillText('CONTROLLO', 0, -2.2); c.fillText('SCONTRINI', 0, 2.4);
+    c.restore();
   }
   if (!lunga && !['costume', 'canottiera', 'abito', 'vestitino'].includes(v.tipo)) {
     const m = [lerp(punti[0][0], punti[1][0], 0.62), lerp(punti[0][1], punti[1][1], 0.62)];
@@ -2406,6 +2528,27 @@ function corpo(c, p, espr, o = {}) {
       for (const [x, y, h] of [[CX - 4, 226, 12], [CX + 8, 224, 15], [CX - 14, 226, 7]]) { rrect(c, x - 1.8, y, 3.6, h, 1.8); c.fill(); }
     }
     if (v.cintura) { c.fillStyle = v.cintura; c.fillRect(CX - 42, 236, 84, 11); c.fillStyle = 'rgba(255,255,255,0.14)'; c.fillRect(CX - 42, 237.5, 84, 1.6); }
+  } else if (v.tipo === 'polo') {
+    // polo (Michele): l'apertura coi due bottoni sotto il colletto, il nome ricamato sul petto
+    poli(c, [[CX - 9, 180], [CX + 9, 180], [CX, 194]]); c.fillStyle = scuro(S, 0.1); c.fill();
+    rrect(c, CX - 5, 186, 10, 24, 2); c.fillStyle = scuro(v.colore, 0.05); c.fill(); tratto(c, alfa(scuro(v.colore, 0.35), 0.8), 1.2);
+    for (const y of [196, 204]) { ellisse(c, CX, y, 1.8, 1.8); c.fillStyle = '#ffffff'; c.fill(); tratto(c, alfa(scuro(v.colore, 0.5), 0.9), 0.8); }
+    if (v.ricamo) {
+      c.save(); c.translate(CX + 23, 204); c.rotate(-0.04);
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = v.ricamoColore;
+      if (v.ricamo.length > 1) { c.font = 'bold 5px sans-serif'; c.fillText(v.ricamo[0], 0, -4.5); c.font = 'bold 6px sans-serif'; c.fillText(v.ricamo[1], 0, 2.5, 30); }
+      else { c.font = 'bold 6px sans-serif'; c.fillText(v.ricamo[0], 0, 0, 30); }
+      c.restore();
+    }
+    c.fillStyle = 'rgba(255,255,255,0.2)'; c.fillRect(CX - 34, 188, 3, 46);
+  } else if (v.tipo === 'maglione') {
+    // maglione di lana a coste (il Giso): coste verticali, fondo a coste fitte, girocollo (sotto)
+    for (let x = CX - 44; x < CX + 46; x += 4.4) { c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(x, 180, 1.5, 80); c.fillStyle = 'rgba(255,255,255,0.08)'; c.fillRect(x + 2.2, 180, 1, 80); }
+    c.fillStyle = scuro(v.colore, 0.16); c.fillRect(CX - 46, 243, 92, 16);
+    c.fillStyle = 'rgba(0,0,0,0.24)';
+    for (let x = CX - 45; x < CX + 46; x += 2.8) c.fillRect(x, 243, 1, 16);
+    c.fillRect(CX - 46, 242.4, 92, 1.2);
+    ellisse(c, CX, 181, 13, 8); c.fillStyle = scuro(S, 0.1); c.fill();
   } else if (v.tipo === 'vestitino') {
     // (le ragazze del Manna) vestito da sera senza maniche: scollo tondo, cinturina, qualche brillantino. La gonna è più sotto.
     ellisse(c, CX, 181, 15, 10); c.fillStyle = scuro(S, 0.1); c.fill();
@@ -2546,6 +2689,40 @@ function corpo(c, p, espr, o = {}) {
     for (const s of [-1, 1]) { poli(c, [[CX + s * 0.8, 185], [CX + s * 15, 179], [CX + s * 12.5, 201]]); c.fillStyle = v.camicia; c.fill(); tratto(c, CONT, 1.6); }
     ellisse(c, CX, 188.5, 1.5, 1.5); c.fillStyle = '#ffffff'; c.fill(); tratto(c, 'rgba(0,0,0,0.5)', 0.7);
   }
+  if (v.tipo === 'polo') {
+    // il colletto della polo, piatto sulle spalle
+    for (const s of [-1, 1]) { poli(c, [[CX + s * 2, 182], [CX + s * 13, 176], [CX + s * 25, 182], [CX + s * 12, 192]]); c.fillStyle = chiaro(v.colore, 0.4); c.fill(); tratto(c, CONT, 1.6); }
+  }
+  if (v.tipo === 'maglione') {
+    // il girocollo a coste
+    const giro = () => { c.beginPath(); c.ellipse(CX, 179, 16, 9.5, 0, 0.02 * Math.PI, 0.98 * Math.PI); };
+    giro(); tratto(c, CONT, 8.6); giro(); tratto(c, scuro(v.colore, 0.12), 5.8);
+    c.setLineDash([1, 2]); giro(); tratto(c, 'rgba(0,0,0,0.3)', 5.8); c.setLineDash([]);
+  }
+  if (p.fischietto) {
+    // il fischietto appeso al collo: il cordino e il fischietto di metallo sul petto
+    const cordino = () => { c.beginPath(); c.moveTo(CX - 13, 177); c.quadraticCurveTo(CX - 8, 200, CX + 3, 213); c.moveTo(CX + 13, 177); c.quadraticCurveTo(CX + 11, 199, CX + 3, 213); };
+    cordino(); tratto(c, CONT, 3.4); cordino(); tratto(c, '#22305a', 1.8);
+    c.save(); c.translate(CX + 6, 218); c.rotate(0.4);
+    rrect(c, -9, -5, 14, 10, 5); c.fillStyle = gradL(c, 0, -5, 0, 5, [[0, chiaro(p.fischietto, 0.5)], [0.5, p.fischietto], [1, scuro(p.fischietto, 0.35)]]); c.fill(); tratto(c, CONT, 1.6);
+    rrect(c, 3, -3, 9, 5.5, 1.5); c.fillStyle = p.fischietto; c.fill(); tratto(c, CONT, 1.4);
+    ellisse(c, -2, -1, 2.2, 2); c.fillStyle = '#2a2a33'; c.fill();
+    c.restore();
+  }
+  if (p.grembiule) {
+    // il grembiule da pizzaiolo legato in vita: dalla cintura alle ginocchia, con la tasca davanti,
+    // i lacci e qualche spolverata di farina
+    const G = p.grembiule, fianchi = 33 + g * 0.6;
+    const telo = () => { c.beginPath(); c.moveTo(CX - fianchi, 227); c.lineTo(CX + fianchi, 227); c.quadraticCurveTo(CX + fianchi + 4, 248, CX + 34, 268); c.quadraticCurveTo(CX, 272, CX - 34, 268); c.quadraticCurveTo(CX - fianchi - 4, 248, CX - fianchi, 227); c.closePath(); };
+    telo(); c.fillStyle = gradL(c, 0, 227, 0, 270, [[0, G], [1, scuro(G, 0.12)]]); c.fill();
+    c.save(); telo(); c.clip();
+    for (const [x, y, r] of [[-14, 255, 4], [10, 248, 3], [20, 262, 2.5]]) { ellisse(c, CX + x, y, r * 1.6, r); c.fillStyle = 'rgba(200,190,170,0.35)'; c.fill(); }
+    c.restore();
+    telo(); tratto(c, CONT, 2.6);
+    rrect(c, CX - 15, 242, 30, 13, 2.5); tratto(c, alfa(scuro(G, 0.4), 0.9), 1.3);
+    rrect(c, CX - fianchi - 1, 222, fianchi * 2 + 2, 6.5, 2); c.fillStyle = scuro(G, 0.06); c.fill(); tratto(c, CONT, 1.8);
+    for (const s of [-1, 1]) { c.beginPath(); c.moveTo(CX + s * (fianchi - 4), 227); c.quadraticCurveTo(CX + s * (fianchi + 2), 238, CX + s * (fianchi - 1), 246); tratto(c, CONT, 3.6); tratto(c, G, 1.8); }
+  }
   if (v.tipo === 'piumino') {
     // catenina, colletto della camicia e collo alto del piumino
     if (v.catenina) {
@@ -2588,7 +2765,9 @@ export function disegnaPersonaggio(c, p, espr, o = {}) {
   const h = p.statura ?? 1;
   if (h !== 1) { c.save(); c.translate(CX, 284); c.scale(h, h); c.translate(-CX, -284); }
   const destro = corpo(c, p, espr, o);
-  disegnaTesta(c, p, espr);
+  // (o.senzaTesta: solo il corpo, per chi ha la testa in un'immagine a parte e cambia faccia senza
+  // cambiare posa: Michele alla cassa)
+  if (!o.senzaTesta) disegnaTesta(c, p, espr);
   if (o.maniSopra) for (const b of ultimeBraccia) braccio(c, p, b);   // mani nei capelli: sopra la testa
   // Quello che ha in mano si disegna per ultimo, e anche il braccio che lo regge: se no una
   // mano alzata sparirebbe dietro i capelli lunghi (la testa si disegna dopo il corpo).
