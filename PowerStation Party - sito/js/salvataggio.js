@@ -25,7 +25,7 @@ export const IMPOSTAZIONI = {
   volumeEffetti: 0.8,       // 0..1
   vibrazione: true,         // colpi ed errori fanno vibrare il telefono (dove si può: Android)
   difficolta: 'normale',    // 'facile' | 'normale' | 'difficile': il livello di partenza (Fase 5)
-  provaLampo: true,         // prova di 5 secondi prima dei microgiochi mai visti (Fase 3)
+  provaLampo: true,         // prima dei microgiochi mai giocati il cursore dell'Intro parte su PROVA
   velocitaTesti: 'normale', // 'lenta' | 'normale' | 'veloce': quanto restano a schermo scritte e fumetti
   tremolio: true,           // lo schermo che trema sui colpi
   ritardoAudio: 0,          // ms: quanto arriva in ritardo il suono (cuffie e casse Bluetooth); misurato nelle Impostazioni

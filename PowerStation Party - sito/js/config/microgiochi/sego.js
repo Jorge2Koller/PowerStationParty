@@ -6,6 +6,7 @@ export default {
   verbo: 'LANCIA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x8a5ac8,
+  musica: 'nascosto',           // js/config/musiche.js
   ospite: { id: 'sego', etichetta: 'OBIETTIVO:\nSEGO' },
   comandi: [
     'MOUSE: premi, tira indietro come una fionda e lascia (o FRECCE + SPAZIO tenuto)',

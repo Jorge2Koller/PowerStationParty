@@ -248,13 +248,14 @@ export const PERSONAGGI = {
   // il Giso, il paladino degli scontrini: testa rasata, sopracciglia scure e folte, occhi castani,
   // barba corta appena accennata, sorrisetto furbo. Maglione rosso a coste, il fischietto appeso al
   // collo, la fascia al braccio "CONTROLLO SCONTRINI" (lente e cartellina le ha nel suo microgioco)
+  // È bassino (statura < 1): nel suo microgioco è sempre più basso di chi gioca
   giso: {
     pelle: '#e9b892', capelli: '#2a1c14', capelliLuce: '#5a4436', occhi: '#5e3a1c',
     sopra: '#1c120c', sopraSpess: 10.5, sopraDritte: true, palpebra: [0.22, 0.22],
     faccia: { top: 44, larg: 53, mascella: 47, mascellaY: 155, mento: 25, mentoY: 184 },
     stile: 'rasato', rasatoScuro: true, barba: 'accenno', naso: [9.5, 13], orecchie: 10, sorriso: 3, ghigno: true, labbra: true,
     vestito: { tipo: 'maglione', colore: '#c8202c' }, fischietto: '#d4d9e2', fascia: { colore: '#f2c43a', testo: '#1f1430' },
-    pantaloni: '#2f3a52', scarpe: '#1e1e24',
+    pantaloni: '#2f3a52', scarpe: '#1e1e24', statura: 0.86,
   },
 };
 
@@ -329,6 +330,22 @@ export const GIUDICI = [
   { nome: 'commosso', pelle: '#f3ceb4', capelli: '#7a4a2a', capelliLuce: '#b4865a', occhi: '#3a6a8a', sopra: '#6a4226', sopraSpess: 7,
     faccia: { top: 48, larg: 56, mascella: 51, mascellaY: 152, mento: 31, mentoY: 180 }, stile: 'ricciCorti', barba: 'nessuna', naso: [9, 11], orecchie: 10, sorriso: 5, labbra: true,
     vestito: { tipo: 'cardigan', colore: '#3f9a8a', camicia: '#fbf6ea', quadretti: 'rgba(120,150,190,0.5)', bottoni: '#f2e6c8' }, pantaloni: '#5a4a3a', scarpe: '#3a2a1c' },
+];
+
+// I due finanzieri del finale di "Scontrino, prego!" (inventati: due uomini, nessuna persona vera): la
+// divisa grigia della Guardia di Finanza con le fiamme gialle sul bavero, i bottoni dorati, le
+// spalline e il berretto rigido con la visiera e la fiamma dorata. Il primo baffuto e serio, il
+// secondo più giovane, con la barba corta.
+const DIVISA = { tipo: 'divisa', colore: '#5f6873', fiamme: '#f2c818', bottoni: '#e8c048', camicia: '#f4f6fa', cravatta: '#3c4149' };
+export const FINANZIERI = [
+  { pelle: '#e3ad86', capelli: '#2a1e18', capelliLuce: '#5a4a40', occhi: '#3a2414', sopra: '#2a1c16', sopraSpess: 10, sopraDritte: true, palpebra: [0.3, 0.3],
+    faccia: { top: 46, larg: 56, mascella: 52, mascellaY: 152, mento: 32, mentoY: 182 }, stile: 'corto', barba: 'baffi', baffi: '#2a1e18', naso: [10.5, 13], orecchie: 10, sorriso: -1,
+    cappello: { tipo: 'visiera', colore: '#5f6873', fregio: '#e8c048' }, corporatura: 1.08,
+    vestito: { ...DIVISA, gradi: 3 }, pantaloni: '#59626d', scarpe: '#121216' },
+  { pelle: '#efc19e', capelli: '#3a2a1e', capelliLuce: '#7a5e48', occhi: '#4a3020', sopra: '#2e2016', sopraSpess: 9, palpebra: [0.2, 0.2],
+    faccia: { top: 47, larg: 52, mascella: 46, mascellaY: 154, mento: 25, mentoY: 183 }, stile: 'corto', barba: 'corta', naso: [9.5, 12], orecchie: 9.5, sorriso: 1,
+    cappello: { tipo: 'visiera', colore: '#5f6873', fregio: '#e8c048' },
+    vestito: { ...DIVISA, gradi: 1 }, pantaloni: '#59626d', scarpe: '#121216' },
 ];
 
 // Il Bota a fine giornata, per il finale di "Spalma il Bota!": abbronzato alla perfezione,
@@ -759,6 +776,17 @@ function barba(c, p) {
     c.save(); forma(); c.clip(); puntini(700, CX - 60, 112, 120, 76, 0.6); c.restore();
     c.beginPath(); c.moveTo(CX - 17, 147); c.quadraticCurveTo(CX, 141, CX + 17, 147); tratto(c, alfa(H, 0.5), 5); // baffi
     ellisse(c, CX, 176, 15, 9); c.fillStyle = alfa(H, 0.3); c.fill();                                         // mento
+  } else if (p.barba === 'baffi') {
+    // solo i baffi, folti e ben pettinati, che scendono un po' ai lati (il finanziere); il viso rasato
+    const M = p.baffi ?? H;
+    const forma = () => {
+      c.beginPath(); c.moveTo(CX, 143);
+      c.bezierCurveTo(CX + 9, 138, CX + 22, 140, CX + 26, 152); c.quadraticCurveTo(CX + 20, 151, CX + 12, 154);
+      c.quadraticCurveTo(CX + 5, 150, CX, 152); c.quadraticCurveTo(CX - 5, 150, CX - 12, 154);
+      c.quadraticCurveTo(CX - 20, 151, CX - 26, 152); c.bezierCurveTo(CX - 22, 140, CX - 9, 138, CX, 143); c.closePath();
+    };
+    forma(); c.fillStyle = gradL(c, 0, 139, 0, 155, [[0, chiaro(M, 0.12)], [1, scuro(M, 0.15)]]); c.fill(); tratto(c, scuro(M, 0.35), 1.2);
+    for (const s of [-1, 1]) for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(CX + s * (4 + k * 5), 145); c.lineTo(CX + s * (6 + k * 5.5), 151); tratto(c, alfa(chiaro(M, 0.3), 0.45), 0.8); }
   } else if (p.barba === 'pizzettoBaffi') {
     // barba di qualche giorno, baffi sottili e pizzetto sul mento
     c.beginPath();
@@ -1843,6 +1871,38 @@ function cappello(c, p) {
     c.restore();
     return;
   }
+  if (k.tipo === 'visiera') {
+    // il berretto rigido con la visiera (i finanzieri): la calotta grigia larga e dritta, la fascia
+    // più scura col soggolo dorato intrecciato, la visiera nera lucida e, davanti, la fiamma dorata
+    const f = p.faccia, L = f.larg, yb = f.top + 27;
+    const calotta = () => {
+      c.beginPath(); c.moveTo(CX - L - 2, yb + 2);
+      c.bezierCurveTo(CX - L - 8, yb - 12, CX - L - 18, f.top - 4, CX - L - 12, f.top - 12);
+      c.quadraticCurveTo(CX, f.top - 32, CX + L + 12, f.top - 12);
+      c.bezierCurveTo(CX + L + 18, f.top - 4, CX + L + 8, yb - 12, CX + L + 2, yb + 2);
+      c.closePath();
+    };
+    calotta(); c.fillStyle = gradL(c, 0, f.top - 26, 0, yb, [[0, chiaro(k.colore, 0.16)], [1, scuro(k.colore, 0.12)]]); c.fill(); tratto(c, CONT, 3);
+    c.beginPath(); c.moveTo(CX - L - 8, f.top - 10); c.quadraticCurveTo(CX, f.top - 27, CX + L + 8, f.top - 10); tratto(c, 'rgba(255,255,255,0.18)', 2);   // il bordo della calotta
+    rrect(c, CX - L - 3, yb, L * 2 + 6, 16, 3); c.fillStyle = gradL(c, 0, yb, 0, yb + 16, [[0, scuro(k.colore, 0.3)], [1, scuro(k.colore, 0.42)]]); c.fill(); tratto(c, CONT, 2.4);
+    // il soggolo: un cordone dorato intrecciato, da un bottoncino all'altro
+    const cordone = (y) => { c.beginPath(); c.moveTo(CX - L + 1, y); c.quadraticCurveTo(CX, y + 1.5, CX + L - 1, y); };
+    for (const y of [yb + 5, yb + 10.5]) { cordone(y); tratto(c, scuro(k.fregio, 0.45), 4.4); cordone(y); tratto(c, k.fregio, 3); c.setLineDash([2.2, 1.6]); cordone(y); tratto(c, chiaro(k.fregio, 0.5), 1.4); c.setLineDash([]); }
+    for (const s of [-1, 1]) { ellisse(c, CX + s * (L - 1), yb + 8, 3.4, 3.4); c.fillStyle = k.fregio; c.fill(); tratto(c, scuro(k.fregio, 0.5), 1.2); }
+    // la visiera
+    const vis = () => { c.beginPath(); c.moveTo(CX - L + 2, yb + 14); c.quadraticCurveTo(CX, yb + 31, CX + L - 2, yb + 14); c.quadraticCurveTo(CX, yb + 20, CX - L + 2, yb + 14); c.closePath(); };
+    vis(); c.fillStyle = gradL(c, 0, yb + 14, 0, yb + 30, [[0, '#2a2c32'], [1, '#0c0d10']]); c.fill(); tratto(c, CONT, 2.4);
+    c.beginPath(); c.moveTo(CX - L * 0.55, yb + 19.5); c.quadraticCurveTo(CX - L * 0.2, yb + 24, CX + L * 0.1, yb + 23.5); tratto(c, 'rgba(255,255,255,0.32)', 1.6);
+    // la fiamma: la granata (una pallina) con le lingue di fuoco sopra, dorata
+    const fx = CX, fy = f.top + 9;
+    ellisse(c, fx, fy + 7, 6, 6); c.fillStyle = gradR(c, fx - 2, fy + 5, 0.5, 7, [[0, chiaro(k.fregio, 0.55)], [1, k.fregio]]); c.fill(); tratto(c, scuro(k.fregio, 0.5), 1.2);
+    c.beginPath(); c.moveTo(fx - 5, fy + 3);
+    c.quadraticCurveTo(fx - 9, fy - 6, fx - 4, fy - 13); c.quadraticCurveTo(fx - 3, fy - 6, fx - 1, fy - 5);
+    c.quadraticCurveTo(fx - 2, fy - 13, fx + 2, fy - 20); c.quadraticCurveTo(fx + 3, fy - 10, fx + 4, fy - 7);
+    c.quadraticCurveTo(fx + 6, fy - 11, fx + 8, fy - 13); c.quadraticCurveTo(fx + 9, fy - 4, fx + 5, fy + 3); c.closePath();
+    c.fillStyle = gradL(c, 0, fy - 20, 0, fy + 3, [[0, chiaro(k.fregio, 0.45)], [1, k.fregio]]); c.fill(); tratto(c, scuro(k.fregio, 0.5), 1.2);
+    return;
+  }
   if (k.tipo !== 'basco') return;
   c.save(); c.translate(104, 38); c.rotate(0.14);
   const calotta = () => { c.beginPath(); c.ellipse(4, -2, 60, 21, 0, 0, Math.PI * 2); };
@@ -2056,6 +2116,9 @@ const POSE = {
   aVoce: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 192], [80, 168]] },
   tasca: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [46, 222], [34, 240]] },
   conti: { sx: [[33, 196], [48, 220], [26, 228]], dx: [[33, 196], [62, 200], [72, 176]] },
+  // i finanzieri: il saluto con la mano alla visiera (con o.maniSopra), il blocchetto delle multe
+  saluto: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [70, 172], [46, 98]] },
+  blocchetto: { sx: [[33, 196], [44, 222], [14, 214]], dx: [[33, 196], [46, 222], [22, 206]] },
 };
 
 // quello che un personaggio tiene in mano (x, y = la mano destra; p = il personaggio)
@@ -2164,7 +2227,7 @@ export function fiori(c, p, x0, y0, w, h, seme, k = 1) {
 }
 
 function braccio(c, p, punti, pollice) {
-  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione'].includes(v.tipo) || v.maniche === 'lunghe';
+  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione', 'divisa'].includes(v.tipo) || v.maniche === 'lunghe';
   const manica = v.manica ?? v.colore;
   const linea = (a, b, m) => { c.beginPath(); c.moveTo(...a); c.lineTo(...b); if (m) c.lineTo(...m); };
   // palestrato: braccio più grosso, e il bicipite gonfio tra spalla e gomito
@@ -2549,6 +2612,31 @@ function corpo(c, p, espr, o = {}) {
     for (let x = CX - 45; x < CX + 46; x += 2.8) c.fillRect(x, 243, 1, 16);
     c.fillRect(CX - 46, 242.4, 92, 1.2);
     ellisse(c, CX, 181, 13, 8); c.fillStyle = scuro(S, 0.1); c.fill();
+  } else if (v.tipo === 'divisa') {
+    // la divisa dei finanzieri: giacca chiusa coi bottoni dorati, camicia bianca e cravatta nello
+    // scollo, il bavero (con le fiamme gialle: le disegna dopo, sopra il contorno), i taschini con la
+    // patta, le tasche in basso e il nastrino sul petto
+    poli(c, [[CX - 15, 180], [CX + 15, 180], [CX, 213]]); c.fillStyle = v.camicia; c.fill();
+    poli(c, [[CX - 4, 184], [CX + 4, 184], [CX + 3, 191], [CX - 3, 191]]); c.fillStyle = v.cravatta; c.fill(); tratto(c, CONT, 1.2);
+    poli(c, [[CX - 3, 191], [CX + 3, 191], [CX + 5.5, 207], [CX, 213], [CX - 5.5, 207]]); c.fillStyle = v.cravatta; c.fill(); tratto(c, CONT, 1.2);
+    for (const s of [-1, 1]) { poli(c, [[CX + s * 13, 178], [CX + s * 3, 183], [CX + s * 9, 193]]); c.fillStyle = v.camicia; c.fill(); tratto(c, CONT, 1.4); }
+    for (const s of [-1, 1]) {
+      poli(c, [[CX + s * 15, 179], [CX + s * 28, 183], [CX + s * 25, 191], [CX + s * 21, 192], [CX + s * 2, 216]]);
+      c.fillStyle = gradL(c, 0, 180, 0, 216, [[0, chiaro(v.colore, 0.06)], [1, scuro(v.colore, 0.14)]]); c.fill(); tratto(c, CONT, 2);
+      // i taschini sul petto, con la patta e il bottoncino; le tasche in basso
+      rrect(c, CX + s * 21 - 8, 207, 16, 15, 2); tratto(c, alfa(scuro(v.colore, 0.5), 0.8), 1.3);
+      rrect(c, CX + s * 21 - 9, 204, 18, 6, 2); c.fillStyle = scuro(v.colore, 0.12); c.fill(); tratto(c, CONT, 1.3);
+      ellisse(c, CX + s * 21, 207.5, 1.8, 1.8); c.fillStyle = v.bottoni; c.fill(); tratto(c, scuro(v.bottoni, 0.5), 0.8);
+      rrect(c, CX + s * 22 - 10, 236, 20, 15, 2); tratto(c, alfa(scuro(v.colore, 0.5), 0.8), 1.3);
+      rrect(c, CX + s * 22 - 10.5, 233.5, 21, 6, 2); c.fillStyle = scuro(v.colore, 0.12); c.fill(); tratto(c, CONT, 1.3);
+    }
+    c.beginPath(); c.moveTo(CX + 1, 214); c.lineTo(CX + 1, 258); tratto(c, alfa(scuro(v.colore, 0.55), 0.9), 1.4);   // la chiusura
+    [['#c8282e', '#f2f2f2'], ['#2a5ab8', '#f2c43a'], ['#2e8a4a', '#f2f2f2']].forEach(([a, b], i) => {
+      const x = CX + 13 + i * 5.5;
+      c.fillStyle = a; c.fillRect(x, 198, 5, 4.5); c.fillStyle = b; c.fillRect(x + 1.8, 198, 1.4, 4.5);
+      c.strokeStyle = CONT; c.lineWidth = 0.7; c.strokeRect(x, 198, 5, 4.5);
+    });
+    c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(CX - 34, 190, 3, 50);
   } else if (v.tipo === 'vestitino') {
     // (le ragazze del Manna) vestito da sera senza maniche: scollo tondo, cinturina, qualche brillantino. La gonna è più sotto.
     ellisse(c, CX, 181, 15, 10); c.fillStyle = scuro(S, 0.1); c.fill();
@@ -2635,6 +2723,19 @@ function corpo(c, p, espr, o = {}) {
       c.strokeStyle = CONT; c.lineWidth = 0.8; c.strokeRect(x, 213, 6, 6);
     });
     for (const x of [CX - 27, CX - 17]) { ellisse(c, x, 225, 4, 4); c.fillStyle = '#e8c048'; c.fill(); tratto(c, '#8a6a10', 1.2); ellisse(c, x - 1, 224, 1.2, 1); c.fillStyle = '#fff6c0'; c.fill(); }
+  }
+  if (v.tipo === 'divisa') {
+    // le fiamme gialle sul bavero (con la fiammella d'argento), le spalline coi gradi, i bottoni dorati
+    for (const s of [-1, 1]) {
+      poli(c, [[CX + s * 15.5, 180.5], [CX + s * 26.5, 184], [CX + s * 18, 199]]); c.fillStyle = v.fiamme; c.fill(); tratto(c, scuro(v.fiamme, 0.5), 1.2);
+      c.beginPath(); c.moveTo(CX + s * 19.5, 191); c.quadraticCurveTo(CX + s * 18, 187.5, CX + s * 20.5, 185); c.quadraticCurveTo(CX + s * 22.5, 188, CX + s * 21, 191); c.closePath();
+      c.fillStyle = '#eef0f4'; c.fill(); tratto(c, 'rgba(60,60,70,0.6)', 0.6);
+      rrect(c, CX + s * 29 - 8.5, 181.5, 17, 6, 2.5); c.fillStyle = scuro(v.colore, 0.18); c.fill(); tratto(c, CONT, 1.4);
+      for (let k = 0; k < (v.gradi ?? 1); k++) { ellisse(c, CX + s * (29 + (k - ((v.gradi ?? 1) - 1) / 2) * 4.5), 184.5, 1.5, 1.5); c.fillStyle = v.bottoni; c.fill(); }
+    }
+    for (const y of [219, 231, 243]) {
+      ellisse(c, CX + 1, y, 2.8, 2.8); c.fillStyle = gradR(c, CX, y - 1, 0.3, 3, [[0, chiaro(v.bottoni, 0.55)], [1, v.bottoni]]); c.fill(); tratto(c, scuro(v.bottoni, 0.55), 1);
+    }
   }
   if (v.tipo === 'croupier') {
     // papillon e targhetta dorata col numero 11

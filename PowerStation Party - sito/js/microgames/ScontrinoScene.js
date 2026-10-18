@@ -1,23 +1,28 @@
 // ============================================================
 //  SCONTRINO, PREGO!  (id: scontrino)
 //  Nella pizzeria al taglio di Michele i clienti entrano dall'arco, scelgono, pagano alla cassa ed
-//  escono dalla porta a destra. Michele a volte batte lo scontrino, a volte no, con un trucchetto
-//  (che si vede e si sente sempre). Chi gioca è il vice del Giso, il paladino degli scontrini: preme
-//  SCONTRINO! (SPAZIO, clic o tocco ovunque) prima che un cliente senza scontrino arrivi alla porta.
-//  SCONTRINO! vale per il cliente più vicino alla porta tra quelli che hanno già pagato (la freccia).
+//  escono dalla porta a destra. Una regola sola: chi esce deve avere in mano lo scontrino, il foglietto
+//  BIANCO. Michele a volte non glielo dà, con un trucchetto che si vede sempre (il classico, lo strappo,
+//  il conto a voce, il volantino al posto dello scontrino, l'annullo), e dal terzo atto qualche
+//  furbetto sgattaiola alla porta senza pagare. Chi gioca è il vice del Giso, il paladino degli
+//  scontrini: clicca (o tocca) il cliente da fermare prima che arrivi alla porta; SPAZIO ferma il più
+//  vicino alla porta (l'anello giallo). Occhio a ALL'ULTIMO: Michele si scorda lo scontrino, grida
+//  ASPETTA! e glielo lancia: fermare quel cliente è un falso allarme.
 //
 //  Tutto quello che succede (chi entra e quando, con che trucco, le distrazioni) lo decide all'inizio
 //  il seme del round, e dipende solo dal tempo di gioco: tutti i giocatori della sfida trovano gli
 //  stessi clienti negli stessi momenti, qualunque cosa facciano (programma, qui sotto).
-//  Per i giocatori automatici: scena.clienti (t.P = quando paga, t.G = quando si gira verso la porta,
-//  trucco = null se è onesto, esito), scena.bersaglio() e scena.premi().
+//  Per i giocatori automatici: scena.clienti (t.P = da quando si può fermare, t.G = quando si gira
+//  verso la porta, trucco = null se è onesto, ultimo = lo scontrino gli arriva al volo, esito),
+//  scena.bersaglio(), scena.premi() (SPAZIO) e scena.premi(x, y) (un clic lì).
 // ============================================================
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { Sessione } from '../sessione.js';
+import { Sessione, DOPPIONE } from '../sessione.js';
 import { RES, casuale } from '../grafica/base.js';
 import { PIZZERIA as PZ, CLIENTE } from '../grafica/pizzeria.js';
-import { preparaPosa, preparaCorpo, preparaTesta } from '../sprites.js';
+import { PERSONAGGI, FINANZIERI } from '../grafica/personaggi.js';
+import { preparaPosa, preparaCorpo, preparaTesta, preparaFigura } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, fumetto, fumo, caso, eTouch, perDito, vibra, puntiHud, numero, quanti } from '../fx.js';
 
 // --- dove stanno le cose (unità logiche) ---
@@ -25,8 +30,8 @@ const PIEDI = 228, PIEDI_USCITA = 240;              // i piedi dei clienti: dava
 const X = { arco: 174, coda: 212, vetrina: 242, attesa: 272, cassa: 306, porta: 458 };
 const ATTESA_Y = PIEDI + 7;              // (chi aspetta la cassa sta un passo più avanti)
 const MIK = { taglio: 256, cassa: 322, cima: 78, taglia: 0.6 };   // Michele, dietro al banco
-const GISO = { x: 58, piedi: 276, taglia: 0.88 };   // il Giso, in primo piano in basso a sinistra
-const VICE = { x: 136, piedi: 276, taglia: 0.72 };  // chi gioca, il suo vice
+const GISO = { x: 58, piedi: 276 };                 // il Giso, in primo piano in basso a sinistra (più basso di chi gioca: vedi prepara)
+const VICE = { x: 136, piedi: 276, taglia: 0.84 };  // chi gioca, il suo vice
 const SC = 1.16;                                    // la grandezza dei clienti (la testa sopra il banco)
 const [MX, MY] = CLIENTE.mano;
 // i colori dei clienti (pochi tipi generici, ricolorati col tint)
@@ -43,6 +48,7 @@ const POSE_GISO = {
   gisoOffeso: ['shock', { posa: 'conti', accessorio: 'lente' }, {}],
 };
 const DENS_M = Math.ceil(RES * 0.65), DENS_G = Math.ceil(RES * 0.9);
+const statura = (id) => PERSONAGGI[id.replace(DOPPIONE, '')]?.statura ?? 1;
 const COL_CORIANDOLI = [0xff5a6a, 0x5ab4ff, 0xffe14a, 0x7dff9a, 0xff9ac4, 0xb06aff];
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -78,14 +84,15 @@ export function programma(c, seme, durata, lampo) {
     A = Math.max(A, pronto - 0.6);
     if (A > durata - 2.4) break;
     const k = attoA(A), atto = atti[k], rit = c.ritmo * atto.ritmo, mv = 0.35 * rit;
-    // imbroglia? e con che trucco (tra quelli già arrivati, mai lo stesso due volte di fila)
-    let trucco = null;
+    // imbroglia? e con che trucco (tra quelli già arrivati, mai lo stesso due volte di fila); se è
+    // onesto, lo scontrino può arrivargli all'ultimo, lanciato da Michele
+    let trucco = null, ultimo = false;
     if (sacchi[k][pescati[k]++ % 10]) {
       const ok = c.trucchi.filter((tr) => tr.daAtto - 1 <= k).map((tr) => tr.id);
       const scelte = ok.length > 1 ? ok.filter((id) => id !== ultimoTrucco) : ok;
       trucco = scelte[Math.floor(rnd() * scelte.length)];
       ultimoTrucco = trucco;
-    }
+    } else ultimo = rnd() < (c.ultimi?.[k] ?? 0);
     const aspetto = {
       tipo: rnd() < 0.35 ? 1 : 0, tono: Math.floor(rnd() * 3), capelli: Math.floor(rnd() * 5) - 1,
       maglia: MAGLIE[Math.floor(rnd() * MAGLIE.length)], pantaloni: PANTALONI[Math.floor(rnd() * PANTALONI.length)], coloreCapelli: CAPELLI[Math.floor(rnd() * CAPELLI.length)],
@@ -112,31 +119,46 @@ export function programma(c, seme, durata, lampo) {
     }
     passi.push([P, X.cassa, PIEDI]);
     // alla cassa: paga, poi lo scontrino o il trucco, poi si gira verso la porta
-    const paga = T.paga * rit, d = S[trucco ?? 'onesto'] * rit, seg = P + paga, G = seg + d;
+    const paga = T.paga * rit, d = S[trucco ?? (ultimo ? 'ultimo' : 'onesto')] * rit, seg = P + paga, G = seg + d;
     const M = (t0, t1, corpo, testa = 'normale', segnale = false) => michele.push({ t0, t1, x0: MIK.cassa, x1: MIK.cassa, corpo, testa, segnale });
     if (trucco === 'voce') { M(P, seg + d * 0.5, 'aVoce', 'parla', true); M(seg + d * 0.5, G, 'tasca', 'normale', true); }
     else {
       M(P, seg, 'cassa');
-      if (trucco === 'classico') M(seg, G, 'normale', 'normale', true);
+      if (trucco === 'classico') M(seg, G, 'normale', 'fischia', true);
       else if (trucco === 'strappo') { M(seg, seg + d * 0.6, 'cassa', 'normale', true); M(seg + d * 0.6, G, 'strappa', 'normale', true); }
-      else M(seg, G, 'cassa', 'normale', true);
+      else if (ultimo) M(seg, G, 'normale');                       // (se lo scorda)
+      else M(seg, G, 'cassa', 'normale', true);                    // onesto, annullo, volantino
     }
-    let fine = G, annulla = null;
+    let fine = G, annulla = null, presa = null;
     if (trucco === 'annullo') { annulla = G + T.annulla * rit; fine = annulla + 0.15; M(G, fine, 'cassa', 'normale', true); }
+    if (ultimo) { presa = G + c.presa; fine = G + c.presa * 0.7; M(G, presa, 'aVoce', 'parla', true); }
     libero = fine; ultimoGiro = G;
     const fin = c.finestra * atto.finestra;
-    clienti.push({ i, atto: k, taglio, trucco, prezzo, aspetto, passi, t: { A, S0, inc, P, seg, G, D: G + fin, fin, d, rit, annulla } });
+    clienti.push({ i, atto: k, taglio, trucco, ultimo, prezzo, aspetto, passi, x0: X.cassa, y0: PIEDI, y1: PIEDI_USCITA, t: { A, S0, inc, P, seg, G, D: G + fin, fin, d, rit, annulla, presa } });
     A += atto.cadenza * (0.85 + rnd() * 0.3);
   }
+  // i furbetti (dal terzo atto): entrano dall'arco e, invece di mettersi in fila, sgattaiolano dritti
+  // alla porta passando davanti a tutti
+  atti.forEach((a, k) => {
+    const n = Math.round(c.furbetti?.[k] ?? 0), fine = Math.min(durata, k + 1 < atti.length ? atti[k + 1].da : durata);
+    for (let j = 0; j < n; j++) {
+      const A = Math.max(0.3, a.da) + ((j + 0.25 + rnd() * 0.5) / n) * (fine - Math.max(0.3, a.da)), G = A + 0.8, fin = c.finestraFurbetto;
+      if (G + fin > durata - 0.4) continue;
+      const aspetto = { tipo: rnd() < 0.5 ? 1 : 0, tono: Math.floor(rnd() * 3), capelli: Math.floor(rnd() * 2), maglia: 0x2a2a34, pantaloni: 0x2f3a52, coloreCapelli: CAPELLI[Math.floor(rnd() * CAPELLI.length)], furbo: true };
+      clienti.push({ i: clienti.length, atto: k, taglio: false, trucco: 'furbetto', ultimo: false, furbo: true, prezzo: 0, aspetto, passi: [[A, X.arco, PIEDI - 14], [G, X.coda, PIEDI + 10]], x0: X.coda, y0: PIEDI + 10, y1: PIEDI_USCITA + 5, t: { A, P: G, seg: G, G, D: G + fin, fin, d: 0, rit: 1, annulla: null, presa: null } });
+    }
+  });
   // le distrazioni: mai sopra un momento che serve per riconoscere un trucco (la stampante che parte,
-  // lo strappo, l'annullo, il conto a voce). "Ce l'ha la margherita?" arriva mentre un altro paga.
+  // lo strappo, l'annullo, il conto a voce, ASPETTA!, il furbetto che parte)
   const chiavi = [];
   for (const cl of clienti) {
     const { seg, d, P: p } = cl.t;
+    if (cl.furbo) { chiavi.push(cl.t.G); continue; }
     if (cl.trucco === 'voce') chiavi.push(p);
-    else if (cl.trucco !== 'classico' && cl.trucco !== 'finta') chiavi.push(seg + d * 0.35);
+    else if (cl.trucco !== 'classico') chiavi.push(seg + d * 0.35);
     if (cl.trucco === 'strappo') chiavi.push(seg + d * 0.8);
     if (cl.trucco === 'annullo') chiavi.push(cl.t.annulla);
+    if (cl.ultimo) chiavi.push(cl.t.G + 0.1);
   }
   const tipi = mescola(rnd, [...c.distrazioni]), distrazioni = [];
   let n = 0;
@@ -145,10 +167,6 @@ export function programma(c, seme, durata, lampo) {
     for (let j = 0; j < quante; j++) {
       const tipo = tipi[n++ % tipi.length];
       let t = a.da + 0.8 + ((j + rnd() * 0.7) / quante) * (fine - a.da - 1.6);
-      if (tipo === 'margherita') {
-        const paganti = clienti.filter((cl) => cl.atto === k && cl.trucco !== 'voce' && cl.t.P < fine - 0.3);
-        if (paganti.length) t = paganti[Math.floor(rnd() * paganti.length)].t.P + 0.1;
-      }
       for (let g = 0; g < 8 && chiavi.some((x) => Math.abs(x - t) < 0.45); g++) t += 0.5;
       if (t < fine && !distrazioni.some((x) => Math.abs(x.t - t) < 0.8)) distrazioni.push({ t, tipo });
     }
@@ -198,6 +216,7 @@ export class ScontrinoScene extends MicrogiocoBase {
     for (let k = 0; k < imbrogli; k++) perfetta += (c.punti.preso + c.punti.subito) * c.serie.reduce((m, [n, f]) => (k >= n ? f : m), 1);
     this.fattore = this.lampo || !perfetta ? 1 : c.perfetta / perfetta;
     this.clienti = this.prog.clienti.map((cl) => ({ ...cl, x: X.arco, y: PIEDI, fermo: 0, ferma: -1, esito: null, uscito: false, progresso: 0 }));
+    this.tocca = eTouch();
     this.grezzo = 0; this.presi = 0; this.falsi = 0; this.scappati = 0; this.serie = 0; this.serieMax = 0;
     this.nAtto = -1; this.iSeg = 0; this.facce = [];
     this.bolla = null; this.display = { di: null };
@@ -225,39 +244,41 @@ export class ScontrinoScene extends MicrogiocoBase {
     this.mano = im(this, PZ.tasti.x, PZ.tasti.y, 'manoMichele').setOrigin(0.5, 0.7).setDepth(24).setVisible(false);
     this.mezzaluna = im(this, MIK.taglio, PZ.vetrina.y0 + 1, 'mezzaluna').setOrigin(0.5, 1).setDepth(21).setVisible(false);
 
-    // il Giso e il vice (chi gioca), con le cartelline
+    // il Giso e il vice (chi gioca), con le cartelline. Il Giso è bassino: le figure hanno già dentro
+    // la statura, e se chi gioca è basso quanto lui (o di più) il Giso si rimpicciolisce ancora
     for (const [k, [espr, o, altro]] of Object.entries(POSE_GISO)) preparaPosa(this, k, 'giso', espr, o, DENS_G, altro);
-    this.giso = im(this, GISO.x, GISO.piedi, 'gisoVigile', GISO.taglia).setOrigin(0.5, 1).setDepth(60);
+    const sg = statura('giso'), sv = statura(this.giocatore.id);
+    this.gisoTaglia = VICE.taglia * Math.min(1, (sv * 0.9) / sg);
+    const kg = (this.gisoTaglia * sg) / 0.88, kv = (VICE.taglia * sv) / 0.72;   // (rispetto alle misure di prima)
+    this.giso = im(this, GISO.x, GISO.piedi, 'gisoVigile', this.gisoTaglia).setOrigin(0.5, 1).setDepth(60);
     this.gisoFino = 0;
-    this.cartellina = im(this, 44, 249, 'cartellina', 0.95).setAngle(-8).setDepth(61);
-    this.mazzetta = im(this, 45, 238, 'mazzetta', 0.95).setOrigin(0.5, 1).setAngle(-8).setDepth(62).setVisible(false);
+    this.cartellina = im(this, GISO.x - 14 * kg, GISO.piedi - 27 * kg, 'cartellina', 0.95 * kg).setAngle(-8).setDepth(61);
+    this.mazzetta = im(this, GISO.x - 13 * kg, GISO.piedi - 38 * kg, 'mazzetta', 0.95 * kg).setOrigin(0.5, 1).setAngle(-8).setDepth(62).setVisible(false);
+    this.kMazzetta = kg;
     this.vice = im(this, VICE.x, VICE.piedi, `${this.giocatore.id}_normale`, VICE.taglia).setOrigin(0.5, 1).setDepth(63);
     this.viceFino = 0;
-    im(this, 119, 254, 'cartellina', 0.62).setAngle(8).setDepth(64);
+    im(this, VICE.x - 17 * kv, VICE.piedi - 22 * kv, 'cartellina', 0.62 * kv).setAngle(8).setDepth(64);
 
     // la freccia sul cliente che conta (il più vicino alla porta tra quelli che hanno pagato)
     this.gFreccia = this.add.graphics().setDepth(80);
-    // HUD
-    const rec = !!Sessione.record;
+    // HUD: i punti, gli scontrini dei furbi da beccare (si accendono) e le croci dei falsi allarmi
+    // che si possono fare (si colorano quando li fai)
+    const rec = !!Sessione.record || this.prova;
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, size: 9, depth: 1001 });
-    this.testoPresi = txt(this, 474, 49, '', { ox: 1, size: 8, depth: 1001 });
-    this.testoFalsi = txt(this, 474, 61, '', { ox: 1, size: 8, depth: 1001 });
     this.testoSerie = txt(this, 6, rec ? 48 : 36, '', { ox: 0, size: 9, color: '#ffe14a', depth: 1001 });
+    txt(this, 470 - (this.obiettivo - 1) * 8 - 6, 53, 'BECCATI', { ox: 1, size: 7, color: '#fff3d6', depth: 1001 });
+    this.iconePresi = Array.from({ length: this.obiettivo }, (_, k) => im(this, 470 - (this.obiettivo - 1 - k) * 8, 53, 'scontrinoCarta', 0.46).setDepth(1001).setAlpha(0.28));
+    txt(this, 470 - (this.maxFalsi - 1) * 10 - 7, 66, 'FALSI', { ox: 1, size: 7, color: '#fff3d6', depth: 1001 });
+    this.iconeFalsi = Array.from({ length: this.maxFalsi + 1 }, (_, k) => im(this, 470 - (this.maxFalsi - k) * 10, 66, 'crocione', 0.5).setDepth(1001).setAlpha(0.28).setVisible(k < this.maxFalsi));
+    this.testoPresiExtra = txt(this, 474, 78, '', { ox: 1, size: 7, color: '#7dff9a', depth: 1001 });
     this.hud();
 
-    // i comandi: SPAZIO, clic o tocco in qualsiasi punto (sul telefono c'è anche il pulsante grande)
+    // i comandi: un clic o un tocco sul cliente da fermare (vicino a nessuno: il più vicino alla porta);
+    // SPAZIO: il più vicino alla porta (l'anello giallo, sul computer)
     this.input.keyboard.on('keydown-SPACE', () => this.premi());
-    this.input.on('pointerdown', () => this.premi());
-    if (eTouch()) {
-      const g = this.add.graphics();
-      g.fillStyle(0x000000, 0.3); g.fillRoundedRect(-47, -12, 96, 27, 9);
-      g.fillStyle(0xd8343a, 0.95); g.fillRoundedRect(-48, -14, 96, 27, 9);
-      g.lineStyle(1.5, 0xffe14a, 1); g.strokeRoundedRect(-48, -14, 96, 27, 9);
-      this.bottone = this.add.container(424, 250, [g, txt(this, 0, -0.5, 'SCONTRINO!', { size: 11 })]).setDepth(1002);
-    } else {
-      const aiuto = txt(this, 474, 258, perDito('SPAZIO: SCONTRINO!', ''), { ox: 1, size: 8, color: '#fff3d6', depth: 1001 });
-      this.tweens.add({ targets: aiuto, alpha: 0, delay: 4000, duration: 600, onComplete: () => aiuto.destroy() });
-    }
+    this.input.on('pointerdown', (p) => { const w = this.cameras.main.getWorldPoint(p.x, p.y); this.premi(w.x, w.y); });
+    const aiuto = txt(this, 474, 258, perDito('CLICCA chi esce senza scontrino (o SPAZIO)', 'TOCCA chi esce senza scontrino'), { ox: 1, size: 8, color: '#fff3d6', depth: 1001 });
+    this.tweens.add({ targets: aiuto, alpha: 0, delay: 5000, duration: 600, onComplete: () => aiuto.destroy() });
 
     // gli eventi della serata, in ordine di tempo
     this.eventi = [];
@@ -270,7 +291,7 @@ export class ScontrinoScene extends MicrogiocoBase {
 
   pulisci() {
     for (const o of [this.mikCorpo, this.mikTesta, this.giso]) o?.destroy();
-    const chiavi = [...Object.keys(POSE_MICHELE).map((k) => 'mikCorpo_' + k), ...Object.keys(FACCE_MICHELE).map((k) => 'mikTesta_' + k), ...Object.keys(POSE_GISO), 'micheleMulta', 'micheleCaccia', 'gisoPosa', 'gisoSpinto'];
+    const chiavi = [...Object.keys(POSE_MICHELE).map((k) => 'mikCorpo_' + k), ...Object.keys(FACCE_MICHELE).map((k) => 'mikTesta_' + k), ...Object.keys(POSE_GISO), 'micheleMulta', 'micheleCaccia', 'gisoPosa', 'gisoSpinto', 'finanziere0', 'finanziere1', 'finanziere1b'];
     for (const k of chiavi) if (this.textures.exists(k)) this.textures.remove(k);
   }
 
@@ -278,6 +299,7 @@ export class ScontrinoScene extends MicrogiocoBase {
   eventiCliente(cl) {
     const T = cl.t, d = T.d, ev = (t, fn) => this.eventi.push({ t, fn });
     ev(T.A, () => this.entra(cl));
+    if (cl.furbo) { ev(T.G, () => this.sgattaiola(cl)); return; }   // (il furbetto non passa dalla cassa)
     if (cl.taglio) {
       ev(T.S0, () => this.taglia(cl));
       ev(T.inc - this.cfg.tempi.incarta * T.rit, () => { Audio.sfx('carta'); this.trancioSulBanco?.setTexture('trancio'); });
@@ -286,18 +308,24 @@ export class ScontrinoScene extends MicrogiocoBase {
     ev(T.P, () => this.paga(cl));
     if (!cl.taglio) ev(T.P + (T.seg - T.P) * 0.5, () => this.dallaCassa(cl, 'cartonePizza', false));
     const tr = cl.trucco;
-    if (tr === null || tr === 'annullo') {
+    if (cl.ultimo) {
+      // se lo scorda: si gira verso il forno; il cliente si avvia, Michele grida ASPETTA! e glielo lancia
+      ev(T.seg, () => this.tasta(cl, d * 0.6, true));
+      ev(T.G + 0.05, () => this.aspetta(cl));
+      ev(T.presa - 0.42, () => this.lancia(cl, 0.42));
+    } else if (tr === null || tr === 'annullo') {
       ev(T.seg, () => this.tasta(cl, d * 0.3, true));
       ev(T.seg + d * 0.35, () => this.stampa(cl, d * 0.42));
       ev(T.seg + d * 0.8, () => this.consegna(cl, d * 0.2));
-    } else if (tr === 'finta') {
-      ev(T.seg, () => this.tasta(cl, d * 0.75, false));
+    } else if (tr === 'finto') {
+      ev(T.seg, () => this.tasta(cl, d * 0.35, true));
+      ev(T.seg + d * 0.5, () => this.daVolantino(cl, d * 0.4));
     } else if (tr === 'strappo') {
       ev(T.seg, () => this.tasta(cl, d * 0.25, true));
       ev(T.seg + d * 0.28, () => this.stampa(cl, d * 0.3));
       ev(T.seg + d * 0.6, () => this.strappa(cl, d * 0.4));
     } else if (tr === 'classico') {
-      ev(T.seg, () => this.mikCorpo && this.tweens.add({ targets: [this.mikCorpo, this.mikTesta], y: MIK.cima + 1.5, duration: 120, yoyo: true }));
+      ev(T.seg, () => { this.mikCorpo && this.tweens.add({ targets: [this.mikCorpo, this.mikTesta], y: MIK.cima + 1.5, duration: 120, yoyo: true }); this.note(2); });
     }
     ev(T.G, () => this.gira(cl));
     if (tr === 'annullo') ev(T.annulla, () => this.annulla(cl));
@@ -311,7 +339,8 @@ export class ScontrinoScene extends MicrogiocoBase {
     pezzo(`clMaglia${a.tipo}`, a.maglia);
     pezzo(`clPelle${a.tipo}_${a.tono}`);
     if (a.capelli >= 0) pezzo(`clCapelli${a.capelli}`, a.coloreCapelli);
-    cl.spr = this.add.container(X.arco, PIEDI - 14, pezzi).setScale(SC).setAlpha(0);
+    if (a.furbo) pezzo('clOcchiali');
+    cl.spr = this.add.container(X.arco, PIEDI - 14, pezzi).setScale(SC, a.furbo ? SC * 0.9 : SC).setAlpha(0);
     this.tweens.add({ targets: cl.spr, alpha: 1, duration: 250 });
   }
 
@@ -337,21 +366,23 @@ export class ScontrinoScene extends MicrogiocoBase {
       if (t < cl.ferma) cl.fermo += dt;
       const u = Math.max(0, t - cl.t.G - cl.fermo), p = Math.min(1, u / cl.t.fin);
       cl.progresso = p;
-      x = lerp(X.cassa, X.porta, p); y = lerp(PIEDI, PIEDI_USCITA, p);
+      x = lerp(cl.x0, X.porta, p); y = lerp(cl.y0, cl.y1, p);
       dir = t < cl.ferma ? 0 : 1;
       if (p >= 1) return this.allaPorta(cl);
     }
     if (t < cl.ferma && cl.guarda) dir = cl.guarda;
     cl.x = x; cl.y = y;
     // la camminata: il passo che rimbalza e il corpo un po' inclinato
-    const cammina = dir !== 0;
-    cl.spr.setPosition(x, y - (cammina ? Math.abs(Math.sin(t * 13 + cl.i)) * 1.8 : 0)).setAngle(cammina ? dir * 3 + Math.sin(t * 13 + cl.i) * 2 : 0);
+    const cammina = dir !== 0, f = cl.furbo ? 20 : 13;   // (il furbetto va a passettini svelti)
+    cl.spr.setPosition(x, y - (cammina ? Math.abs(Math.sin(t * f + cl.i)) * 1.8 : 0)).setAngle(cammina ? dir * (cl.furbo ? 6 : 3) + Math.sin(t * f + cl.i) * 2 : 0);
     cl.spr.setDepth(30 + y * 0.05 + cl.i * 0.001);
     // quello che ha in mano: lo scontrino nella destra (più grande a FACILE), il trancio o il cartone nell'altra
     const lato = dir < 0 ? -1 : 1, hx = x + lato * MX * SC, hy = y + MY * SC;
     if (cl.scontrino) {
+      // (lo tiene un po' alzato, che si veda bene; se lo sventola, sopra la testa)
       const sv = t < cl.sventola;
-      cl.scontrino.setPosition(hx + (sv ? -lato * 6 : 0), hy - (sv ? 18 : 0)).setAngle(sv ? Math.sin(t * 32) * 28 : -8 * lato).setDepth(cl.spr.depth + 0.5);
+      cl.scontrino.setPosition(hx + (sv ? -lato * 6 : 0), hy - (sv ? 18 : 4)).setAngle(sv ? Math.sin(t * 32) * 28 : -8 * lato).setDepth(cl.spr.depth + 0.5);
+      cl.croce?.setPosition(cl.scontrino.x, cl.scontrino.y - 6).setDepth(cl.spr.depth + 0.6);
     }
     if (cl.oggetto) cl.oggetto.setPosition(x - lato * MX * SC, hy + 1).setDepth(cl.spr.depth + 0.4);
   }
@@ -363,7 +394,7 @@ export class ScontrinoScene extends MicrogiocoBase {
       if (cl.trucco) this.scappato(cl);
       else cl.esito = 'onesto';
     }
-    const via = [cl.spr, cl.scontrino, cl.oggetto].filter(Boolean);
+    const via = [cl.spr, cl.scontrino, cl.oggetto, cl.croce].filter(Boolean);
     this.tweens.add({ targets: via, alpha: 0, x: '+=10', duration: 220, onComplete: () => via.forEach((o) => o.destroy()) });
   }
 
@@ -443,9 +474,9 @@ export class ScontrinoScene extends MicrogiocoBase {
     if (!s) return;
     Audio.sfx('carta');
     if (!cl.spr || cl.uscito) { s.destroy(); return; }
-    const k = this.cfg.evidenti ? 1.35 : 1;
+    const k = this.cfg.evidenti ? 1.3 : 1;
     s.setOrigin(0.5, 0.85);
-    this.tweens.add({ targets: s, x: cl.x + MX * SC, y: cl.y + MY * SC, scale: scalaDi('scontrinoCarta', 0.75 * k), duration: Math.max(140, dur * 1000), ease: 'Sine.out', onComplete: () => { if (cl.uscito) s.destroy(); else cl.scontrino = s; } });
+    this.tweens.add({ targets: s, x: cl.x + MX * SC, y: cl.y + MY * SC, scale: scalaDi('scontrinoCarta', 0.95 * k), duration: Math.max(140, dur * 1000), ease: 'Sine.out', onComplete: () => { if (cl.uscito) s.destroy(); else cl.scontrino = s; } });
   }
 
   // lo strappo: Michele prende lo scontrino, lo strappa davanti al petto e se lo mette in tasca
@@ -470,6 +501,52 @@ export class ScontrinoScene extends MicrogiocoBase {
     });
   }
 
+  // lo scontrino finto: Michele tira fuori da sotto il banco il volantino giallo e glielo dà
+  daVolantino(cl, dur) {
+    if (!cl.spr || cl.uscito) return;
+    Audio.sfx('foglio');
+    const v = im(this, MIK.cassa + 6, PZ.piano - 2, 'volantino', 0.5).setDepth(25);
+    this.tweens.add({ targets: v, x: cl.x + MX * SC, y: cl.y + MY * SC, scale: scalaDi('volantino', this.cfg.evidenti ? 1.25 : 1), duration: Math.max(160, dur * 1000), ease: 'Sine.out', onComplete: () => { if (cl.uscito) v.destroy(); else cl.scontrino = v; } });
+  }
+
+  // ALL'ULTIMO: il cliente si è girato senza scontrino, Michele se ne accorge e grida
+  aspetta(cl) {
+    this.frase(caso(this.cfg.frasiAspetta), (cl.t.presa - cl.t.G) * 1000 + 300);
+    Audio.sfx('salto');
+    const esc = txt(this, MIK.cassa - 18, 72, '!', { size: 16, color: '#ffe14a', depth: 940 });
+    this.tweens.add({ targets: esc, y: esc.y - 8, alpha: 0, delay: 450, duration: 300, onComplete: () => esc.destroy() });
+  }
+  // ...e glielo lancia: lo scontrino vola dalla cassa alla sua mano (anche se intanto è stato fermato)
+  lancia(cl, dur) {
+    if (!cl.spr || cl.uscito) return;
+    Audio.sfx('stampante');
+    const F = PZ.fessura, s = im(this, F.x, F.y - 10, 'scontrinoCarta', 0.95).setOrigin(0.5, 0.85).setDepth(90), q = { k: 0 };
+    this.tweens.add({ targets: q, k: 1, duration: dur * 1000, ease: 'Sine.out',
+      onUpdate: () => { const k = q.k; s.setPosition(lerp(F.x, cl.x + MX * SC, k), lerp(F.y - 10, cl.y + MY * SC, k) - Math.sin(k * Math.PI) * 30).setAngle(k * 540); },
+      onComplete: () => {
+        if (cl.uscito) { s.destroy(); return; }
+        s.setAngle(0); cl.scontrino?.destroy(); cl.scontrino = s; cl.sventola = this.trascorso + 0.6;
+        Audio.sfx('carta');
+        if (cl.esito !== 'falso') fumetto(this, Math.min(cl.x, 400), cl.y - 104, caso(this.cfg.frasiCeLho), 800, 955);
+      } });
+  }
+
+  // il furbetto: niente fila e niente cassa, si china e va dritto alla porta
+  sgattaiola(cl) {
+    if (!cl.spr || cl.uscito) return;
+    Audio.sfx('fiuu');
+    const s = txt(this, cl.x + 4, cl.y - 96, '?!', { size: 9, color: '#ffe14a', depth: 940 });
+    this.tweens.add({ targets: s, y: s.y - 8, alpha: 0, delay: 500, duration: 300, onComplete: () => s.destroy() });
+  }
+
+  // due notine sopra Michele che fischietta (fa il vago)
+  note(n = 2) {
+    for (let k = 0; k < n; k++) {
+      const nt = im(this, this.mikCorpo.x + 14 + k * 6, 92, 'notaMusica').setDepth(30).setAlpha(0);
+      this.tweens.add({ targets: nt, alpha: 1, y: 70 - k * 6, x: nt.x + 8, delay: 120 + k * 260, duration: 700, onComplete: () => this.tweens.add({ targets: nt, alpha: 0, duration: 200, onComplete: () => nt.destroy() }) });
+    }
+  }
+
   gira(cl) {
     if (this.display.di === cl.i && cl.trucco !== 'annullo') this.time.delayedCall(650, () => { if (this.display.di === cl.i) this.mostraDisplay(null, ''); });
     if (cl.carta) { cl.carta.destroy(); cl.carta = null; }
@@ -481,7 +558,11 @@ export class ScontrinoScene extends MicrogiocoBase {
     this.tweens.add({ targets: this.mano, y: PZ.tasti.y + 2.5, duration: 90, yoyo: true, onComplete: () => this.mano.setVisible(false) });
     Audio.sfx('annullo');
     this.mostraDisplay(cl, this.scrittaAnnullo, true);
-    if (this.cfg.evidenti) cl.scontrino?.setTint(0xff9090);
+    if (cl.scontrino && !cl.uscito) {
+      cl.scontrino.setTint(0xffb0b0);
+      cl.croce = im(this, cl.scontrino.x, cl.scontrino.y - 6, 'crocione', this.cfg.evidenti ? 1.3 : 1).setDepth(cl.scontrino.depth + 0.1);
+      this.tweens.add({ targets: cl.croce, scale: { from: cl.croce.scale * 2.2, to: cl.croce.scale }, duration: 200, ease: 'Back.out' });
+    }
     this.time.delayedCall(1300, () => { if (this.display.di === cl.i) this.mostraDisplay(null, ''); });
   }
 
@@ -504,10 +585,22 @@ export class ScontrinoScene extends MicrogiocoBase {
     return best;
   }
 
-  premi() {
+  // il cliente più vicino a un clic o a un tocco (tra quelli che si possono fermare), se è abbastanza vicino
+  vicino(x, y) {
+    const t = this.trascorso;
+    let best = null, dMin = this.tocca ? 46 : 38;
+    for (const cl of this.clienti) {
+      if (!cl.spr || cl.esito || cl.uscito || t < cl.t.P) continue;
+      const d = Math.hypot((x - cl.x) * 0.9, y - (cl.y - 40));
+      if (d < dMin) { dMin = d; best = cl; }
+    }
+    return best;
+  }
+
+  // ferma un cliente: quello cliccato (x, y), o il più vicino alla porta (SPAZIO, o un clic lontano da tutti)
+  premi(x = null, y = null) {
     if (!this.inCorso) return;
-    if (this.bottone) this.tweens.add({ targets: this.bottone, scale: { from: 0.88, to: 1 }, duration: 140, ease: 'Back.out' });
-    const cl = this.bersaglio();
+    const cl = (x != null && this.vicino(x, y)) || this.bersaglio();
     if (!cl) { Audio.sfx('tsk'); return; }
     if (cl.trucco) this.preso(cl); else this.falso(cl);
   }
@@ -531,6 +624,14 @@ export class ScontrinoScene extends MicrogiocoBase {
     this.bollaGiso = fumetto(this, 96, 152, caso(c.frasiGiso), 1100, 960);
     this.vice.setTexture(`${this.giocatore.id}_felice`); this.viceFino = t + 0.9;
     // Michele, beccato: rosso e sudato, e lo scontrino battuto di corsa (vola al cliente)
+    if (cl.furbo) {
+      // il furbetto, beccato: torna indietro e paga (i soldi volano nel cassetto)
+      fumetto(this, Math.min(cl.x, 400), cl.y - 104, 'Pagavo, pagavo!', 900, 955);
+      const b = im(this, cl.x + MX * SC, cl.y + MY * SC, 'banconota').setDepth(90);
+      this.tweens.add({ targets: b, x: 372, y: 138, delay: 300, duration: 420, ease: 'Sine.out', onComplete: () => { b.destroy(); Audio.sfx('cassa'); } });
+      this.dopoPreso(prima, t);
+      return;
+    }
     this.facce = [{ testa: 'beccato', fino: t + 1.2 }];
     if (!this.bolla?.active) this.frase(caso(c.frasiBeccato), 1100);
     this.time.delayedCall(250, () => {
@@ -540,10 +641,16 @@ export class ScontrinoScene extends MicrogiocoBase {
       const F = PZ.fessura, s = im(this, F.x, F.y - 10, 'scontrinoCarta', 0.75).setOrigin(0.5, 0.85).setDepth(90);
       this.tweens.add({ targets: s, x: cl.x + MX * SC, y: cl.y + MY * SC, angle: { from: -30, to: 360 }, duration: 420, ease: 'Sine.out', onComplete: () => { if (cl.uscito) s.destroy(); else { cl.scontrino?.destroy(); s.setAngle(0); cl.scontrino = s; } } });
     });
-    // la cartellina si gonfia
+    this.dopoPreso(prima, t);
+  }
+
+  // dopo ogni furbo beccato: la cartellina si gonfia, e all'obiettivo la scritta
+  dopoPreso(prima) {
     this.mazzetta.setVisible(true);
-    this.tweens.add({ targets: this.mazzetta, scaleY: scalaDi('mazzetta', 0.95) * Math.min(4.5, 0.55 * this.presi), duration: 200, ease: 'Back.out' });
-    if (!prima && this.condizione) { scritta(this, 240, 70, `${this.obiettivo} IMBROGLI!`, { size: 13, color: '#7dff9a', durata: 900 }); Audio.sfx('bonus'); }
+    this.tweens.add({ targets: this.mazzetta, scaleY: scalaDi('mazzetta', 0.95 * this.kMazzetta) * Math.min(4.5, 0.55 * this.presi), duration: 200, ease: 'Back.out' });
+    const ic = this.iconePresi[this.presi - 1];
+    if (ic) this.tweens.add({ targets: ic, scale: { from: ic.scale * 2, to: ic.scale }, duration: 220, ease: 'Back.out' });
+    if (!prima && this.condizione) { scritta(this, 240, 70, `${this.obiettivo} FURBI BECCATI!`, { size: 13, color: '#7dff9a', durata: 900 }); Audio.sfx('bonus'); }
     vibra(30);
     this.hud();
   }
@@ -559,7 +666,8 @@ export class ScontrinoScene extends MicrogiocoBase {
     Audio.sfx('errore');
     this.giso.setTexture('gisoOffeso'); this.gisoFino = t + 1;
     this.vice.setTexture(`${this.giocatore.id}_shock`); this.viceFino = t + 0.9;
-    this.frase(caso(c.frasiFalso), 1100);
+    if (cl.ultimo && !cl.scontrino) fumetto(this, Math.min(cl.x, 400), cl.y - 104, 'Me lo stava dando!', 900, 955);
+    else this.frase(caso(c.frasiFalso), 1100);
     this.facce = [{ testa: 'felice', fino: t + 1 }];
     if (prima && !this.condizione) scritta(this, 240, 70, 'TROPPI FALSI ALLARMI!', { size: 12, color: '#ff6b5a', durata: 900 });
     vibra(70);
@@ -571,14 +679,11 @@ export class ScontrinoScene extends MicrogiocoBase {
     const t = this.trascorso;
     cl.esito = 'scappato';
     this.scappati++; this.serie = 0;
-    const s = txt(this, X.porta - 4, 200, 'SENZA SCONTRINO!', { size: 7, color: '#ff8a7a', depth: 940 });
+    const s = txt(this, X.porta - 36, 200, 'SENZA SCONTRINO!', { size: 7, color: '#ff8a7a', depth: 940 });
     this.tweens.add({ targets: s, y: 190, alpha: 0, delay: 500, duration: 400, onComplete: () => s.destroy() });
     this.facce = [{ testa: 'occhiolino', fino: t + 0.5 }, { testa: 'fischia', fino: t + 1.5 }];
     Audio.sfx('fischiettio');
-    for (let k = 0; k < 2; k++) {
-      const n = im(this, this.mikCorpo.x + 14 + k * 6, 92, 'notaMusica').setDepth(30).setAlpha(0);
-      this.tweens.add({ targets: n, alpha: 1, y: 70 - k * 6, x: n.x + 8, delay: 300 + k * 260, duration: 700, onComplete: () => this.tweens.add({ targets: n, alpha: 0, duration: 200, onComplete: () => n.destroy() }) });
-    }
+    this.note(2);
     const b = im(this, 372, 138, 'banconota').setDepth(26);
     this.tweens.add({ targets: b, x: this.mikCorpo.x + 10, y: 150, alpha: 0.2, duration: 500, ease: 'Sine.in', onComplete: () => b.destroy() });
     this.vice.setTexture(`${this.giocatore.id}_triste`); this.viceFino = t + 0.9;
@@ -592,9 +697,10 @@ export class ScontrinoScene extends MicrogiocoBase {
 
   hud() {
     this.testoPunti.setText(puntiHud(this.punti));
-    const ob = this.obiettivo, mf = this.maxFalsi;
-    this.testoPresi.setText(`PRESI: ${this.presi}/${ob}`).setColor(this.presi >= ob ? '#7dff9a' : '#ffe14a');
-    this.testoFalsi.setText(`FALSI ALLARMI: ${this.falsi}/${mf}`).setColor(this.falsi > mf ? '#ff6b5a' : '#fff3d6');
+    this.iconePresi.forEach((ic, k) => ic.setAlpha(k < this.presi ? 1 : 0.28).setTint(this.presi >= this.obiettivo ? 0xb8ffc8 : 0xffffff));
+    this.testoPresiExtra.setText(this.presi > this.obiettivo ? `+${this.presi - this.obiettivo}` : '');
+    // (l'ultima croce, quella in più, compare quando i falsi allarmi sono troppi)
+    this.iconeFalsi.forEach((ic, k) => ic.setAlpha(k < this.falsi ? 1 : 0.28).setVisible(k < this.maxFalsi || this.falsi > this.maxFalsi));
     const m = this.molt();
     this.testoSerie.setText(m > 1 ? `SERIE x${numero(m, m % 1 ? 1 : 0)}` : '');
   }
@@ -615,18 +721,6 @@ export class ScontrinoScene extends MicrogiocoBase {
       this.tweens.add({ targets: this.telefono, angle: { from: -8, to: 8 }, duration: 60, yoyo: true, repeat: 9, onComplete: () => this.telefono.setAngle(0) });
       const s = txt(this, PZ.telefono.x, PZ.telefono.y - 6, 'DRIIN!', { size: 8, color: '#ffe14a', depth: 940 });
       this.tweens.add({ targets: s, y: s.y - 8, alpha: 0, delay: 900, duration: 300, onComplete: () => s.destroy() });
-    } else if (tipo === 'birra') {
-      // un cliente rovescia la birra sulla mensola
-      if (!this.birra.visible) return;
-      Audio.sfx('splash');
-      this.tweens.add({ targets: this.birra, angle: 95, x: this.birra.x + 4, duration: 220, ease: 'Quad.in', onComplete: () => this.birra.setVisible(false) });
-      const pz = im(this, PZ.mensola.x + 6, 214, 'pozzaBirra').setDepth(5).setAlpha(0);
-      this.tweens.add({ targets: pz, alpha: 1, delay: 200, duration: 300 });
-      const s = txt(this, PZ.mensola.x + 4, PZ.mensola.y - 10, 'OPS!', { size: 8, color: '#fff3d6', depth: 940 });
-      this.tweens.add({ targets: s, y: s.y - 8, alpha: 0, delay: 700, duration: 300, onComplete: () => s.destroy() });
-    } else if (tipo === 'margherita') {
-      fumetto(this, 196, 132, caso(this.cfg.frasiMargherita), 1300, 955);
-      Audio.sfx('borbottio');
     }
   }
 
@@ -670,9 +764,9 @@ export class ScontrinoScene extends MicrogiocoBase {
       this.porta.setTexture(aperta ? 'portaUscitaAperta' : 'portaUscita').setScale(scalaDi(aperta ? 'portaUscitaAperta' : 'portaUscita', 1));
       if (aperta) Audio.sfx('apri');
     }
-    // il cliente che conta: l'anello giallo ai piedi e la freccia sotto, che pulsa (sopra la testa
-    // coprirebbe Michele e la cassa)
-    const g = this.gFreccia, b = this.bersaglio();
+    // sul computer, il cliente che ferma SPAZIO: l'anello giallo ai piedi e la freccia sotto, che pulsa
+    // (sul telefono si tocca il cliente: niente anello)
+    const g = this.gFreccia, b = this.tocca ? null : this.bersaglio();
     g.clear();
     if (b) {
       const k = 1 + Math.sin(t * 10) * 0.08, y = b.y + 9 + Math.sin(t * 9) * 1.5;
@@ -707,19 +801,20 @@ export class ScontrinoScene extends MicrogiocoBase {
     return {
       punteggio: Math.round(this.punti),
       vittoria: this.condizione,
-      riepilogo: `${quanti(this.presi, 'imbroglio scoperto', 'imbrogli scoperti')} su ${imbrogli}, ${quanti(this.falsi, 'falso allarme', 'falsi allarmi')}`,
+      riepilogo: `${quanti(this.presi, 'furbo beccato', 'furbi beccati')} su ${imbrogli}, ${quanti(this.falsi, 'falso allarme', 'falsi allarmi')}`,
       titoli: this.cfg.titoli,
     };
   }
 
   // ---------- la fine ----------
-  // Vinci: arrivano due finanzieri da cartone con le sirenette, multa a Michele (disperato, con la
-  // mezzaluna in mano), il Giso in posa con la cartellina gonfissima tra i coriandoli. Perdi: Michele
+  // Vinci: fuori lampeggia la luce blu ed entrano due finanzieri in divisa (uno saluta, l'altro gli fa
+  // la multa), Michele disperato con la mezzaluna in mano, il Giso in posa con la cartellina gonfissima
+  // tra i coriandoli. Perdi: Michele
   // mette il Giso alla porta con la pala, gli cade la cartellina e volano via tutti gli scontrini.
   // Al massimo 3,6 secondi; si salta con un tocco, INVIO o SPAZIO.
   finale(ris, fatto) {
     const c = this.cfg;
-    for (const o of [this.gFreccia, this.testoSerie, this.bottone, this.testoFalsi, this.testoPresi]) o?.setVisible(false);
+    for (const o of [this.gFreccia, this.testoSerie]) o?.setVisible(false);
     this.bolla?.destroy(); this.bollaGiso?.destroy();
     this.mano.setVisible(false);
     let chiuso = false;
@@ -733,26 +828,22 @@ export class ScontrinoScene extends MicrogiocoBase {
     this.tweens.add({ targets: titolo, scale: { from: 1.6, to: 1 }, duration: 260, ease: 'Back.out' });
     const mx = this.mikCorpo.x;
     if (ris.vittoria) {
-      // i finanzieri entrano dalla porta, con la sirenetta che lampeggia
+      // la luce blu del lampeggiante dalla porta, poi entrano i finanzieri in divisa
       Audio.sfx('sirena'); this.time.delayedCall(900, () => Audio.sfx('sirena'));
       this.porta.setTexture('portaUscitaAperta').setScale(scalaDi('portaUscitaAperta', 1));
-      [[0, 340], [1, 384]].forEach(([k, xf]) => {
-        const a = { tipo: k, tono: k ? 2 : 0, capelli: 0, maglia: 0x6b7466, pantaloni: 0x4a4f48, coloreCapelli: 0x2a1c14 };
-        const pezzi = [`clGambe${a.tipo}`, `clMaglia${a.tipo}`, `clPelle${a.tipo}_${a.tono}`, 'clCapelli0'].map((key, i) => {
-          const p = this.add.image(0, 0, key).setOrigin(0.5, 1).setScale(scalaDi(key, 1));
-          const tinta = [a.pantaloni, a.maglia, null, a.coloreCapelli][i];
-          if (tinta != null) p.setTint(tinta);
-          return p;
-        });
-        const cap = this.add.image(0, -74, 'cappelloFinanza').setOrigin(0.5, 1).setScale(scalaDi('cappelloFinanza', 1));
-        const luce = this.add.image(0, -88.5, 'sirenetta').setOrigin(0.5, 1).setScale(scalaDi('sirenetta', 1)).setTint(0x3a7aff);
-        this.time.addEvent({ delay: 170, repeat: 20, callback: () => luce.setTint(luce.tintTopLeft === 0x3a7aff ? 0xff3a3a : 0x3a7aff) });
-        const f = this.add.container(X.porta, PIEDI_USCITA, [...pezzi, cap, luce]).setScale(SC).setDepth(70 + k);
-        this.tweens.add({ targets: f, x: xf, y: PIEDI, duration: 900, delay: k * 250, ease: 'Sine.out' });
+      const luce = im(this, PZ.porta.x0 + 16, 162, 'lampeggio', 1.3).setDepth(5).setTint(0x5a8aff).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: luce, alpha: { from: 1, to: 0.15 }, duration: 160, yoyo: true, repeat: 10 });
+      preparaFigura(this, 'finanziere0', FINANZIERI[0], 'normale', { posa: 'saluto', maniSopra: true }, DENS_M);
+      preparaFigura(this, 'finanziere1', FINANZIERI[1], 'normale', {}, DENS_M);
+      preparaFigura(this, 'finanziere1b', FINANZIERI[1], 'sufficienza', { posa: 'tiIndico' }, DENS_M);
+      [['finanziere0', 336], ['finanziere1', 388]].forEach(([key, xf], k) => {
+        const f = im(this, X.porta, PIEDI_USCITA + 2, key, 0.7).setOrigin(0.5, 1).setDepth(70 + k);
+        this.tweens.add({ targets: f, x: xf, y: PIEDI + 2, duration: 900, delay: k * 250, ease: 'Sine.out' });
         this.tweens.add({ targets: f, angle: { from: -3, to: 3 }, duration: 110, yoyo: true, repeat: 7, delay: k * 250 });
-        if (k === 0) this.time.delayedCall(1050, () => {
+        if (k === 1) this.time.delayedCall(1050, () => {
+          f.setTexture('finanziere1b').setScale(scalaDi('finanziere1b', 0.7)).setFlipX(true);
           fumetto(this, xf - 6, 132, caso(c.frasiFinanza), 1500, 1050);
-          const m = im(this, xf + 14, 200, 'multa').setDepth(75);
+          const m = im(this, xf - 14, 200, 'multa').setDepth(75);
           this.tweens.add({ targets: m, x: mx + 4, y: 128, angle: 360, duration: 380, ease: 'Sine.out' });
           Audio.sfx('carta');
           // Michele, multato: disperato, con la mezzaluna in mano
@@ -765,7 +856,7 @@ export class ScontrinoScene extends MicrogiocoBase {
       preparaPosa(this, 'gisoPosa', 'giso', 'felice', { posa: 'felice' }, DENS_G);
       this.giso.setTexture('gisoPosa');
       this.tweens.add({ targets: [this.cartellina, this.mazzetta], x: '-=18', y: '-=34', angle: -18, duration: 320, ease: 'Back.out' });
-      this.mazzetta.setVisible(true).setScale(scalaDi('mazzetta', 1.1), scalaDi('mazzetta', 0.95) * Math.max(2.5, Math.min(5, 0.6 * this.presi)));
+      this.mazzetta.setVisible(true).setScale(scalaDi('mazzetta', 1.1 * this.kMazzetta), scalaDi('mazzetta', 0.95 * this.kMazzetta) * Math.max(2.5, Math.min(5, 0.6 * this.presi)));
       this.vice.setTexture(`${this.giocatore.id}_felice`);
       Audio.sfx('vittoria');
       stelle(this, 52, 150, 10, 1050);

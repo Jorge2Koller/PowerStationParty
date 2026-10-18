@@ -6,7 +6,7 @@ export default {
   verbo: 'SCHIVA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x3b6fd1,
-  musica: 'corsa',         // traccia di audio.js
+  musica: 'strada',           // js/config/musiche.js
   ospite: { id: 'greg', etichetta: 'OCCHIO A:\nREGRORIO' },
   comandi: [
     'FRECCE SINISTRA/DESTRA: cambia corsia. SPAZIO: salta',

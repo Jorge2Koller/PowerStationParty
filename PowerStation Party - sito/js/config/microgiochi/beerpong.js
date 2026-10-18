@@ -7,7 +7,7 @@ export default {
   verbo: 'TIRA!',           // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x2f8f6a,
-  musica: 'festa',
+  musica: 'pallaio',           // js/config/musiche.js
   // i veterani del Pallaio: lo Zio e Marsupino, mossi dal computer
   ospite: { id: 'zio', etichetta: 'CONTRO:\nI VETERANI' },
   cast: ['marsupino'],      // altri personaggi della storia: chi li sceglie qui gioca "contro se stesso"

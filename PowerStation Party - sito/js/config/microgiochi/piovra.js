@@ -6,7 +6,7 @@ export default {
   verbo: 'SALVALE!',        // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x7a2fa8,
-  musica: 'disco',
+  musica: 'disco',           // js/config/musiche.js
   ospite: { id: 'petri', etichetta: 'OCCHIO A:\nIL PIOVRA' },
   comandi: [
     'Clicca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',

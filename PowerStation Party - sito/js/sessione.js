@@ -136,7 +136,8 @@ export const Sessione = {
 
   // ---------- il turno ----------
   get idCorrente() { return this.lista[this.indice]; },
-  get seme() { return this.semi?.[this.indice] ?? (Math.random() * 2 ** 32) >>> 0; },
+  // (durante la prova: un seme suo, così la prova non è la stessa partita di quella vera)
+  get seme() { return this.semeProva ?? this.semi?.[this.indice] ?? (Math.random() * 2 ** 32) >>> 0; },
   // chi gioca adesso (numero del giocatore): a ogni round comincia quello dopo
   get turno() {
     if (this.solo != null) return this.solo;

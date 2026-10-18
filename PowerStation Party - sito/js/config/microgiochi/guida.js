@@ -6,6 +6,7 @@ export default {
   verbo: 'ACCHIAPPA!',      // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x3a3a8a,
+  musica: 'parcheggio',           // js/config/musiche.js
   ospite: { id: 'giorgio', etichetta: 'STASERA GUIDA:\nGIORGIO' },
   comandi: [
     'Giorgio si infila nelle macchine degli altri: CLICCALO prima che chiuda!',

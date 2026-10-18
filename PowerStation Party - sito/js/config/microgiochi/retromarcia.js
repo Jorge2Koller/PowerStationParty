@@ -6,7 +6,7 @@ export default {
   verbo: 'SPINGI!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x6a8f3a,
-  musica: 'rock',          // l'autoradio di Emilio (traccia di audio.js)
+  musica: 'rock',           // js/config/musiche.js
   ospite: { id: 'emilio', etichetta: 'AL VOLANTE:\nEMILIO' },
   cast: ['pastaffi'],      // altri personaggi della storia: chi li sceglie qui gioca "contro se stesso"
   comandi: [

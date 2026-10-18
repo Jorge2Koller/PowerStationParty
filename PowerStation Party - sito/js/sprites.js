@@ -96,6 +96,11 @@ export function preparaPosa(scene, key, id, espr, o = {}, dens = RES, altro = {}
   tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, { ...p, ...altro }, espr, { ...op, ...o }); }, dens);
 }
 
+// Una posa di una comparsa che non è tra i PERSONAGGI (i finanzieri di "Scontrino, prego!"): p = il suo
+// aspetto, come una voce di PERSONAGGI. Creata dal microgioco quando serve e buttata da lui.
+export function preparaFigura(scene, key, p, espr, o = {}, dens = RES) {
+  tela(scene, key, 96, 144, (c) => { c.scale(0.5, 0.5); disegnaPersonaggio(c, p, espr, o); }, dens);
+}
 // Un personaggio a due pezzi, per chi cambia faccia senza cambiare posa (Michele alla cassa, in
 // "Scontrino, prego!"): il corpo in una posa, senza testa (96x144, come una figura intera), e la testa
 // con un'espressione (96x100: la parte di sopra della stessa figura; altro = ritocchi all'aspetto,

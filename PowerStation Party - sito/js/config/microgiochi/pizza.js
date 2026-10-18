@@ -6,7 +6,7 @@ export default {
   verbo: 'CONDISCI!',       // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0xc0392b,
-  musica: 'osteria',
+  musica: 'osteria',           // js/config/musiche.js
   ospite: { id: 'boni', etichetta: 'A CENA DAL:\nBONI' },
   cast: ['oli', 'sego'],    // gli imbucati: chi li sceglie qui gioca "contro se stesso"
   comandi: [

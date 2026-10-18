@@ -187,7 +187,7 @@ export function annunciaTrofei(scene, trofei = [], ritardo = 0) {
     c.add([pannello(scene, 0, 0, 290, 34, { alfa: 0.95, raggio: 10, colore: 0x3a2050 }), im(scene, -126, 0, 'coppa', 0.75),
       txt(scene, -108, -7, 'TROFEO: ' + t.nome, { size: 9, ox: 0, color: '#ffe14a' }),
       txt(scene, -108, 7, `${t.descrizione}   +${CONFIG.trofei.pinte} PINTE`, { size: 7, ox: 0, color: '#fff3d6' })]);
-    Audio.sfx('bonus');
+    Audio.jingle('trofeo');
     scene.tweens.add({ targets: c, y: 244, duration: 300, ease: 'Back.out', hold: 1300, yoyo: true, onComplete: () => c.destroy() });
   }));
 }

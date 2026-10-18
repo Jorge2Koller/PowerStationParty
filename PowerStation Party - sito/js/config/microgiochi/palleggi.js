@@ -6,6 +6,7 @@ export default {
   verbo: 'PALLEGGIA!',      // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x4a9a3a,
+  musica: 'stadio',           // js/config/musiche.js
   ospite: { id: 'zio', etichetta: 'SFIDA\nLO ZIO' },
   comandi: [
     'FRECCE (o A/D) o il mouse: muoviti. SPAZIO o CLIC: calcia',

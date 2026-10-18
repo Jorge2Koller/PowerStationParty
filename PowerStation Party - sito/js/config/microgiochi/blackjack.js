@@ -6,6 +6,7 @@ export default {
   verbo: 'PUNTA!',          // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x1f8a4a,
+  musica: 'casino',           // js/config/musiche.js
   ospite: { id: 'ingiocabile', etichetta: "AL BANCO:\nL'INGIOCABILE" },
   comandi: [
     '1, 2, 3 (o le fiches): punta. Poi C carta, S stai, D raddoppia (o i pulsanti)',
