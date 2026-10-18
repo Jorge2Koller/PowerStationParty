@@ -36,10 +36,12 @@ const NORMALE = {
 const ALTO = (alto, basso) => {
   // (su iPhone, aprendo la tastiera, Safari può far scorrere la pagina: allora si vede da "alto" in giù)
   const t = Math.max(0, Math.min(150, alto)), b = Math.max(t + 96, Math.min(270, basso)), y0 = t + 32;
+  // quello che stai scrivendo, ripetuto nel gioco (la casella vera, su qualche telefono, finisce sotto
+  // la tastiera): solo se sotto il fumetto c'è posto, se no andrebbe sopra il proverbio
+  const posto = b - y0 - 66 >= 30;
   return {
-    fumetto: { x: 8, y: y0, w: 372, h: Math.max(30, b - y0 - 66) }, barra: { x: 18, y: b - 45, w: 352 },
-    // quello che stai scrivendo, ripetuto nel gioco: la casella vera, su qualche telefono, finisce sotto la tastiera
-    eco: { x: 194, y: b - 55 },
+    fumetto: { x: 8, y: y0, w: 372, h: posto ? b - y0 - 66 : Math.max(30, b - y0 - 50) }, barra: { x: 18, y: b - 45, w: 352 },
+    eco: posto ? { x: 194, y: b - 55 } : null,
     casella: { x: 70, y: b - 38, w: 210, h: 28 }, ok: { x: 286, y: b - 38, w: 60, h: 28 },
     // Denny piccolo in basso a destra, sotto punti e contatore
     denny: { x: 446, piedi: b + 4, taglia: Math.max(0.36, Math.min(0.62, (b - t - 54) / 144)) }, size: 11,
@@ -140,6 +142,7 @@ export class ProverbiScene extends MicrogiocoBase {
   }
 
   termina() {
+    this.eco?.setVisible(false);   // (aggiorna non gira più: se no resterebbe sul finale)
     this.chiudiCasella();
     this.stato = 'fine';     // (le correzioni ancora in arrivo non partono più)
     super.termina();

@@ -11,12 +11,12 @@ export default {
   comandi: [
     'MOUSE: premi, tira indietro come una fionda e lascia (o FRECCE + SPAZIO tenuto)',
     'Fai entrare i fumogeni dalle finestre APERTE (dov\'è Franci valgono doppio)',
-    'Riempi la casa di fumo: all\'80% Franci esce!',
+    'Riempi la casa di fumo fino alla tacca gialla: Franci esce!',
   ],
   comandiTouch: [
     'Appoggia il dito e tira indietro come una fionda, poi lascia',
     'Fai entrare i fumogeni dalle finestre APERTE (dov\'è Franci valgono doppio)',
-    'Riempi la casa di fumo: all\'80% Franci esce!',
+    'Riempi la casa di fumo fino alla tacca gialla: Franci esce!',
   ],
   obiettivo: 'Fai uscire Franci di casa!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
@@ -24,7 +24,14 @@ export default {
   // Revisione 4, la stessa scala per tutti (erano 40 / 110 / 170): far uscire Franci è il bronzo;
   // con 6 secondi d'anticipo l'argento, con 12 l'oro. Se non esce, il fumo conta poco.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  // (scheda di valutazione: col fumo più difficile si arrivava al bronzo anche senza farlo uscire,
+  // a forza di fumogeni a segno. Ora se non esce il totale si ferma a tettoPrima, e se esce vale
+  // almeno il bronzo: la vittoria è farlo uscire, come dice l'obiettivo)
+  tettoPrima: 90,
   soglia: 80,             // % di fumo in casa a cui Franci esce
+  // in Lampo (15 secondi, solo il primo atto) la soglia è più bassa: col fumo di adesso all'80% non
+  // ci arrivava quasi nessuno. Comandi e HUD non dicono il numero: c'è la tacca gialla sulla barra
+  sogliaLampo: 65,
   // punti
   puntiFinestra: 5,       // fumogeno entrato da una finestra (era 3)
   puntiFranci: 9,         // ...nella stanza dove c'è Franci (era 6)

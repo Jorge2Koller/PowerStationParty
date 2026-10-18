@@ -69,6 +69,7 @@ export class PalleggiScene extends MicrogiocoBase {
     this.dito = null;
     this.tEsprIo = 0;
     this.tEsprZio = 0;
+    this.saltando = false; this.tStupito = 0; this.tScia = 0;   // (festa, Zio a bocca aperta e scia: la scena viene riusata)
 
     im(this, 0, 0, 'bgParco').setOrigin(0);
     this.ombra = this.add.ellipse(this.x, TERRA + 1, 34, 6, 0x000000, 0.22).setDepth(5);

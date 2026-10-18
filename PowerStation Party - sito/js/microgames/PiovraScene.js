@@ -715,11 +715,18 @@ export class PiovraScene extends MicrogiocoBase {
   // ------------------------------------------------------------
   risultato() {
     const c = this.cfg, prese = this.ragazze.filter((r) => r.stato === 'presa').length;
+    const vittoria = this.salvate >= c.obiettivoSalvate;
+    // (mai sotto zero; e con l'obiettivo raggiunto le agganciate non portano sotto il bronzo:
+    // scheda di valutazione, "se salvi 8 ragazze perdi comunque". Con 2,8 a salvata le prime 8
+    // fanno 101, e bastava una ragazza agganciata allo scadere per scendere sotto i 100)
+    let punteggio = Math.max(0, this.punti - prese * c.malusAgganciata);
+    if (vittoria) punteggio = Math.max(punteggio, Math.min(this.punti, c.medaglie.bronzo));
+    const tolti = this.punti - punteggio;
     return {
-      punteggio: Math.max(0, this.punti - prese * c.malusAgganciata),   // (mai sotto zero)
-      vittoria: this.salvate >= c.obiettivoSalvate,
-      // (le agganciate si scrivono solo se tolgono davvero qualcosa: il totale non va sotto zero)
-      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (Math.min(this.punti, prese * c.malusAgganciata) > 0 ? `, agganciate ${prese} (-${Math.min(this.punti, prese * c.malusAgganciata)})` : ''),
+      punteggio,
+      vittoria,
+      // (le agganciate si scrivono solo se tolgono davvero qualcosa)
+      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (tolti > 0 ? `, agganciate ${prese} (-${tolti})` : ''),
       titoli: ['TEMPO!', 'IL PIOVRA HA VINTO!'],
     };
   }

@@ -507,7 +507,7 @@ export class BlackjackScene extends MicrogiocoBase {
       punteggio,
       // (la condizione è il bronzo stesso; in Lampo, più corto, in proporzione)
       vittoria: punteggio >= c.medaglie.bronzo * Math.min(1, this.durata / c.durata),
-      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.maniPro ? ` (${this.maniPro} da pro, +${this.premi})` : '') + (this.blackjack ? `, ${quanti(this.blackjack, 'blackjack', 'blackjack')}` : '') + (this.puntata ? `. Mano a metà annullata: i ${this.puntata} puntati tornano a te` : ''),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.maniPro ? ` (${this.maniPro} da pro, +${this.premi})` : '') + (this.blackjack ? `, ${quanti(this.blackjack, 'blackjack', 'blackjack')}` : '') + (this.puntata ? `. Mano annullata: +${this.puntata} resi` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }

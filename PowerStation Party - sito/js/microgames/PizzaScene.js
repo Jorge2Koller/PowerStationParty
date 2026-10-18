@@ -662,7 +662,8 @@ export class PizzaScene extends MicrogiocoBase {
   alRientro() { this.pennello = null; if (this.trascina) { this.trascina.img.destroy(); this.trascina = null; } }
 
   risultato() {
-    const c = this.cfg, scoperti = this.scoperti.length, fuori = scoperti >= 2;
+    // (fuori = scoperti tutti: con il Guerra sono tre, e due scoperti non bastano più per perdere)
+    const c = this.cfg, scoperti = this.scoperti.length, fuori = scoperti >= this.imbucati.length;
     const punteggio = fuori ? Math.min(Math.round(this.punti), c.maxScoperti) : Math.round(this.punti);
     return {
       punteggio,
@@ -697,19 +698,20 @@ export class PizzaScene extends MicrogiocoBase {
         const sotto = this.imbucati.filter((m) => !m.scoperto);
         sotto.forEach((m, k) => {
           m.trucco?.setVisible(false);
-          const x = T.tavola.x0 + 112 + k * 46, f = this.add.container(x, T.tavola.y + 40, [ritratto(this, 0, 0, m.id, 22, 'occhiolino')]).setDepth(715).setScale(0);
+          // (passo 34: anche in tre stanno tutti sotto la tovaglia, che finisce a x1)
+          const x = T.tavola.x0 + 96 + k * 34, f = this.add.container(x, T.tavola.y + 40, [ritratto(this, 0, 0, m.id, 22, 'occhiolino')]).setDepth(715).setScale(0);
           this.tweens.add({ targets: f, scale: 1, delay: 300 + k * 200, duration: 220, ease: 'Back.out' });
           m.img.setVisible(false);
         });
         if (sotto.length) {
-          const fetta = im(this, T.tavola.x0 + 112, T.tavola.y + 44, 'fettaPizza', 0.8).setDepth(716).setAlpha(0);
-          this.tweens.add({ targets: fetta, alpha: 1, x: T.tavola.x0 + 112 + (sotto.length > 1 ? 46 : 20), delay: 800, duration: 700, yoyo: true, repeat: 1, ease: 'Sine.inOut' });
+          const fetta = im(this, T.tavola.x0 + 96, T.tavola.y + 44, 'fettaPizza', 0.8).setDepth(716).setAlpha(0);
+          this.tweens.add({ targets: fetta, alpha: 1, x: T.tavola.x0 + 96 + (sotto.length > 1 ? 34 : 20), delay: 800, duration: 700, yoyo: true, repeat: 1, ease: 'Sine.inOut' });
         }
         stelle(this, 240, 120, 8, 990);
       } else {
         Audio.sfx('sconfitta');
         titolo('FUORI TUTTI!', '#ff6b5a');
-        // il Boni insegue Oli e il Sego fuori dalla taverna, agitando la pala
+        // il Boni insegue gli imbucati (Oli, il Sego e il Guerra) fuori dalla taverna, agitando la pala
         const tutti = this.imbucati;
         tutti.forEach((m) => { m.trucco?.destroy(); m.trucco = null; m.img.setVisible(true).setTexture(`${m.id}_shock`).setDepth(717); });
         tutti.forEach((m, k) => m.img.setPosition(T.tavola.x0 + 20 + k * 30, Y_SEDUTI + 14));

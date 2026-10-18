@@ -4,7 +4,7 @@
 //  punto mirato. Da una finestra aperta entra e la stanza si riempie di fumo, che
 //  passa piano alle stanze accanto e si dirada col tempo. Sul muro o sulle persiane
 //  chiuse rimbalza nel cortile: fumo sprecato che copre la vista per un po'.
-//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (soglia in config.js).
+//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (65% in Lampo: soglia e sogliaLampo in config).
 //  Comandi: mouse e dito (fionda: appoggia, tira indietro e lascia), tastiera (frecce per
 //  mirare + SPAZIO tenuto: la forza sale e scende, si lancia al rilascio).
 //  Tre atti: all'inizio calma; poi TIRA VENTO (le finestre sbattono più spesso); alla fine
@@ -248,13 +248,13 @@ export class SegoScene extends MicrogiocoBase {
       const g = this.barraFumo, w = 176;
       g.clear();
       g.fillStyle(0x000000, 0.45); g.fillRoundedRect(152, 30, w, 6, 3);
-      g.fillStyle(pct >= c.soglia ? 0x7dff9a : 0xb06aff, 1);
+      g.fillStyle(pct >= this.soglia ? 0x7dff9a : 0xb06aff, 1);
       if (pct > 2) g.fillRoundedRect(152, 30, (w * Math.min(100, pct)) / 100, 6, 3);
-      g.fillStyle(0xffe14a, 1); g.fillRect(152 + (w * c.soglia) / 100 - 0.75, 28, 1.5, 10);
+      g.fillStyle(0xffe14a, 1); g.fillRect(152 + (w * this.soglia) / 100 - 0.75, 28, 1.5, 10);
       this.testoPunti.setText(puntiHud(this.punti));
       this.testoGranate.setText('FUMOGENI: ' + this.lanciate);
     }
-    if (!this.uscito && this.percentuale >= c.soglia) {
+    if (!this.uscito && this.percentuale >= this.soglia) {
       this.uscito = true;
       this.secondiRimasti = Math.ceil(this.tempoRimasto);
       this.termina();
@@ -400,11 +400,16 @@ export class SegoScene extends MicrogiocoBase {
     g.fillStyle(col, 1); if (t.forza > 0.06) g.fillRoundedRect(MANO.x + 21.5, 242.5 - 47 * t.forza, 5, 47 * t.forza, 2);
   }
 
+  // la soglia di fumo a cui Franci esce (più bassa in Lampo: vedi sogliaLampo in config)
+  get soglia() { return this.durata < this.cfg.durata ? this.cfg.sogliaLampo ?? this.cfg.soglia : this.cfg.soglia; }
+
   risultato() {
     const c = this.cfg, pct = Math.floor(this.percentuale);
     const bonus = this.uscito ? c.bonusUscita + c.bonusSecondo * this.secondiRimasti : Math.floor(pct * c.puntiFumo);
+    // se esce vale almeno il bronzo; se non esce, al bronzo non si arriva (tettoPrima)
+    const grezzo = Math.max(0, this.punti + bonus);
     return {
-      punteggio: Math.max(0, this.punti + bonus),
+      punteggio: this.uscito ? Math.max(c.medaglie.bronzo, grezzo) : Math.min(c.tettoPrima, grezzo),
       vittoria: this.uscito,
       riepilogo: this.uscito
         ? `Uscito con ${this.secondiRimasti}s di anticipo! A segno: ${this.centrate}/${this.lanciate}`
@@ -422,7 +427,7 @@ export class SegoScene extends MicrogiocoBase {
     for (const o of [this.inMano, this.manoMia, this.testoPunti, this.testoGranate, ...this.hudSego]) o.setVisible(false);
     Audio.sfx('tempo');
     const titolo = (s, col) => txt(this, 240, 24, s, { size: 18, color: col, depth: 710 });
-    if (ris.vittoria) {
+    if (this.uscito) {
       const P = CASA.porta;
       this.franciImg.setVisible(false);
       this.time.delayedCall(400, () => {

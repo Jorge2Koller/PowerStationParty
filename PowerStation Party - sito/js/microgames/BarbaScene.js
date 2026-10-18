@@ -66,6 +66,7 @@ export class BarbaScene extends MicrogiocoBase {
     this.tTaglio = 0;
     this.tSciacquo = 0;
     this.stordito = 0;    // dopo un "AHIA" il rasoio non taglia per un attimo
+    this.tRimprovero = 0; this.fumRimprovero = null;   // le frasi del Delu (la scena viene riusata)
     this.tEspr = 0;
     this.espr = 'normale';
     this.prec = null;       // dov'era l'attrezzo sulla faccia nel fotogramma prima (durante una passata)
@@ -390,7 +391,7 @@ export class BarbaScene extends MicrogiocoBase {
     this.locPrec = loc;
     this.vel = this.misuraVel(w, rado);
     this.precMondo = { x: w.x, y: w.y };
-    this.stordito -= dt; this.tSuono -= dt; this.tAvviso -= dt; this.tTaglio -= dt;
+    this.stordito -= dt; this.tSuono -= dt; this.tAvviso -= dt; this.tTaglio -= dt; this.tRimprovero -= dt;
 
     const da = this.prec ?? loc;
     const passi = Math.max(1, Math.ceil(Math.hypot(loc.x - da.x, loc.y - da.y) / 2));
@@ -511,8 +512,9 @@ export class BarbaScene extends MicrogiocoBase {
 
   // il Delu ti riprende (una frase delle sue), ma non a ogni errore: al massimo una ogni 2 secondi
   rimprovero() {
-    if (this.tRimprovero > this.trascorso) return;
-    this.tRimprovero = this.trascorso + 2;
+    // (un conto alla rovescia vero: trascorso salta in avanti con le penalità)
+    if (this.tRimprovero > 0) return;
+    this.tRimprovero = 2;
     this.fumRimprovero?.destroy();
     this.fumRimprovero = fumetto(this, Math.min(390, this.testa.x + 100), 112, caso(this.cfg.frasiErrore), 1400, 960);
   }

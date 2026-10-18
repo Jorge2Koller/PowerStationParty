@@ -81,7 +81,8 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { lontanoMin: 40, lontanoMax: 140, cadutaInizio: 70, cadutaFine: 125, crollo: 0.38, lanciaGiusto: 0.6, atti: { lancio: 1.2, sbagliati: 0.6 } },
+    // (Facile resta più facile di Normale anche dopo la scheda di valutazione: erano lontano 40-140, lanciaGiusto 0,6)
+    facile: { lontanoMin: 35, lontanoMax: 120, cadutaInizio: 70, cadutaFine: 125, crollo: 0.38, lanciaGiusto: 0.72, atti: { lancio: 1.2, sbagliati: 0.6 } },
     difficile: { lontanoMin: 80, lontanoMax: 230, cadutaFine: 175, crollo: 0.25, lanciaGiusto: 0.42, atti: { lancio: 0.85, sbagliati: 1.3 } },
   },
 };

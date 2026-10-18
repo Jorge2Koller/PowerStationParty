@@ -84,7 +84,8 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { atti: { foglietto: 1.5, avviso: 1.3, tempo: 1.3 }, secondiRapido: 7.5, sbirciata: 1.5 },
-    difficile: { atti: { foglietto: 0.7, avviso: 0.8, tempo: 0.85 }, secondiRapido: 5, sbirciata: 0.8 },
+    // (secondiRapido e sbirciata seguono i nuovi valori di Normale: erano 7,5 / 1,5 e 5 / 0,8)
+    facile: { atti: { foglietto: 1.5, avviso: 1.3, tempo: 1.3 }, secondiRapido: 10, sbirciata: 1.8 },
+    difficile: { atti: { foglietto: 0.7, avviso: 0.8, tempo: 0.85 }, secondiRapido: 6.5, sbirciata: 1 },
   },
 };
