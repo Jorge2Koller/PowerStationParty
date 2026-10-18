@@ -28,7 +28,9 @@ export default {
   // (revisione 4) ogni ragazza salvata vale più della precedente: la prima puntiSalvata, la seconda il
   // doppio... (2,5 x quante ne hai salvate, arrotondato: 3, 5, 8, 10, 13...). Così l'obiettivo, 8
   // ragazze, fa circa 100 (il bronzo), e chi ne salva il doppio vola. Prima ognuna valeva 10.
-  puntiSalvata: 2.5,
+  // (scheda di valutazione: "se salvi 8 ragazze perdi comunque". Con 2,5 le prime 8 facevano 92 punti,
+  // sotto il bronzo; con 2,8 fanno 101: 8 salvate bastano, come dice l'obiettivo)
+  puntiSalvata: 2.8,
   bonusSerie: 2,           // fughe di fila senza nessuna agganciata nel frattempo: +2 alla seconda, +4 alla terza... (erano 5)
   maxBonusSerie: 8,        // (era 20)
   malusAgganciata: 10,     // a fine partita, per ogni ragazza ancora agganciata (il totale non va sotto zero) (era 15)
@@ -38,7 +40,8 @@ export default {
   velTrascinata: 45,       // agganciata, il tentacolo la tira verso il Petri
   distanzaChiacchiera: 40, // ...fin qui
   // schiaffi
-  raggioTentacolo: 5,      // quanto lontano dal tentacolo vale il colpo (unità, oltre al suo spessore)
+  raggioTentacolo: 8,      // quanto lontano dal tentacolo vale il colpo (unità, oltre al suo spessore) (era 5: dal PC si mancava)
+  velPC: 0.88,             // dal computer (mouse o trackpad) i tentacoli vanno un po' più piano: era più difficile che col dito
   raggioDito: 4,           // col dito un po' di più
   // aiuti
   birra: { ricarica: 9, durata: 3, velPetri: 170 },   // (era lo shottino: stesso effetto, il Petri ci si fionda)

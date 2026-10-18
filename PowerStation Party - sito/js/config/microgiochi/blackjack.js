@@ -34,14 +34,15 @@ export default {
   // i tre atti: da quando (secondi), annuncio, secondi per puntare e per ogni scelta (poi il banco
   // punta il minimo per te, o stai)
   atti: [
-    { da: 0, tempo: 3 },
-    { da: 12, nome: 'IL BANCO ACCELERA!', tempo: 2.3 },
-    { da: 24, nome: 'ULTIME MANI!', tempo: 2 },
+    { da: 0, tempo: 2.6 },
+    { da: 12, nome: 'IL BANCO ACCELERA!', tempo: 2 },
+    { da: 24, nome: 'ULTIME MANI!', tempo: 1.7 },
   ],
   puntate: [10, 25, 50],
   // le attese del banco (dare le carte, tirare, pagare) per tanto: con 0,7 in 35 secondi si giocano
-  // 9-10 mani invece di 6-7, e la fortuna di una mano pesa meno
-  ritmoTavolo: 0.7,
+  // 9-10 mani invece di 6-7, e la fortuna di una mano pesa meno; con 0,5 (scheda di valutazione:
+  // "aumentare la velocità per fare più mani") se ne giocano ancora un paio in più
+  ritmoTavolo: 0.5,
   mazzi: 2,
   rimescola: 20,          // sotto queste carte rimaste, il sabot si rimescola
   stai: 17,               // il banco tira finché non arriva almeno a questo

@@ -433,6 +433,10 @@ export class BallataScene extends MicrogiocoBase {
       });
       this.time.delayedCall(1900, () => { if (!this.finito && this.fase !== 'alzata') this.mettiPosa('lori_canta'); });
       scuoti(this, 160, 0.004);
+      // niente errori a cascata: la vignetta giusta va al suo posto (resta sbagliata, senza punti) e
+      // quella che c'era torna libera nella casella lasciata. Prima restava inchiodata dove non doveva
+      // stare, e alla sua strofa era sbagliata per forza (scheda di valutazione)
+      this.time.delayedCall(350, () => this.rimetti(C.i, h));
     }
     this.disegnaSegni();
     this.time.delayedCall(700, () => { if (this.armata < 0) this.tweens.add({ targets: this.fumetto, alpha: 0, duration: 200, onComplete: () => this.fumetto.setVisible(false) }); });
@@ -441,6 +445,26 @@ export class BallataScene extends MicrogiocoBase {
       if (this.giuste === this.n) this.time.delayedCall(450, () => this.morale());
       this.fineCanzone = this.trascorso + 1.9;
     }
+  }
+
+  // dopo un colpo sbagliato sulla casella i (strofa h): la vignetta h prende il posto di quella battuta
+  rimetti(i, h) {
+    if (this.finito) return;
+    const C = this.celle[i], j = this.celle.findIndex((x) => x.i !== i && x.v === h);
+    if (j < 0) return;
+    const B = this.celle[j];
+    if (this.trascina?.i === j) { this.trascina = null; }
+    if (this.selezione === j) this.selezione = null;
+    [C.v, B.v] = [B.v, C.v];
+    [C.img, B.img] = [B.img, C.img];
+    [C.girata, B.girata] = [B.girata, C.girata];
+    if (C.girata) { C.girata = false; C.img.setTexture(`vign_${C.v}`); }
+    for (const X of [C, B]) {
+      this.tweens.killTweensOf(X.img);
+      X.img.setScale(this.scala).setDepth(24);
+      this.tweens.add({ targets: X.img, x: X.x, y: X.y, angle: 0, duration: 260, ease: 'Quad.out', onComplete: () => X.img.setDepth(20) });
+    }
+    Audio.sfx('foglio');
   }
 
   morale() {

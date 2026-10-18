@@ -377,7 +377,7 @@ export class PiovraScene extends MicrogiocoBase {
       const tx = r.x, ty = r.y - 26, D = Math.hypot(tx - b.x, ty - b.y);
       const voluto = Math.atan2(ty - b.y, tx - b.x);
       t.dir += Phaser.Math.Angle.Wrap(voluto - t.dir) * Math.min(1, dt * 8);
-      t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * dt;
+      t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * (eTouch() ? 1 : this.cfg.velPC ?? 1) * dt;
       // l'amico in mezzo: se il tentacolo gli passa contro (in qualunque punto) sbatte, e se
       // puntava la ragazza che lui protegge rinuncia appena ci arriva vicino
       const A = this.amico, punta = { x: b.x + Math.cos(t.dir) * t.len, y: b.y + Math.sin(t.dir) * t.len };
