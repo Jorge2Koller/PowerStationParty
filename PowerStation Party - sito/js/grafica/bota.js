@@ -146,28 +146,13 @@ function creaPelle(retro) {
 // ------------------------------------------------------------
 //  ATTREZZI E COMPARSE
 // ------------------------------------------------------------
-// tubetto di crema solare (18x40), beccuccio in basso: la goccia esce da (9, 39)
-function tubettoCrema(c) {
-  rrect(c, 2, 2, 14, 27, [6, 6, 3, 3]); c.fillStyle = gradL(c, 2, 0, 16, 0, [[0, '#c9ced9'], [0.35, '#ffffff'], [1, '#b9c0cf']]); c.fill(); tratto(c, CONT, 1.1);
-  rrect(c, 3.5, 8.5, 11, 13.5, 1.5); c.fillStyle = gradL(c, 0, 8, 0, 22, [[0, '#ffb23a'], [1, '#ff7a2e']]); c.fill(); tratto(c, 'rgba(0,0,0,0.25)', 0.5);
-  for (let i = 0; i < 8; i++) { const a = i * 0.785; c.beginPath(); c.moveTo(9 + Math.cos(a) * 2.9, 13.4 + Math.sin(a) * 2.9); c.lineTo(9 + Math.cos(a) * 4.1, 13.4 + Math.sin(a) * 4.1); tratto(c, '#fff3a0', 0.7); }
-  ellisse(c, 9, 13.4, 2.2, 2.2); c.fillStyle = '#fff3a0'; c.fill();
-  c.fillStyle = '#ffffff'; c.fillRect(5.2, 18.6, 7.6, 1.6);
-  rrect(c, 4, 28.5, 10, 4.5, 1.2); c.fillStyle = '#2f6fd8'; c.fill(); tratto(c, CONT, 0.9);
-  poli(c, [[6.5, 33], [11.5, 33], [9.8, 38.5], [8.2, 38.5]]); c.fillStyle = '#2f6fd8'; c.fill(); tratto(c, CONT, 0.8);
-}
+// (Tubetto, goccia, gabbiani, onda e ombrellone dall'alto non ci sono più: servivano al gioco di
+// prima, rifatto dopo la scheda di valutazione.)
 
 // la mano di chi spalma (40x56, palmo a 20, 35)
 function manoCrema(c) {
   rrect(c, 12, 44, 16, 13, 4); c.fillStyle = '#dca57c'; c.fill(); tratto(c, CONT, 1.6);
   manoAperta(c, '#e9b58d');
-}
-
-// goccia di crema (12x12)
-function gocciaCrema(c) {
-  const forma = () => { c.beginPath(); c.moveTo(6, 1.2); c.bezierCurveTo(10.5, 1, 11.4, 5, 10.2, 8); c.bezierCurveTo(9, 11.4, 3, 11.4, 1.6, 8.2); c.bezierCurveTo(0.4, 5, 1.5, 1.4, 6, 1.2); c.closePath(); };
-  forma(); c.fillStyle = gradR(c, 5, 5, 1, 7, [[0, '#ffffff'], [1, '#e3ebf6']]); c.fill(); tratto(c, 'rgba(120,150,190,0.7)', 0.7);
-  ellisse(c, 4.6, 4.2, 1.8, 1.2, -0.5); c.fillStyle = 'rgba(255,255,255,0.95)'; c.fill();
 }
 
 // il sole con la faccia (60x60): da sornione (0) a furibondo (3)
@@ -201,34 +186,6 @@ function sole(c, liv) {
     for (const x of [26.2, 30, 33.8]) { c.beginPath(); c.moveTo(x, 33.8); c.lineTo(x, 40.2); tratto(c, D, 0.6); }
     c.beginPath(); c.moveTo(22.5, 37); c.lineTo(37.5, 37); tratto(c, D, 0.6);
   }
-}
-
-// gabbiano ladro (34x30), guarda a destra; ali = true: ali alzate
-function gabbiano(c, ali) {
-  const G = '#8f98a8';
-  for (const x of [14, 18.5]) { c.beginPath(); c.moveTo(x, 21); c.lineTo(x - 0.5, 27.5); c.lineTo(x + 2.4, 27.8); tratto(c, '#f08a1e', 1.1); }
-  poli(c, [[7.5, 14], [1.5, 13], [3, 17.5], [8, 18.5]]); c.fillStyle = '#3a3f4a'; c.fill(); tratto(c, CONT, 0.8);
-  if (ali) { ellisse(c, 11, 8.5, 8.2, 3.4, -0.7); c.fillStyle = scuro(G, 0.15); c.fill(); tratto(c, CONT, 0.9); }
-  ellisse(c, 15, 17, 9.4, 6.2, 0.06); c.fillStyle = gradL(c, 0, 11, 0, 23, [[0, '#ffffff'], [1, '#dfe6ee']]); c.fill(); tratto(c, CONT, 1);
-  ellisse(c, 24.5, 10.2, 4.8, 4.6); c.fillStyle = '#ffffff'; c.fill(); tratto(c, CONT, 1);
-  poli(c, [[28.4, 9.2], [33.6, 11.4], [28.2, 12.8]]); c.fillStyle = '#ffc93a'; c.fill(); tratto(c, CONT, 0.8);
-  ellisse(c, 31.4, 11.6, 0.8, 0.7); c.fillStyle = '#e0352c'; c.fill();
-  ellisse(c, 25.6, 9.4, 1.05, 1.15); c.fillStyle = CONT; c.fill();
-  c.beginPath(); c.moveTo(23, 7); c.lineTo(27.6, 8.2); tratto(c, CONT, 1);              // sguardo da furfante
-  if (ali) ellisse(c, 12.5, 9.5, 8.4, 3.5, -0.5); else ellisse(c, 13, 16.2, 7, 3.8, 0.12);
-  c.fillStyle = G; c.fill(); tratto(c, CONT, 0.9);
-  c.beginPath(); if (ali) { c.moveTo(6, 12.6); c.lineTo(9, 7.6); } else { c.moveTo(7.5, 17.4); c.lineTo(12, 18.6); } tratto(c, '#3a3f4a', 1.1);
-}
-
-// lingua d'onda (190x40) che arriva da destra: la punta è a sinistra
-function onda(c) {
-  const forma = (m) => { c.beginPath(); c.moveTo(192, 1 + m); c.lineTo(44, 3 + m); c.bezierCurveTo(16, 4 + m, 2 + m, 12, 2 + m, 20); c.bezierCurveTo(2 + m, 28, 16, 36 - m, 44, 37 - m); c.lineTo(192, 39 - m); c.closePath(); };
-  forma(0); c.fillStyle = 'rgba(255,255,255,0.95)'; c.fill();
-  forma(3.2); c.fillStyle = gradL(c, 0, 0, 190, 0, [[0, 'rgba(150,222,238,0.9)'], [1, 'rgba(60,160,214,0.92)']]); c.fill();
-  const r = casuale(7);
-  c.fillStyle = 'rgba(255,255,255,0.75)';
-  for (let i = 0; i < 46; i++) { const x = 10 + r() * 175, y = 7 + r() * 26; ellisse(c, x, y, 0.6 + r() * 1.3, 0.5 + r()); c.fill(); }
-  for (let i = 0; i < 6; i++) { const x = 30 + r() * 140, y = 9 + r() * 22; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 7, y - 2.5, x + 14, y); tratto(c, 'rgba(255,255,255,0.6)', 0.9); }
 }
 
 function telefono(c) {
@@ -343,21 +300,6 @@ function sfondoLido(c) {
   c.fillStyle = gradR(c, 240, 135, 170, 340, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(60,30,0,0.2)']]); c.fillRect(0, 0, 480, 270);
 }
 
-// l'ombrellone visto dall'alto (60x60): otto spicchi bianchi e azzurri col bordo a festoni e il pomello
-function ombrelloneAlto(c) {
-  const R = 27, cx = 30, cy = 30;
-  for (let k = 0; k < 8; k++) {
-    const a0 = (k / 8) * Math.PI * 2, a1 = ((k + 1) / 8) * Math.PI * 2;
-    c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, R, a0, a1); c.closePath();
-    c.fillStyle = k % 2 ? '#ffffff' : '#2f8fd0'; c.fill();
-  }
-  // le stecche e il bordo a festoni
-  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); tratto(c, 'rgba(0,0,0,0.18)', 0.8); }
-  c.beginPath(); for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, r = R + (k % 2 ? 0 : 1.6); c[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); tratto(c, CONT, 1.4);
-  c.fillStyle = gradR(c, cx - 8, cy - 8, 2, R, [[0, 'rgba(255,255,255,0.28)'], [1, 'rgba(0,0,0,0.12)']]); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.fill();
-  ellisse(c, cx, cy, 3.4, 3.4); c.fillStyle = '#e8c048'; c.fill(); tratto(c, CONT, 1);
-}
-
 export function creaBota(scene) {
   const { w, h, dens } = CORPO, R = RIQUADRO_TESTA;
   tela(scene, 'bgLido', 480, 270, sfondoLido);
@@ -367,14 +309,8 @@ export function creaBota(scene) {
   // (le maschere della pelle una volta sola: il gruppo del Bota si rifà a ogni partita)
   PELLE.fronte ??= creaPelle(false);
   PELLE.retro ??= creaPelle(true);
-  tela(scene, 'tubettoCrema', 18, 40, tubettoCrema, 8);
   tela(scene, 'manoCrema', 40, 57, manoCrema, 6);
-  tela(scene, 'gocciaCrema', 12, 12, gocciaCrema, 10);
   for (let i = 0; i < 4; i++) tela(scene, 'sole_' + i, 60, 60, (c) => sole(c, i), 6);
-  tela(scene, 'gabbiano_0', 34, 30, (c) => gabbiano(c, false), 8);
-  tela(scene, 'gabbiano_1', 34, 30, (c) => gabbiano(c, true), 8);
-  tela(scene, 'ondaLido', 190, 40, onda, 5);
-  tela(scene, 'ombrelloneAlto', 60, 60, ombrelloneAlto, 6);
   tela(scene, 'telefono', 11, 17, telefono, 10);
   tela(scene, 'lattina', 10, 15, lattina, 10);
 }
