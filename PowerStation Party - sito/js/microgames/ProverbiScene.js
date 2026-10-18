@@ -13,7 +13,7 @@
 //  più sottolineata); DENNY SI SCATENA! (parla in fretta e dopo poco il fumetto sbiadisce: resta la
 //  casella). Si scrive in una casella HTML vera (js/casella.js): sul telefono si apre la sua
 //  tastiera, e quando è aperta fumetto, casella e barra salgono nella parte che resta visibile.
-//  L'ordine dei proverbi esce dal seme del round: tutti trovano gli stessi, nello stesso ordine.
+//  L'ordine dei proverbi esce dal seme del round e dal giocatore: ognuno ha i suoi, in un altro ordine.
 //  (Denny e le sue pose sono texture create qui e buttate alla fine: niente immagini grandi nuove.)
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
@@ -36,8 +36,12 @@ const NORMALE = {
 const ALTO = (alto, basso) => {
   // (su iPhone, aprendo la tastiera, Safari può far scorrere la pagina: allora si vede da "alto" in giù)
   const t = Math.max(0, Math.min(150, alto)), b = Math.max(t + 96, Math.min(270, basso)), y0 = t + 32;
+  // quello che stai scrivendo, ripetuto nel gioco (la casella vera, su qualche telefono, finisce sotto
+  // la tastiera): solo se sotto il fumetto c'è posto, se no andrebbe sopra il proverbio
+  const posto = b - y0 - 66 >= 30;
   return {
-    fumetto: { x: 8, y: y0, w: 372, h: Math.max(30, b - y0 - 50) }, barra: { x: 18, y: b - 45, w: 352 },
+    fumetto: { x: 8, y: y0, w: 372, h: posto ? b - y0 - 66 : Math.max(30, b - y0 - 50) }, barra: { x: 18, y: b - 45, w: 352 },
+    eco: posto ? { x: 194, y: b - 55 } : null,
     casella: { x: 70, y: b - 38, w: 210, h: 28 }, ok: { x: 286, y: b - 38, w: 60, h: 28 },
     // Denny piccolo in basso a destra, sotto punti e contatore
     denny: { x: 446, piedi: b + 4, taglia: Math.max(0.36, Math.min(0.62, (b - t - 54) / 144)) }, size: 11,
@@ -76,7 +80,9 @@ export class ProverbiScene extends MicrogiocoBase {
 
   prepara() {
     const c = this.cfg;
-    this.rnd = casuale(Sessione.seme);
+    // (il seme del round, ma diverso per ogni giocatore: chi gioca dopo non deve trovare gli stessi
+    // proverbi nello stesso ordine, scheda di valutazione)
+    this.rnd = casuale((Sessione.seme + 7919 * ((Sessione.giocatore?.i ?? 0) + 1)) >>> 0);
     this.lampo = Sessione.tipo === 'lampo';
     // l'ordine dei proverbi: dal seme del round, tutti diversi
     this.ordine = this.mescola(c.proverbi.map((_, i) => i));
@@ -104,6 +110,7 @@ export class ProverbiScene extends MicrogiocoBase {
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, size: 9, depth: 1001 });
     this.testoGiusti = txt(this, 474, 49, '', { ox: 1, size: 8, depth: 1001 });
     this.testoSerie = txt(this, 0, 0, '', { ox: 0, size: 9, color: '#ffe14a', depth: 31 });
+    this.eco = txt(this, 0, 0, '', { size: 11, color: '#ffe14a', depth: 32 }).setVisible(false);
     this.hud();
 
     // la casella (HTML): si chiude in pausa e si riapre alla ripresa
@@ -135,6 +142,7 @@ export class ProverbiScene extends MicrogiocoBase {
   }
 
   termina() {
+    this.eco?.setVisible(false);   // (aggiorna non gira più: se no resterebbe sul finale)
     this.chiudiCasella();
     this.stato = 'fine';     // (le correzioni ancora in arrivo non partono più)
     super.termina();
@@ -422,6 +430,9 @@ export class ProverbiScene extends MicrogiocoBase {
   aggiorna(dt) {
     this.controllaTastiera();
     this.casella?.aggiorna();
+    const eco = this.L.eco && this.casella?.haFuoco();
+    this.eco.setVisible(!!eco);
+    if (eco) this.eco.setPosition(this.L.eco.x, this.L.eco.y).setText('SCRIVI: ' + (this.casella.valore.trim() || '...'));
     // gli atti si annunciano
     const atto = this.cfg.atti.indexOf(this.attoA(this.trascorso));
     if (atto !== this.nAtto) {

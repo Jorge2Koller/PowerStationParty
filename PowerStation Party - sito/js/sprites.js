@@ -230,7 +230,7 @@ export function creaTexture(scene) {
   personaggio('lori_ripara', lori, 'shock', { posa: 'maniInTesta', maniSopra: true, accessorio: 'niente' });
   personaggio('lori_inchino', lori, 'felice', { posa: 'inchino' });
   // gli imbucati che, sotto la tovaglia, si passano la fetta e fanno l'occhiolino
-  for (const id of ['oli', 'sego']) personaggio(`${id}_occhiolino`, PERSONAGGI[id], 'occhiolino');
+  for (const id of ['oli', 'sego', 'guerra']) personaggio(`${id}_occhiolino`, PERSONAGGI[id], 'occhiolino');   // (gli imbucati della pizza)
   creaOggetti(scene);
   creaMedaglie(scene);
   // gli sfondi e le immagini di un microgioco solo: si creano quando servono (vedi gruppoPigro in

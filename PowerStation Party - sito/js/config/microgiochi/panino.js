@@ -37,11 +37,13 @@ export default {
   secondiRapido: 8,
   malusFuoriOrdine: 2,    // preso un ingrediente che non tocca ancora: non entra (era 3)
   malusSbagliato: 8,      // presa una schifezza: punti tolti e panino nel cestino (l'ordine resta) (era 10)
-  lanciaGiusto: 0.5,      // quante volte su 1 Marsupino lancia proprio l'ingrediente che serve adesso
+  lanciaGiusto: 0.62,     // quante volte su 1 Marsupino lancia proprio l'ingrediente che serve adesso
+  // (scheda di valutazione: "forse troppo difficile". Più lanci giusti e più vicini, presa più larga,
+  // pila più stabile, meno schifezze: erano lanciaGiusto 0,5, presa 20, crollo 0,3, lontano 60-190)
   // movimento del pane: velocità massima uguale per tastiera, mouse e dito (unità/s)
   velPane: 300,
   guadagnoDito: 1.15,     // col dito: quanto si sposta il pane per ogni unità di trascinamento
-  presa: 20,              // mezza larghezza della zona in cui si prende (cresce di 0,6 per strato)
+  presa: 24,              // mezza larghezza della zona in cui si prende (cresce di 0,6 per strato)
   // la pila ondeggia: molla (rigidità e smorzamento) spinta dalle accelerazioni del pane;
   // più strati = molla più morbida
   ondeggio: 0.003,
@@ -49,23 +51,23 @@ export default {
   smorzamento: 9,
   // il crollo: se la pila (con almeno due strati) pende più di "crollo", cadono gli strati di sopra
   // (stratiCrollo). Il limite si abbassa per ogni strato oltre il secondo (crolloPerStrato)
-  crollo: 0.3,
+  crollo: 0.34,
   crolloPerStrato: 0.12,
   stratiCrollo: 2,
   malusCrollo: 5,
   // lanci di Marsupino: velocità di caduta a inizio e fine partita
   cadutaInizio: 80,
-  cadutaFine: 150,
+  cadutaFine: 135,
   // la roba buona cade lontano dal pane: a una distanza tra questi due valori (unità)
-  lontanoMin: 60,
-  lontanoMax: 190,
+  lontanoMin: 45,
+  lontanoMax: 160,
   // i tre atti: da quando (secondi), annuncio, quanti ingredienti negli ordini nuovi, secondi tra
   // un lancio e l'altro, probabilità di una schifezza, di due lanci insieme e che la schifezza sia
   // tirata addosso al pane
   atti: [
     { da: 0, ricetta: 3, lancio: 0.95, sbagliati: 0.1, doppio: 0 },
-    { da: 12, nome: 'ORDINI DA QUATTRO!', ricetta: 4, lancio: 0.75, sbagliati: 0.18, doppio: 0.4 },
-    { da: 24, nome: 'MARSUPINO SI ARRABBIA!', ricetta: 5, lancio: 0.6, sbagliati: 0.3, doppio: 0.35, mira: 0.7 },
+    { da: 12, nome: 'ORDINI DA QUATTRO!', ricetta: 4, lancio: 0.75, sbagliati: 0.15, doppio: 0.4 },
+    { da: 24, nome: 'MARSUPINO SI ARRABBIA!', ricetta: 5, lancio: 0.6, sbagliati: 0.24, doppio: 0.35, mira: 0.55 },
   ],
   // tubetti di ketchup e maionese
   tubettoInizio: 3.4,     // secondi tra un tubetto e l'altro
@@ -79,7 +81,8 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { lontanoMin: 40, lontanoMax: 140, cadutaInizio: 70, cadutaFine: 125, crollo: 0.38, lanciaGiusto: 0.6, atti: { lancio: 1.2, sbagliati: 0.6 } },
+    // (Facile resta più facile di Normale anche dopo la scheda di valutazione: erano lontano 40-140, lanciaGiusto 0,6)
+    facile: { lontanoMin: 35, lontanoMax: 120, cadutaInizio: 70, cadutaFine: 125, crollo: 0.38, lanciaGiusto: 0.72, atti: { lancio: 1.2, sbagliati: 0.6 } },
     difficile: { lontanoMin: 80, lontanoMax: 230, cadutaFine: 175, crollo: 0.25, lanciaGiusto: 0.42, atti: { lancio: 0.85, sbagliati: 1.3 } },
   },
 };

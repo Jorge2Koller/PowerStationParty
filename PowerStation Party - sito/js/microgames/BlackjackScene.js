@@ -507,13 +507,22 @@ export class BlackjackScene extends MicrogiocoBase {
       punteggio,
       // (la condizione è il bronzo stesso; in Lampo, più corto, in proporzione)
       vittoria: punteggio >= c.medaglie.bronzo * Math.min(1, this.durata / c.durata),
-      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.maniPro ? ` (${this.maniPro} da pro, +${this.premi})` : '') + (this.blackjack ? `, ${quanti(this.blackjack, 'blackjack', 'blackjack')}` : ''),
+      riepilogo: `${fiches} fiches, ${quanti(this.vinte, 'mano vinta', 'mani vinte')} su ${this.mani}` + (this.maniPro ? ` (${this.maniPro} da pro, +${this.premi})` : '') + (this.blackjack ? `, ${quanti(this.blackjack, 'blackjack', 'blackjack')}` : '') + (this.puntata ? `. Mano annullata: +${this.puntata} resi` : ''),
       titoloFine: fiches < this.cfg.puntate[0] ? 'AL VERDE!' : 'TEMPO!',
     };
   }
 
   finale(ris, fatto) {
     this.mostra('nessuno');
+    // la mano a metà si annulla e si vede: le fiches puntate tornano nella banca (contavano già come tue)
+    if (this.puntata) {
+      this.fiches += this.puntata;
+      this.puntata = 0;
+      for (const f of this.pila) this.tweens.add({ targets: f, x: BANCA.x, y: BANCA.y, alpha: 0, duration: 350, onComplete: () => f.destroy() });
+      this.pila = [];
+      this.aggiornaBanca();
+      scritta(this, 240, 206, 'MANO ANNULLATA: LA PUNTATA TORNA A TE', { size: 8, color: '#ffe14a', durata: 1400, depth: 960 });
+    }
     this.fum?.destroy();
     this.fumZ?.destroy();
     for (const o of [this.testoMio, this.testoBanco, this.testoPuntata]) o.setVisible(false);

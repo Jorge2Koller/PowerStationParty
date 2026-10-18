@@ -377,7 +377,7 @@ export class PiovraScene extends MicrogiocoBase {
       const tx = r.x, ty = r.y - 26, D = Math.hypot(tx - b.x, ty - b.y);
       const voluto = Math.atan2(ty - b.y, tx - b.x);
       t.dir += Phaser.Math.Angle.Wrap(voluto - t.dir) * Math.min(1, dt * 8);
-      t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * dt;
+      t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * (eTouch() ? 1 : this.cfg.velPC ?? 1) * dt;
       // l'amico in mezzo: se il tentacolo gli passa contro (in qualunque punto) sbatte, e se
       // puntava la ragazza che lui protegge rinuncia appena ci arriva vicino
       const A = this.amico, punta = { x: b.x + Math.cos(t.dir) * t.len, y: b.y + Math.sin(t.dir) * t.len };
@@ -715,11 +715,18 @@ export class PiovraScene extends MicrogiocoBase {
   // ------------------------------------------------------------
   risultato() {
     const c = this.cfg, prese = this.ragazze.filter((r) => r.stato === 'presa').length;
+    const vittoria = this.salvate >= c.obiettivoSalvate;
+    // (mai sotto zero; e con l'obiettivo raggiunto le agganciate non portano sotto il bronzo:
+    // scheda di valutazione, "se salvi 8 ragazze perdi comunque". Con 2,8 a salvata le prime 8
+    // fanno 101, e bastava una ragazza agganciata allo scadere per scendere sotto i 100)
+    let punteggio = Math.max(0, this.punti - prese * c.malusAgganciata);
+    if (vittoria) punteggio = Math.max(punteggio, Math.min(this.punti, c.medaglie.bronzo));
+    const tolti = this.punti - punteggio;
     return {
-      punteggio: Math.max(0, this.punti - prese * c.malusAgganciata),   // (mai sotto zero)
-      vittoria: this.salvate >= c.obiettivoSalvate,
-      // (le agganciate si scrivono solo se tolgono davvero qualcosa: il totale non va sotto zero)
-      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (Math.min(this.punti, prese * c.malusAgganciata) > 0 ? `, agganciate ${prese} (-${Math.min(this.punti, prese * c.malusAgganciata)})` : ''),
+      punteggio,
+      vittoria,
+      // (le agganciate si scrivono solo se tolgono davvero qualcosa)
+      riepilogo: `salvate ${this.salvate}, serie max ${this.serieMax}` + (tolti > 0 ? `, agganciate ${prese} (-${tolti})` : ''),
       titoli: ['TEMPO!', 'IL PIOVRA HA VINTO!'],
     };
   }

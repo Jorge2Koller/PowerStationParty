@@ -26,7 +26,7 @@ I microgiochi sono ventuno:
 | `retromarcia` | Emilio in Retromarcia | Emilio (con Pastaffi e gli Shar Pei) |
 | `beerpong` | Beer Pong al Pallaio | i veterani del Pallaio (lo Zio e Marsupino) |
 | `xfactor` | Provini a X-Factor | i cantanti, Tini e Oli |
-| `pizza` | La pizza dal Boni | il Boni (con Oli e il Sego imbucati) |
+| `pizza` | La pizza dal Boni | il Boni (con Oli, il Sego e il Guerra imbucati) |
 | `ballata` | La ballata del Pallaio | Lori, il cantastorie |
 | `proverbi` | Le Perle di Denny | Denny (Pastaffi, il figlio di Emilio) |
 | `scontrino` | Scontrino, prego! | Michele, alla cassa (col Giso, il paladino degli scontrini) |
@@ -589,6 +589,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - contano solo gli errori di chi rade: la velocità è quella della mano (misurata sugli
     ultimi due decimi di secondo), e se è De Luca a muoversi di scatto o ad aprire la bocca
     sotto la lama non è un errore (`velSussulto` e `margineRincorsa` in `barba.js`)
+  - dopo un taglietto o un AHIA De Luca sbotta con una delle sue frasi: "Calma!", "Non ci metti
+    le mani!" o "Io ho anni di esperienza con la lametta" (al massimo una ogni 2 secondi;
+    `frasiErrore` in `barba.js`)
   - col dito: l'interruttore in basso a sinistra sceglie PENNELLO o RASOIO (si può
     cambiare anche a metà passata con un altro dito); l'attrezzo sta un po' sopra
     il dito, così si vede la lama; col dito si può andare un po' più veloci
@@ -627,6 +630,7 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     CHIUDE TUTTO
   - la traiettoria tratteggiata e il mirino dicono dove arriva: verde = finestra
     aperta, rosso = persiane chiuse, grigio = muro
+  - la tacca gialla sulla barra del fumo è dove Franci esce: all'80%, al 65% in Lampo
 - TorRONDAcelli (SPARA!):
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
@@ -642,8 +646,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
   - il banco sta su 17, il blackjack paga 3 a 2; nella sfida tutti e due trovano
     lo stesso mazzo
-  - poco tempo per decidere (la barra sotto le carte: 3 secondi, poi 2,3 dal 12° secondo,
-    2 dal 24°): poi il banco punta il minimo per te, o ti fa stare
+  - poco tempo per decidere (la barra sotto le carte: 2,6 secondi, poi 2 dal 12° secondo,
+    1,7 dal 24°): poi il banco punta il minimo per te, o ti fa stare. Il banco distribuisce svelto,
+    così in 35 secondi si giocano più mani
+  - se il tempo finisce a metà di una mano, la mano si annulla: la puntata torna nelle tue fiches
+    (si vede tornare in banca, con la scritta MANO ANNULLATA)
   - i punti sono le fiches vinte (sopra le 100 di partenza): la mano vinta paga la puntata,
     quella persa se la porta via, quindi quanto punti conta (al verde, finisce prima)
   - MOSSA DA PRO: la scelta uguale alla strategia di base. Una mano VINTA giocata tutta da pro il
@@ -656,10 +663,13 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - calcia quando il pallone arriva al piede: perfetto = sale dritto, buono =
     scappa un po', scarso = scappa tanto; se cade, la serie riparte
   - più palleggi di fila, più valgono: x1,5 ogni 5, fino a x3
-  - tre atti: calma; dal 12° secondo TIRA VENTO (il pallone deriva di lato, le righe
+  - tre atti: un filo di vento; dal 12° secondo TIRA VENTO (il pallone deriva di lato, le righe
     bianche sul prato dicono da che parte); dal 24° lo Zio calcia il PALLONE D'ORO:
     colpiscilo per 25 punti (se cade non succede niente, ma il tuo pallone intanto scende)
   - a ogni colpo la gamba dalla parte del pallone si alza (anche quella dello Zio)
+  - il colpo perfetto lascia la scia; ogni 5 palleggi di fila festa (saltello e coriandoli); quando
+    il pallone cade si alza la polvere; alla serie da vittoria (12) lo Zio resta a bocca aperta:
+    "Ma come...?!"
 - Il Passo del Passaseo (PEDALA!: la salita in bici, testa a testa col Passaseo):
   - si pedala un pedale alla volta, A TEMPO: FRECCE SINISTRA e DESTRA (o A e D); col dito (o
     col mouse) la metà sinistra e la metà destra dello schermo. In basso la pallina del ritmo va
@@ -713,6 +723,8 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     passano contro sbattono (BONK!) e lei e chi le sta accanto non si possono prendere
   - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
     vicino a lei, 1 e 2 gli aiuti (la birra va da sola nel punto più lontano dalle ragazze)
+  - dal computer (mouse o trackpad) i tentacoli vanno un po' più piano che col dito (`velPC` in
+    `piovra.js`), e lo schiaffo prende anche un po' accanto al tentacolo (`raggioTentacolo`)
   - tre atti: dal 12° secondo IL PETRI SI MUOVE; dal 24° TENTACOLI A SORPRESA (sbucano da
     sotto un tavolino o dalla consolle)
 - L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna):
@@ -789,7 +801,7 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
     `giudici`, `errori`; le note in `xfactor-mappa.json`, che fa `strumenti/beatmap.py` (vedi
     "La canzone di X-Factor" più sotto)
-- La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli e il Sego, che si sono imbucati):
+- La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli, il Sego e il Guerra, che si sono imbucati):
   - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
     la pizza va fatta A MEMORIA. Toccandolo (o TAB) lo si rivede un momento, ma si perde il bonus
     velocità
@@ -799,8 +811,8 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - PRONTA! (INVIO) la consegna; RIFAI (BACKSPACE) ricomincia la pizza
   - pizza giusta: il Boni la inforna e la porta in tavola. Sbagliata (un pezzo in più o in meno,
     un ingrediente che non c'era, l'ananas, poco pomodoro): la butta, corre a bere dalla caraffa e
-    scopre uno degli imbucati, che caccia fuori con la pala. Al secondo errore li scopre tutti e
-    due: FUORI TUTTI!, e finisce
+    scopre uno degli imbucati, che caccia fuori con la pala. Al terzo errore li ha scoperti tutti e
+    tre: FUORI TUTTI!, e finisce
   - gli imbucati stanno nascosti (sotto la tovaglia, dietro la botte, nella cesta della legna,
     dietro la tenda della cantina, sotto i cappotti) o travestiti a tavola tra gli invitati (la
     maschera di Giorgio, baffi finti e cappello, da cuoco). Gli invitati sono personaggi giocabili
@@ -827,7 +839,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     rigira una vignetta girata
   - quando la bacchetta cade: vignetta giusta, TOC, OOOH e monete nel cappello; sbagliata, Lori
     canta quello che c'è davvero nella casella ("...le chiavi nel bicchiere?!"), il pubblico ride,
-    volano i pomodori e lui fulmina il garzone. Una vignetta battuta resta lì, bloccata
+    volano i pomodori e lui fulmina il garzone. Subito dopo la vignetta giusta va da sola in quella
+    casella (senza punti) e quella sbagliata torna libera nella casella lasciata: un errore non ne
+    trascina un altro alla strofa dopo. Una vignetta battuta resta lì, bloccata
   - tre atti: LA PRIMA STROFA (la riga in alto: quella in basso è sotto il telo); dal 12° secondo
     IL VENTO (metà del telo vola via; le folate girano una vignetta o ne scambiano due già
     sistemate, e la bacchetta fa qualche finta: punta una casella, di solito lì accanto, e
@@ -844,7 +858,8 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     giusta e si preme INVIO. Sul computer si scrive e basta, senza clic (mentre si scrive le
     scorciatoie del gioco tacciono, tranne ESC per la pausa); sul telefono si tocca SCRIVI, che
     apre la tastiera, e si manda con Invio o con OK. Con la tastiera aperta fumetto, casella e
-    barra del tempo salgono nella parte che resta visibile, e Denny si fa piccolo
+    barra del tempo salgono nella parte che resta visibile, Denny si fa piccolo e sopra la barra si
+    legge quello che stai scrivendo (SCRIVI: ...), anche dove la casella finisce sotto la tastiera
   - maiuscole, spazi prima e dopo, accenti e apostrofi non contano; dalle parole di 5 lettere in su
     va bene anche un errore di battitura. La parola sbagliata di Denny non vale mai
   - giusta: la parola sbagliata si cancella con una riga rossa e sopra arriva quella giusta, Denny
@@ -859,7 +874,7 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     tempo e nessun errore di battitura
   - i proverbi sono in `proverbi` di `js/config/microgiochi/proverbi.js`: una riga ciascuno, il
     proverbio giusto con tra [quadre] la parola da scrivere, `dice` la parola sbagliata di Denny,
-    `perla: true` se è un suo sbaglio vero. L'ordine esce dal seme del round, senza ripetizioni
+    `perla: true` se è un suo sbaglio vero. L'ordine esce dal seme del round e da chi gioca (ognuno li trova in un ordine diverso), senza ripetizioni
 - Scontrino, prego! (SCONTRINO!: nella pizzeria al taglio "Da Michele" chi gioca è il vice del
   Giso, il paladino degli scontrini, e tiene d'occhio Michele alla cassa):
   - una regola sola: chi esce deve avere in mano lo scontrino, il foglietto BIANCO (bello grande,
@@ -919,8 +934,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   un piatto, +2 per il guanto; alla fine i piatti ancora tuoi: sotto i 3 niente, 3 = +50, 4 = +80,
   5 = +120. Persi tutti, finisce prima.
 - **Sego** (35 s): +5 per ogni fumogeno in una finestra aperta (+9 nella stanza di Franci), -3 per
-  quelli sprecati. Se Franci esce (80% di fumo in casa): +40 e +15 per ogni secondo che avanza; se
-  non esce, un quinto della percentuale di fumo.
+  quelli sprecati. Se Franci esce (80% di fumo in casa, 65% in Lampo): +40 e +15 per ogni secondo che
+  avanza, e vale almeno il bronzo; se non esce, un quinto della percentuale di fumo, e il totale si
+  ferma a 90 (la vittoria è farlo uscire).
 - **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana), +5 per ogni
   ombrellone ripreso; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +40, 4 = +70, 5 = +100.
 - **L'Ingiocabile** (35 s): 1 punto per ogni fiche vinta (sopra le 100 di partenza). Le mani vinte
@@ -939,9 +955,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   volta che Giorgio viene tirato fuori (+2 se era già quasi dentro), +5 se lo fermi o lo tiri giù
   dalla macchina di Emilio, -10 per ogni passaggio scroccato, -3 per il sosia (mai sotto zero).
   Vittoria con 4 guidate.
-- **Petri Tentacolari** (35 s): ogni ragazza salvata vale più della precedente (2,5 x quante ne hai
-  salvate: 3, 5, 8, 10...), più la serie (+2 alla seconda di fila, fino a +8); -10 per ogni ragazza
-  ancora agganciata alla fine. Vittoria con 8 ragazze.
+- **Petri Tentacolari** (35 s): ogni ragazza salvata vale più della precedente (2,8 x quante ne hai
+  salvate: 3, 6, 8, 11...), più la serie (+2 alla seconda di fila, fino a +8); -10 per ogni ragazza
+  ancora agganciata alla fine, ma con 8 salvate non si scende sotto il bronzo. Vittoria con 8 ragazze.
 - **L'Incubo degli Scapoli** (35 s): freccia perfetta 1, buona 0,5 (d'oro il doppio), per il
   moltiplicatore della serie; alla fine le ragazze dalla tua parte: sotto le 3 niente, 3 = +70,
   4 = +140, 5 = +200.
@@ -964,9 +980,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   all'argento, l'oro vuole quasi tutte le note perfette; chi tocca a caso non passa mai. In
   Lampo (15 secondi, il ritaglio dal pezzo forte) decide il verdetto e i punti sono quelli e basta.
 - **La pizza dal Boni** (35 s): ogni pizza giusta vale più della precedente (30, 35, 40, 45...),
-  +5 se consegnata entro 6 secondi senza rivedere il foglietto, +2 per ogni pizza giusta di fila
+  +5 se consegnata entro 8 secondi senza rivedere il foglietto, +2 per ogni pizza giusta di fila
   dopo la prima. Vittoria con 3 pizze giuste (il bronzo; 6 pizze perfette sono l'oro) senza farsi
-  scoprire tutti e due: se il Boni li scopre tutti e due, FUORI TUTTI! e i punti si fermano a 90.
+  scoprire tutti e tre: se il Boni li scopre tutti e tre, FUORI TUTTI! e i punti si fermano a 90.
 - **La ballata del Pallaio** (35 s): ogni strofa giusta vale più della precedente (10, 15, 20,
   25...), per la serie (+10% per ogni strofa giusta di fila dopo la prima); +60 per la morale se
   sono giuste tutte e 8. Vittoria con 5 strofe giuste su 8 (il bronzo); 7 giuste di fila sono

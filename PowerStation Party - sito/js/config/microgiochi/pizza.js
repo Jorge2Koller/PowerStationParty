@@ -8,31 +8,31 @@ export default {
   colore: 0xc0392b,
   musica: 'osteria',           // js/config/musiche.js
   ospite: { id: 'boni', etichetta: 'A CENA DAL:\nBONI' },
-  cast: ['oli', 'sego'],    // gli imbucati: chi li sceglie qui gioca "contro se stesso"
+  cast: ['oli', 'sego', 'guerra'],    // gli imbucati: chi li sceglie qui gioca "contro se stesso"
   comandi: [
     'Leggi la pizza sul foglietto: poi si gira, va fatta A MEMORIA (TAB: la rivedi, ma niente bonus)',
     'SPAZIO tenuto: il pomodoro. Da 1 a 6 (o clic sulla ciotola, poi sulla pizza): un pezzo',
-    'INVIO: PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al secondo, FUORI!',
+    'INVIO: PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al terzo, FUORI!',
   ],
   comandiTouch: [
     'Leggi la pizza sul foglietto: poi si gira, va fatta A MEMORIA (toccalo: la rivedi, ma niente bonus)',
     'Passa il dito in tondo sulla pasta: il pomodoro. Tocca la ciotola e poi la pizza: un pezzo',
-    'Poi PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al secondo, FUORI!',
+    'Poi PRONTA! Niente ananas. Una pizza sbagliata e il Boni scopre un imbucato: al terzo, FUORI!',
   ],
-  obiettivo: 'Fai 3 pizze giuste senza far scoprire tutti e due!',
+  obiettivo: 'Fai 3 pizze giuste senza far scoprire tutti e tre!',
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 3 pizze giuste
   // (l'obiettivo) sono il bronzo; ogni pizza giusta vale più della precedente.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoPizze: 3,
   // punti: la k-esima pizza giusta vale puntiPizza + crescitaPizza x (k - 1); più bonusRapido se
   // consegnata entro secondiRapido senza rivedere il foglietto; più la serie (pizze giuste di fila,
-  // bonusSerie x (serie - 1)). Se il Boni li scopre tutti e due i punti si fermano a maxScoperti.
+  // bonusSerie x (serie - 1)). Se il Boni li scopre tutti i punti si fermano a maxScoperti.
   // Così 2 pizze non arrivano mai a 100 (al massimo 77), 3 sì (almeno 105); 6 perfette fanno 315,
   // 7 fanno 392
   puntiPizza: 30,
   crescitaPizza: 5,
   bonusRapido: 5,
-  secondiRapido: 6,
+  secondiRapido: 8,         // (era 6: col foglietto più lungo si arrivava tardi comunque)
   bonusSerie: 2,
   maxScoperti: 90,
   // il pomodoro: la pizza è pronta se è coperto almeno questo (da 0 a 1); da tastiera, SPAZIO tenuto
@@ -62,11 +62,13 @@ export default {
   // difficile, scelta dell'utente. Per rimetterli, negli atti: sbuca: [3.5, 5.5] (ogni quanti secondi)
   // e avviso: 1.6 (quanti secondi per rimandarlo giù)
   atti: [
-    { da: 0, nome: 'LE PRIME PIZZE', menu: 0, foglietto: 3.2 },
-    { da: 12, nome: 'GLI INVITATI ORDINANO', menu: 1, foglietto: 2 },
-    { da: 24, nome: 'IL BONI HA FRETTA', menu: 1, foglietto: 0.8, tempo: 6.5 },
+    { da: 0, nome: 'LE PRIME PIZZE', menu: 0, foglietto: 4 },
+    { da: 12, nome: 'GLI INVITATI ORDINANO', menu: 1, foglietto: 3.5 },
+    { da: 24, nome: 'IL BONI HA FRETTA', menu: 1, foglietto: 2.6, tempo: 8 },
   ],
-  sbirciata: 1.1,           // secondi che il foglietto resta girato quando lo si rivede
+  // (scheda di valutazione: "più tempo per gli ingredienti": il foglietto restava 3,2 / 2 / 0,8
+  // secondi, e nel terzo atto 6,5 secondi a pizza)
+  sbirciata: 1.4,           // secondi che il foglietto resta girato quando lo si rivede
   // gli imbucati: dove si nascondono e come si travestono (il seme del round sceglie per ognuno
   // un nascondiglio o un travestimento, tutti diversi)
   nascondigli: ['tovaglia', 'botte', 'cesta', 'tenda', 'cappotti'],
@@ -82,7 +84,8 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { atti: { foglietto: 1.5, avviso: 1.3, tempo: 1.3 }, secondiRapido: 7.5, sbirciata: 1.5 },
-    difficile: { atti: { foglietto: 0.7, avviso: 0.8, tempo: 0.85 }, secondiRapido: 5, sbirciata: 0.8 },
+    // (secondiRapido e sbirciata seguono i nuovi valori di Normale: erano 7,5 / 1,5 e 5 / 0,8)
+    facile: { atti: { foglietto: 1.5, avviso: 1.3, tempo: 1.3 }, secondiRapido: 10, sbirciata: 1.8 },
+    difficile: { atti: { foglietto: 0.7, avviso: 0.8, tempo: 0.85 }, secondiRapido: 6.5, sbirciata: 1 },
   },
 };
