@@ -2,10 +2,14 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party-5';   // versione 5: la canzone vera di "Provini a X-Factor" (prima: Fasi 3-7)
-// i ritagli della canzone di "Provini a X-Factor" e la sua mappa delle note: si scaricano subito,
-// all'installazione (in tutto 0,7 MB), così il gioco installato li ha anche senza rete
-const SUBITO = ['audio/cambiare-aria.mp3', 'audio/cambiare-aria-lampo.mp3', 'js/config/microgiochi/xfactor-mappa.json'];
+const CACHE = 'powerstation-party-6';   // versione 6: le anteprime dei microgiochi (prima: la canzone di X-Factor, Fasi 3-7)
+// i ritagli della canzone di "Provini a X-Factor" e la sua mappa delle note, e i riquadri della lista
+// dei microgiochi: si scaricano subito, all'installazione (in tutto 0,9 MB), così il gioco installato li
+// ha anche senza rete (le foto grandi delle anteprime si salvano la prima volta che si vedono)
+const MICROGIOCHI = ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida',
+  'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino'];
+const SUBITO = ['audio/cambiare-aria.mp3', 'audio/cambiare-aria-lampo.mp3', 'js/config/microgiochi/xfactor-mappa.json',
+  ...MICROGIOCHI.map((id) => `icone/anteprime/${id}.webp`)];
 const FONT = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {

@@ -36,7 +36,7 @@ export class ImpostazioniScene extends Phaser.Scene {
       { tipo: 'si', chiave: 'audio', eti: 'Audio', aiuto: perDito('Audio acceso o spento (anche col tasto M)', 'Audio acceso o spento (anche col pulsante in alto a destra)') },
       { tipo: 'si', chiave: 'vibrazione', eti: 'Vibrazione', aiuto: 'Colpi ed errori fanno vibrare il telefono (dove si può: Android sì, iPhone no)' },
       { tipo: 'scelta', chiave: 'difficolta', eti: 'Difficoltà di partenza', aiuto: 'Il livello di chi non l\'ha scelto (quello di ognuno: GIOCA, poi LIVELLI)' },
-      { tipo: 'si', chiave: 'provaLampo', eti: 'Prova lampo', aiuto: 'Pochi secondi di prova prima di un microgioco mai visto (in arrivo)' },
+      { tipo: 'si', chiave: 'provaLampo', eti: 'Prova', aiuto: 'Prima di un microgioco mai giocato il cursore parte su PROVA (la prova c\'è sempre: dura finché premi PRONTO)' },
       { tipo: 'scelta', chiave: 'velocitaTesti', eti: 'Velocità dei testi', aiuto: 'Quanto restano a schermo scritte e fumetti' },
       { tipo: 'si', chiave: 'tremolio', eti: 'Schermo che trema', aiuto: 'Il tremolio sui colpi: spegnilo se ti dà fastidio' },
       { tipo: 'ritardo', chiave: 'ritardoAudio', eti: 'Ritardo audio', aiuto: perDito('Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. INVIO: lo misuro io (PROVA). SINISTRA/DESTRA: a mano', 'Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. PROVA: lo misuro io. Le frecce: a mano') },
@@ -326,6 +326,7 @@ export class RitardoScene extends Phaser.Scene {
     // la musica di prima: quella del menu, o del microgioco in pausa
     const id = this.dati?.chiave?.replace('mg_', '');
     Audio.musica(this.dati?.ritorno === 'Pausa' ? CONFIG.microgiochi[id]?.musica ?? 'gioco' : 'menu');
+    if (this.dati?.ritorno === 'Pausa') Audio.pausaMusica();   // (il microgioco è in pausa: la sua musica resta ferma)
     this.scene.start('Impostazioni', { ritorno: this.dati?.ritorno, chiave: this.dati?.chiave });
   }
 }

@@ -6,6 +6,7 @@ export default {
   verbo: 'IMPILA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0xe08a2a,
+  musica: 'cucina',           // js/config/musiche.js
   ospite: { id: 'marsupino', etichetta: 'CHEF:\nMARSUPINO' },
   comandi: [
     'FRECCE SINISTRA/DESTRA (o A/D), oppure il mouse: muovi il pane',

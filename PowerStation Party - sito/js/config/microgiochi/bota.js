@@ -6,6 +6,7 @@ export default {
   verbo: 'SPALMA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x1fa8c9,
+  musica: 'calypso',           // js/config/musiche.js
   ospite: { id: 'bota', etichetta: 'DA SPALMARE:\nIL BOTA' },
   comandi: [
     'TIENI PREMUTO e passa la mano: coprilo tutto di crema (non su occhi e bocca)',

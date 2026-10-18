@@ -6,6 +6,7 @@ export default {
   verbo: 'RADI!',           // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0xc0392b,
+  musica: 'barbiere',           // js/config/musiche.js
   ospite: { id: 'marco', etichetta: "IL CLIENTE:\nO'SFURNACCHIAT" },
   comandi: [
     'TASTO DESTRO (o CTRL+clic): stendi la schiuma',

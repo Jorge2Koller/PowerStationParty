@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <!-- Pagina di prova delle musiche (non fa parte del gioco: non è collegata da nessuna parte e il
+       service worker non la salva). Si apre dal server del gioco: http://.../prova-musiche.html -->
+  <title>Prova musiche</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --fondo: #1f1430; --carta: #2c1f45; --testo: #fff3d6; --giallo: #ffe14a; --verde: #7dff9a; --tenue: #b9a9d6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fondo); color: var(--testo); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    header { position: sticky; top: 0; z-index: 2; background: var(--fondo); padding: 12px 16px 10px; border-bottom: 2px solid #3a2a5a; }
+    h1 { margin: 0 0 4px; font-size: 20px; color: var(--giallo); }
+    h2 { margin: 22px 16px 8px; font-size: 16px; color: var(--giallo); }
+    p { margin: 0; color: var(--tenue); font-size: 13px; }
+    .atti { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+    .atti button, .stop { border: 2px solid var(--giallo); background: transparent; color: var(--giallo); border-radius: 999px; padding: 5px 12px; font: inherit; cursor: pointer; }
+    .atti button.su { background: var(--giallo); color: var(--fondo); }
+    .stop { border-color: #ff8a7a; color: #ff8a7a; margin-left: auto; }
+    .lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; padding: 0 16px; }
+    .brano { text-align: left; background: var(--carta); color: var(--testo); border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; font: inherit; cursor: pointer; }
+    .brano b { display: block; color: var(--giallo); }
+    .brano span { display: block; color: var(--tenue); font-size: 13px; }
+    .brano.su { border-color: var(--verde); }
+    .brano.su b { color: var(--verde); }
+    footer { padding: 24px 16px 40px; color: var(--tenue); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Prova musiche</h1>
+    <p>Tocca una musica per ascoltarla; l'atto si cambia qui sotto (cambia a inizio battuta). I jingle sono in fondo.</p>
+    <div class="atti" id="atti">
+      <button data-atto="1" class="su">Atto 1</button>
+      <button data-atto="2">Atto 2</button>
+      <button data-atto="3">Atto 3</button>
+      <button data-atto="4">Ultimi 5 s</button>
+      <button class="stop" id="stop">Stop</button>
+    </div>
+  </header>
+  <h2>Musiche</h2>
+  <div class="lista" id="brani"></div>
+  <h2>Jingle</h2>
+  <div class="lista" id="jingle"></div>
+  <footer>Le musiche sono in js/config/musiche.js. Sul telefono: controlla che non sia in silenzioso.</footer>
+  <script type="module">
+    import { Audio } from './js/audio.js';
+    import { BRANI, JINGLE } from './js/config/musiche.js';
+    import { CONFIG } from './js/config.js';
+
+    // per ogni musica, i microgiochi che la usano
+    const usata = {};
+    for (const [id, m] of Object.entries(CONFIG.microgiochi)) if (m.musica) (usata[m.musica] ??= []).push(m.titolo);
+    usata.menu = ['Menu e schermate'];
+    const NOMI = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si' };
+    const tono = (b) => `${NOMI[b.tonica[0]]}${b.tonica[1] === 'b' ? '♭' : b.tonica[1] === '#' ? '♯' : ''} ${b.modo ?? 'maggiore'}`;
+
+    let atto = 1, scelto = null;
+    const applica = () => Audio.atto(Math.min(atto, 3), atto === 4);
+    const bottone = (dove, testo, sotto, fn) => {
+      const b = document.createElement('button');
+      b.className = 'brano';
+      b.innerHTML = `<b></b><span></span>`;
+      b.querySelector('b').textContent = testo;
+      b.querySelector('span').textContent = sotto;
+      b.onclick = () => { Audio.sblocca(); fn(b); };
+      document.getElementById(dove).append(b);
+    };
+    for (const [nome, b] of Object.entries(BRANI)) {
+      bottone('brani', b.titolo, `${(usata[nome] ?? []).join(', ')} · ${b.carattere} · ${b.bpm} bpm · ${tono(b)}`, (el) => {
+        scelto?.classList.remove('su'); el.classList.add('su'); scelto = el;
+        Audio.musica(null); Audio.musica(nome); applica();
+      });
+    }
+    const NOMI_JINGLE = { vittoria: 'Vittoria', sconfitta: 'Sconfitta', medagliaBronzo: 'Medaglia di bronzo', medagliaArgento: "Medaglia d'argento", medagliaOro: "Medaglia d'oro", trofeo: 'Trofeo' };
+    for (const nome of Object.keys(NOMI_JINGLE)) bottone('jingle', NOMI_JINGLE[nome], JINGLE[nome].bpm + ' bpm', () => Audio.jingle(nome));
+    bottone('jingle', 'Conto alla rovescia', '3, 2, 1, VIA!', () => ['conto3', 'conto2', 'conto1', 'contoVia'].forEach((j, k) => setTimeout(() => Audio.jingle(j), k * 650)));
+
+    document.querySelectorAll('#atti [data-atto]').forEach((b) => b.onclick = () => {
+      Audio.sblocca();
+      atto = Number(b.dataset.atto);
+      document.querySelectorAll('#atti [data-atto]').forEach((x) => x.classList.toggle('su', x === b));
+      applica();
+    });
+    document.getElementById('stop').onclick = () => { Audio.musica(null); scelto?.classList.remove('su'); scelto = null; };
+    for (const ev of ['pointerdown', 'touchend', 'click']) addEventListener(ev, () => Audio.sblocca(), { capture: true, passive: true });
+  </script>
+</body>
+</html>

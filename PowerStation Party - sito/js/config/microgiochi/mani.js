@@ -6,6 +6,7 @@ export default {
   verbo: 'SCIAF!',          // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x2f8a5a,
+  musica: 'comica',           // js/config/musiche.js
   ospite: { id: 'guerra', etichetta: 'OCCHIO A:\nGUERRA' },
   comandi: [
     'CLIC sulle mani di Guerra: schiaffo! (o i tasti 1-5: la mano su quel piatto)',

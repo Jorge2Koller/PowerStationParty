@@ -6,6 +6,7 @@ export default {
   verbo: 'SPILLA!',         // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0xb5651d,
+  musica: 'bar',           // js/config/musiche.js
   ospite: { id: 'beppe', etichetta: 'CONTRO:\nBEPPE' },
   comandi: [
     'Tieni premuto SPAZIO per spillare',

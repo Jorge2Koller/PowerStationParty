@@ -101,10 +101,6 @@ export const CONFIG = {
   // frasi di sfottò e di pareggio della classifica finale (js/config/frasi.js)
   sfotto, sfottoTanti, frasiPareggio,
 
-  // prova lampo: la prima volta che si incontra un microgioco (Impostazioni: Prova lampo),
-  // prima della partita vera si gioca tanti secondi di prova, che non contano
-  provaLampo: 6,
-
   // premi buffi di fine sfida (js/config/premi.js) e schermata Novità (js/config/novita.js)
   premi, novita,
 

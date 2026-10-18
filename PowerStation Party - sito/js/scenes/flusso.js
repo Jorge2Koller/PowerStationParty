@@ -53,6 +53,47 @@ function sfotto(G, ordine) {
     .replaceAll('{tutti}', G.map((g) => g.nome).join(', '));
 }
 
+// I due pulsanti in fondo all'introduzione: PROVA e PRONTO! (frecce + SPAZIO o INVIO, P per la prova,
+// oppure un clic o un tocco sul pulsante). primaProva = il cursore parte su PROVA.
+function sceltaProva(scene, y, primaProva, prova, pronto) {
+  const voci = [{ testo: 'PROVA', x: 186, w: 78, fn: prova }, { testo: 'PRONTO!', x: 294, w: 96, fn: pronto }];
+  const c = scene.add.container(0, 0).setDepth(20);
+  let sel = primaProva ? 0 : 1, fatto = false, attivo = false;
+  const g = scene.add.graphics();
+  c.add(g);
+  const scritte = voci.map((v) => { const t = txt(scene, v.x, y, v.testo, { size: 10 }); c.add(t); return t; });
+  const disegna = () => {
+    g.clear();
+    voci.forEach((v, i) => {
+      const su = i === sel;
+      g.fillStyle(0x000000, 0.35); g.fillRoundedRect(v.x - v.w / 2 + 1.5, y - 8.5, v.w, 18, 9);
+      g.fillStyle(su ? 0xffe14a : 0x1f1430, su ? 1 : 0.85); g.fillRoundedRect(v.x - v.w / 2, y - 10, v.w, 18, 9);
+      g.lineStyle(1.6, su ? 0xffffff : 0xffe14a, 1); g.strokeRoundedRect(v.x - v.w / 2, y - 10, v.w, 18, 9);
+      scritte[i].setColor(su ? '#1f1430' : '#ffe14a').setStroke(su ? '#ffe14a' : '#1f1430', su ? 0 : 4);
+    });
+  };
+  // (i tasti aspettano un attimo, per quelli tenuti premuti dalla schermata prima; il clic e il tocco no)
+  const scegli = (i, tasto = false) => { if (fatto || (tasto && !attivo)) return; fatto = true; voci[i].fn(); };
+  const muovi = (i) => { if (i === sel || fatto) return; sel = i; Audio.sfx('muovi'); disegna(); };
+  voci.forEach((v, i) => {
+    const z = scene.add.zone(v.x, y - 1, v.w + 6, 24).setInteractive({ useHandCursor: true });
+    z.on('pointerover', () => muovi(i));
+    z.on('pointerdown', () => { muovi(i); scegli(i); });
+    c.add(z);
+  });
+  scene.tweens.add({ targets: scritte, scale: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+  disegna();
+  // (come attendiInvio: un attimo prima di ascoltare, così i tasti tenuti premuti non contano)
+  scene.time.delayedCall(350, () => {
+    attivo = true;
+    const k = scene.input.keyboard, ok = (e) => { if (!e.repeat) scegli(sel, true); };
+    k.on('keydown-LEFT', () => muovi(0)); k.on('keydown-RIGHT', () => muovi(1));
+    k.on('keydown-SPACE', ok); k.on('keydown-ENTER', ok);
+    k.on('keydown-P', (e) => { if (!e.repeat) { muovi(0); scegli(0, true); } });
+  });
+  return c;
+}
+
 // ------------------------------------------------------------
 export class IntroScene extends Phaser.Scene {
   constructor() { super('Intro'); }
@@ -94,10 +135,13 @@ export class IntroScene extends Phaser.Scene {
       this.tweens.add({ targets: v, scale: 1.12, delay: 550, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
 
-    // prova lampo: la prima volta che si incontra questo microgioco (su questo telefono o computer)
-    // si gioca prima qualche secondo di prova; in una sfida la fanno tutti i giocatori del round
+    // PROVA o PRONTO!: prima di ogni turno si può provare il microgioco (una partita come quella vera,
+    // ma diversa e che non conta), finché chi gioca non preme PRONTO. Tornando dalla prova si parte
+    // subito col conto alla rovescia. Per i microgiochi mai giocati su questo telefono o computer il
+    // cursore parte su PROVA (Impostazioni: Prova)
     const chiaveTurno = `${S.seme}:${S.passo}`;
-    const prova = Salvataggio.impostazioni.provaLampo && S.provaFatta !== chiaveTurno && (!Salvataggio.dati.visti[id] || S.provaRound === S.seme);
+    const dallaProva = S.dopoProva === chiaveTurno;
+    S.dopoProva = null;
 
     // chi gioca (travestito, se gioca contro se stesso)
     ombra(this, 60, 224, 62);
@@ -126,8 +170,7 @@ export class IntroScene extends Phaser.Scene {
     txt(this, 240, cima + 11, 'COMANDI', { size: 9, color: '#ffe14a', depth: 2 });
     const tc = txt(this, 240, cima + 18, (eTouch() && m.comandiTouch ? m.comandiTouch : m.comandi).join('\n'), { size: 7, oy: 0, spacing: 0, wrap: 246, depth: 2 });
     const to = txt(this, 240, tc.y + tc.height + 1, m.obiettivo, { size: 8, oy: 0, color: '#7dff9a', wrap: 246, depth: 2 });
-    let td = txt(this, 240, to.y + to.height - 2, `Durata: ${m.durata} secondi`, { size: 6.5, oy: 0, color: '#fff3d6', depth: 2 });
-    if (prova) td = txt(this, 240, td.y + td.height - 1, `PROVA LAMPO: prima ${CONFIG.provaLampo} secondi per provare (non contano)`, { size: 6.5, oy: 0, color: '#ff9ac4', wrap: 246, depth: 2 });
+    const td = txt(this, 240, to.y + to.height - 2, `Durata: ${S.tipo === 'lampo' ? CONFIG.modalita.lampo.durata : m.durata} secondi`, { size: 6.5, oy: 0, color: '#fff3d6', depth: 2 });
     const alt = td.y + td.height + 3 - cima;
     pannello(this, 240, cima + alt / 2, 256, alt, { depth: 1 });
 
@@ -142,15 +185,14 @@ export class IntroScene extends Phaser.Scene {
       yPronto = Math.max(252, yb + 17);
     }
 
-    const pronto = txt(this, 240, yPronto, perDito('Premi SPAZIO quando sei pronto!', 'Tocca lo schermo quando sei pronto!'), { size: 10, color: '#ffe14a' });
-    lampeggia(this, pronto);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
     // sul telefono non c'è ESC: freccia per tornare al menu, audio e schermo intero
     if (eTouch()) pulsante(this, 16, 13, 'indietro', () => this.scene.start('Menu'));
     pulsantiAngolo(this);
 
-    attendiInvio(this, () => {
-      pronto.destroy();
+    const parti = () => {
+      bottoni?.destroy();
+      Audio.musica(null);   // (durante il conto alla rovescia la musica tace: si sente il conto)
       // durante il conto alla rovescia regole e personaggi si scuriscono: i numeri si leggono meglio
       const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(90);
       this.tweens.add({ targets: velo, fillAlpha: 0.78, duration: 180 });
@@ -160,18 +202,18 @@ export class IntroScene extends Phaser.Scene {
       const conto = S.tipo === 'lampo' ? [m.verbo ?? 'VIA!'] : ['3', '2', '1', m.verbo ?? 'VIA!'];
       conto.forEach((num, k) => this.time.delayedCall(k * 650, () => {
         const i = k + 4 - conto.length;   // (0, 1, 2 = i numeri; 3 = il comando)
-        Audio.sfx(i < 3 ? 'bip' : 'via');
+        Audio.jingle(['conto3', 'conto2', 'conto1', 'contoVia'][i]);
         const t = txt(this, 240, 135, num, { size: i < 3 ? 70 : num.length > 8 ? 46 : 56, color: i < 3 ? '#ffffff' : '#7dff9a', thick: 10, depth: 100 });
         t.setScale(2.5).setAlpha(0);
         this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 220, ease: 'Back.out' });
         this.tweens.add({ targets: t, alpha: 0, scale: 0.6, delay: 480, duration: 150, onComplete: () => t.destroy() });
         scuoti(this, 80, 0.004);
       }));
-      this.time.delayedCall(conto.length * 650, () => {
-        if (prova) Object.assign(S, { prova: true, provaRound: S.seme, provaFatta: chiaveTurno });
-        this.scene.start('mg_' + id);
-      });
-    }, ['SPACE', 'ENTER']);
+      this.time.delayedCall(conto.length * 650, () => this.scene.start('mg_' + id));
+    };
+    const prova = () => { Audio.sfx('scegli'); S.prova = true; this.scene.start('mg_' + id); };
+    const bottoni = dallaProva ? null : sceltaProva(this, yPronto, !Salvataggio.dati.visti[id] && Salvataggio.impostazioni.provaLampo !== false, prova, parti);
+    if (dallaProva) parti();
   }
 }
 
@@ -190,10 +232,13 @@ export class RisultatoScene extends Phaser.Scene {
       // statistiche, record, Pinte e trofei (js/progressi.js)
       this.progressi = Progressi.dopoTurno({ id: S.idCorrente, punteggio: r.punteggio, giocatore: g, controSeStesso: S.controSeStesso });
     } else this.progressi = null;
-    Audio.musica('menu');
     this.input.setDefaultCursor('default');
     raggi(this, r.vittoria ? 0x3fae74 : 0x8a5a9a, r.vittoria ? 0x62cf96 : 0xa878b8);
-    Audio.sfx(r.vittoria ? 'vittoria' : 'sconfitta');
+    // prima il jingle (se il finale del microgioco non l'ha appena suonato; con la medaglia suona il suo,
+    // al timbro), poi la musica del menu
+    Audio.musica(null);
+    if (!(intero && r.vittoria)) Audio.sfx(r.vittoria ? 'vittoria' : 'sconfitta');
+    this.time.delayedCall(2600, () => Audio.musica('menu'));
 
     txt(this, 240, 14, m.titolo, { size: 8 });
     scritta(this, 240, 44, r.vittoria ? 'VITTORIA!' : 'SCONFITTA!', { size: 26, color: r.vittoria ? '#ffe14a' : '#ffb0a4', durata: 999999 });
@@ -310,7 +355,7 @@ export class RisultatoScene extends Phaser.Scene {
       const Y = this.yPunti, img = im(this, 262, Y - 2, 'medaglia_' + tipo, 1.3).setAngle(-10).setDepth(3), s0 = img.scaleX;
       img.setScale(s0 * 3).setAlpha(0);
       this.tweens.add({ targets: img, scale: s0, alpha: 1, duration: 200, ease: 'Quad.in', onComplete: () => {
-        Audio.sfx(tipo === 'oro' ? 'bonus' : 'sbam');
+        Audio.jingle({ bronzo: 'medagliaBronzo', argento: 'medagliaArgento', oro: 'medagliaOro' }[tipo]);
         scuoti(this, 90, 0.004);
         stelle(this, 262, Y - 2, tipo === 'oro' ? 9 : 5);
         this.tweens.add({ targets: img, angle: 10, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' });

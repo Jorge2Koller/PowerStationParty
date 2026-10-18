@@ -6,7 +6,7 @@ export default {
   verbo: 'CORREGGI!',       // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x2f6f8f,
-  musica: 'festa',          // la musica del Pallaio (quella del beer pong)
+  musica: 'quiz',           // js/config/musiche.js
   // Denny è Pastaffi, il figlio di Emilio: chi sceglie Pastaffi qui gioca "contro se stesso"
   ospite: { id: 'pastaffi', etichetta: 'LE PERLE DI:\nDENNY' },
   comandi: [

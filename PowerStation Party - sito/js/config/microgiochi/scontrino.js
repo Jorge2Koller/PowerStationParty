@@ -8,23 +8,24 @@ export default {
   verbo: 'SCONTRINO!',      // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x2f7a5a,
-  musica: 'osteria',
+  musica: 'guardie',           // js/config/musiche.js
   nomeLocale: 'Da Michele',
-  // Michele alla cassa; il Giso, il paladino degli scontrini, in primo piano (chi gioca è il suo vice).
+  // Michele alla cassa; il Giso, il paladino degli scontrini, in primo piano (chi gioca è il suo vice;
+  // il Giso è bassino: è sempre più basso di chi gioca).
   // Chi sceglie Michele o il Giso qui gioca "contro se stesso"
   ospite: { id: 'michele', etichetta: 'ALLA CASSA:\nMICHELE' },
   cast: ['giso'],
   comandi: [
-    'Lo scontrino vero: tasti, prezzo, "trrr" e foglio in mano',
-    'Senza scontrino? SPAZIO o clic prima che arrivi alla porta',
-    'Vale per il primo verso la porta (la freccia). Falso: -5',
+    'Guarda la mano: lo scontrino è il foglietto BIANCO',
+    'Chi esce senza (o col foglio sbagliato): CLICCALO prima della porta',
+    'SPAZIO: il più vicino alla porta. Se Michele grida ASPETTA, aspetta!',
   ],
   comandiTouch: [
-    'Lo scontrino vero: tasti, prezzo, "trrr" e foglio in mano',
-    'Senza scontrino? Tocca, ovunque, prima che arrivi alla porta',
-    'Vale per il primo verso la porta (la freccia). Falso: -5',
+    'Guarda la mano: lo scontrino è il foglietto BIANCO',
+    'Chi esce senza (o col foglio sbagliato): TOCCALO prima della porta',
+    'Fermi uno onesto? Falso allarme. Se Michele grida ASPETTA, aspetta!',
   ],
-  obiettivo: 'Becca 6 imbrogli, con al massimo 2 falsi allarmi!',
+  obiettivo: 'Becca 6 furbi, con al massimo 2 falsi allarmi!',
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). L'obiettivo è il
   // bronzo: finché non è raggiunto (6 imbrogli presi e non più di 2 falsi allarmi) il totale si ferma a
   // tettoPrima; quando lo è, sale almeno al bronzo. Argento e oro vengono dai punti.
@@ -59,24 +60,34 @@ export default {
   // arriva alla cassa
   tempi: { entra: 1.0, entraCassa: 1.4, sceglie: 0.45, taglio: 0.75, incarta: 0.3, allaCassa: 0.45, paga: 0.35, annulla: 0.35, cambio: 0.22 },
   // quanto dura, dopo che il cliente ha pagato, quello che fa Michele: lo scontrino vero (onesto) o un trucco
-  segnali: { onesto: 0.9, classico: 0.55, finta: 0.8, strappo: 1.15, annullo: 0.9, voce: 1.05 },
+  segnali: { onesto: 0.9, classico: 0.6, finto: 0.9, strappo: 1.15, annullo: 0.9, voce: 1.05, ultimo: 0.55 },
   // facile: i trucchi "più evidenti" (lo scontrino in mano ai clienti più grande, il display che lampeggia)
   evidenti: false,
+  // ALL'ULTIMO (onesto): Michele se lo scorda, il cliente si gira senza scontrino, Michele grida "ASPETTA!"
+  // e glielo lancia: arriva dopo "presa" secondi da quando il cliente si è girato. Chi lo ferma prima fa
+  // un falso allarme. ultimi = quanti dei clienti onesti, per atto, se lo vedono arrivare così
+  presa: 0.9,
+  ultimi: [0, 0.3, 0.35],
+  // IL FURBETTO (dal terzo atto): entra, non paga e sgattaiola dritto alla porta, con gli occhiali scuri.
+  // furbetti = quanti per atto; il suo passo verso la porta dura finestraFurbetto secondi
+  furbetti: [0, 0, 2],
+  finestraFurbetto: 2.3,
 
   // --- i trucchetti di Michele ---
-  // Si riconoscono sempre, guardando e ascoltando: lo scontrino vero ha i tasti, il display col prezzo,
-  // il "trrr" della stampante e lo scontrino bianco in mano al cliente. daAtto = da che atto compare.
-  //   IL CLASSICO: niente tasti, niente stampante, niente scontrino
-  //   LA FINTA: la mano batte sui tasti, ma il display resta a zero, la stampante zitta, non esce niente
+  // Una regola sola: chi esce deve avere in mano lo scontrino, il foglietto BIANCO e lungo. I trucchi
+  // sono i modi in cui Michele non glielo dà, e si vedono sempre. daAtto = da che atto compare.
+  //   IL CLASSICO: niente tasti, niente stampante: fischietta guardando in alto, e niente scontrino
   //   LO STRAPPO: lo scontrino esce, ma lui lo strappa e se lo mette in tasca prima di darlo
-  //   L'ANNULLO: lo batte e lo dà, il cliente si gira e lui lo annulla (bip basso, display rosso ANNULLATO)
   //   IL CONTO A VOCE: "Fanno 6 euro, lascia stare!", senza toccare la cassa
+  //   LO SCONTRINO FINTO: al posto dello scontrino gli dà il volantino giallo della pizzeria
+  //   L'ANNULLO: lo batte e lo dà, il cliente si gira e lui lo annulla: sullo scontrino in mano compare
+  //     la croce rossa (e il display della cassa diventa rosso)
   trucchi: [
     { id: 'classico', nome: 'IL CLASSICO', daAtto: 1 },
-    { id: 'finta', nome: 'LA FINTA', daAtto: 1 },
-    { id: 'strappo', nome: 'LO STRAPPO', daAtto: 2 },
-    { id: 'annullo', nome: "L'ANNULLO", daAtto: 2 },
-    { id: 'voce', nome: 'IL CONTO A VOCE', daAtto: 3 },
+    { id: 'strappo', nome: 'LO STRAPPO', daAtto: 1 },
+    { id: 'voce', nome: 'IL CONTO A VOCE', daAtto: 2 },
+    { id: 'finto', nome: 'LO SCONTRINO FINTO', daAtto: 2 },
+    { id: 'annullo', nome: "L'ANNULLO", daAtto: 3 },
   ],
 
   // I tre atti: la stessa pizzeria, la serata si scalda. da = secondo d'inizio (daLampo: in Lampo, dove
@@ -84,13 +95,13 @@ export default {
   // cadenza = ogni quanti secondi entra un cliente; imbrogli = quanti clienti su 1 escono senza
   // scontrino (se Michele riesce); taglio = quanti su 1 vogliono il trancio tagliato (gli altri il
   // cartone da asporto, già pronto); ritmo = moltiplica i tempi di Michele in quell'atto; finestra =
-  // moltiplica la finestra; distrazioni = quante (teglia fumante, telefono, birra, "la margherita?")
+  // moltiplica la finestra; distrazioni = quante (teglia fumante, telefono: poche, per non confondere)
   atti: [
-    { da: 0, daLampo: -1, nome: 'SI APRE!', cadenza: 3.0, imbrogli: 0.7, taglio: 1, ritmo: 1.1, finestra: 1, distrazioni: 0 },
-    { da: 12, daLampo: 0, nome: 'ORA DI PUNTA!', cadenza: 1.5, imbrogli: 0.65, taglio: 0.25, ritmo: 1, finestra: 1, distrazioni: 0 },
-    { da: 24, daLampo: 7, nome: 'SABATO SERA {locale}!', cadenza: 1.15, imbrogli: 0.7, taglio: 0, ritmo: 0.8, finestra: 0.9, distrazioni: 4 },
+    { da: 0, daLampo: -1, nome: 'SI APRE!', cadenza: 3.0, imbrogli: 0.6, taglio: 1, ritmo: 1.1, finestra: 1.1, distrazioni: 0 },
+    { da: 12, daLampo: 0, nome: 'ORA DI PUNTA!', cadenza: 1.7, imbrogli: 0.6, taglio: 0.25, ritmo: 1, finestra: 1, distrazioni: 0 },
+    { da: 24, daLampo: 7, nome: 'SABATO SERA {locale}!', cadenza: 1.3, imbrogli: 0.6, taglio: 0, ritmo: 0.85, finestra: 0.9, distrazioni: 2 },
   ],
-  distrazioni: ['teglia', 'telefono', 'birra', 'margherita'],
+  distrazioni: ['teglia', 'telefono'],
   // quanti imbrogli (che arrivano alla porta prima della fine) può avere una serata, e almeno quanti
   // clienti onesti: il seme del round sceglie sempre una serata così, perché l'obiettivo si possa
   // sempre fare e chi preme SCONTRINO! per tutti faccia più falsi allarmi di quanti ne sono permessi
@@ -105,14 +116,15 @@ export default {
   frasiBeccato: ['Ma è un amico!', 'Dopo te lo faccio, dopo!', 'Ma che sei, la Finanza?'],
   frasiFalso: ['Eccolo, contento?'],
   frasiVoce: ['Fanno {prezzo}, lascia stare!', 'Sono {prezzo}, lascia stare!', 'Dai, {prezzo} e lascia stare!'],
-  frasiMargherita: ["Ce l'ha la margherita?"],
-  frasiFinanza: ['Multa!', 'Favorisca!'],
+  frasiFinanza: ['Favorisca i documenti!', 'Guardia di Finanza!'],
+  frasiAspetta: ['ASPETTA! LO SCONTRINO!', 'ASPETTA! ECCOLO!'],
+  frasiCeLho: ["Ce l'ho, ce l'ho!", 'Eccolo, contento?'],
   titoli: ['MICHELE, MULTATO!', 'TUTTO IN NERO!'],
 
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { ritmo: 1.1, finestra: 2.5, secondiSubito: 0.85, evidenti: true, imbrogli: [9, 12], atti: { distrazioni: 0.4 } },
-    difficile: { ritmo: 0.8, finestra: 1.5, secondiSubito: 0.45, imbrogli: [11, 15], onesti: 5, atti: { cadenza: 0.85, distrazioni: 1.5 } },
+    facile: { ritmo: 1.1, finestra: 2.5, secondiSubito: 0.85, evidenti: true, imbrogli: [9, 12], ultimi: [0, 0.15, 0.2], furbetti: [0, 0, 1], atti: { distrazioni: 0 } },
+    difficile: { ritmo: 0.8, finestra: 1.5, secondiSubito: 0.45, imbrogli: [11, 15], onesti: 5, ultimi: [0, 0.4, 0.45], furbetti: [0, 1, 3], finestraFurbetto: 1.9, atti: { cadenza: 0.85, distrazioni: 1.5 } },
   },
 };

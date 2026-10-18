@@ -6,7 +6,7 @@ export default {
   verbo: 'SPARA!',          // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x2f8fd0,
-  musica: 'marcia',        // la marcia del Generale (traccia di audio.js)
+  musica: 'marcia',           // js/config/musiche.js
   ospite: { id: 'generale', etichetta: 'AGLI ORDINI\nDEL GENERALE' },
   comandi: [
     'Il mouse mira, il CLIC spara (oppure FRECCE + SPAZIO). I colpi sono pochi!',

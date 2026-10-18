@@ -1,9 +1,9 @@
 // La pizzeria al taglio di "Scontrino, prego!", vista di fronte: lo sfondo (pareti, arco d'ingresso,
 // porta d'uscita, pavimento) e, davanti, il banco con la vetrina e la cassa (Michele sta in mezzo,
 // dietro al banco). In più le cose piccole del microgioco: lo scontrino, il trancio, il cartone, i
-// soldi, i clienti a pezzi (corpo, pelle e capelli: si ricolorano col tint), il cappello dei
-// finanzieri. Tutto disegnato: le foto di riferimento non entrano nel gioco. Il nome del locale è
-// quello della configurazione (nomeLocale).
+// soldi, i clienti a pezzi (corpo, pelle e capelli: si ricolorano col tint), il volantino dello
+// scontrino finto, la luce del lampeggiante dei finanzieri. Tutto disegnato: le foto di riferimento
+// non entrano nel gioco. Il nome del locale è quello della configurazione (nomeLocale).
 import { CONT, tratto, ellisse, rrect, poli, gradL, gradR, scuro, chiaro, alone, casuale, tela } from './base.js';
 import scontrino from '../config/microgiochi/scontrino.js';
 
@@ -358,19 +358,28 @@ function manoMichele(c) {
   c.beginPath(); c.moveTo(3.4, 3); c.lineTo(3.4, 7); c.moveTo(5.6, 3); c.lineTo(5.6, 7.4); tratto(c, 'rgba(120,60,30,0.45)', 0.6);
   rrect(c, 7.5, 0.5, 3, 5.5, 1.5); c.fillStyle = '#eab792'; c.fill(); tratto(c, CONT, 0.9);
 }
-// il cappello dei finanzieri (inventati, da cartone: niente stemmi), con la sirenetta sopra
-function cappelloFinanza(c) {
-  c.beginPath(); c.moveTo(4, 12); c.quadraticCurveTo(3, 3, 16, 3); c.quadraticCurveTo(29, 3, 28, 12); c.closePath();
-  c.fillStyle = gradL(c, 0, 3, 0, 12, [[0, '#7e8878'], [1, '#5a6456']]); c.fill(); tratto(c, CONT, 1);
-  rrect(c, 4, 10, 24, 3, 1); c.fillStyle = '#3a4038'; c.fill(); tratto(c, CONT, 0.8);
-  c.beginPath(); c.moveTo(5, 13); c.quadraticCurveTo(16, 18, 27, 13); c.lineTo(26, 12.6); c.quadraticCurveTo(16, 15.5, 6, 12.6); c.closePath();
-  c.fillStyle = '#1a1a1e'; c.fill(); tratto(c, CONT, 0.8);
-  rrect(c, 13, 0.5, 6, 3, 1); c.fillStyle = '#3a3a40'; c.fill();
+// lo scontrino finto di Michele: il volantino giallo della pizzeria (col trancio disegnato), che dà
+// al posto dello scontrino. Si riconosce: è giallo e largo, lo scontrino è bianco e lungo
+function volantino(c) {
+  rrect(c, 0.5, 0.5, 13, 15, 1); c.fillStyle = gradL(c, 0, 0, 0, 16, [[0, '#ffe45a'], [1, '#f2b82a']]); c.fill(); tratto(c, CONT, 0.9);
+  poli(c, [[3, 9], [11, 7], [7, 13.5]]); c.fillStyle = '#e8a24a'; c.fill(); tratto(c, 'rgba(43,27,23,0.7)', 0.6);
+  for (const [x, y] of [[6.5, 9.4], [8.6, 9]]) { ellisse(c, x, y, 0.9, 0.9); c.fillStyle = '#c8282e'; c.fill(); }
+  c.font = 'bold 3.2px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#c8282e'; c.fillText('PIZZA!', 7, 3.6);
 }
-function sirena(c) {
-  c.beginPath(); c.moveTo(0.5, 5.5); c.quadraticCurveTo(0.5, 0.5, 4, 0.5); c.quadraticCurveTo(7.5, 0.5, 7.5, 5.5); c.closePath();
-  c.fillStyle = '#ffffff'; c.fill(); tratto(c, CONT, 0.8);
-  ellisse(c, 2.8, 2.4, 1, 0.8); c.fillStyle = 'rgba(255,255,255,0.9)'; c.fill();
+// la croce rossa sullo scontrino annullato (in mano al cliente)
+function crocione(c) {
+  for (const [a, b, d, e] of [[2, 2, 12, 12], [12, 2, 2, 12]]) { c.beginPath(); c.moveTo(a, b); c.lineTo(d, e); tratto(c, '#ffffff', 4.4); tratto(c, '#e0242c', 2.6); }
+}
+// gli occhiali scuri del furbetto (un pezzo in più del cliente, sopra la faccia)
+function occhialiFurbetto(c) {
+  for (const s of [-1, 1]) { rrect(c, 20 + s * 6 - 4.5, 17.5, 9, 5.5, 2); c.fillStyle = '#16161c'; c.fill(); tratto(c, CONT, 0.9); }
+  c.beginPath(); c.moveTo(18, 19.5); c.lineTo(22, 19.5); tratto(c, CONT, 1);
+  ellisse(c, 15.5, 19, 1.2, 0.8); c.fillStyle = 'rgba(255,255,255,0.6)'; c.fill();
+}
+// la luce blu del lampeggiante, che entra dalla porta (i finanzieri sono arrivati)
+function lampeggio(c) {
+  c.fillStyle = gradR(c, 30, 60, 2, 60, [[0, 'rgba(90,150,255,0.85)'], [0.5, 'rgba(60,110,255,0.35)'], [1, 'rgba(60,110,255,0)']]);
+  c.fillRect(0, 0, 60, 120);
 }
 // la multa
 function multa(c) {
@@ -463,8 +472,10 @@ export function creaPizzeria(scene) {
   tela(scene, 'gocceSudore', 13, 9, gocce, 7);
   tela(scene, 'notaMusica', 9, 11, nota, 7);
   tela(scene, 'manoMichele', 11, 10, manoMichele, 7);
-  tela(scene, 'cappelloFinanza', 32, 18, cappelloFinanza, 5);
-  tela(scene, 'sirenetta', 8, 6, sirena, 8);
+  tela(scene, 'volantino', 14, 16, volantino, 6);
+  tela(scene, 'crocione', 14, 14, crocione, 6);
+  tela(scene, 'lampeggio', 60, 120, lampeggio, 2);
+  tela(scene, 'clOcchiali', 40, 84, occhialiFurbetto, 3);
   tela(scene, 'multa', 14, 18, multa, 6);
   for (const t of [0, 1]) {
     tela(scene, `clGambe${t}`, 40, 84, (c) => gambeCliente(c, t), 3);
