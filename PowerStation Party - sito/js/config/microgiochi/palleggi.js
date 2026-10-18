@@ -38,22 +38,24 @@ export default {
   bonusOltre: 15,
   puntiOro: 20,           // il pallone d'oro colpito (era 25)
   // fisica (unità e secondi)
-  gravita: 300,
+  // (scheda di valutazione: "troppo facile". Erano gravità 300, zona 34/10/24, perfetto 8/9,
+  // buono 18/16, vento 0/22/18)
+  gravita: 330,
   // velocità verso l'alto e spinta di lato per ogni tipo di colpo: [vy, vx minima, vx massima]
-  colpi: { perfetto: [232, 0, 10], buono: [215, 18, 42], scarso: [192, 45, 78] },
+  colpi: { perfetto: [242, 0, 14], buono: [224, 24, 50], scarso: [200, 52, 90] },
   // zona del colpo: quanto sopra (e sotto) al piede può essere il pallone, e quanto lontano
-  sopra: 34, sotto: 10, portata: 24,
-  perfetto: { altezza: 8, distanza: 9 },
-  buono: { altezza: 18, distanza: 16 },
+  sopra: 30, sotto: 9, portata: 21,
+  perfetto: { altezza: 6.5, distanza: 7.5 },
+  buono: { altezza: 15, distanza: 14 },
   velGiocatore: 210,
   guadagnoDito: 1.2,
   ricarica: 0.3,          // secondi prima di poter calciare di nuovo dopo un colpo a vuoto
   // i tre atti: da quando (secondi), annuncio, gravità (x), vento (spinta di lato, unità/s²),
   // palloni d'oro dello Zio
   atti: [
-    { da: 0, gravita: 1, vento: 0 },
-    { da: 12, nome: 'TIRA VENTO!', gravita: 1.08, vento: 22 },
-    { da: 24, nome: "IL PALLONE D'ORO!", gravita: 1.15, vento: 18, oro: true },
+    { da: 0, gravita: 1, vento: 8 },
+    { da: 12, nome: 'TIRA VENTO!', gravita: 1.1, vento: 32 },
+    { da: 24, nome: "IL PALLONE D'ORO!", gravita: 1.18, vento: 28, oro: true },
   ],
   cambioVento: [2.5, 4],  // secondi tra un cambio di verso del vento e l'altro
   ogniOro: 3.2,           // secondi tra un pallone d'oro e l'altro (dopo che il precedente è sparito)
@@ -70,7 +72,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { perfetto: { altezza: 10, distanza: 11 }, buono: { altezza: 21, distanza: 19 }, atti: { gravita: 0.95, vento: 0.6 } },
-    difficile: { perfetto: { altezza: 6.5, distanza: 7.5 }, buono: { altezza: 15, distanza: 13 }, atti: { gravita: 1.05, vento: 1.4 } },
+    facile: { perfetto: { altezza: 8, distanza: 9 }, buono: { altezza: 18, distanza: 16 }, atti: { gravita: 0.93, vento: 0.5 } },
+    difficile: { perfetto: { altezza: 5.5, distanza: 6.5 }, buono: { altezza: 13, distanza: 12 }, atti: { gravita: 1.05, vento: 1.35 } },
   },
 };

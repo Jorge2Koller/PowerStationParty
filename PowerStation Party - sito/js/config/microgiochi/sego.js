@@ -33,21 +33,23 @@ export default {
   bonusSecondo: 15,       // ...più tanti punti per ogni secondo che avanza (erano 2)
   puntiFumo: 0.2,         // se non esce: punti per ogni % di fumo in casa (era metà della %)
   // fumo (1 = stanza piena)
-  fumoGranata: 0.6,       // quanto fumo porta un fumogeno nella stanza
+  fumoGranata: 0.48,      // quanto fumo porta un fumogeno nella stanza
   fumoVicine: 0.15,       // ...e nelle stanze accanto
   passaggio: 0.25,        // quanto fumo passa da una stanza all'altra (al secondo)
   diradaAperta: 1.3,      // quanto se ne va più in fretta con la finestra aperta
   // finestre e Franci
-  aperteInizio: 7,        // finestre aperte all'inizio (su 12)
+  aperteInizio: 5,        // finestre aperte all'inizio (su 12)
+  // (scheda di valutazione: "facile, da rivedere la difficoltà". Meno fumo a fumogeno, meno finestre
+  // aperte, Franci le chiude prima e il fumo se ne va più in fretta: erano 0,6, 7 aperte, atti 6/4,5/2,2)
   // i tre atti: da quando (secondi), annuncio, secondi tra una finestra che sbatte e l'altra,
   // secondi tra una finestra chiusa da Franci e l'altra, parte del fumo che se ne va ogni secondo
   atti: [
-    { da: 0, vento: 4, franci: 6, dirada: 0.015 },
-    { da: 12, nome: 'TIRA VENTO!', vento: 2.2, franci: 4.5, dirada: 0.022 },
-    { da: 24, nome: 'FRANCI CHIUDE TUTTO!', vento: 2, franci: 2.2, dirada: 0.03 },
+    { da: 0, vento: 3.4, franci: 4.5, dirada: 0.022 },
+    { da: 12, nome: 'TIRA VENTO!', vento: 1.9, franci: 3.2, dirada: 0.03 },
+    { da: 24, nome: 'FRANCI CHIUDE TUTTO!', vento: 1.6, franci: 1.8, dirada: 0.04 },
   ],
   // lancio
-  ricarica: 0.7,          // secondi per prendere il fumogeno successivo
+  ricarica: 0.85,         // secondi per prendere il fumogeno successivo
   // fionda (mouse e dito): quanto tirare indietro (unità) per la forza piena. Se sotto al punto
   // dove hai premuto c'è meno spazio, basta meno (mai meno di tiroMinimo). Col mouse si tira di
   // meno: il mouse è preciso, e spesso si preme in fondo allo schermo, sulla mano

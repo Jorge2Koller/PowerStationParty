@@ -196,7 +196,12 @@ export class PalleggiScene extends MicrogiocoBase {
     const [scritto, col] = { perfetto: ['PERFETTO!', '#7dff9a'], buono: ['BUONO', '#ffe14a'], scarso: ['SCARSO...', '#ff9a5a'] }[tipo];
     scritta(this, this.palla.x, this.palla.y - 16, `${scritto} +${guadagno}`, { size: 8, color: col, durata: 300 });
     if (tipo === 'perfetto') stelle(this, this.palla.x, this.palla.y, 4, 900);
+    this.onda(this.palla.x, this.palla.y, tipo === 'perfetto' ? 0x7dff9a : 0xffffff);
+    if (tipo === 'perfetto') this.tScia = 0.45;
     this.aggiornaHud();
+    // ogni 5 di fila: un saltino di gioia; all'obiettivo lo Zio resta a bocca aperta
+    if (this.serie % 5 === 0) this.festa();
+    if (this.serie === c.obiettivoSerie) { this.tStupito = 1.6; this.zioParla('Ma come...?!', 1200); }
     if (molt > prima) {
       Audio.sfx('bonus');
       scritta(this, 240, 70, `${this.serie} DI FILA! x${String(molt).replace('.', ',')}`, { size: 12, color: '#7dff9a', durata: 600 });
@@ -242,8 +247,38 @@ export class PalleggiScene extends MicrogiocoBase {
     this.testoPunti.setText(puntiHud(this.punti));
   }
 
+  // l'onda d'urto del calcio: un cerchio che si allarga e sparisce
+  onda(x, y, col) {
+    const g = this.add.graphics().setDepth(890).setPosition(x, y);
+    const o = { r: 4, a: 0.9 };
+    this.tweens.add({ targets: o, r: 18, a: 0, duration: 260, ease: 'Quad.out', onUpdate: () => g.clear().lineStyle(2, col, o.a).strokeCircle(0, 0, o.r), onComplete: () => g.destroy() });
+  }
+
+  // il polverone quando il pallone tocca terra
+  polvere(x) {
+    for (let i = 0; i < 6; i++) {
+      const p = this.add.circle(x + (Math.random() - 0.5) * 8, TERRA - 2, 2.5 + Math.random() * 2, 0xd9c9a3, 0.85).setDepth(880);
+      const d = (i % 2 ? 1 : -1) * (8 + Math.random() * 14);
+      this.tweens.add({ targets: p, x: p.x + d, y: p.y - 6 - Math.random() * 8, scale: 2, alpha: 0, duration: 420 + Math.random() * 200, ease: 'Quad.out', onComplete: () => p.destroy() });
+    }
+  }
+
+  // il saltino di gioia (ogni 5 palleggi di fila), con i coriandoli
+  festa() {
+    if (this.saltando) return;
+    this.saltando = true;
+    this.tweens.add({ targets: this.io, y: this.io.y - 7, duration: 110, yoyo: true, ease: 'Quad.out', onComplete: () => { this.saltando = false; } });
+    const col = [0xff5fa2, 0xffe14a, 0x7dff9a, 0x5ab8ff];
+    for (let i = 0; i < 10; i++) {
+      const p = this.add.rectangle(this.x, Y_PIEDE - 60, 3, 2, col[i % 4]).setDepth(895);
+      this.tweens.add({ targets: p, x: this.x + (Math.random() - 0.5) * 70, y: Y_PIEDE - 70 - Math.random() * 30, angle: 360, duration: 300, ease: 'Quad.out',
+        onComplete: () => this.tweens.add({ targets: p, y: TERRA, alpha: 0, angle: 720, duration: 700, ease: 'Quad.in', onComplete: () => p.destroy() }) });
+    }
+  }
+
   caduta() {
     this.statoPalla = 'terra';
+    this.polvere(this.palla.x);
     this.attesa = 1.3;
     this.cadute++;
     if (this.serie >= 3) Audio.sfx('errore');
@@ -317,6 +352,12 @@ export class PalleggiScene extends MicrogiocoBase {
         if (this.attesa <= 0) { this.tweens.add({ targets: this.palla, alpha: 0, duration: 120 }); this.servi(0.2); }
       }
       this.palla.setPosition(x, y).setAngle(this.palla.angle + this.vx * dt * 8);
+      // dopo un colpo perfetto il pallone lascia una scia
+      if (this.tScia > 0) {
+        this.tScia -= dt;
+        const sc = this.add.circle(x, y, R_PALLA * 0.8, 0x7dff9a, 0.45).setDepth(this.palla.depth - 1);
+        this.tweens.add({ targets: sc, alpha: 0, scale: 0.4, duration: 220, onComplete: () => sc.destroy() });
+      }
       this.ombraPalla.setPosition(x, TERRA + 1).setScale(lerp(1, 0.4, Phaser.Math.Clamp((TERRA - y) / 140, 0, 1)));
     }
 
@@ -359,7 +400,8 @@ export class PalleggiScene extends MicrogiocoBase {
     if (this.tEsprZio > 0) this.tEsprZio -= dt;
     const calcio = u > 0.95 || u < 0.07 ? 'calcio2D' : u > 0.87 || u < 0.15 ? 'calcio1D' : null;
     const aria = this.tEsprZio > 0 ? 'sufficienza' : 'normale';
-    this.posa(this.zio, 'zio', calcio ? (aria === 'normale' ? calcio : `${calcio}_${aria}`) : aria);
+    if (this.tStupito > 0) { this.tStupito -= dt; this.posa(this.zio, 'zio', 'shock'); }
+    else this.posa(this.zio, 'zio', calcio ? (aria === 'normale' ? calcio : `${calcio}_${aria}`) : aria);
     this.tFrase -= dt;
     if (this.tFrase <= 0) { this.tFrase = 5 + Math.random() * 3; this.zioParla(caso(c.frasi)); }
   }

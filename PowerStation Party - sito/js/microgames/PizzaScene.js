@@ -12,7 +12,7 @@
 //    L'ananas è una trappola: non è mai nell'ordinazione.
 //  - PRONTA!: giusta, il Boni la inforna e la porta in tavola; sbagliata (un pezzo in più o in
 //    meno, un ingrediente sbagliato, l'ananas, poco pomodoro) la butta, corre a bere dalla caraffa
-//    e scopre un imbucato. Al secondo errore li scopre tutti e due: FUORI TUTTI!, e finisce.
+//    e scopre un imbucato. Al terzo errore li ha scoperti tutti e tre: FUORI TUTTI!, e finisce.
 //  Nel terzo atto il Boni ha fretta: il tempo per pizza è contato. (Gli imbucati che sbucano a
 //  chiedere una fetta, da rimandare giù con un tocco o G prima che il Boni si giri, ci sono ancora qui
 //  sotto, ma sono spenti: negli atti della configurazione non c'è più "sbuca". Troppo difficile.)
@@ -31,7 +31,7 @@ const TAGLIA = 0.5;            // invitati e imbucati (circa 72 unità)
 const Y_SEDUTI = 180;          // i piedi di chi è seduto alla tavola (le gambe stanno dietro la tovaglia)
 const STRUMENTI = ['sugo', ...INGREDIENTI];   // il mestolo del pomodoro e le sei ciotole
 const SETTORI = 12;            // il pomodoro: la pasta è divisa in 12 spicchi x 2 anelli
-const NOMI = { oli: 'OLI', sego: 'SEGO' };
+const NOMI = { oli: 'OLI', sego: 'SEGO', guerra: 'GUERRA' };
 
 export class PizzaScene extends MicrogiocoBase {
   constructor() { super('pizza'); }
@@ -66,7 +66,7 @@ export class PizzaScene extends MicrogiocoBase {
     // il Boni al forno
     // (davanti alla tavola quando ci va a bere: tra la tavola e il bancone)
     this.boni = im(this, T.boni.x, T.boni.y, 'boni_normale', TAGLIA_BONI).setOrigin(0.5, 1).setDepth(34);
-    // la tavola: gli invitati (personaggi giocabili, dal seme) e i due imbucati
+    // la tavola: gli invitati (personaggi giocabili, dal seme) e gli imbucati (tre: tre vite)
     this.preparaImbucati(rImb);
     this.tavola = im(this, T.tavola.x0 - 2, T.tavola.y - 2, 'tavolaTaverna').setOrigin(0).setDepth(30);
     this.caraffa = im(this, T.tavola.x1 - 6, T.tavola.y + 3, 'caraffaTavola', 0.85).setOrigin(0.5, 1).setDepth(31);
@@ -109,7 +109,7 @@ export class PizzaScene extends MicrogiocoBase {
     this.testoPunti = txt(this, 474, 36, '', { size: 9, ox: 1, depth: 1001 });
     this.testoPizze = txt(this, 474, 49, '', { size: 8, ox: 1, depth: 1001, color: '#ffe14a' });
     this.faccine = this.imbucati.map((m, i) => {
-      const x = 444 + i * 22, y = 68;
+      const x = 466 - (this.imbucati.length - 1 - i) * 22, y = 68;
       const f = this.add.container(x, y, [this.add.circle(0, 0, 9, 0x1f1430, 0.85), ritratto(this, 0, 0, m.id, 15)]).setDepth(1001);
       const croce = this.add.graphics().setDepth(1002).setVisible(false);
       croce.lineStyle(2.6, 0xff3b2f, 1).lineBetween(x - 7, y - 7, x + 7, y + 7).lineBetween(x + 7, y - 7, x - 7, y + 7);
@@ -155,13 +155,15 @@ export class PizzaScene extends MicrogiocoBase {
     const c = this.cfg, pesca = (a) => a.splice(Math.floor(r() * a.length), 1)[0];
     const nasc = [...c.nascondigli], trav = [...c.travestimenti], posti = [0, 1, 2, 3];
     // chi viene scoperto per primo lo decide il seme
-    const ordine = r() < 0.5 ? ['oli', 'sego'] : ['sego', 'oli'];
+    // (scheda di valutazione: un imbucato in più, il Guerra, così gli errori concessi sono due e si perde al terzo)
+    const ordine = [...c.cast];
+    for (let k = ordine.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [ordine[k], ordine[j]] = [ordine[j], ordine[k]]; }
     this.imbucati = ordine.map((id, i) => {
       const travestito = r() < c.travestito && trav.length;
       return travestito ? { i, id, travestito: pesca(trav), posto: pesca(posti) } : { i, id, nascondiglio: pesca(nasc) };
     });
     // gli invitati: personaggi giocabili presi dal seme (non chi gioca, non il Boni né gli imbucati)
-    const io = this.giocatore.id.replace(DOPPIONE, ''), via = new Set([io, 'boni', 'oli', 'sego']);
+    const io = this.giocatore.id.replace(DOPPIONE, ''), via = new Set([io, 'boni', ...c.cast]);
     const ospiti = CONFIG.personaggiGiocabili.map((g) => g.id).filter((id) => !via.has(id));
     this.invitati = posti.map((i) => {
       const id = pesca(ospiti), x = T.posti[i];
@@ -463,8 +465,8 @@ export class PizzaScene extends MicrogiocoBase {
     this.invitati.forEach((v) => v.img.setTexture(`${v.id}_shock`));
     this.faccine[m.i].croce.setVisible(true);
     colpetto(this, this.faccine[m.i].f, 1.4, 1.4);
-    if (this.scoperti.length >= 2) {
-      // li ha scoperti tutti e due: FUORI TUTTI!
+    if (this.scoperti.length >= this.imbucati.length) {
+      // li ha scoperti tutti: FUORI TUTTI!
       this.time.delayedCall(900, () => this.termina());
       return;
     }
