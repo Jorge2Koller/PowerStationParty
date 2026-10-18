@@ -58,7 +58,8 @@ export default {
   errori: { taglio: 700, ovatta: 0.5, fila: 3, lento: 0.96 },
 
   // I tre atti, allineati alla canzone: i secondi in cui cominciano sono nella mappa (li calcola lo
-  // script dai battiti: nel ritaglio intero 0, 12,19 e 23,89; nel Lampo il primo non c'è).
+  // script dai battiti: nel ritaglio intero 0, 11,25 e 26,25; nel Lampo c'è solo il pezzo forte, da 0).
+  // Nella mappa c'è anche chi canta, e quando ("voci": l'Oli, il Tini o insieme), per la scena.
   // luci = quanto girano e brillano i fasci; tutti in piedi = i giudici si alzano
   atti: [
     { nome: 'LA STROFA', luci: 0.45 },
