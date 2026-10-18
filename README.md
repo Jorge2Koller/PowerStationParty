@@ -5,7 +5,7 @@ giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
 sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
 e vince il round chi fa più punti.
 
-I microgiochi sono diciannove:
+I microgiochi sono ventuno:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -28,6 +28,8 @@ I microgiochi sono diciannove:
 | `xfactor` | Provini a X-Factor | i cantanti, Tini e Oli |
 | `pizza` | La pizza dal Boni | il Boni (con Oli e il Sego imbucati) |
 | `ballata` | La ballata del Pallaio | Lori, il cantastorie |
+| `proverbi` | Le Perle di Denny | Denny (Pastaffi, il figlio di Emilio) |
+| `scontrino` | Scontrino, prego! | Michele, alla cassa (col Giso, il paladino degli scontrini) |
 
 Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
 "Modalità" e "Beer pong" qui sotto.
@@ -157,8 +159,8 @@ https://app.netlify.com/drop (serve un account gratuito per tenerlo online).
 **`PowerStation Party - sito`** (il nome non va cambiato: il link del sito dipende da lui).
 Per aggiornarlo dal sito di GitHub, senza git: apri quella cartella, **Add file → Upload
 files**, e trascina il *contenuto* di questa cartella (non la cartella stessa): `index.html`,
-`manifest.json`, `sw.js`, `README.md`, `server.py`, gli `avvia*`, e le cartelle `icone/` e
-`js/`. **Non** caricare `test/` e `note/` (prove automatiche e appunti: non fanno parte del
+`manifest.json`, `sw.js`, `README.md`, `server.py`, gli `avvia*`, `prova-musiche.html` (la pagina
+per ascoltare le musiche: facoltativa) e le cartelle `audio/`, `icone/` e `js/`. **Non** caricare `test/` e `note/` (prove automatiche e appunti: non fanno parte del
 gioco). Poi **Commit changes**. I file con lo stesso nome vengono sostituiti.
 
 ### Come un'app: schermata Home e gioco offline
@@ -217,12 +219,12 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
        giocare. Dopo ogni partita si vede il tabellone.
      - **Beer Pong** (da 2 a 6 giocatori, gratis): la partita vera al tavolo del Pallaio, a tiri
        alternati, ROSSI contro BLU (vedi "Beer pong" qui sotto).
-   - **Partita singola**: un solo microgioco, scelto dalla lista (su due colonne:
-     SU/GIÙ scorrono la prima e poi la seconda).
+   - **Partita singola**: un solo microgioco, scelto nella sala dei microgiochi (vedi "La sala dei
+     microgiochi" qui sotto).
    - **Livelli**: il livello di ogni giocatore (vedi "Livelli" qui sotto).
 
    Da soli:
-   - **Allenamento**: un microgioco a scelta, da rigiocare quanto si vuole.
+   - **Allenamento**: un microgioco a scelta (nella sala dei microgiochi), da rigiocare quanto si vuole.
    - **Da solo**: 7 microgiochi a caso e il **boss**, con 4 vite.
      Senza una medaglia si perde una vita; il boss è un microgioco a DIFFICILE e per
      batterlo serve almeno l'argento (10 Pinte in premio). Alla fine il conto e il record.
@@ -242,7 +244,7 @@ in fondo.
 
 Dal menu (e dalla pausa) **IMPOSTAZIONI**: volume della **musica** e degli **effetti**,
 **audio** sì/no, **vibrazione** sì/no (dove il telefono la ha: Android), **difficoltà di
-partenza**, **prova lampo** prima dei microgiochi nuovi, **velocità dei testi** (quanto
+partenza**, **prova** (dove parte il cursore prima dei microgiochi nuovi), **velocità dei testi** (quanto
 restano a schermo scritte e fumetti), **schermo che trema** sì/no e **ritardo audio**. Si cambiano con le
 frecce (SU/GIÙ la riga, SINISTRA/DESTRA il valore) o toccando direttamente i comandi, e si
 salvano da sole. La **difficoltà di partenza** è il livello di chi non ne ha scelto uno
@@ -255,11 +257,31 @@ una serie di BIP e si tocca (o si preme SPAZIO) a ogni BIP, ascoltando e senza g
 schermo; il gioco misura di quanto si arriva in ritardo e salva il numero. Quei giochi spostano
 il tempo di gioco di quanto indicato.
 
-**Prova lampo** (acceso di serie): la prima volta che si incontra un microgioco, su quel
-telefono o computer, prima della partita vera si giocano 6 secondi di prova che non contano
-(la barra del tempo è rosa, in alto c'è scritto PROVA LAMPO). In una sfida la prova la fanno
-tutti i giocatori di quel round, così nessuno parte avvantaggiato. I secondi sono
-`provaLampo` in `js/config.js`.
+**La prova**: nell'introduzione di ogni turno ci sono due pulsanti, **PROVA** e **PRONTO!** (frecce
+e SPAZIO o INVIO, P per la prova, oppure un clic o un tocco). La prova è una partita come quella vera,
+ma con un'altra serata (un altro seme: non si impara la partita vera) e che non conta: la barra del
+tempo è rosa e in alto a sinistra, al posto del nome, c'è il pulsante **PRONTO!** (sul computer anche
+ESC, come lo START dei vecchi giochi). Quando finisce ricomincia, finché chi gioca non preme PRONTO;
+allora si torna all'introduzione e parte subito il conto alla rovescia della partita vera. Ognuno, al
+suo turno, può provare quanto vuole. L'impostazione **Prova** (accesa di serie) fa partire il cursore
+su PROVA per i microgiochi mai giocati su quel telefono o computer (se no parte su PRONTO!).
+
+### La sala dei microgiochi
+
+Allenamento e Partita singola si scelgono in una sala come quella dei party game: in basso una griglia
+di riquadri, uno per microgioco, con la sua foto; quello scelto ha la cornice gialla e il nome in
+un'etichetta, e in alto c'è l'anteprima in grande (tre foto del microgioco che si alternano) col
+titolo, il comando, l'obiettivo, la durata, il record e la medaglia migliore. Sui riquadri: la
+medaglia migliore (di chi gioca da solo, o di chiunque) e un angolino rosso con la stellina per i
+microgiochi mai giocati su quel telefono o computer. Col mouse basta passare sopra un riquadro per
+vederne l'anteprima, e col clic si gioca; col dito il primo tocco sceglie e il secondo (o GIOCA!) fa
+partire; da tastiera le frecce e INVIO. **A CASO** (o R) fa saltare il cursore tra i riquadri e si
+gioca dove si ferma. Da soli, in alto a destra, il livello (L, o un tocco).
+
+Le foto sono in `icone/anteprime/` (`<id>.webp` il riquadro, `<id>-1.webp`... le tre dell'anteprima):
+le scatta `strumenti/anteprime.py`, che apre ogni microgioco nel browser, lo gioca un po' a caso e lo
+ferma in tre momenti. Si rilancia quando un microgioco cambia aspetto (anche uno solo:
+`anteprime.py scontrino`). Se una foto manca, il riquadro ha il colore del microgioco col titolo.
 
 Tutto quello che il gioco ricorda sta in un **salvataggio** unico (`js/salvataggio.js`, nel
 `localStorage` del browser): impostazioni, personaggi dell'ultima partita, un registro degli
@@ -307,10 +329,68 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
 - **Premi buffi**: a fine sfida, prima della classifica finale, fino a tre premi ("Lo
   specialista", "Mani di burro", "L'eterno secondo", "Il diesel"...), calcolati dai punti
   sfida dei round (`js/premi.js`, titoli e frasi in `js/config/premi.js`).
-- **Musiche**: oltre a quelle di prima, la marcia del Generale (TorRONDAcelli), la corsa in
-  strada (Arriva ReGrorio!, Il Passo del Passaseo) e la festa dei premi e della classifica finale
-  (tutte in `js/audio.js`, a 8 bit).
+- **Musiche**: vedi "Musiche" qui sotto.
 - Le schermate entrano con una dissolvenza veloce.
+
+### Musiche
+
+Tutte le musiche sono **8 bit e originali**: melodie, giri di accordi e arrangiamenti sono stati
+inventati per il gioco (nessuna melodia esistente, nemmeno "quasi uguale"), nello stile delle musiche
+allegre dei giochi per famiglie: tonalità maggiori (il minore solo per il "di nascosto"), brani brevi
+che girano in loop (due parti da 8 battute), basso che rimbalza, melodia staccata e saltellante,
+domanda e risposta tra due strumenti, batteria leggera. Gli strumenti sono quelli dei vecchi giochi:
+onda quadra al 50% e al 25% (o al 12,5%) per la melodia, triangolo per il basso, rumore per la
+batteria, arpeggi veloci per gli accordi e un po' di vibrato sulle note lunghe. Si generano nel codice,
+senza file audio (il gioco resta leggero sul telefono).
+
+Ogni musica è scritta **in un posto solo**, `js/config/musiche.js` (tempo, tonalità, accordi in numeri
+romani, note in gradi della scala, basso, batteria, strumenti: in cima al file c'è come si scrive), e la
+suona il sequencer di `js/audio.js`. Un microgioco la sceglie col campo `musica` della sua
+configurazione.
+
+Durante un microgioco la musica **cresce in tre atti** (un terzo del tempo l'uno, anche nel Lampo da
+15 secondi): nel secondo entrano la seconda voce (o gli arpeggi) e la batteria piena, nel terzo il
+tempo sale del 5-7% oppure la musica sale di un tono; negli **ultimi 5 secondi** la batteria fa il
+riempimento. I cambi arrivano a inizio battuta. In **pausa** la musica si ferma e riparte da lì; quando
+il microgioco finisce si spegne subito, senza code, e partono i jingle. Volume, audio spento e Ritardo
+audio delle Impostazioni valgono come sempre; i volumi delle musiche sono pareggiati tra loro (`volume`
+di ogni musica).
+
+| Microgioco | Musica (`musica`) | Carattere | Tempo | Tonalità | Atto 3 |
+| --- | --- | --- | --- | --- | --- |
+| Menu e schermate | `menu` | il tema del gioco, da fischiettare | 112 | Do maggiore | (nei menu: dal secondo giro il secondo atto) |
+| La Spina del PowerStation | `bar` | bar allegro, swing morbido | 116 | Fa maggiore | +6% |
+| Arriva ReGrorio! | `strada` | corsa in strada, energica | 150 | La maggiore | un tono sopra |
+| La Barba di O'Sfurnacchiat | `barbiere` | bottega del barbiere, pizzicato scherzoso | 104 | Sol maggiore | +6% |
+| Il Panino di Marsupino | `cucina` | cucina che rimbalza | 128 | Do maggiore | un tono sopra |
+| Guerra, via quelle mani! | `comica` | comica, staccata, a scatti | 140 | Re maggiore | +7% |
+| Sego, sono sotto casa! | `nascosto` | di nascosto ma divertente (passi felpati) | 110 | Re minore, ritornello in Fa maggiore | +5% |
+| TorRONDAcelli | `marcia` | marcia militare buffa | 120 | Si♭ maggiore | un tono sopra |
+| L'Ingiocabile | `casino` | casinò, lounge jazz swing | 96 | Mi♭ maggiore | +5% |
+| MaraZio | `stadio` | sportiva, da stadio | 132 | Mi maggiore | un tono sopra |
+| Spalma il Bota! | `calypso` | spiaggia, calypso | 108 | Re maggiore | +6% |
+| Il Passaggiorgio | `parcheggio` | notte in parcheggio, funky | 118 | Sol maggiore | +6% |
+| Petri Tentacolari | `disco` | disco | 124 | La maggiore | un tono sopra |
+| Emilio in Retromarcia | `rock` | rock dell'autoradio | 150 | Mi maggiore | un tono sopra |
+| Beer Pong al Pallaio | `pallaio` | festa al bar | 118 | Do maggiore | +6% |
+| La pizza dal Boni | `osteria` | osteria, tarantella in 6/8 | 112 | Sol maggiore | +7% |
+| Le Perle di Denny | `quiz` | quiz, rilassata e sorniona | 100 | Fa maggiore | +5% |
+| Scontrino, prego! | `guardie` | guardie e ladri, comica e staccata | 126 | Si♭ maggiore | +7% |
+
+**Musiche che non cambiano**: i giochi a tempo di musica hanno note, battute o colpi sincronizzati con
+la base, quindi tengono la loro (in `TRACCE`, in `js/audio.js`): L'Incubo degli Scapoli (`pista`),
+Provini a X-Factor (la canzone vera, `silenzio`), La ballata del Pallaio (`ballata`) e Il Passo del
+Passaseo (`corsa`, che accelera verso la fine come prima). Premi buffi, classifica finale e la modalità
+Beer Pong usano `festa`.
+
+**Jingle** (2-4 secondi, scritti come le musiche, in `JINGLE`): vittoria e sconfitta (dopo ogni turno;
+se il finale del microgioco l'ha appena suonato, la schermata del risultato non lo ripete), medaglia
+di bronzo, d'argento e d'oro (al timbro della medaglia), trofeo, e il conto alla rovescia (3, 2, 1, VIA!
+è una frase sola: durante il conto la musica tace).
+
+**Per ascoltarle**: `prova-musiche.html` (dal server del gioco, anche dal telefono: per esempio
+`http://192.168.1.23:8080/prova-musiche.html`) ha un pulsante per ogni musica e ogni jingle, e si
+sceglie l'atto (1, 2, 3, ultimi 5 secondi). Non è collegata al gioco e non serve per giocare.
 
 ### Livelli: FACILE, NORMALE, DIFFICILE (e l'handicap)
 
@@ -346,7 +426,7 @@ Le medaglie hanno le stesse soglie a tutti i livelli (a FACILE si prendono più 
   sono tutti disponibili da subito.
 - **PROFILO** (dal menu), quattro schede: i **personaggi** (microgiochi giocati, sfide e round
   vinti, medaglie, le partite vinte a beer pong, e la medaglia migliore in ogni microgioco), i
-  **trofei** (40: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
+  **trofei** (44: ventitré generali e uno "Oro a ..." per ogni microgioco), i **record** di sempre di ogni microgioco
   (punteggio, chi e quando) e l'**albo d'oro** delle ultime sfide (chi ha vinto).
 - Dopo ogni turno: le Pinte guadagnate accanto alla medaglia e, se è il caso, NUOVO RECORD!;
   i trofei appena presi scendono dall'alto. Tutto sta nel salvataggio (e quindi si esporta e
@@ -409,7 +489,10 @@ compare il timbro "CONTRO SE STESSO!" e, dove il giocatore si vede in scena, ent
 il suo **doppione**: lo stesso personaggio travestito con occhiali finti, nasone e
 baffi, così i due non si confondono. Il microgioco non cambia di una virgola.
 Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
-microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Factor").
+microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Factor"). Pastaffi è anche
+Denny, l'ospite di "Le Perle di Denny": chi lo sceglie lì gioca contro se stesso. In "Scontrino,
+prego!" giocano contro se stessi Michele (l'ospite, alla cassa) e il Giso (nel `cast`): il vice
+del Giso, lì, è il doppione.
 
 ### Beer pong
 
@@ -680,32 +763,32 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - anche i veterani bevono quelli che gli centri: più bevono, meno centrano
   - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
     ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
-- Provini a X-Factor (INTONA!: sei alla pianola e dai la nota ai cantanti, Tini e Oli):
-  - la melodia scorre sul pentagramma da destra verso sinistra, colorata come chi la canta; il
-    tuo cursore sta fermo a sinistra e si sposta solo su e giù, tra 7 note
-  - tastiera: SU / GIÙ (o W / S), una nota a colpo; tenendo premuto si scorre
-  - mouse: il cursore va all'altezza del puntatore, sulla nota più vicina (nessun aiuto verso
-    quella giusta)
-  - dito: trascina su e giù nella metà destra dello schermo, sotto i pulsanti (conta di quanto
-    ti sposti, non dove tocchi, così il dito non copre le note)
-  - i cantanti cantano la nota dove sta il cursore: giusta, voce piena e un po' di vibrato;
-    sbagliata, calante e incrinata; a metà strada, un glissando. Si gioca anche senza audio: la
-    nota tenuta bene si accende, quella sbagliata diventa rossa
-  - le note con la stella valgono doppio, se le tieni dall'inizio alla fine senza stonare; ogni
-    3 secondi intonati di fila il moltiplicatore sale di 0,5 (fino a x3), e alla prima stonatura
-    torna a x1
-  - tre atti: LA STROFA (note lunghe, a turno); dal 12° secondo IL RITORNELLO (più corte, salti
-    più grandi, i due si alternano più in fretta); dal 24° L'ACUTO!, e negli ultimi secondi la
-    nota più alta da tenere fino in fondo, coi suoi tremoli da seguire
-  - alla fine votano i quattro giudici (inventati), ognuno con la sua soglia di intonazione: con
-    almeno 3 SÌ si passa. Il verdetto si salta con un tocco o con INVIO. Le lucine sul loro
-    tavolo dicono già durante la canzone come la stanno pensando
-  - la base è una di tre canzoni (ROCK, POP o RAP), con la batteria, un basso che si muove, gli
-    accordi a ritmo e un passaggio di batteria a ogni atto; nel ritornello si sale di un tono
-  - la canzone e la melodia escono dal seme del round: sono le stesse per tutti i giocatori
-  - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `tolleranza`,
-    `grazia` e `graziaSalto` (quanto tempo c'è per arrivare sulla nota nuova),
-    `scorrimento`, `atti` (durata delle note, salti, stelle) e le `soglia` dei `giudici`
+- Provini a X-Factor (SUONA!: fai la base a Tini e Oli su "Cambiare Aria", la loro canzone vera):
+  - sei dietro la console coi 4 pad luminosi; le note sono cerchi che scendono verso il loro pad,
+    a tempo con la canzone: si colpiscono quando toccano il pad (PERFETTO, BUONO, MANCATO), e il
+    pad si accende del colore della nota. Le note lunghe si tengono finché finisce la scia
+  - tastiera: D F J K (o le frecce), da sinistra a destra; dito e mouse: si tocca il pad (o la sua
+    corsia nella metà bassa dello schermo), anche con più dita insieme
+  - l'errore si sente sulla canzone vera: a ogni nota mancata si ovatta per mezzo secondo e il
+    disco graffia; con 3 errori di fila resta ovattata e un po' più lenta finché non si torna a
+    prendere le note. Toccare a vuoto vicino a una nota azzera la serie
+  - note prese: i cantanti si gasano, i giudici annuiscono, il pubblico alza gli accendini; note
+    mancate: il cantante ti guarda malissimo, il produttore preme il NO, i fischi
+  - tre atti, allineati alla canzone: LA STROFA (il crescendo: note lente sui battiti forti); dal
+    12° secondo IL PEZZO FORTE! (parte il beat pieno, note più fitte, luci a tutta); dal 24° IL
+    GRAN FINALE! (note fitte e lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
+  - alla fine i quattro giudici (inventati) votano la precisione, uno alla volta: con almeno 3 SÌ
+    si passa (SEI AI BOOTCAMP!). Le lucine sul tavolo dicono già come la pensano
+  - la canzone è un ritaglio di 35 secondi (15 in Lampo, dal pezzo forte), si carica quando parte
+    il microgioco e si butta quando finisce; il tempo è quello dell'audio, col **Ritardo audio**
+    delle Impostazioni. Con la pausa canzone e note si fermano insieme. Senza audio si gioca lo
+    stesso, col proprio orologio
+  - la mappa delle note è una per livello (FACILE solo i battiti forti, NORMALE battiti e qualche
+    attacco, DIFFICILE attacchi fitti, note lunghe e doppie): la stessa per tutti, in sfida
+  - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `finestre`
+    (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
+    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fa `strumenti/beatmap.py` (vedi
+    "La canzone di X-Factor" più sotto)
 - La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli e il Sego, che si sono imbucati):
   - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
     la pizza va fatta A MEMORIA. Toccandolo (o TAB) lo si rivede un momento, ma si perde il bonus
@@ -722,11 +805,13 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     dietro la tenda della cantina, sotto i cappotti) o travestiti a tavola tra gli invitati (la
     maschera di Giorgio, baffi finti e cappello, da cuoco). Gli invitati sono personaggi giocabili
   - tre atti: LE PRIME PIZZE (due o tre ingredienti); dal 12° secondo GLI INVITATI ORDINANO
-    (pizze più ricche, e gli imbucati sbucano a chiedere una fetta: un tocco su di loro, o G, li
-    rimanda giù prima che il Boni si giri); dal 24° IL BONI HA FRETTA (il foglietto resta poco e
-    ogni pizza ha il suo tempo)
-  - ordini, nascondigli, travestimenti, invitati e i momenti in cui sbucano escono dal seme del
-    round: sono gli stessi per tutti i giocatori
+    (pizze più ricche, il foglietto resta meno); dal 24° IL BONI HA FRETTA (il foglietto resta
+    poco e ogni pizza ha il suo tempo)
+  - ordini, nascondigli, travestimenti e invitati escono dal seme del round: sono gli stessi per
+    tutti i giocatori
+  - (gli imbucati che sbucano a chiedere una fetta, da rimandare giù con un tocco, ci sono ancora
+    nel codice ma sono spenti: troppo difficile. Si riaccendono con `sbuca` e `avviso` negli
+    `atti` di `js/config/microgiochi/pizza.js`)
 - La ballata del Pallaio (RIORDINA!: sei il garzone di Lori, il cantastorie, e hai appeso le
   vignette del suo cartellone alla rinfusa):
   - Lori canta una strofa alla volta: sopra di lui il fumetto con la scena della strofa, e la
@@ -753,6 +838,59 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     (nessuna vignetta parte al posto giusto), folate e finte escono dal seme del round. In Lampo si gioca la riga in alto:
     tre strofe e la morale
   - si gioca anche senza audio: la casella illuminata, l'arco e il cerchio dicono dove e quando
+- Le Perle di Denny (CORREGGI!: al Pallaio Denny, il figlio di Emilio, fa il grande saggio e
+  sbaglia i proverbi con totale convinzione):
+  - ogni proverbio arriva intero nel fumetto, con una sola parola sbagliata: si scrive quella
+    giusta e si preme INVIO. Sul computer si scrive e basta, senza clic (mentre si scrive le
+    scorciatoie del gioco tacciono, tranne ESC per la pausa); sul telefono si tocca SCRIVI, che
+    apre la tastiera, e si manda con Invio o con OK. Con la tastiera aperta fumetto, casella e
+    barra del tempo salgono nella parte che resta visibile, e Denny si fa piccolo
+  - maiuscole, spazi prima e dopo, accenti e apostrofi non contano; dalle parole di 5 lettere in su
+    va bene anche un errore di battitura. La parola sbagliata di Denny non vale mai
+  - giusta: la parola sbagliata si cancella con una riga rossa e sopra arriva quella giusta, Denny
+    si offende e ribatte, e arriva subito il proverbio dopo. Sbagliata: la casella trema, Denny
+    gongola e si riprova. Ogni proverbio ha la sua barra del tempo: se finisce, Denny la
+    proclama VERITÀ DEFINITIVA, si vede il proverbio giusto e si passa al dopo, senza punti
+  - le PERLE ORIGINALI (gli sbagli veri di Denny, `perla: true`) valgono doppio
+  - tre atti: LE PERLE DI DENNY (la parola sbagliata è sottolineata, tempo largo); dal 12° secondo
+    TROVALA TU! (non più sottolineata); dal 24° DENNY SI SCATENA! (parla in fretta e dopo un paio
+    di secondi il fumetto sbiadisce: resta la casella). A FACILE la parola è sempre sottolineata,
+    c'è la prima lettera in grigio nella casella e più tempo; a DIFFICILE mai sottolineata, meno
+    tempo e nessun errore di battitura
+  - i proverbi sono in `proverbi` di `js/config/microgiochi/proverbi.js`: una riga ciascuno, il
+    proverbio giusto con tra [quadre] la parola da scrivere, `dice` la parola sbagliata di Denny,
+    `perla: true` se è un suo sbaglio vero. L'ordine esce dal seme del round, senza ripetizioni
+- Scontrino, prego! (SCONTRINO!: nella pizzeria al taglio "Da Michele" chi gioca è il vice del
+  Giso, il paladino degli scontrini, e tiene d'occhio Michele alla cassa):
+  - una regola sola: chi esce deve avere in mano lo scontrino, il foglietto BIANCO (bello grande,
+    tenuto alzato). I clienti entrano dall'arco, scelgono, pagano alla cassa ("cling") e vanno verso
+    la porta: chi esce senza, o col foglio sbagliato, si clicca (o si tocca) prima che arrivi alla
+    porta. SPAZIO ferma il più vicino alla porta (sul computer ha l'anello giallo ai piedi); un clic
+    lontano da tutti, lo stesso. Il Giso fischia e lo blocca, Michele diventa rosso, suda e lo batte di
+    corsa. Se lo scontrino c'era è un falso allarme ("Eccolo, contento?"); se nessuno lo ferma, la porta
+    si chiude e Michele fischietta
+  - i trucchetti di Michele, che si vedono sempre: IL CLASSICO (niente tasti, niente stampante: fa il
+    vago e fischietta), LO STRAPPO (lo scontrino esce, ma lui lo strappa e se lo mette in tasca), IL
+    CONTO A VOCE ("Fanno 6 euro, lascia stare!", senza toccare la cassa), LO SCONTRINO FINTO (al posto
+    dello scontrino gli dà il volantino giallo della pizzeria), L'ANNULLO (lo dà, il cliente si gira e
+    lui lo annulla: sullo scontrino in mano compare la croce rossa, e il display diventa rosso)
+  - ALL'ULTIMO: Michele si scorda lo scontrino, il cliente si avvia senza, Michele grida ASPETTA! e
+    glielo lancia al volo. Quel cliente è onesto: fermarlo è un falso allarme ("Me lo stava dando!")
+  - I FURBETTI (dal terzo atto): entrano e invece di mettersi in fila sgattaiolano dritti alla porta,
+    chinati e con gli occhiali scuri, senza pagare. Beccati, tornano a pagare ("Pagavo, pagavo!")
+  - tre atti: SI APRE! (un cliente alla volta, il classico e lo strappo); dal 12° secondo ORA DI
+    PUNTA! (il locale si riempie, due clienti che si accavallano, arrivano il conto a voce, il
+    volantino e ALL'ULTIMO); dal 24° SABATO SERA DA MICHELE! (la coda all'arco, i cartoni da asporto,
+    l'annullo, i furbetti e due distrazioni: la teglia fumante e il telefono degli ordini). A FACILE
+    Michele è più lento, la finestra più lunga e lo scontrino in mano più grande; a DIFFICILE più
+    veloce, la finestra corta, più clienti insieme e più furbetti. In Lampo si parte dall'ora di punta
+  - in alto a destra: i punti, gli scontrini dei furbi beccati (si accendono: l'obiettivo) e le croci
+    dei falsi allarmi (si colorano quando li fai)
+  - il Giso è bassino: è sempre più basso di chi gioca. Quando vinci entrano due finanzieri in divisa
+    (uno saluta, l'altro fa la multa a Michele) e fuori lampeggia la luce blu
+  - clienti, trucchi e distrazioni escono dal seme del round: nella stessa sfida tutti trovano
+    gli stessi clienti negli stessi momenti (Sfida del giorno compresa). Il nome del locale
+    (sull'insegna, sulla polo di Michele e nei testi) è `nomeLocale` nella configurazione
 - ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -815,12 +953,16 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Beer Pong al Pallaio** (35 s): si parte da 80 (la partita pari): +20 per ogni bicchiere centrato,
   +40 se di rimbalzo, +10 in più quando si è IN FIAMME, +40 per ogni triangolo finito; -20 per ogni
   bicchiere tuo che ti centrano. Un bicchiere più di loro è il bronzo.
-- **Provini a X-Factor** (35 s): 10 punti per ogni secondo intonato (sul tempo della canzone), per
-  il moltiplicatore della serie (+0,5 ogni 3 secondi di fila, fino a x3); le note con la stella
-  valgono doppio se tenute senza stonare; +40 per l'acuto finale tenuto fino in fondo. I giudici
-  votano sui punti: il Commosso dice SÌ da 0,6 volte il bronzo, la Diva da 0,8, MC Catena dal
-  bronzo, il Produttore da 1,8; con 3 SÌ su 4 si passa, cioè proprio col bronzo. In Lampo (15
-  secondi) l'acuto non c'è e le soglie dei giudici sono in proporzione.
+- **Provini a X-Factor** (35 s): PERFETTO 2,5, BUONO 1,25 (la proporzione 10 a 5), per il
+  moltiplicatore della serie (x1,5 dopo 10 note di fila, x2 dopo 20, x3 dopo 40; un errore la
+  azzera), +1 per ogni nota lunga tenuta fino in fondo, +10 per ogni SÌ dei giudici. Le note di
+  FACILE (meno) valgono di più e quelle di DIFFICILE (più) di meno, e la serie si conta in
+  proporzione: in tutto si fanno i punti di NORMALE. I giudici votano la precisione (PERFETTO 1,
+  BUONO 0,6, MANCATO 0): il Commosso dice SÌ dal 33%, la Diva dal 52%, MC Catena dal 64%, il
+  Produttore dall'84%; con 3 SÌ su 4 si passa. Il provino passato è il bronzo: senza 3 SÌ il
+  totale si ferma a 90, con 3 SÌ sale almeno a 100. Coi giocatori simulati: chi è bravo arriva
+  all'argento, l'oro vuole quasi tutte le note perfette; chi tocca a caso non passa mai. In
+  Lampo (15 secondi, il ritaglio dal pezzo forte) decide il verdetto e i punti sono quelli e basta.
 - **La pizza dal Boni** (35 s): ogni pizza giusta vale più della precedente (30, 35, 40, 45...),
   +5 se consegnata entro 6 secondi senza rivedere il foglietto, +2 per ogni pizza giusta di fila
   dopo la prima. Vittoria con 3 pizze giuste (il bronzo; 6 pizze perfette sono l'oro) senza farsi
@@ -829,6 +971,24 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   25...), per la serie (+10% per ogni strofa giusta di fila dopo la prima); +60 per la morale se
   sono giuste tutte e 8. Vittoria con 5 strofe giuste su 8 (il bronzo); 7 giuste di fila sono
   l'argento, tutte e 8 l'oro. In Lampo (la riga in alto: 4 strofe) bastano 3 giuste.
+- **Le Perle di Denny** (35 s): +10 per ogni proverbio corretto, +5 se in meno di 3 secondi, per il
+  moltiplicatore della serie (x1,5 dopo 3 giusti di fila, x2 dopo 5; un errore o un tempo scaduto
+  la azzerano); le PERLE ORIGINALI valgono doppio; -2 per ogni tentativo sbagliato (mai sotto
+  zero). Vittoria con 6 proverbi corretti, che sono il bronzo: fino a 5 il totale si ferma a 90, il
+  sesto lo porta almeno a 100 e da lì non si scende più sotto. Coi giocatori simulati: chi è
+  bravo arriva all'argento (una decina di proverbi), l'oro vuole 13-14 proverbi quasi tutti
+  veloci. In Lampo (15 secondi) bastano 3 giusti e i punti sono quelli e basta.
+- **Scontrino, prego!** (35 s): +10 per ogni imbroglio scoperto, +5 se lo becchi entro 0,6 secondi
+  da quando il cliente si gira verso la porta, per il moltiplicatore della serie (x1,5 dopo 3
+  presi di fila, x2 dopo 5; un falso allarme o uno che scappa la azzerano); -5 per ogni falso
+  allarme (mai sotto zero). Ogni serata ha i suoi imbrogli (tra 9 e 12 a NORMALE, con almeno 4
+  clienti onesti): i punti degli imbrogli si contano in proporzione, così una serata perfetta
+  (tutti presi subito, nessun falso allarme) fa sempre 360. Vittoria con 6 imbrogli scoperti e al
+  massimo 2 falsi allarmi, che sono il bronzo: finché non ci sei il totale si ferma a 90, quando
+  ci sei sale almeno a 100. Coi giocatori simulati: chi è lento passa quasi sempre, chi è medio
+  arriva all'argento una volta su due, l'oro vuole quasi tutto preso subito; chi preme sempre o
+  a caso fa troppi falsi allarmi e non passa mai. In Lampo (15 secondi, dall'ora di punta)
+  bastano 3 imbrogli con al massimo 1 falso allarme, e i punti sono quelli e basta.
 
 Tutti i numeri (punti, durate, velocità, curve di difficoltà) sono nei file di configurazione:
 `js/config/microgiochi/<id>.js`, uno per microgioco.
@@ -849,17 +1009,60 @@ La cartella `test/` non fa parte del gioco: non va caricata sul sito.
 Tutti i microgiochi sono nelle prove e hanno il loro giocatore automatico in `test/bot.py`
 (la modalità Beer Pong, la partita vera a tiri alternati, non ancora). Per chi scrive un giocatore
 automatico: nel beer pong il tiro si può dare dal codice, `scena.T.tira(m, p)`, e `gestoPer(x, y,
-tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere; nel provino la melodia è
-in `scena.note` (`da` e `a` in ottavi, `pos` da 0 a 6), il tempo in `scena.pos`, e il cursore si
-sposta con `scena.diUnaNota(+1 o -1)`; nella ballata la strofa in corso è `scena.armata`, la casella
-illuminata `scena.bersaglio`, e le vignette si scambiano con `scena.scambia(a, b)`.
+tiro)` di `js/beerpong/motore.js` dice che gesto serve per un bicchiere; nel provino le note sono
+in `scena.note` (`t` e `dur` in secondi di canzone, `pad` da 0 a 3), il tempo in `scena.pos`, e i
+pad si premono con `scena.premi(pad, quando)` e si lasciano con `scena.rilascia(pad)`; nella ballata la strofa in corso è `scena.armata`, la casella
+illuminata `scena.bersaglio`, e le vignette si scambiano con `scena.scambia(a, b)`; nelle Perle di
+Denny il proverbio è `scena.prov` (`giusta`, `dice`), si risponde con `scena.risposta(testo)` (come
+INVIO) quando `scena.stato` è `'risposta'`, e `scena.tProv` è il tempo passato sul proverbio.
+In Scontrino, prego! i clienti sono in `scena.clienti` (`trucco`: null se è onesto, 'furbetto' per chi
+sgattaiola; `ultimo`: lo scontrino gli arriva al volo; `t.P` da quando si può fermare, `t.G` quando si
+gira verso la porta, `t.D` quando ci arriva), `scena.bersaglio()` dice chi ferma SPAZIO, `scena.premi()`
+lo ferma e `scena.premi(x, y)` è un clic lì; `programma` e `serata` di `ScontrinoScene.js`
+dicono in anticipo com'è la serata di un seme.
+(Le Perle di Denny e Scontrino, prego!, arrivati dopo, nelle prove non ci sono ancora.)
+
+## La canzone di X-Factor
+
+"Provini a X-Factor" si suona su una canzone vera, "Cambiare Aria" del Tini e dell'Oli. Nel sito ci
+sono solo due ritagli, in mono (`audio/cambiare-aria.mp3`, 35 secondi, e `audio/cambiare-aria-lampo.mp3`,
+15 secondi, dal pezzo forte), e la mappa delle note `js/config/microgiochi/xfactor-mappa.json` (i
+battiti, dove cominciano gli atti e le note di ogni livello). La canzone intera sta fuori dal sito,
+in `riferimenti/`, e non va caricata su GitHub.
+
+Ritagli e mappa li fa `strumenti/beatmap.py` (fuori dal sito), con librosa (battiti e attacchi della
+canzone) e ffmpeg (i ritagli, con la dissolvenza): se cambia la canzone, o i tagli scritti in cima
+allo script, basta rilanciarlo. La prima volta:
+
+```bash
+py -m venv strumenti\.venv
+```
+
+```bash
+strumenti\.venv\Scripts\python -m pip install librosa soundfile
+```
+
+poi, ogni volta:
+
+```bash
+strumenti\.venv\Scripts\python strumenti\beatmap.py
+```
+
+In memoria, decodificato, il ritaglio da 35 secondi pesa circa 6,7 MB (a 48 kHz, come su iPhone) e
+quello da 15 circa 2,9 MB; ce n'è caricato uno solo, solo durante il microgioco. Se su qualche
+telefono le note sembrano tutte un filo in anticipo o in ritardo rispetto alla musica, c'è
+`canzone.offset` nella configurazione (secondi da aggiungere a ogni nota); per le cuffie Bluetooth
+c'è il Ritardo audio delle Impostazioni.
 
 ## Struttura
 
 ```
 index.html               pagina del gioco (telefono: zona sicura, "Gira il telefono")
 manifest.json            nome, icone e orientamento per la schermata Home
-sw.js                    service worker: il gioco offline dopo la prima visita
+sw.js                    service worker: il gioco offline dopo la prima visita (i ritagli
+                         della canzone di X-Factor li scarica subito)
+audio/                   i ritagli di "Cambiare Aria" per X-Factor (35 e 15 secondi, mono)
+icone/anteprime/         le foto dei microgiochi per la sala (strumenti/anteprime.py)
 icone/                   la copertina (sfondo del menu, copertina.webp), le icone per la
                          schermata Home ricavate da lei e l'anteprima dei link (copertina-og.jpg)
 server.py                server locale senza cache (Windows, Mac, Linux; --rete)
@@ -893,15 +1096,19 @@ js/
   torneo.js              il tabellone del Torneo (eliminazione diretta)
   progressi.js           statistiche, record, albo d'oro, trofei, Pinte, acquisti e costumi
   dialogo.js             finestra HTML sopra al gioco (codice del salvataggio, conferme)
+  casella.js             casella di testo HTML sopra al gioco (Le Perle di Denny): sul telefono
+                         apre la tastiera (pulsante SCRIVI), dice se è aperta e quanto si vede
   compat.js              aggiunte per i browser più vecchi (Safari)
   dispositivo.js         computer o telefono? (eTouch, ?touch=1)
   main.js                avvio di Phaser, scene, audio, telefono in verticale e in sottofondo
   vendor/phaser.min.js   Phaser 3.80.1
   sessione.js            stato della partita per N giocatori: chi gioca, turni, record,
                          classifica del round e generale, "contro se stesso"
-  audio.js               effetti 8-bit e musica (Web Audio API); per il provino anche la
-                         melodia guida e le voci continue dei cantanti (guida, vaiA, voce);
-                         la melodia cantata da Lori nella ballata (notaCanto)
+  config/musiche.js      le musiche e i jingle, scritti come note (le suona audio.js)
+  audio.js               effetti 8-bit e il sequencer delle musiche (Web Audio API): atti, pausa,
+                         jingle; le musiche dei giochi a tempo (TRACCE); le canzoni vere (carica e
+                         canzone: il ritaglio di X-Factor, col filtro degli errori); le voci
+                         continue e la melodia cantata da Lori nella ballata (vaiA, voce, notaCanto)
   sprites.js             crea tutte le texture all'avvio; preparaGiocatore (calci e
                          doppione di chi sta per giocare), ritratto (la testa di un
                          personaggio, per selezione e classifiche)
@@ -910,8 +1117,8 @@ js/
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES), e i gruppi di immagini che si
                          creano solo quando servono (gruppoPigro, usaGruppi): vedi sotto
-    personaggi.js        i ventuno personaggi (con Emilio, Pastaffi, i cantanti Tini e
-                         Oli, il Boni e Lori), le ragazze delle due discoteche, il buttafuori e i quattro
+    personaggi.js        i ventitré personaggi (con Emilio, Pastaffi, i cantanti Tini e
+                         Oli, il Boni, Lori, Michele e il Giso), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
@@ -941,7 +1148,7 @@ js/
                          di birra, la pallina, la mano, la lampadina, la giacca
     provino.js           il palco del talent (inventato) di "Provini a X-Factor": la grande
                          X luminosa, i fari, il tavolo dei giudici, il pubblico con gli
-                         accendini, la pianola, la chiave di violino e la nota del cursore
+                         accendini (la console coi pad la disegna la scena)
     taverna.js           "La pizza dal Boni": la taverna col forno a legna, la tavola lunga
                          con la tovaglia a quadri, il bancone con la pasta e le ciotole, gli
                          ingredienti, il foglietto, i nascondigli e i travestimenti
@@ -949,11 +1156,15 @@ js/
                          con le lucine, il cartellone del cantastorie, il telo, i tavolini,
                          e le vignette (vignetta(): piccole scene coi personaggi e gli
                          oggetti del gioco, composte all'inizio di ogni ballata)
+    pizzeria.js          "Scontrino, prego!": la pizzeria al taglio di Michele vista di fronte
+                         (lavagna, orologio, arco, insegna col nome del locale, porta d'uscita),
+                         il banco con la vetrina e la cassa (display e stampante), i clienti a
+                         pezzi da ricolorare col tint, lo scontrino, il volantino, la luce blu
     sfondi.js            pub, strada, barberia, bar, sala da pranzo e tavola,
                          cortile con la villetta di Franci, spiaggia, casinò e
                          tavolo verde, prato toscano, strada tra vigne e grano,
                          parcheggio sotto casa di notte, pista della discoteca
-  scenes/menu.js         boot, menu, lista dei microgiochi (allenamento e partita
+  scenes/menu.js         boot, menu, la sala dei microgiochi (allenamento e partita
                          singola), comandi, pausa
   scenes/partita.js      prima della partita: quanti siete, scelta dei personaggi,
                          modalità
@@ -966,7 +1177,7 @@ js/
   scenes/torneo.js       il tabellone del Torneo, la fine della Sfida del giorno, le
                          classifiche a Squadre
   scenes/beerpong.js     la modalità BEER PONG: le squadre, la partita, la fine
-  scenes/flusso.js       introduzione ("TOCCA A...!", prova lampo), risultato del turno
+  scenes/flusso.js       introduzione ("TOCCA A...!", PROVA e PRONTO!), risultato del turno
                          con la medaglia, classifica del round e generale, premi buffi,
                          finale (a due, oppure il podio)
   microgames/
@@ -977,7 +1188,7 @@ js/
     RondaScene.js  BlackjackScene.js  PalleggiScene.js  PassaseoScene.js
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
     RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
-    PizzaScene.js  BallataScene.js
+    PizzaScene.js  BallataScene.js  ProverbiScene.js  ScontrinoScene.js
 ```
 
 Le immagini sono tutte disegnate dal codice, all'avvio. Gli sfondi e le immagini che servono a un
@@ -1022,12 +1233,17 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
 - di Emilio e Pastaffi: `cappello: { tipo: 'bandana', colore, fantasia }`, `barbaColore` e
   `baffi` (barba e baffi di un colore diverso dai capelli), `stivali: true`,
   `catenaPortafoglio: colore`, `septum: colore` (l'anellino sotto il naso); la `statura`
-  di Emilio è 0.72: è il più basso di tutti
+  di Emilio è 0.72: è il più basso di tutti. Pastaffi (Denny) ha i capelli biondo scuro (e la
+  barba, che prende il colore dei capelli)
 - dei cantanti: `cappello: { tipo: 'berretto', colore, stemma }` (Tini: il berretto con la
   visiera di traverso e una stella inventata), `collana: colore`, e nel `vestito`: `stampa:
   'fulmine'` (con `stampaColore`) sulla maglietta, `collo: 'v'` e `spalle: colore` (le maniche
   di un altro colore: Oli), `tartan: colore` (i quadri sui pantaloni), `strappi: true` (i
   jeans strappati al ginocchio)
+- di Michele e del Giso: `tempie: colore` (con `corto`: i lati brizzolati), `occhiaie` (da 0 a
+  1), `barba: 'pizzettoPieno'` (il pizzetto coi baffi folti, con `barbaGrigi` = i fili grigi),
+  `grembiule: colore`, `sudore: true` (le gocce di chi è beccato); `fischietto: colore` (appeso
+  al collo) e `fascia: { colore, testo }` (al braccio, con la scritta CONTROLLO SCONTRINI)
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -1042,6 +1258,9 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   `vestitino` (il vestito delle ragazze del Manna), `canottiera` (il Manna: con `catenina`,
   `cintura` e `fibbia`), `chiodo` (il giubbotto di pelle di Emilio: `sotto` = colore della
   maglietta, `borchie` = colore delle borchie),
+  `polo` (Michele: col colletto, i due bottoni e `ricamo` = le righe del nome ricamato sul petto,
+  che vengono da `nomeLocale` nella configurazione del suo microgioco), `maglione` (il Giso: lana
+  a coste, girocollo e polsini),
   `costume` (a torso nudo: il costume da bagno è `pantaloni`, con `fantasia` = colori
   dei fiorellini);
   con `tshirt`, `bottoni: true` fa i bottoncini sotto il collo (Lori);
@@ -1087,7 +1306,15 @@ cuore (`lori_canta`), che alza la bacchetta (`lori_alza`), che batte (`lori_batt
 (`lori_ripara`) e l'inchino (`lori_inchino`); la bacchetta, lunga, la disegna la scena (va dalla
 mano alla casella). Le pose sono in `POSE` (`pala`, `grida`, `corre`, `beve`, `caccia`, `cuore`,
 `alza`, `batte`, `gratta`, `inchino`), gli oggetti in mano (`pala`, `palaAlta`, `caraffa`) in
-`accessorio()`.
+`accessorio()`. Per "Le Perle di Denny" Denny da grande saggio (la posa `saggio`: dito alzato e
+mano sul petto, con la faccia di sufficienza), offeso, che gongola, che si arrende e che proclama
+dalla sedia: le crea la scena quando parte e le butta alla fine (`preparaPosa` in `js/sprites.js`,
+densità più alta perché si vede in grande). Per "Scontrino, prego!" Michele è a due pezzi, corpo
+e testa (`preparaCorpo` e `preparaTesta` in `js/sprites.js`), così cambia faccia senza cambiare
+posa: le pose alla cassa (`cassa`, `taglia` con la `mezzaluna`, `strappa`, `aVoce`, `tasca`) e le
+facce (`fischia`, l'espressione nuova di chi fischietta guardando altrove, `occhiolino`, `parla`,
+beccato con `gote` e `sudore`); il Giso con la cartellina e la lente (la posa `conti`,
+l'accessorio `lente`). Anche queste le crea la scena e le butta alla fine.
 
 Le due discoteche non si pestano i piedi: Petri Tentacolari usa `RAGAZZE`, lo sfondo
 `bgDisco` (vista dall'alto) e la musica `disco`; L'Incubo degli Scapoli usa `TIPE`, lo sfondo
@@ -1098,7 +1325,7 @@ disegnati con lo stesso codice dei personaggi: se cambia un personaggio, vanno r
 
 Scorciatoia per le prove: `index.html?prova=barba` (o `spina`, `regrorio`,
 `panino`, `mani`, `sego`, `ronda`, `blackjack`, `palleggi`, `passaseo`, `bota`, `guida`,
-`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`, `pizza`, `ballata`) apre subito quel microgioco, in
+`piovra`, `scapoli`, `retromarcia`, `beerpong`, `xfactor`, `pizza`, `ballata`, `proverbi`, `scontrino`) apre subito quel microgioco, in
 allenamento, col primo personaggio dell'ultima partita; con `&chi=` lo si prova con un altro, per
 esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto di vedere un
 "contro se stesso").
@@ -1106,7 +1333,7 @@ esempio `index.html?prova=scapoli&chi=manna` (che è anche il modo più svelto d
 ## Aggiungere un personaggio giocabile
 
 I personaggi che si possono scegliere sono quelli dell'elenco `personaggiGiocabili` in
-`js/config.js` (oggi diciassette). Per renderne giocabile uno che c'è già tra i
+`js/config.js` (oggi diciannove). Per renderne giocabile uno che c'è già tra i
 `PERSONAGGI` di `js/grafica/personaggi.js` basta **una riga**:
 
 ```js
@@ -1131,7 +1358,7 @@ all'avvio), poi la riga in `personaggiGiocabili`.
 
 La griglia ha cinque colonne (così nella cella ci sta il nome breve, `breve` nella riga del
 personaggio, se il nome è lungo) e posto per quattro righe (diciannove personaggi più "A
-CASO"): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
+CASO": con Michele e il Giso è piena): se ne servono di più va rimpicciolita la cella (`COL` e `CELLA` in
 `js/scenes/partita.js`). Al Bancone la fila dei personaggi si stringe da sola. Ognuno ha un personaggio diverso, quindi non si può essere
 più dei personaggi giocabili: `maxGiocatori` va tenuto entro quel numero.
 
@@ -1175,8 +1402,8 @@ export class MioGiocoScene extends MicrogiocoBase {
    - `comandi`: righe per tastiera e mouse; `comandiTouch`: le stesse righe per
      chi gioca col dito (saranno mostrate sul telefono)
    - `obiettivo` e tutti i parametri di difficoltà del tuo gioco
-   - facoltativo: `musica`, il nome di una traccia di `audio.js` (se no `gioco`; Petri
-     Tentacolari usa `disco`)
+   - facoltativo: `musica`, il nome di una musica di `js/config/musiche.js` (se no `gioco`):
+     meglio una nuova, scritta apposta (vedi "Musiche")
    
    Poi in `js/config.js` importalo (`import miogioco from './config/microgiochi/miogioco.js';`),
    aggiungilo a `microgiochi: { ... }` e inserisci `'miogioco'` in `ordineSfida` se deve entrare
