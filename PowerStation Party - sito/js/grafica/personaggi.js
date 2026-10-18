@@ -2068,6 +2068,14 @@ const POSE = {
   // pubblico, che si tocca la collanina e basta, al telefono...
   balla1: { sx: [[33, 196], [56, 200], [66, 174]], dx: [[33, 196], [48, 216], [54, 236]] },
   balla2: { sx: [[33, 196], [48, 216], [54, 236]], dx: [[33, 196], [56, 200], [66, 174]] },
+  // le mosse della sfida di ballo (L'Incubo degli Scapoli), come nei pittogrammi: braccia al cielo,
+  // giù (le mani sulle ginocchia), a sinistra e a destra (un braccio teso in alto di lato, l'altro
+  // che punta di traverso davanti al petto: la gamba di lato la mette o.calcio), battimani
+  mossaSu: [[33, 196], [60, 164], [78, 114]],
+  mossaGiu: [[33, 196], [56, 222], [30, 250]],
+  mossaSx: { sx: [[33, 196], [60, 186], [84, 166]], dx: [[33, 196], [36, 222], [-8, 212]] },
+  mossaDx: { sx: [[33, 196], [36, 222], [-8, 212]], dx: [[33, 196], [60, 186], [84, 166]] },
+  mossaBatti: [[33, 196], [54, 218], [7, 200]],
   indica: { sx: [[33, 196], [30, 216], [5, 204]], dx: [[33, 196], [60, 196], [80, 184]] },
   collana: { sx: [[33, 196], [30, 216], [5, 204]], dx: [[33, 196], [43, 219], [40, 241]] },
   alTelefono: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [57, 188], [51, 152]] },
