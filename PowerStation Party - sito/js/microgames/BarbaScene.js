@@ -12,7 +12,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { FACCIA, ARTE, mascheraBarba, zonaDelicata, sulViso } from '../sprites.js';
-import { txt, im, scritta, stelle, fumo, pannello, scuoti, puntatore, colpetto, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
+import { txt, im, scritta, stelle, fumo, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, eTouch, perDito, vibra, multiTouch } from '../fx.js';
 
 const GW = FACCIA.w / 2, GH = FACCIA.h / 2; // griglia della barba: celle da 2x2 unità della faccia
 const CX = 240, CY = 142;                   // posizione a riposo della testa
@@ -504,8 +504,17 @@ export class BarbaScene extends MicrogiocoBase {
     scuoti(this, 250, 0.012);
     this.cameras.main.flash(120, 255, 80, 80);
     scritta(this, this.testa.x, 70, 'AHIA!!', { size: 24, color: '#ff6b5a' });
+    this.rimprovero();
     scritta(this, 440, 50, `-${String(this.cfg.penalita).replace('.', ',')} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
     this.tweens.add({ targets: this.spost, sy: 1.12, sx: 0.92, duration: 80, yoyo: true, repeat: 2 });
+  }
+
+  // il Delu ti riprende (una frase delle sue), ma non a ogni errore: al massimo una ogni 2 secondi
+  rimprovero() {
+    if (this.tRimprovero > this.trascorso) return;
+    this.tRimprovero = this.trascorso + 2;
+    this.fumRimprovero?.destroy();
+    this.fumRimprovero = fumetto(this, Math.min(390, this.testa.x + 100), 112, caso(this.cfg.frasiErrore), 1400, 960);
   }
 
   // rasoio troppo veloce: taglietto e cerotto
@@ -525,6 +534,7 @@ export class BarbaScene extends MicrogiocoBase {
     vibra(40);
     scuoti(this, 120, 0.006);
     scritta(this, this.testa.x, 78, 'TAGLIETTO! PIANO!', { size: 12, color: '#ff9a8a' });
+    this.rimprovero();
     scritta(this, 440, 50, `-${String(c.penalitaTaglio).replace('.', ',')} SEC`, { size: 9, color: '#ff6b5a', durata: 900 });
   }
 

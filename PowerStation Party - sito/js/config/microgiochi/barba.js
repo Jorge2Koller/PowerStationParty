@@ -64,7 +64,9 @@ export default {
     { da: 12, nome: 'DE LUCA SI AGITA!' },
     { da: 24, nome: 'CHIACCHIERA E SBADIGLIA!' },
   ],
-  chiacchiere: ['E poi gli ho detto...', "Uè, fai piano!", 'Ma lo sai che...', "'O ssaje comm'è...", 'Senti questa!'],
+  chiacchiere: ['E poi gli ho detto...', "Uè, fai piano!", 'Ma lo sai che...', "'O ssaje comm'è...", 'Senti questa!', 'Io ho anni di esperienza con la lametta'],
+  // le frasi del Delu (scheda di valutazione): dopo un taglietto o un AHIA, una di queste
+  frasiErrore: ['Calma!', 'Non ci metti le mani!', 'Io ho anni di esperienza con la lametta'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
