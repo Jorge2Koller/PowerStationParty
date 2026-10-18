@@ -244,6 +244,8 @@ export class AllenamentoScene extends Phaser.Scene {
 
     // l'anteprima: le foto che si alternano, con un leggero avvicinamento
     this.time.addEvent({ delay: 1700, loop: true, callback: () => this.prossimaFoto() });
+    // (Phaser riusa la stessa scena: senza questo, dopo il primo microgioco la sala resta bloccata)
+    this.parte = false;
     this.sel = -1;
     this.scegli(Math.min(ultimoScelto, ids.length - 1), true);
   }
