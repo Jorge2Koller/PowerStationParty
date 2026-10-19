@@ -12,6 +12,12 @@
 //  il bagagliaio. I tre atti: il parcheggio; ARRIVA EMILIO! (passa con Denny, che lo chiama:
 //  Giorgio gli corre dietro e va fermato prima che salga); alla fine anche il bagagliaio.
 //  Clic a vuoto: la mano resta ferma per un attimo.
+//  Quando scende dall'A3 rilancia le chiavi: di solito nell'angolo, ogni tanto lontano (in mezzo al
+//  parcheggio o sul tetto dell'A3), e si prendono da lì (chiaviLontane in config).
+//  La scena si muove (scheda di valutazione: "da aggiungere animazioni, un po' monotono"): le
+//  macchine molleggiano e dondolano, chi guida fa le facce e tiene il tempo con la testa, Giorgio
+//  ha l'ombra e alza la polvere correndo, l'A3 trema e si spolvera, le lucine lampeggiano a onda e
+//  nei palazzi si accendono e si spengono le finestre.
 //  I punti non scendono mai sotto zero (un passaggio scroccato toglie solo quello che hai).
 //  Le corse di Giorgio sono uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -30,7 +36,12 @@ const AMICI = [
   { id: 'sego', modello: 'suv', x: 408 },
 ];
 const A3 = { modello: 'a3', x: 72, y: PARCHEGGIO.davanti };   // la macchina di Giorgio, col muso a sinistra
-const CHIAVI = { x: 448, y: 246 };
+const CHIAVI = { x: 448, y: 246 };   // l'angolo delle chiavi (dove stanno all'inizio e quasi sempre)
+const TETTO_A3 = { x: A3.x + 12, y: A3.y - MODELLI.a3.tetto - 9 };   // ...e dove restano se le lancia sul tetto
+// le lucine colorate appese nello sfondo (come in grafica/sfondi.js: inizio, fine, quanto pendono, seme dei colori)
+const FILI = [[0, 70, 240, 60, 22, 3], [240, 60, 480, 76, 20, 4]];
+const COLORI_LUCINE = [0xff5a6a, 0xffd84a, 0x5ad0ff, 0x7dff9a, 0xff9af0];
+const PALAZZI = [[-10, 120, 54], [370, 120, 62], [130, 220, 24]];   // i palazzi dello sfondo: x, larghezza, tetto
 const TAGLIA = 0.42;          // Giorgio e il sosia: 40x60 unità
 const ALTO = 144 * TAGLIA;    // altezza a schermo di un personaggio
 const TESTA = 0.3;            // teste nei finestrini
@@ -65,18 +76,27 @@ export class GuidaScene extends MicrogiocoBase {
     this.emilio = null;     // la macchina di Emilio che passa (vedi passaEmilio)
     this.presiEmilio = 0;
     this.saliti = 0;        // volte che è salito da Emilio
+    this.tScuoti = 0;       // l'A3 al volante: sbuffi e polvere
+    this.tLuccica = 0.5;    // il luccichio delle chiavi a terra
 
     im(this, 0, 0, 'bgParcheggio').setOrigin(0);
+    this.lucine();
     this.auto = AMICI.map((a, i) => this.creaAuto({ ...a, i, y: PARCHEGGIO.fila, verso: 1 }));
     this.a3 = this.creaAuto({ ...A3, verso: -1 });
     im(this, 150, 268, 'cartello2019', 1).setOrigin(0.5, 1).setDepth(267);
 
-    // le chiavi della A3, nell'angolo
+    // le chiavi della A3, nell'angolo (posto = dove sono appoggiate adesso: ci tornano se le lasci
+    // lontano da Giorgio; lontane = l'ultima volta le ha lanciate lontano)
     this.chiavi = im(this, CHIAVI.x, CHIAVI.y, 'chiavi', 1.1).setDepth(800);
+    this.posto = { ...CHIAVI };
+    this.lontane = false;
+    this.voloChiavi = null;
     this.aiutoChiavi = txt(this, CHIAVI.x - 8, CHIAVI.y - 26, 'LE CHIAVI!', { size: 7, color: '#ffe14a', depth: 801 }).setVisible(false);
     this.tweens.add({ targets: this.aiutoChiavi, scale: 1.15, duration: 300, yoyo: true, repeat: -1 });
 
-    // Giorgio (vestito da sera) e, quando serve, il sosia incappucciato
+    // Giorgio (vestito da sera) e, quando serve, il sosia incappucciato. Sotto, la sua ombra
+    // (in volo resta a terra e si stringe: si vede quanto è alto e dove cadrà)
+    this.ombra = this.add.ellipse(240, 237, 26, 7, 0x05040c, 0.55).setDepth(237);
     this.G = { stato: 'pausa', t: 1, x: 240, y: 236, dir: 1, key: (e) => 'giorgioSera_' + e, img: im(this, 240, 236, 'giorgioSera_normale', TAGLIA).setOrigin(0.5, 1).setDepth(238) };
     this.sosia = null;
 
@@ -102,6 +122,33 @@ export class GuidaScene extends MicrogiocoBase {
   }
 
   alRientro() { if (this.trascina != null) { this.trascina = null; this.riportaChiavi(); } }
+
+  // le lucine colorate dello sfondo, sopra ognuna un alone che si accende e si spegne: tutte
+  // insieme fanno un'onda che corre lungo il filo, come le luci di Natale (lo sfondo le ha ferme).
+  // Posizioni e colori sono quelli di grafica/sfondi.js (stessa curva, stesso seme)
+  lucine() {
+    let n = 0;
+    for (const [x0, y0, x1, y1, abbasso, seme] of FILI) {
+      const rr = casuale(seme), xc = (x0 + x1) / 2, yc = Math.max(y0, y1) + abbasso;
+      for (let i = 1; i < 18; i++) {
+        const t = i / 18, u = 1 - t;
+        const x = u * u * x0 + 2 * t * u * xc + t * t * x1, y = u * u * y0 + 2 * t * u * yc + t * t * y1;
+        const l = this.add.circle(x, y + 2, 3.6, COLORI_LUCINE[Math.floor(rr() * 5)], 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.05).setDepth(2);
+        this.tweens.add({ targets: l, alpha: 0.85, duration: 380, yoyo: true, repeat: -1, delay: (n++ % 7) * 110, ease: 'Sine.inOut' });
+      }
+    }
+    // e nei palazzi qualcuno accende e spegne la luce (le finestre sono quelle dello sfondo)
+    const finestre = [];
+    for (const [x, w, top] of PALAZZI) {
+      for (let y = top + 9; y < 128; y += 14) for (let xx = x + 7; xx < x + w - 10; xx += 16) {
+        if (xx > 0 && xx < 470 && !(xx + 9 > 222 && xx < 258 && y + 8 > 104)) finestre.push([xx, y]);   // (non dietro al portone)
+      }
+    }
+    this.time.addEvent({ delay: 700, loop: true, callback: () => {
+      const [x, y] = caso(finestre), luce = this.add.rectangle(x + 4.5, y + 4, 9, 8, Math.random() < 0.3 ? 0xffd9a0 : 0xffe78a).setAlpha(0).setDepth(1);
+      this.tweens.add({ targets: luce, alpha: 0.9, duration: 150, hold: 1500 + Math.random() * 2500, yoyo: true, onComplete: () => luce.destroy() });
+    } });
+  }
 
   // La furbizia di Giorgio: sale col tempo e coi tuoi successi. Le fasi valgono da quella.
   get furbizia() {
@@ -129,9 +176,39 @@ export class GuidaScene extends MicrogiocoBase {
     const dentro = this.add.image(0, 0, 'giorgioSera_normale').setVisible(false);
     const anta = this.add.graphics();
     cont.add([testa, dietro, img, vano, dentro, anta]);
-    const auto = { ...a, M, P, cont, testa, dietro, img, vano, dentro, anta, casa: true, ap: null };
-    if (a.id) this.mettiTesta(auto, testa, a.id + '_normale', 'ant');
+    // molla = quanto è schiacciata sulle sospensioni (unità: la muove sobbalza)
+    const auto = { ...a, M, P, cont, testa, dietro, img, vano, dentro, anta, casa: true, ap: null, molla: 0 };
+    if (a.id) {
+      this.mettiTesta(auto, testa, a.id + '_normale', 'ant');
+      // chi guida aspetta con la musica accesa: tiene il tempo con la testa (ognuno col suo)
+      this.tweens.add({ targets: testa, y: '+=1', duration: 230 + a.i * 40, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: a.i * 90 });
+    }
     return auto;
+  }
+
+  // la macchina che molleggia quando qualcuno sale o sbatte la portiera, e dondola (ang, gradi)
+  // quando ne tiri fuori Giorgio
+  sobbalza(auto, giu = 1.5, ang = 0) {
+    this.tweens.killTweensOf(auto);
+    this.tweens.add({ targets: auto, molla: giu, duration: 70, yoyo: true, repeat: 1, ease: 'Quad.out', onComplete: () => { auto.molla = 0; } });
+    if (ang) this.tweens.add({ targets: auto.cont, angle: { from: ang * auto.verso, to: 0 }, duration: 550, ease: 'Elastic.out' });
+  }
+
+  // la faccia di chi guida (nel finestrino): reagisce per un attimo, poi torna normale (ms = 0: resta)
+  faccia(auto, espr, ms = 800) {
+    if (!auto?.id) return;
+    this.mettiTesta(auto, auto.testa, `${auto.id}_${espr}`, 'ant');
+    auto.tFaccia?.remove();
+    auto.tFaccia = ms ? this.time.delayedCall(ms, () => this.mettiTesta(auto, auto.testa, `${auto.id}_normale`, 'ant')) : null;
+  }
+
+  // sbuffi di polvere dai piedi di chi corre (chi = Giorgio o il sosia)
+  passi(chi, dt) {
+    chi.tPasso = (chi.tPasso ?? 0) - dt;
+    if (chi.tPasso > 0) return;
+    chi.tPasso = 0.12;
+    const d = chi.dir ?? 1, s = im(this, chi.x - d * 6, chi.y - 1, 'fumo', 0.22).setDepth(chi.y).setTint(0x9a96aa).setAlpha(0.55);
+    this.tweens.add({ targets: s, x: s.x - d * 7, y: s.y - 4, scale: scalaDi('fumo', 0.5), alpha: 0, duration: 360, onComplete: () => s.destroy() });
   }
 
   // una testa nel finestrino ('ant' = davanti, chi guida; 'post' = dietro)
@@ -222,11 +299,32 @@ export class GuidaScene extends MicrogiocoBase {
       if (a) fumo(this, a.cont.x - a.M.m - 2, a.cont.y - 6, 2, a.cont.depth + 1, 0xb8b8c8);
     }
 
+    // l'A3 al volante: col motore che tossisce butta fumo dal tubo e perde la polvere dal tetto
+    if (this.G.stato === 'volante') {
+      this.tScuoti -= dt;
+      if (this.tScuoti <= 0) {
+        this.tScuoti = 0.16;
+        const a3 = this.a3;
+        fumo(this, a3.cont.x + a3.M.m + 2, a3.cont.y - 7, 1, 900, 0x6a6458);
+        fumo(this, a3.cont.x - 30 + Math.random() * 60, a3.cont.y - a3.M.tetto + 2, 1, 900, 0xd8d0c0);
+      }
+    }
+    this.ombraGiorgio();
+
     const sc = this.auto[this.sel];
     this.freccia.setPosition(sc.cont.x, sc.cont.y - sc.M.tetto - 12).setVisible(!eTouch() && sc.casa);
-    this.aiutoChiavi.setVisible(this.G.stato === 'aTerra' && this.trascina == null);
-    if (this.trascina == null && this.G.stato === 'aTerra') this.chiavi.angle = Math.sin(this.trascorso * 18) * 12;
-    else if (this.trascina == null) this.chiavi.angle = 0;
+    // LE CHIAVI! sta sopra le chiavi, dovunque siano finite
+    this.aiutoChiavi.setVisible(this.G.stato === 'aTerra' && this.trascina == null && !this.voloChiavi)
+      .setPosition(Phaser.Math.Clamp(this.chiavi.x - 8, 28, 450), this.chiavi.y - 26);
+    if (this.trascina == null && !this.voloChiavi && this.G.stato === 'aTerra') this.chiavi.angle = Math.sin(this.trascorso * 18) * 12;
+    else if (this.trascina == null && !this.voloChiavi) this.chiavi.angle = 0;
+    // e luccicano (di più quando servono), così si trovano anche lontano dall'angolo
+    this.tLuccica -= dt;
+    if (this.tLuccica <= 0 && this.chiavi.visible && this.trascina == null && !this.voloChiavi) {
+      this.tLuccica = this.G.stato === 'aTerra' ? 0.3 : 1;
+      const s = im(this, this.chiavi.x - 5 + Math.random() * 10, this.chiavi.y - 5 + Math.random() * 8, 'stella', 0.3).setDepth(801);
+      this.tweens.add({ targets: s, scale: scalaDi('stella', 0.9), angle: 90, alpha: 0, duration: 380, onComplete: () => s.destroy() });
+    }
 
     const hud = `${this.punti}|${this.guidate}`;
     if (hud !== this.hud) {
@@ -236,8 +334,18 @@ export class GuidaScene extends MicrogiocoBase {
     }
   }
 
+  // l'ombra sotto Giorgio quando è a terra (in volo la porta vola; in macchina non c'è)
+  ombraGiorgio() {
+    const G = this.G;
+    if (G.stato === 'vola') return;
+    const vis = G.img.visible && !['dentro', 'via', 'sale', 'volante'].includes(G.stato);
+    this.ombra.setVisible(vis);
+    if (vis) this.ombra.setPosition(G.x, G.y).setScale(G.stato === 'aTerra' ? 1.3 : 1).setDepth(G.img.depth - 1);
+  }
+
   muoviGiorgio(dt, f) {
     const G = this.G, c = this.cfg;
+    if (G.stato === 'corre' || G.stato === 'versoA3' || G.stato === 'emilio') this.passi(G, dt);
     if (G.stato === 'pausa') {
       G.t -= dt;
       G.img.y = G.y + Math.sin(this.trascorso * 6) * 0.6;
@@ -440,8 +548,9 @@ export class GuidaScene extends MicrogiocoBase {
     const S = this.sosia;
     if (S.stato !== 'corre') return;
     const dx = S.tx - S.x, dy = S.ty - S.y, d = Math.hypot(dx, dy), passo = Math.min(d, S.vel * dt);
-    if (d > 0) { S.x += (dx / d) * passo; S.y += (dy / d) * passo; }
+    if (d > 0) { S.x += (dx / d) * passo; S.y += (dy / d) * passo; S.dir = dx < 0 ? -1 : 1; }
     S.img.setPosition(S.x, S.y - Math.abs(Math.sin(this.trascorso * 15 + 1)) * 2.5).setFlipX(dx < 0).setDepth(S.y + 2);
+    this.passi(S, dt);
     if (d - passo <= 0.5) {
       if (!S.meta.auto.casa || S.meta.auto.ap) { S.img.destroy(); this.sosia = null; return; }
       S.img.setVisible(false);
@@ -465,6 +574,10 @@ export class GuidaScene extends MicrogiocoBase {
     this.mettiDentro(auto, key, porta, 0);
     auto.dentro.setTint(chi === 'cartone' ? 0xc89a62 : 0xffffff);
     Audio.sfx('apri');
+    // la macchina si abbassa sotto il peso e chi guida si gira spaventato (con chiunque salga, anche
+    // col sosia e col cartone: la faccia non tradisce chi è il vero Giorgio)
+    this.sobbalza(auto, 1.2);
+    this.faccia(auto, 'shock', auto.ap.durata * 1000);
     if (chi === 'giorgio') {
       G.stato = 'dentro';
       G.img.setVisible(false);
@@ -480,7 +593,13 @@ export class GuidaScene extends MicrogiocoBase {
 
   aggiornaAuto(auto, dt) {
     const ap = auto.ap;
-    if (auto.casa && auto.id) auto.cont.y = auto.y + (Math.sin(this.trascorso * 40 + auto.i) > 0 ? 0.25 : 0);   // motore acceso
+    // motore acceso (quelle degli amici sempre; l'A3 solo con Giorgio al volante, e trema di più:
+    // è ferma da anni), più la molla delle sospensioni
+    if (auto.casa) {
+      const motore = auto.id ? (Math.sin(this.trascorso * 40 + auto.i) > 0 ? 0.25 : 0)
+        : this.G.stato === 'volante' ? (Math.sin(this.trascorso * 47) > 0 ? 0.9 : -0.3) : 0;
+      auto.cont.y = auto.y + motore + auto.molla;
+    }
     if (!ap || ap.chi === 'a3') return;
     ap.t += dt;
     const quanto = Math.min(1, ap.t / ap.durata);
@@ -494,7 +613,7 @@ export class GuidaScene extends MicrogiocoBase {
     auto.ap = null;
     this.disegnaPorta(auto, null, false);
     auto.dentro.setVisible(false).clearTint();
-    if (!silenzio) Audio.sfx('portiera');
+    if (!silenzio) { Audio.sfx('portiera'); this.sobbalza(auto, 2); }
     if (ap.chi === 'sosia' && this.sosia) { this.sosia.img.destroy(); this.sosia = null; }
     if (ap.chi === 'giorgio') this.scrocca(auto);
   }
@@ -509,8 +628,9 @@ export class GuidaScene extends MicrogiocoBase {
     scritta(this, auto.cont.x, auto.cont.y - 80, `PASSAGGIO SCROCCATO! -${c.malusPassaggio}`, { size: 9, color: '#ff6b5a', durata: 900 });
     // cartoni via: il gioco è fatto
     for (const a of this.auto) if (a.ap?.chi === 'cartone') this.chiudi(a, true);
-    // Giorgio felice nel finestrino di dietro, la macchina va via
+    // Giorgio felice nel finestrino di dietro, chi guida rassegnato, la macchina va via
     this.mettiTesta(auto, auto.dietro, G.travestito ? 'incognito_giorgio' : 'giorgioSera_felice', 'post');
+    this.faccia(auto, 'sufficienza', 0);
     auto.casa = false;
     this.time.delayedCall(150, () => {
       Audio.sfx('clacson');
@@ -539,6 +659,8 @@ export class GuidaScene extends MicrogiocoBase {
           auto.cont.setDepth(auto.y);
           auto.casa = true;
           if (this.finito) return;
+          this.faccia(auto, 'triste', 900);
+          this.sobbalza(auto, 1.5, 1.5);
           const G = this.G, g = this.geometria(auto, 'post');
           G.x = auto.x + g.x; G.y = auto.y + 8;
           G.img.setPosition(G.x, G.y).setTexture(G.key('felice')).setVisible(true).setDepth(G.y + 2);
@@ -554,18 +676,20 @@ export class GuidaScene extends MicrogiocoBase {
   // ------------------------------------------------------------
   tocco(p) {
     if (!this.inCorso) return;
-    const w = puntatore(this, p);
-    // le chiavi si prendono sempre (anche con la mano dolorante)
-    if (this.trascina == null && this.chiavi.visible && this.G.stato !== 'chiavi' && Math.hypot(w.x - this.chiavi.x, w.y - this.chiavi.y) < 18 + (p.wasTouch ? 6 : 0)) {
+    const w = puntatore(this, p), extra = p.wasTouch ? this.cfg.raggioDito : 0, G = this.G;
+    // Giorgio che corre da Emilio (o che ci sta salendo): si ferma toccandolo. Viene prima delle
+    // chiavi, che possono essere finite in mezzo al parcheggio proprio dove passa lui
+    const suGiorgio = (G.stato === 'emilio' || G.stato === 'salendoEmilio') && Math.abs(w.x - G.x) <= 12 + extra && w.y <= G.y + 4 + extra && w.y >= G.y - ALTO - extra;
+    if (suGiorgio && this.bloccata <= 0) return this.fermaEmilio();
+    // le chiavi si prendono sempre (anche con la mano dolorante, e anche al volo mentre le lancia)
+    if (this.trascina == null && this.chiavi.visible && G.stato !== 'chiavi' && Math.hypot(w.x - this.chiavi.x, w.y - this.chiavi.y) < 18 + (p.wasTouch ? 6 : 0)) {
+      this.fermaChiavi();
       this.trascina = p.id;
       this.chiavi.setScale(scalaDi('chiavi', 1.4)).setAngle(0);
       Audio.sfx('tintinnio');
       return;
     }
     if (this.bloccata > 0) return;
-    const extra = p.wasTouch ? this.cfg.raggioDito : 0, G = this.G;
-    // Giorgio che corre da Emilio (o che ci sta salendo): si ferma toccandolo
-    if ((G.stato === 'emilio' || G.stato === 'salendoEmilio') && Math.abs(w.x - G.x) <= 12 + extra && w.y <= G.y + 4 + extra && w.y >= G.y - ALTO - extra) return this.fermaEmilio();
     for (const a of this.auto) {
       if (!a.ap || !a.casa) continue;
       const g = this.geometria(a, a.ap.porta), quanto = Math.min(1, a.ap.t / a.ap.durata);
@@ -594,6 +718,9 @@ export class GuidaScene extends MicrogiocoBase {
     ap.chi = 'fuori';
     this.chiudi(a, true);
     for (const x of this.auto) if (x.ap?.chi === 'cartone') this.chiudi(x, true);
+    // lo strattone fa dondolare la macchina, e chi guida tira un sospiro di sollievo
+    this.sobbalza(a, 2.5, 3);
+    this.faccia(a, 'felice', 900);
     Audio.sfx('schiaffo');
     vibra(30);
     scuoti(this, 90, 0.004);
@@ -607,25 +734,36 @@ export class GuidaScene extends MicrogiocoBase {
   vola(x0, y0) {
     const c = this.cfg, G = this.G;
     const tx = 170 + Math.round(this.rnd() * 160), ty = 226 + Math.round(this.rnd() * 20);
+    const terra0 = G.y;   // dove toccava terra prima del volo (l'ombra parte da lì)
     G.stato = 'vola';
     G.x = tx; G.y = ty;
     G.img.setVisible(true).setTexture(G.key('shock')).setPosition(x0, y0).setDepth(860).setFlipX(tx < x0);
+    this.ombra.setVisible(true);
     const salto = { t: 0 };
     this.tweens.add({
       targets: salto, t: 1, duration: 520, ease: 'Linear',
       onUpdate: () => {
-        const t = salto.t;
-        G.img.setPosition(lerp(x0, tx, t), lerp(y0, ty, t) - Math.sin(t * Math.PI) * 50).setAngle(t * 360 * (tx < x0 ? -1 : 1));
+        const t = salto.t, su = Math.sin(t * Math.PI);
+        G.img.setPosition(lerp(x0, tx, t), lerp(y0, ty, t) - su * 50).setAngle(t * 360 * (tx < x0 ? -1 : 1));
+        // l'ombra a terra, più piccola e chiara quanto più è in alto
+        const ty0 = lerp(terra0, ty, t);
+        this.ombra.setPosition(lerp(x0, tx, t), ty0).setScale(1 - su * 0.5).setAlpha(0.55 - su * 0.3).setDepth(ty0 + 1);
       },
       onComplete: () => {
+        this.ombra.setAlpha(0.55);
         if (this.finito) return;
         G.img.setAngle(0).setDepth(ty + 2).setTexture(G.key(Math.random() < 0.5 ? 'triste' : 'shock'));
+        // atterra di sedere: si schiaccia e torna su
+        const sx = G.img.scaleX, sy = G.img.scaleY;
+        this.tweens.add({ targets: G.img, scaleX: sx * 1.3, scaleY: sy * 0.7, duration: 90, yoyo: true, ease: 'Quad.out', onComplete: () => G.img.setScale(sx, sy) });
         Audio.sfx('tonfo');
+        scuoti(this, 80, 0.003);
         stelle(this, tx, ty - ALTO * 0.6, 6, ty + 3);
         fumo(this, tx, ty - 2, 3, ty + 3, 0xb8b0a0);
         fumetto(this, tx, ty - ALTO - 8, caso(c.frasiFuori), 900, 860);
         G.stato = 'aTerra';
-        G.t = lerp(c.scopertoInizio, c.scopertoFine, this.progresso);
+        // (se le chiavi non sono nell'angolo, un attimo in più per trovarle)
+        G.t = lerp(c.scopertoInizio, c.scopertoFine, this.progresso) + (this.lontane ? c.chiaviLontane?.piuTempo ?? 0 : 0);
         G.tStelle = 0.4;
       },
     });
@@ -670,6 +808,7 @@ export class GuidaScene extends MicrogiocoBase {
     if (!this.inCorso || this.trascina != null) return;
     if (this.G.stato !== 'aTerra') { Audio.sfx('vuoto'); return; }
     const G = this.G;
+    this.fermaChiavi();
     this.G.stato = 'chiavi';   // (intanto non si rialza)
     Audio.sfx('tintinnio');
     this.tweens.add({ targets: this.chiavi, x: G.x, y: G.y - ALTO * 0.45, angle: 720, duration: 380, ease: 'Quad.out', onComplete: () => { if (!this.finito) this.consegna(); } });
@@ -692,8 +831,53 @@ export class GuidaScene extends MicrogiocoBase {
     } else this.riportaChiavi();
   }
 
+  // lasciate lontano da Giorgio: tornano dov'erano appoggiate (l'angolo, o dove le aveva lanciate)
   riportaChiavi() {
-    this.tweens.add({ targets: this.chiavi, x: CHIAVI.x, y: CHIAVI.y, angle: 0, scale: scalaDi('chiavi', 1.1), duration: 280, ease: 'Quad.out' });
+    this.tweens.add({ targets: this.chiavi, x: this.posto.x, y: this.posto.y, angle: 0, scale: scalaDi('chiavi', 1.1), duration: 280, ease: 'Quad.out' });
+  }
+
+  // le chiavi prese (col dito o col mouse, o lanciate con INVIO) anche mentre volano, rimbalzano o
+  // tornano al loro posto: quel movimento si ferma lì
+  fermaChiavi() {
+    this.voloChiavi?.stop();
+    this.voloChiavi = null;
+    this.tweens.killTweensOf(this.chiavi);
+    this.chiavi.setScale(scalaDi('chiavi', 1.1));
+  }
+
+  // Giorgio scende dall'A3 e rilancia le chiavi: di solito nell'angolo, ogni tanto lontano (in mezzo
+  // al parcheggio o sul tetto dell'A3: vedi chiaviLontane in config). Volano ad arco girando su se
+  // stesse, rimbalzano una volta e restano lì finché non servono. Dice se le ha lanciate lontano
+  lanciaChiavi(x0, y0) {
+    const L = this.cfg.chiaviLontane;
+    let dove = CHIAVI, lontane = false;
+    if (L && (L.diFila || !this.lontane) && this.rnd() < L.prob) {
+      if (this.rnd() < L.tetto) { dove = TETTO_A3; lontane = true; }
+      else for (let i = 0; i < 12 && !lontane; i++) {
+        const x = lerp(L.zona.x[0], L.zona.x[1], this.rnd()), y = lerp(L.zona.y[0], L.zona.y[1], this.rnd());
+        const d = Math.hypot(x - CHIAVI.x, y - CHIAVI.y);
+        if (d >= L.distanza[0] && d <= L.distanza[1]) { dove = { x: Math.round(x), y: Math.round(y) }; lontane = true; }
+      }
+    }
+    this.lontane = lontane;
+    this.posto = { ...dove };
+    const ch = this.chiavi, d = Math.hypot(dove.x - x0, dove.y - y0), alto = 30 + d * 0.12, volo = { t: 0 };
+    ch.setVisible(true).setPosition(x0, y0).setScale(scalaDi('chiavi', 1.1));
+    this.voloChiavi = this.tweens.add({
+      targets: volo, t: 1, duration: 420 + d * 0.5, ease: 'Linear',
+      onUpdate: () => ch.setPosition(lerp(x0, dove.x, volo.t), lerp(y0, dove.y, volo.t) - Math.sin(volo.t * Math.PI) * alto).setAngle(volo.t * 720),
+      onComplete: () => {
+        this.voloChiavi = null;
+        if (this.finito) return;
+        Audio.sfx('tintinnio');
+        ch.setAngle(0);
+        // il rimbalzo, e un po' di polvere dove cadono
+        this.tweens.add({ targets: ch, y: dove.y - 6, duration: 90, yoyo: true, ease: 'Quad.out' });
+        fumo(this, dove.x, dove.y + 4, 2, 799, 0xb8b0a0);
+        if (lontane) scritta(this, Phaser.Math.Clamp(dove.x, 40, 440), dove.y - 30, dove === TETTO_A3 ? 'SUL TETTO!' : 'LE CHIAVI SONO LÌ!', { size: 8, color: '#ffe14a', durata: 600 });
+      },
+    });
+    return lontane;
   }
 
   // le prende controvoglia e va alla sua A3
@@ -727,6 +911,7 @@ export class GuidaScene extends MicrogiocoBase {
         a3.dentro.setVisible(false);
         this.disegnaPorta(a3, null, false);
         Audio.sfx('portiera');
+        this.sobbalza(a3, 2);
         this.mettiTesta(a3, a3.testa, 'giorgioSera_sufficienza', 'ant');
         // il motore dopo anni: tossisce, poi parte
         Audio.sfx('tossisce');
@@ -742,6 +927,11 @@ export class GuidaScene extends MicrogiocoBase {
           G.t = c.alVolante;
           vibra(80);
           scuoti(this, 200, 0.006);
+          // l'A3 si sveglia di soprassalto, con una nuvola di polvere (sono anni che sta lì)
+          this.sobbalza(a3, 3, 2.5);
+          fumo(this, a3.cont.x, a3.cont.y - a3.M.tetto / 2, 5, 901, 0xd8d0c0);
+          // gli amici non ci credono: a bocca aperta (chi suona il clacson poi è felice, vedi sotto)
+          for (const a of this.auto) if (a.casa && !a.ap) this.faccia(a, 'shock', 1200);
           fumo(this, a3.cont.x + a3.M.m + 4, a3.cont.y - 8, 6, 900, 0x6a6458);
           scritta(this, 150, 196, `AL VOLANTE! +${vale}`, { size: 14, color: '#7dff9a', durata: 900 });
           scritta(this, a3.cont.x, a3.cont.y - 70, 'BRUM BRUM!', { size: 9, color: '#ffffff', durata: 600 });
@@ -749,6 +939,7 @@ export class GuidaScene extends MicrogiocoBase {
           Phaser.Utils.Array.Shuffle([...this.auto]).slice(0, 2).forEach((a, i) => this.time.delayedCall(200 + i * 300, () => {
             if (!a.casa || this.finito) return;
             Audio.sfx('clacson');
+            if (!a.ap) { this.faccia(a, 'felice', 1000); this.sobbalza(a, 1); }
             fumetto(this, a.cont.x + 20, a.cont.y - a.M.tetto - 12, caso(c.frasiAmici), 1000, 860);
           }));
         });
@@ -764,12 +955,11 @@ export class GuidaScene extends MicrogiocoBase {
     Audio.sfx('portiera');
     G.x = a3.cont.x - g.x; G.y = 252;
     G.img.setTexture(G.travestito ? 'incognito_giorgio' : 'giorgioSera_normale').setPosition(G.x, G.y).setVisible(true).setDepth(270);
-    fumetto(this, G.x + 10, G.y - ALTO - 8, caso(this.cfg.frasiScende), 1000, 860);
     G.stato = 'pausa'; G.t = 0.1;   // e riparte subito di corsa
-    // le chiavi tornano nell'angolo (lanciate)
-    this.chiavi.setVisible(true).setPosition(G.x, G.y - 30);
-    this.tweens.add({ targets: this.chiavi, x: CHIAVI.x, duration: 600, ease: 'Linear' });
-    this.tweens.add({ targets: this.chiavi, y: { from: G.y - 30, to: CHIAVI.y }, angle: 540, duration: 600, ease: 'Back.in' });
+    this.sobbalza(a3, 1.5);
+    // le chiavi: le rilancia (se lontano, lo dice lui)
+    const lontane = this.lanciaChiavi(G.x, G.y - 30);
+    fumetto(this, G.x + 10, G.y - ALTO - 8, caso(lontane ? this.cfg.chiaviLontane.frasi : this.cfg.frasiScende), 1000, 860);
   }
 
   risultato() {
@@ -785,7 +975,8 @@ export class GuidaScene extends MicrogiocoBase {
   // Ha guidato: l'A3 impolverata parte verso la disco con Giorgio al volante e gli amici dietro.
   // Non ha guidato: Giorgio con le cuffie, seduto dietro nel SUV di Sego, felice.
   finale(ris, fatto) {
-    for (const o of [this.testoPunti, this.testoGuidate, this.testoFurbo, this.freccia, this.aiutoChiavi, this.chiavi, this.oraEmilio]) o.setVisible(false);
+    this.fermaChiavi();
+    for (const o of [this.testoPunti, this.testoGuidate, this.testoFurbo, this.freccia, this.aiutoChiavi, this.chiavi, this.oraEmilio, this.ombra]) o.setVisible(false);
     this.emilio?.cont.destroy();
     this.emilio = null;
     for (const a of [...this.auto, this.a3]) { a.ap = null; this.disegnaPorta(a, null, false); a.dentro.setVisible(false).clearTint(); }
@@ -819,6 +1010,7 @@ export class GuidaScene extends MicrogiocoBase {
         titolo('ANCHE STASERA SCROCCA!', '#ff6b5a');
         suv.cont.setDepth(705);
         this.tweens.killTweensOf(suv.cont);
+        suv.cont.setAngle(0);
         suv.cont.setPosition(suv.casa ? suv.cont.x : -90, suv.casa ? suv.cont.y : PARCHEGGIO.fila);
         this.tweens.add({ targets: suv.cont, x: 240, y: 236, scaleX: 1.5, scaleY: 1.5, duration: 600, ease: 'Sine.inOut' });
         this.mettiTesta(suv, suv.dietro, 'giorgioCuffie', 'post');

@@ -64,6 +64,21 @@ export default {
   velVersoA3: 190,         // Giorgio che va alla sua A3 con le chiavi (era 120)
   raggioChiavi: 22,        // quanto vicino a Giorgio vanno lasciate le chiavi (unità)
   raggioDito: 6,           // col dito si prende un po' più largo
+  // Le chiavi che Giorgio butta via quando scende dall'A3. Di solito tornano nell'angolo in basso
+  // a destra, ma ogni tanto le lancia lontano, apposta, e vanno prese da dove sono cadute
+  // (scheda di valutazione: "un po' monotono, magari le chiavi potrebbero essere lanciate in
+  // luoghi diversi, magari non sempre sennò perdi troppo tempo"; prima tornavano sempre nell'angolo)
+  chiaviLontane: {
+    prob: 0.45,            // probabilità di lanciarle lontano...
+    diFila: false,         // ...ma mai due volte di fila (così è al massimo una volta su due)
+    distanza: [110, 270],  // quanto lontano dall'angolo (unità: lo schermo è largo 480)
+    zona: { x: [150, 420], y: [224, 258] },   // dove possono cadere: in mezzo al parcheggio, sotto
+                           //   la fila delle macchine (lì non coprono le portiere da cliccare)
+    tetto: 0.25,           // di quelle volte, probabilità che restino sul tetto dell'A3
+    piuTempo: 0.25,        // secondi in più a terra quando non sono nell'angolo (il tempo di trovarle:
+                           //   così la difficoltà resta quella di prima)
+    frasi: ['Così non le trovate!', 'Ops, mi son cadute!', 'Chiavi? Quali chiavi?', 'Andatele a prendere!'],
+  },
   // Fasi di difficoltà. "da" = la furbizia da cui vale la fase (vedi sopra; una stella a fase).
   //  vel = corsa di Giorgio (unità/s), finestra = secondi per tirarlo fuori, finta = probabilità che
   //  cambi macchina all'ultimo, insieme = portiere aperte insieme (le altre con la sagoma di cartone),
@@ -96,7 +111,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { bloccoVuoto: 0.6, fasi: { vel: 0.85, finestra: 1.3 }, furbiziaGuida: 2, emilio: { velGiorgio: 80 } },
-    difficile: { bloccoVuoto: 1, fasi: { vel: 1.12, finestra: 0.82 }, furbiziaGuida: 4, emilio: { velGiorgio: 110 } },
+    facile: { bloccoVuoto: 0.6, fasi: { vel: 0.85, finestra: 1.3 }, furbiziaGuida: 2, emilio: { velGiorgio: 80 }, chiaviLontane: { prob: 0.3 } },
+    difficile: { bloccoVuoto: 1, fasi: { vel: 1.12, finestra: 0.82 }, furbiziaGuida: 4, emilio: { velGiorgio: 110 }, chiaviLontane: { prob: 0.55, piuTempo: 0.15 } },
   },
 };
