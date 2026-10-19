@@ -93,6 +93,7 @@ const SFX = {
   spento: (t) => nota(520, t, 0.5, 'sawtooth', 0.08, 110),
   // Emilio in Retromarcia
   bipRetro: (t) => nota(1560, t, 0.11, 'square', 0.055),
+  cipCip: (t) => { for (const dt of [0, 0.12, 0.3]) nota(2400, t + dt, 0.07, 'triangle', 0.05, 3300); },   // gli uccellini di chi è KO
   bau: (t) => { nota(190, t, 0.09, 'sawtooth', 0.12, 120); rumore(t, 0.08, 0.1, 500, 'lowpass'); },
   cai: (t) => { nota(700, t, 0.12, 'square', 0.07, 1100); nota(900, t + 0.12, 0.16, 'square', 0.06, 500); },
   miao: (t) => { nota(560, t, 0.16, 'triangle', 0.09, 880); nota(880, t + 0.16, 0.22, 'triangle', 0.08, 520); },
