@@ -5,12 +5,15 @@
 //  Se una mano arriva al piatto lo trascina via piano: colpiscila per salvarlo.
 //  Finte: la mano si ferma e torna indietro. Guanto da forno: due schiaffi.
 //  Schiaffo a vuoto: la tua mano resta dolorante per un attimo (niente clic a caso).
+//  La tua mano è di chi gioca: giovane, con la sua pelle, il polsino del suo colore e la sua manica.
 //  Con la tastiera: i tasti da 1 a 5 danno lo schiaffo alla mano che punta quel piatto.
 //  Le mani arrivano uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
-import { casuale } from '../grafica/base.js';
+import { casuale, tela } from '../grafica/base.js';
+import { manoGiocatore } from '../grafica/oggetti.js';
+import { aspettoDi } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch, eTouch, puntiHud, numero } from '../fx.js';
 
 const PIATTI = [
@@ -32,6 +35,9 @@ const PALMO = 11.5;         // dal polso al centro del palmo (unità di gioco)
 const MANICA = 12;          // larghezza del braccio (unità di gioco)
 const PX_MANICA = 18 * 6;   // larghezza della texture della manica in pixel
 const Y_GUERRA = 127;
+// la mia mano (manoGiocatore in grafica/oggetti.js, 40x80 unità col centro del dorso a 34): un po' più
+// grande di quelle di Guerra, perché è più vicina (era la mano a cartone di 40x56 a 0,62)
+const TAGLIA_MIA = 0.7;
 
 export class ManiScene extends MicrogiocoBase {
   constructor() { super('mani'); }
@@ -62,8 +68,12 @@ export class ManiScene extends MicrogiocoBase {
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, depth: 1001, size: 9 });
     this.testoPiatti = txt(this, 474, 49, '', { ox: 1, depth: 1001, size: 8 });
 
-    // la mia mano: col mouse fa da cursore, col dito compare dove tocchi
-    this.manoMia = im(this, 240, 200, 'manoMia', 0.62).setOrigin(0.5, 0.6).setDepth(900);
+    // la mia mano: col mouse fa da cursore, col dito compare dove tocchi. È quella di chi gioca,
+    // giovane, con la sua pelle, il polsino del suo colore e la manica del suo vestito (scheda di
+    // valutazione: "non uguale a quella del Guerra da vecchio"; era la stessa per tutti, con la
+    // manica nera, e sembrava un'altra mano di Guerra). Si rifà a ogni partita: cambia chi gioca.
+    tela(this, 'manoGiocatore', 40, 80, (c) => manoGiocatore(c, aspettoDi(this.giocatore.id), this.giocatore.colore ?? '#ffe14a'), 6);
+    this.manoMia = im(this, 240, 200, 'manoGiocatore', TAGLIA_MIA).setOrigin(0.5, 34 / 80).setDepth(900);
     this.manoMia.scala = this.manoMia.scaleX;
     this.input.setDefaultCursor('none');
     multiTouch(this);   // si possono colpire due mani insieme
@@ -78,9 +88,12 @@ export class ManiScene extends MicrogiocoBase {
 
   pulisci() { this.input.setDefaultCursor('default'); }
 
+  // la fase di adesso. In Lampo (15 secondi) i tre atti arrivano prima, in proporzione: se no
+  // restava solo il primo, con una mano alla volta, e si salvavano 3 piatti anche senza fare niente
   get fase() {
+    const k = Math.min(1, this.durata / this.cfg.durata);
     let f = this.cfg.fasi[0];
-    for (const x of this.cfg.fasi) if (this.trascorso >= x.da) f = x;
+    for (const x of this.cfg.fasi) if (this.trascorso >= x.da * k) f = x;
     return f;
   }
 

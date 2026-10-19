@@ -500,6 +500,62 @@ function manoMia(c) {
   manoAperta(c, '#e9b58d');
 }
 
+// La mano di chi gioca in "Guerra, via quelle mani!" (40x80 unità, il centro del dorso in (20, 34)):
+// giovane e liscia, così non si confonde con quelle di Guerra (niente peli, nocche e tendini), con
+// le dita unite dello schiaffo; al polso il polsino di spugna col colore del giocatore (quello del
+// suo nome), sotto l'avambraccio e la manica rimboccata del suo vestito, che sfuma verso il basso.
+// p = l'aspetto del personaggio (aspettoDi in sprites.js), colore = il suo colore del gioco.
+// dita: come DITA_GUERRA, ma più sottili e più vicine
+const DITA_GIOVANI = [[13.3, -0.12, 12, 4.9, 4.2], [18.1, -0.04, 14.6, 5.1, 4.4], [22.9, 0.05, 14, 5, 4.3], [27.3, 0.14, 11, 4.6, 3.9]];
+export function manoGiocatore(c, p, colore) {
+  const S = p.pelle ?? '#e9b58d', scu = scuro(S, 0.2), v = p.vestito ?? {};
+  // la stoffa della manica: quella del vestito (del croupier la manica sua); chi non ha maniche
+  // (il costume da bagno) mette una maglietta del suo colore
+  const stoffa = v.manica ?? (v.colore && v.tipo !== 'costume' ? v.colore : colore);
+  const pollice = () => { c.beginPath(); c.moveTo(13.6, 41); c.quadraticCurveTo(7.4, 38.6, 5.4, 31.6); c.quadraticCurveTo(4.6, 28.2, 7, 27.8); c.quadraticCurveTo(9.4, 27.8, 10.4, 31.2); c.quadraticCurveTo(11.8, 34.6, 15.4, 35); c.closePath(); };
+  const dorso = () => { c.beginPath(); c.moveTo(10.8, 28.5); c.quadraticCurveTo(20, 25, 29.4, 28.5); c.quadraticCurveTo(30.2, 37, 26.8, 43); c.lineTo(26.6, 47); c.lineTo(13.4, 47); c.lineTo(13.2, 43); c.quadraticCurveTo(9.8, 37, 10.8, 28.5); c.closePath(); };
+  const braccio = () => { c.beginPath(); c.moveTo(13.6, 44); c.lineTo(12.2, 68); c.lineTo(27.8, 68); c.lineTo(26.4, 44); c.closePath(); };
+  // prima tutti i contorni, poi tutti i riempimenti: la mano sembra un pezzo solo
+  for (const d of DITA_GIOVANI) { ditoGuerra(c, d, 28.5); tratto(c, CONT, 2.4); }
+  pollice(); tratto(c, CONT, 2.4);
+  dorso(); tratto(c, CONT, 2.4);
+  braccio(); tratto(c, CONT, 2.4);
+  braccio(); c.fillStyle = gradL(c, 12, 0, 28, 0, [[0, scuro(S, 0.16)], [0.45, chiaro(S, 0.06)], [1, scuro(S, 0.2)]]); c.fill();
+  for (const d of DITA_GIOVANI) { const q = ditoGuerra(c, d, 28.5); c.fillStyle = gradL(c, d[0] - q.nx * 2.6, 0, d[0] + q.nx * 2.6, 0, [[0, scuro(S, 0.12)], [0.45, chiaro(S, 0.1)], [1, scuro(S, 0.08)]]); c.fill(); }
+  pollice(); c.fillStyle = gradL(c, 4, 0, 15, 0, [[0, scuro(S, 0.14)], [0.6, S]]); c.fill();
+  dorso(); c.fillStyle = gradL(c, 10, 0, 30, 0, [[0, scuro(S, 0.1)], [0.45, chiaro(S, 0.1)], [1, scuro(S, 0.14)]]); c.fill();
+  // pelle liscia: un riflesso sul dorso e appena una piega alla base di ogni dito
+  ellisse(c, 17.6, 35, 3.6, 6, -0.25); c.fillStyle = 'rgba(255,255,255,0.2)'; c.fill();
+  for (const d of DITA_GIOVANI) {
+    const q = ditoGuerra(c, d, 28.5), L = d[2], k = 0.55, px = d[0] + q.dx * L * k, py = 28.5 + q.dy * L * k, w = d[3] * 0.3;
+    c.beginPath(); c.moveTo(px - q.nx * w, py - q.ny * w); c.quadraticCurveTo(px + q.dx * 0.6, py + q.dy * 0.6, px + q.nx * w, py + q.ny * w); tratto(c, alfa(scu, 0.55), 0.6);
+    // l'unghia corta e pulita, col suo riflesso
+    const ux = q.tx - q.dx * 1.5, uy = q.ty - q.dy * 1.5;
+    ellisse(c, ux, uy, d[4] * 0.3, d[4] * 0.38, d[1]); c.fillStyle = mix(S, '#fff2ee', 0.6); c.fill(); tratto(c, alfa(scu, 0.5), 0.45);
+    ellisse(c, ux - 0.4, uy - 0.4, 0.45, 0.6, d[1]); c.fillStyle = 'rgba(255,255,255,0.8)'; c.fill();
+  }
+  ellisse(c, 6.6, 29.6, 1.3, 1.7, -0.5); c.fillStyle = mix(S, '#fff2ee', 0.6); c.fill(); tratto(c, alfa(scu, 0.5), 0.45);
+  // il polsino di spugna col colore di chi gioca, a due righe bianche
+  const fascia = () => rrect(c, 11.4, 45.6, 17.2, 8.6, 2.6);
+  fascia(); c.fillStyle = gradL(c, 11, 0, 29, 0, [[0, scuro(colore, 0.28)], [0.45, chiaro(colore, 0.12)], [1, scuro(colore, 0.32)]]); c.fill();
+  c.save(); fascia(); c.clip();
+  c.fillStyle = 'rgba(255,255,255,0.92)'; c.fillRect(11, 47.6, 18, 1.4); c.fillRect(11, 51, 18, 1.4);
+  const r = casuale(17);
+  c.fillStyle = 'rgba(0,0,0,0.16)';
+  for (let i = 0; i < 40; i++) { ellisse(c, 11.6 + r() * 17, 45.8 + r() * 8.2, 0.35, 0.35); c.fill(); }   // la spugna
+  c.restore();
+  fascia(); tratto(c, CONT, 1.6);
+  // la manica rimboccata (il risvolto) e sotto la stoffa che scende verso chi gioca
+  rrect(c, 9.4, 70, 21.2, 12, 2); c.fillStyle = gradL(c, 9, 0, 31, 0, [[0, scuro(stoffa, 0.4)], [0.5, scuro(stoffa, 0.12)], [1, scuro(stoffa, 0.42)]]); c.fill(); tratto(c, CONT, 1.6);
+  const risvolto = () => rrect(c, 8.4, 63.6, 23.2, 8.4, 3);
+  risvolto(); c.fillStyle = gradL(c, 8, 0, 32, 0, [[0, scuro(stoffa, 0.25)], [0.45, chiaro(stoffa, 0.16)], [1, scuro(stoffa, 0.3)]]); c.fill(); tratto(c, CONT, 1.8);
+  c.beginPath(); c.moveTo(9.6, 67.8); c.quadraticCurveTo(20, 69.2, 30.4, 67.8); tratto(c, alfa(scuro(stoffa, 0.5), 0.7), 0.7);
+  // in fondo la manica sfuma (il braccio continua fuori dall'immagine)
+  c.save(); c.globalCompositeOperation = 'destination-out';
+  c.fillStyle = gradL(c, 0, 72, 0, 80, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,1)']]); c.fillRect(0, 72, 40, 8);
+  c.restore();
+}
+
 // ------------------------------------------------------------
 //  SEGO, SONO SOTTO CASA: finestre con le persiane (58x44, vano 32x36 al centro), fumogeni
 // ------------------------------------------------------------
