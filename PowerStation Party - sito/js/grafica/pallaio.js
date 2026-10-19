@@ -275,6 +275,28 @@ export function manoPong(c, pelle) {
   ellisse(c, 20, 27, 5, 3.4); riemp(c, alfa(S, 0.5));
 }
 
+// La manata di Marsupino (lo schiaffo a Greg, js/beerpong/schiaffo.js): la mano aperta vista dal
+// dorso, con le dita larghe, dritta in su (si gira con l'angolo). L'origine è al centro del palmo.
+export const MANO_APERTA_IMG = { w: 40, h: 54, ox: 20 / 40, oy: 31 / 54 };
+export function manoAperta(c, pelle) {
+  const P = pelle, S = scuro(pelle, 0.16);
+  // le dita (dalla base alla punta) e il pollice: prima il contorno, poi il palmo, poi il colore
+  // sopra, così le dita si attaccano al palmo senza la riga in mezzo
+  const dita = [[[13, 24], [7.5, 7]], [[18, 22], [16.5, 2.5]], [[23, 22], [25, 3.5]], [[27.5, 25], [33, 10]]];
+  const pollice = () => { c.beginPath(); c.moveTo(11, 36); c.quadraticCurveTo(4.5, 34, 2.5, 25); };
+  const dito = ([a, b]) => { c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); };
+  for (const d of dita) { dito(d); tratto(c, CONT, 8); }
+  pollice(); tratto(c, CONT, 8.2);
+  // avambraccio e palmo
+  poli(c, [[12.5, 54], [14, 40], [28, 40], [29.5, 54]]); riemp(c, gradL(c, 12, 0, 30, 0, [[0, P], [1, S]])); tratto(c, CONT, 1.7);
+  rrect(c, 9.5, 20, 22.5, 23, 8); riemp(c, gradL(c, 9, 0, 32, 0, [[0, chiaro(P, 0.06)], [1, S]])); tratto(c, CONT, 1.7);
+  for (const d of dita) { dito(d); tratto(c, P, 5); }
+  pollice(); tratto(c, P, 5.2);
+  // le nocche e le unghie (dal dorso si vedono appena)
+  for (const [, [x, y]] of dita) { ellisse(c, x + (x - 20) * 0.04, y + 1.6, 1.5, 1.1); riemp(c, alfa(chiaro(P, 0.35), 0.8)); }
+  for (const [x, y] of [[14, 27], [18.5, 26], [23, 26]]) { c.beginPath(); c.arc(x, y, 1.6, Math.PI * 1.1, Math.PI * 1.9); tratto(c, alfa(S, 0.9), 0.9); }
+}
+
 function lampada(c) {
   c.beginPath(); c.moveTo(15, 0); c.lineTo(15, 27); tratto(c, '#1b1b22', 1.2);
   alone(c, 15, 37, 15, '#fff3b0', 0.75);

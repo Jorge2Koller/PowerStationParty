@@ -55,6 +55,23 @@ export default {
   caloVeterani: [1, 0.9, 0.72, 0.55],
   // il disturbo di Marsupino nell'ultimo atto: ogni quanti secondi, quanto fa sobbalzare la mira
   disturbo: { ogni: [3.6, 5.2], forza: 0.085, frasi: ['BUUURP!', 'Scusate, il würstel.', 'OOOH!', 'Attento che sbagli!', 'Hai una cosa sulla spalla!'] },
+  // Lo schiaffo: quando Marsupino sbaglia un tiro se la prende con Greg, che gli sta accanto in
+  // fondo al tavolo (scheda di valutazione: "quando Marsupino sbaglia, deve dare uno schiaffo a
+  // Greg"; prima Greg non c'era). È solo di contorno, non cambia la partita: js/beerpong/schiaffo.js
+  schiaffo: {
+    chi: 'marsupino', a: 'greg',  // chi lo dà e chi lo prende
+    probabilita: 1,         // tra i tiri sbagliati di Marsupino, quanti finiscono in schiaffo (1 = tutti)
+    distanza: 60,           // quanto sta lontano Greg da Marsupino (unità)
+    manoScala: 0.68,        // quanto è grande la manata
+    // i tempi in millisecondi: la mano che si alza, il colpo, la mano ferma sulla guancia, la mano
+    // che torna, quando Greg si riprende (dall'inizio del colpo) e quanto girano le stelline
+    tempi: { carica: 200, colpo: 90, fermo: 90, ritorno: 220, riprende: 1300, stordito: 1100 },
+    scritte: ['SCIAF!', 'SCIAFF!', 'PAF!'],
+    parlaMarsupino: 0.4,    // quante volte Marsupino dà la colpa a Greg...
+    parlaGreg: 0.35,        // ...e quante volte Greg protesta (il resto, zitti tutti e due)
+    frasiMarsupino: ['Colpa tua, Greg!', 'Mi hai mosso il braccio!', 'Non guardarmi quando tiro!', 'Porti sfiga, Greg!', 'Era per la mira.'],
+    frasiGreg: ['Ahia!', 'Ma io che c\'entro?!', 'Sempre a me!', 'Ohi! La faccia!', 'Prenditela col tavolo!'],
+  },
   sbronzaPeso: 1,           // quanto pesa la sbronza sulla mira (1 = come in js/config/beerpong.js)
   frasiVittoria: ['Ai miei tempi si mirava meglio.', 'Rivincita. Subito.', 'Ha avuto fortuna, il ragazzo.'],
   frasiSconfitta: ['Esperienza, ragazzo.', 'Offri tu, vero?', 'Trent\'anni di Pallaio.'],
