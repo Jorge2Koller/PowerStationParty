@@ -627,6 +627,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - se una mano ha già preso un piatto, colpiscila per riportarlo indietro
   - col guanto da forno servono due schiaffi; le finte tornano indietro da sole
   - schiaffo a vuoto: la tua mano resta dolorante per un attimo
+  - la mano che dà gli schiaffi è quella di chi gioca: giovane e liscia (non quella vecchia di
+    Guerra), con la pelle del personaggio, il polsino del suo colore e la manica del suo vestito
+  - in Lampo i tre atti arrivano in proporzione ai 15 secondi
 - Sego, sono sotto casa! (LANCIA!):
   - mouse e dito: appoggia, tira indietro come una fionda, lascia (tiri più giù = più in alto).
     Per la forza piena basta tirare di poco col mouse, e se premi in fondo allo schermo basta
@@ -641,13 +644,25 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
 - TorRONDAcelli (SPARA!):
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
-  - la palla ci mette di più ad arrivare lontano: mira un po' avanti alla bagnarola
+  - tre armi, si cambiano coi tasti 1, 2, 3, con la rotella del mouse o coi pulsanti a destra
+    (sul telefono si toccano, e toccarli non spara). Quella scelta si vede sul pulsante, nel nome
+    sopra i pulsanti e sulla canna montata sull'affusto:
+    - CANNONE: quello di prima, coi colpi contati (i pallini in alto); la palla ci mette di più ad
+      arrivare lontano: mira un po' avanti alla bagnarola
+    - MORTAIO: tiro a parabola lenta (il cerchio rosso dice dove cadrà), fa saltare un tratto di
+      mare, buono per i gruppi; si ricarica piano
+    - SILURO: corre dritto dalla riva e affonda la prima bagnarola che trova, anche il galeone e
+      il sottomarino sott'acqua
   - le bagnarole dei pirati (inventati): lo SQUALOTTO (gommone a forma di squalo, 1 colpo), il
-    CIGNO PIRATA (pedalò, 2 colpi) e il GALEONE PAPERA (galeone gonfiabile, 3 colpi). Se toccano riva si prendono un
-    ombrellone: affondali mentre scappano e l'ombrellone torna
-  - munizioni: poche (i pallini in alto). Il Generale lancia una cassa ogni tanto, che
-    atterra da sola sul cannone; un colpo torna anche da solo ogni tanto
-  - tre atti: gommoni e pedalò; dal 12° secondo ARRIVA IL GALEONE; dal 24° ARREMBAGGIO
+    CIGNO PIRATA (pedalò, 2 colpi), il GALEONE PAPERA (galeone gonfiabile, 3 colpi), la BANANA BOAT
+    (veloce, a zig-zag), le CIAMBELLE che arrivano in gruppo (FLOTTIGLIA!) e il SOTTOMARINO PAPERO
+    (si immerge: sott'acqua lo prende solo il siluro). Se toccano riva si prendono un ombrellone:
+    affondali mentre scappano e l'ombrellone torna. Affondarne più d'una con un colpo è una
+    DOPPIETTA o una TRIPLETTA
+  - munizioni del cannone: il Generale lancia una cassa ogni tanto, che atterra da sola sul
+    cannone; un colpo torna anche da solo ogni tanto
+  - tre atti: gommoni, pedalò e flottiglie; dal 12° secondo ARRIVA IL GALEONE! (e le banane); dal
+    24° ARREMBAGGIO! (il sottomarino). In più ondate a ore fisse: DUE GALEONI!, BANANE IN VISTA!
 - L'Ingiocabile (blackjack):
   - 1, 2, 3 o clic/tocco sulle fiches: punti 10, 25 o 50
   - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
@@ -792,6 +807,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - anche i veterani bevono quelli che gli centri: più bevono, meno centrano
   - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
     ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
+  - accanto a Marsupino c'è ReGrorio: ogni volta che Marsupino sbaglia un tiro si gira arrabbiato e
+    SCIAF!, Greg barcolla con le stelline e la guancia rossa (se gioca Greg, lo schiaffo arriva al
+    suo ritratto). Solo di contorno: punti e tiri non cambiano
 - Provini a X-Factor (SUONA!: fai la base a Tini e Oli su "Cambiare Aria", la loro canzone vera):
   - come in Guitar Hero: al centro del palco una strada in prospettiva parte dalla console in
     fondo e arriva in basso a 4 pad colorati (verde, rosso, giallo, blu). Le note scendono lungo
@@ -958,15 +976,17 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Il Panino** (35 s): +5 per ogni ingrediente al momento giusto; ogni ordine servito vale più del
   precedente (10, 16, 34, 64, 106...), +10 se fatto in meno di 8 s; -2 per un ingrediente fuori
   ordine, -5 per un crollo, -8 per una schifezza (il totale non va sotto zero). Vittoria con 3 ordini.
-- **Guerra** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava trascinando via
+- **Guerra** (35 s): schiaffo +4, +8 se la mano era già vicina al piatto, +3 se stava trascinando via
   un piatto, +2 per il guanto; alla fine i piatti ancora tuoi: sotto i 3 niente, 3 = +50, 4 = +80,
   5 = +120. Persi tutti, finisce prima.
 - **Sego** (35 s): +5 per ogni fumogeno in una finestra aperta (+9 nella stanza di Franci), -3 per
   quelli sprecati. Se Franci esce (80% di fumo in casa, 65% in Lampo): +40 e +15 per ogni secondo che
   avanza, e vale almeno il bronzo; se non esce, un quinto della percentuale di fumo, e il totale si
   ferma a 90 (la vittoria è farlo uscire).
-- **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana), +5 per ogni
-  ombrellone ripreso; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +40, 4 = +70, 5 = +100.
+- **TorRONDAcelli** (35 s): per ogni bagnarola affondata gommone 2, pedalò 3, galeone 5, banana 4,
+  ciambella 1, sottomarino 6 (+1 se lontana); +5 per ogni ombrellone ripreso, +3 per ogni bagnarola in
+  più affondata con lo stesso colpo; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +50,
+  4 = +100, 5 = +180. Vittoria con 3 ombrelloni salvati (il bronzo): senza, il totale si ferma a 90.
 - **L'Ingiocabile** (35 s): 1 punto per ogni fiche vinta (sopra le 100 di partenza). Le mani vinte
   giocate tutte da pro (le scelte uguali alla strategia di base) il banco le paga il doppio.
   Vittoria con 100 fiches vinte. Al verde, finisce prima.

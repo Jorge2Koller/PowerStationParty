@@ -10,7 +10,8 @@ export default {
     "L'INCUBO DEGLI SCAPOLI come Just Dance: fai la mossa quando arriva la scheda",
     "X-FACTOR come Guitar Hero, e nel pezzo cantano tutti e due: l'Oli e il Tini",
     'LA SPINA: arriva lo Zere con la vuvuzela blu, e ogni atto è più difficile',
-    'IL PASSAGGIORGIO: ogni tanto le chiavi finiscono lontano, e il parcheggio si muove',
-    "EMILIO IN RETROMARCIA: se stai dietro la macchina, KO per 2 secondi",
+    'TORRONDACELLI: mortaio e siluro, banane, ciambelle e il sottomarino papero',
+    'PASSAGGIORGIO chiavi lontane; RETROMARCIA KO; BEER PONG lo schiaffo a Greg',
+    'GUERRA: la mano è la tua, e le sue sono più svelte',
   ],
 };
