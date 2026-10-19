@@ -1,14 +1,23 @@
 // Microgioco 17: "Provini a X-Factor" - suona "Cambiare Aria" del Tini e dell'Oli sui pad. SUONA!
 //
-//  Il palco di un talent show (inventato): i due cantanti ai lati col microfono, che cantano a
-//  tempo; al centro, dietro la console coi 4 pad luminosi, chi gioca fa la base. La canzone è vera
-//  (un ritaglio di 35 secondi, 15 in Lampo): le note scendono verso i pad, a tempo coi battiti e gli
-//  attacchi della canzone (la mappa è in xfactor-mappa.json, una per livello: la fa
-//  strumenti/beatmap.py). Si colpiscono quando toccano il pad: PERFETTO, BUONO, MANCATO; le note
-//  lunghe si tengono finché finisce la scia.
+//  Il palco di un talent show (inventato), con la grafica di Guitar Hero (scheda di valutazione:
+//  "rifare come Guitar Hero le note e la griglia"): in mezzo l'autostrada delle note in prospettiva,
+//  che parte dalla console di chi suona (in fondo al palco, davanti alla grande X) e arriva ai 4 pad
+//  colorati in basso (verde, rosso, giallo, blu). La canzone è vera (un ritaglio di 35 secondi, 15 in
+//  Lampo): le note scendono lungo le corsie, a tempo coi colpi della canzone (la mappa è in
+//  xfactor-mappa.json, una per livello: la fanno strumenti/beatmap.py e strumenti/griglia.py). Si
+//  colpiscono quando arrivano sul pad: PERFETTO, BUONO, MANCATO; le note lunghe sono scie da tenere,
+//  nel gran finale arrivano gli accordi (due pad insieme). Ogni colpo fa una fiammata del colore
+//  della corsia; con la serie i bordi della strada si accendono (giallo, arancio, azzurro) e le
+//  fiamme crescono.
+//  I due cantanti ai lati si dividono la canzone (scheda di valutazione: "la canzone deve avere sia
+//  una parte del primo cantante che del secondo"; chi canta e quando è nella mappa, o nelle sezioni
+//  in config): chi canta viene avanti sotto il riflettore, l'altro resta un passo indietro e fa il
+//  coro; nel ritornello, tutti e due avanti.
 //  L'errore si sente sulla canzone: a ogni nota mancata si ovatta e il disco graffia; con 3 errori
-//  di fila resta ovattata e rallenta, finché non si torna a prendere le note. Davanti, i quattro
-//  giudici (inventati): le lucine dicono già come la pensano, e alla fine votano la precisione.
+//  di fila resta ovattata e rallenta, finché non si torna a prendere le note. Davanti, ai due lati
+//  della strada, i quattro giudici (inventati): le lucine dicono già come la pensano, e alla fine
+//  votano la precisione.
 //  Tre atti, allineati alla canzone: LA STROFA (il crescendo), IL PEZZO FORTE!, IL GRAN FINALE!.
 //  Il tempo è quello della canzone (l'orologio dell'audio, meno la latenza e il ritardo audio delle
 //  Impostazioni); senza audio si va col proprio orologio. La canzone è la stessa per tutti: nella
@@ -17,17 +26,18 @@
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
-import { PROVINO } from '../grafica/provino.js';
-import { txt, im, scritta, stelle, fumetto, caso, vibra, multiTouch, puntatore, puntiHud, numero } from '../fx.js';
+import { CONFIG } from '../config.js';
+import { PROVINO, PROSPETTIVA, CORSIE, POS_STRADA } from '../grafica/provino.js';
+import { txt, im, scalaDi, scritta, stelle, fumetto, caso, vibra, multiTouch, puntatore, puntiHud, numero, eTouch } from '../fx.js';
 
-const TAGLIA = { cantante: 0.56, io: 0.48, giudice: 0.42 };
+const TAGLIA = { cantante: 0.56, io: 0.42, giudice: 0.42 };
 const PIEDI_GIUDICI = 263;
-// i pad sulla console (in fila, da sinistra) e da dove scendono le note
-const PAD = { y: 201, w: 30, h: 12, passo: 36, cima: 36 };
-const xPad = (k) => 240 + (k - 1.5) * PAD.passo;
-const COLORI = [0xff4fb8, 0x3ae0ff, 0xffe14a, 0x7dff9a];
+const V = PROSPETTIVA;
+const COLORI = CORSIE.map((c) => parseInt(c.slice(1), 16));
 const CODICI = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
 const ESITI = { perfetto: ['PERFETTO!', '#7dff9a'], buono: ['BUONO', '#ffe14a'], mancato: ['MANCATO', '#ff6b5a'], vuoto: ['A VUOTO', '#ff9a8a'], mollata: ['MOLLATA!', '#ff9a8a'], tenuta: ['TENUTA!', '#7dff9a'] };
+// il colore dei bordi della strada col moltiplicatore della serie (x1, x1,5, x2, x3)
+const BORDI = [[1, 0x9a8cc8], [1.5, 0xffe14a], [2, 0xff9a2e], [3, 0x6ae0ff]];
 let MAPPA = null;   // la mappa delle note: si scarica la prima volta e resta (è piccola, 5 KB)
 
 export class XfactorScene extends MicrogiocoBase {
@@ -38,7 +48,9 @@ export class XfactorScene extends MicrogiocoBase {
 
   prepara() {
     this.lampo = Sessione.tipo === 'lampo';
-    this.pronto = false;
+    // (si chiamava "pronto", come il pulsante PRONTO! della prova in MicrogiocoBase: lo copriva, e
+    // nella prova PRONTO non funzionava)
+    this.caricata = false;
     // (la scena si riusa da un turno all'altro: si riparte da zero)
     this.song = null; this._verdetto = null; this.fuoriTempo = false; this.atti = null; this.battiti = null;
     this.note = []; this.iProssima = 0;
@@ -47,9 +59,11 @@ export class XfactorScene extends MicrogiocoBase {
     this.perfetti = 0; this.buoni = 0; this.mancati = 0; this.mancatiFila = 0; this.lunghe = 0;
     this.premuti = [false, false, false, false];
     this.accesi = [0, 0, 0, 0];     // quanto brilla ogni pad (si spegne piano)
+    this.rossi = [0, 0, 0, 0];      // il lampo rosso di una nota mancata
     this.dita = new Map();          // dito (o mouse) -> pad
     this.ovattata = false;
     this.nAtto = -1; this.nBattito = -1;
+    this.sezioni = []; this.chiCanta = null; this.prossimaScintilla = 0;
     this.scena();
     this.comandi();
     this.alPausa = () => this.song?.pausa();
@@ -77,7 +91,7 @@ export class XfactorScene extends MicrogiocoBase {
   // ---------- la canzone e la mappa ----------
   async carica() {
     const c = this.cfg;
-    this.attesa = txt(this, 240, 118, 'SI ACCENDONO LE LUCI...', { size: 12, color: '#ffe14a', depth: 1000 });
+    this.attesa = txt(this, 240, 150, 'SI ACCENDONO LE LUCI...', { size: 12, color: '#ffe14a', depth: 1000 });
     this.tweens.add({ targets: this.attesa, alpha: 0.4, duration: 380, yoyo: true, repeat: -1 });
     try { if (!MAPPA) MAPPA = await (await fetch(c.canzone.mappa)).json(); } catch (e) { MAPPA = null; }
     const R = MAPPA?.ritagli?.[this.lampo ? 'lampo' : 'intero'] ?? null;
@@ -89,16 +103,19 @@ export class XfactorScene extends MicrogiocoBase {
 
   avvia(R, buffer) {
     const c = this.cfg, fine = this.durata - 0.15, off = c.canzone.offset ?? 0;
-    // senza mappa (non si è potuta scaricare): una nota ogni due battiti, sui quattro pad in giro
+    // senza mappa (non si è potuta scaricare): una nota ogni due battiti, sui quattro pad in giro (i
+    // tagli e gli atti sono quelli dei ritagli, a 128 bpm: servono per le sezioni dei cantanti)
     if (!R) {
-      const b = 60 / 129.2;
-      R = { atti: this.lampo ? [null, 0, 11.7] : [0, 12.19, 23.89], battiti: [], forti: [], mappe: {} };
+      const b = 60 / 128;
+      R = { da: this.lampo ? 52.621 : 48.871, atti: this.lampo ? [0, 7.5, null] : [0, 11.25, 26.25], battiti: [], forti: [], mappe: {} };
       for (let t = 0; t < this.durata; t += b) { R.battiti.push(t); R.forti.push(R.battiti.length % 4 === 1 ? 1 : 0); }
       R.mappe.normale = R.battiti.filter((t, i) => t > 1.3 && i % 2 === 0).map((t, i) => [t, i % 4, 0]);
     }
     this.ritaglio = R;
     const mappa = (R.mappe[this.livello] ?? R.mappe.normale).filter((n) => n[0] < fine);
     this.note = mappa.map(([t, pad, dur]) => ({ t: t + off, pad, dur: Math.min(dur, fine - t), esito: null, tenuta: false }));
+    // gli accordi: le note che arrivano insieme si legano con una sbarretta (si vede che vanno prese insieme)
+    this.note.forEach((n, i) => { n.accordo = this.note[i - 1]?.t === n.t || this.note[i + 1]?.t === n.t; });
     // a FACILE le note sono meno e valgono di più (e a DIFFICILE il contrario): in tutto, i punti di NORMALE
     const rif = (R.mappe.normale ?? mappa).filter((n) => n[0] < fine).length;
     this.fattore = rif / Math.max(1, this.note.length);
@@ -107,15 +124,22 @@ export class XfactorScene extends MicrogiocoBase {
     this.atti = R.atti;
     this.battiti = R.battiti.map((t) => t + off);
     this.forti = R.forti;
+    // chi canta: dalla mappa (le "voci" del ritaglio, già in secondi del ritaglio: le scrive
+    // strumenti/beatmap.py); se la mappa non le ha, le sezioni della config, che sono in secondi della
+    // canzone intera e qui diventano secondi del ritaglio (quelle che nel ritaglio durano un attimo,
+    // all'inizio o alla fine, non contano)
+    const voci = R.voci?.length ? R.voci : (c.sezioni ?? []).map((s) => ({ ...s, da: s.da - (R.da ?? 0), a: s.a - (R.da ?? 0) }));
+    this.sezioni = voci.map((s) => ({ ...s, da: s.da + off, a: s.a + off })).filter((s) => s.a > 0.3 && s.da < this.durata - 0.3);
+    this.cantaChi(0, true);
     this.attesa.destroy();
     this.song = Audio.canzone(buffer);
     this.song?.avvia(0);
-    this.pronto = true;
+    this.caricata = true;
   }
 
   // Il tempo del microgioco non parte finché la canzone non è pronta; poi è quello della canzone.
   update(ora, delta) {
-    if (!this.pronto) return;
+    if (!this.caricata) return;
     super.update(ora, delta);
   }
 
@@ -125,30 +149,47 @@ export class XfactorScene extends MicrogiocoBase {
     im(this, 0, 0, 'bgProvino').setOrigin(0);
     this.fasci = this.add.graphics().setDepth(2).setBlendMode(Phaser.BlendModes.ADD);
     this.buio = this.add.rectangle(0, 0, 480, 270, 0x05020c, 0).setOrigin(0).setDepth(15);
-    // i due cantanti (Oli, a destra, è girato verso il centro) e chi suona, dietro la console
+    // chi suona, in fondo al palco dietro la console (da lì parte la strada delle note)
+    this.io = im(this, P.io, P.ioPiedi, `${this.giocatore.id}_normale`, TAGLIA.io).setOrigin(0.5, 1).setDepth(8);
+    im(this, P.console.x, P.console.y, 'consoleDj').setOrigin(0.5, 0).setDepth(9);
+    // i due cantanti (Oli, a destra, è girato verso il centro), coi loro riflettori: chi canta viene
+    // avanti e si illumina, l'altro fa il coro un passo indietro (vedi cantaChi)
+    this.riflettori = c.cantanti.map((id, k) => im(this, P.cantanti[k] + (k ? -6 : 6), 14, 'riflettore', 1).setOrigin(0.5, 0).setDepth(21).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setScale(scalaDi('riflettore', 1.15), scalaDi('riflettore', 1.02)));
+    this.pozze = c.cantanti.map((id, k) => im(this, P.cantanti[k], P.piedi, 'pozzaLuce', 1.2).setDepth(19).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0));
     this.cantanti = c.cantanti.map((id, k) => im(this, P.cantanti[k], P.piedi, `${id}_palco`, TAGLIA.cantante).setOrigin(0.5, 1).setDepth(20).setFlipX(k === 1));
+    this.taglie = [TAGLIA.cantante, TAGLIA.cantante];   // la taglia di adesso (chi canta è più grande)
+    this.colori = c.cantanti.map((id) => CONFIG.personaggiGiocabili.find((p) => p.id === id)?.colore ?? '#ffe14a');
+    // sopra la testa: il nome di chi canta (col suo colore) e "coro" sull'altro
+    this.cartellini = c.cantanti.map((id, k) => {
+      const t = txt(this, 0, 0, '', { size: 7.5, color: '#1f1430', thick: 0 }), g = this.add.graphics();
+      return this.add.container(P.cantanti[k], P.piedi - 96, [g, t]).setDepth(36).setAlpha(0);
+    });
     this.faccia = [0, 0];           // fino a quando un cantante tiene la faccia di una reazione
-    this.io = im(this, P.io, P.piedi + 4, `${this.giocatore.id}_normale`, TAGLIA.io).setOrigin(0.5, 1).setDepth(19);
-    // il fumo sul pavimento
+    // il fumo sul pavimento (dietro alla strada: davanti ai pad li copriva)
     for (let i = 0; i < 7; i++) {
-      const f = im(this, 30 + i * 70, P.piedi + 6 + (i % 3) * 5, 'fumo', 2.6 + (i % 2)).setDepth(26).setAlpha(0.14 + (i % 3) * 0.04);
+      const f = im(this, 30 + i * 70, P.piedi + 6 + (i % 3) * 5, 'fumo', 2.6 + (i % 2)).setDepth(20.5).setAlpha(0.12 + (i % 3) * 0.03);
       this.tweens.add({ targets: f, x: f.x + (i % 2 ? 50 : -50), duration: 5200 + i * 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     }
-    // la console coi pad (disegnata), le corsie delle note, le note
-    this.gCorsie = this.add.graphics().setDepth(22);
-    this.disegnaCorsie();
-    this.gConsole = this.add.graphics().setDepth(24);
-    this.disegnaConsole();
-    this.gPad = this.add.graphics().setDepth(25);
-    this.gNote = this.add.graphics().setDepth(30.5);   // (davanti alle teste dei giudici, dietro al tavolo)
-    this.esiti = [0, 1, 2, 3].map((k) => txt(this, xPad(k), PAD.y - 18, '', { size: 7, depth: 40 }).setAlpha(0));
-    this.testoSerie = txt(this, 240, PAD.y + 22, '', { size: 8, color: '#ffe14a', depth: 40 });
-    // i giudici al tavolo, con la lucina davanti a ognuno, e il NO del produttore
+    // l'autostrada: la strada vuota (disegnata una volta), poi le righe dei battiti e i bordi che si
+    // accendono, i pad, le scie delle note lunghe, le note (immagini, riusate), le fiamme
+    this.strada = im(this, POS_STRADA.x, POS_STRADA.y, 'stradaProvino').setOrigin(0).setDepth(21);
+    this.gRighe = this.add.graphics().setDepth(22);
+    this.gLuce = this.add.graphics().setDepth(22.5).setBlendMode(Phaser.BlendModes.ADD);
+    this.gPad = this.add.graphics().setDepth(23);
+    this.gScie = this.add.graphics().setDepth(24);
+    this.gemme = [];
+    // (le scritte sopra i pad più piccole delle corsie, che lì sono larghe 53: a 6,5 un PERFETTO!
+    // largo 55 toccava quello della corsia accanto e si leggeva PERFETTOPERFETTO)
+    this.esiti = [0, 1, 2, 3].map((k) => txt(this, V.xDi(k, 0), V.colpo - 24, '', { size: 5.5, depth: 40 }).setAlpha(0));
+    this.testoSerie = txt(this, 240, V.colpo + 27, '', { size: 8, color: '#ffe14a', depth: 40 });
+    // i tasti sotto i pad (col dito no: si tocca il pad)
+    this.tasti = eTouch() ? [] : ['D', 'F', 'J', 'K'].map((s, k) => txt(this, V.xDi(k, -0.03), V.colpo + 14, s, { size: 7, depth: 40, color: CORSIE[k] }).setAlpha(0.75));
+    // i giudici ai due tavoli, con la lucina davanti a ognuno, e il NO del produttore
     this.giudici = c.giudici.map((g, i) => ({ ...g, x: P.giudici[i], img: im(this, P.giudici[i], PIEDI_GIUDICI, `giudice${i}_normale`, TAGLIA.giudice).setOrigin(0.5, 1).setDepth(30), voto: null }));
-    im(this, P.banco.x, P.banco.y, 'bancoGiudici').setOrigin(0.5, 0).setDepth(31);
+    for (const x of P.banchi) im(this, x, P.banco.y, 'bancoGiudici').setOrigin(0.5, 0).setDepth(31);
     this.lucine = this.add.graphics().setDepth(32);
     this.lucineDi = null;
-    this.no = this.add.container(P.giudici[2] + 22, P.lucine, [this.add.graphics(), txt(this, 0, 0.5, 'NO', { size: 7, color: '#ffe1dc', thick: 0 })]).setDepth(33);
+    this.no = this.add.container(P.giudici[2] + 30, P.lucine, [this.add.graphics(), txt(this, 0, 0.5, 'NO', { size: 7, color: '#ffe1dc', thick: 0 })]).setDepth(33);
     this.disegnaNo(false);
     // il pubblico al buio, con gli accendini (si alzano con la serie)
     im(this, 0, 247, 'pubblicoProvino').setOrigin(0).setDepth(33);
@@ -161,27 +202,6 @@ export class XfactorScene extends MicrogiocoBase {
     this.testoPrecisione = txt(this, 474, 48, '', { size: 7, ox: 1, depth: 1001, color: '#fff3d6' });
   }
 
-  disegnaCorsie() {
-    const g = this.gCorsie;
-    g.clear();
-    for (let k = 0; k < 4; k++) {
-      const x = xPad(k);
-      g.fillStyle(0x0a0518, 0.34); g.fillRect(x - PAD.w / 2, PAD.cima - 6, PAD.w, PAD.y - PAD.cima + 6);
-      g.lineStyle(1, COLORI[k], 0.22); g.lineBetween(x, PAD.cima - 6, x, PAD.y - 8);
-    }
-  }
-
-  disegnaConsole() {
-    const g = this.gConsole, x0 = xPad(0) - PAD.w / 2 - 10, x1 = xPad(3) + PAD.w / 2 + 10;
-    g.clear();
-    g.fillStyle(0x000000, 0.3); g.fillRoundedRect(x0 + 2, PAD.y - 9, x1 - x0, 30, 6);
-    g.fillStyle(0x2b2f3d, 1); g.fillRoundedRect(x0, PAD.y - 11, x1 - x0, 30, 6);
-    g.fillStyle(0x3d4254, 1); g.fillRoundedRect(x0 + 2, PAD.y - 9, x1 - x0 - 4, 7, 4);
-    g.lineStyle(1.5, 0x12141c, 1); g.strokeRoundedRect(x0, PAD.y - 11, x1 - x0, 30, 6);
-    // le manopole e i led della console (finti)
-    for (let i = 0; i < 6; i++) { g.fillStyle(0x12141c, 1); g.fillCircle(x0 + 12 + i * 24, PAD.y + 13, 2.4); g.fillStyle([0x7dff9a, 0xffe14a, 0xff6b5a][i % 3], 0.9); g.fillCircle(x0 + 20 + i * 24, PAD.y + 13, 1.2); }
-  }
-
   disegnaNo(acceso) {
     const g = this.no.list[0];
     g.clear();
@@ -191,6 +211,49 @@ export class XfactorScene extends MicrogiocoBase {
     this.no.list[1].setAlpha(acceso ? 1 : 0.5);
   }
 
+  // ---------- chi canta ----------
+  // Le sezioni della canzone (config: sezioni): chi canta viene avanti, più grande, sotto il suo
+  // riflettore, col nome sopra la testa; l'altro fa un passo indietro, un po' in ombra, e fa il coro
+  // ('insieme': tutti e due avanti). Al cambio, "TOCCA A OLI!".
+  cantaChi(v, subito = false) {
+    const c = this.cfg, P = PROVINO;
+    const s = this.sezioni.find((s) => v >= s.da && v < s.a);
+    const chi = s?.cantante ?? this.chiCanta ?? 'insieme';
+    if (chi === this.chiCanta) return;
+    const primo = this.chiCanta == null;
+    this.chiCanta = chi;
+    c.cantanti.forEach((id, k) => {
+      const su = chi === 'insieme' || chi === id, img = this.cantanti[k], verso = k ? -1 : 1;
+      this.taglie[k] = TAGLIA.cantante * (su ? 1.1 : 0.92);
+      const dove = { x: P.cantanti[k] + (su ? 8 : -4) * verso, y: P.piedi + (su ? 4 : -4), scaleX: scalaDi(img.texture.key, this.taglie[k]), scaleY: scalaDi(img.texture.key, this.taglie[k]) };
+      this.tweens.killTweensOf(img);
+      if (subito) img.setPosition(dove.x, dove.y).setScale(dove.scaleX);
+      else this.tweens.add({ targets: img, ...dove, duration: 320, ease: 'Back.out' });
+      if (su) img.clearTint(); else img.setTint(0xa49cc4);
+      img.setDepth(su ? 20 : 19.5);
+      this.tweens.add({ targets: [this.riflettori[k], this.pozze[k]], alpha: su ? 1 : 0, duration: subito ? 1 : 300 });
+      this.tweens.add({ targets: this.riflettori[k], x: dove.x, duration: subito ? 1 : 320 });
+      this.tweens.add({ targets: this.pozze[k], x: dove.x, y: dove.y, duration: subito ? 1 : 320 });
+      // il cartellino: il nome sul colore del cantante, o "coro" in grigio
+      const cart = this.cartellini[k], [g, t] = cart.list;
+      t.setText(su ? id.toUpperCase() : 'CORO').setColor(su ? '#1f1430' : '#d8d0f0').setFontSize((su ? 7.5 : 7) * 1.3);
+      const w = t.width + 6;
+      g.clear();
+      if (su) { g.fillStyle(0x1f1430, 1); g.fillRoundedRect(-w / 2 - 1, -7, w + 2, 14, 7); g.fillStyle(Phaser.Display.Color.HexStringToColor(this.colori[k]).color, 1); g.fillRoundedRect(-w / 2, -6, w, 12, 6); }
+      cart.setPosition(dove.x, dove.y - 96 * this.taglie[k] * 1.5 - 8);
+      this.tweens.add({ targets: cart, alpha: su ? 1 : 0.7, duration: 200 });
+      // chi attacca a cantare lo fa subito, a bocca aperta
+      if (su && v >= this.faccia[k]) img.setTexture(`${id}_canta`);
+    });
+    if (!primo && !subito) {
+      // (tutti e due insieme: "INSIEME!" sopra a ognuno)
+      c.cantanti.forEach((id, k) => {
+        if (chi !== 'insieme' && chi !== id) return;
+        scritta(this, P.cantanti[k] + (k ? -40 : 40), P.piedi - 128, chi === 'insieme' ? 'INSIEME!' : `TOCCA A ${chi.toUpperCase()}!`, { size: 9, color: this.colori[k], durata: 650, depth: 960 });
+      });
+    }
+  }
+
   // ---------- i comandi ----------
   comandi() {
     const quando = (ts) => {
@@ -198,20 +261,26 @@ export class XfactorScene extends MicrogiocoBase {
       const ora = this.song?.suona ? this.song.posizione : this.pos;
       return ora - Math.max(0, (performance.now() - (ts ?? performance.now())) / 1000);
     };
+    // (ogni tasto una volta sola: quando i fotogrammi sono lenti lo stesso tasto a volte arrivava due
+    // volte, e il secondo era un colpo a vuoto)
+    const visti = new WeakSet();
     this.input.keyboard.on('keydown', (e) => {
       const k = CODICI[e.code];
-      if (k == null || e.repeat) return;
+      if (k == null || e.repeat || visti.has(e)) return;
+      visti.add(e);
       e.preventDefault?.();
       this.premi(k, quando(e.timeStamp));
     });
     this.input.keyboard.on('keyup', (e) => { const k = CODICI[e.code]; if (k != null) this.rilascia(k); });
-    // dito e mouse: si tocca il pad, o la sua corsia nella metà bassa (più dita insieme)
+    // dito e mouse: si tocca il pad, o la sua corsia sulla strada (più dita insieme). La corsia è
+    // quella della prospettiva all'altezza del dito, un po' più larga ai bordi (sui pad esterni il
+    // dito scappa fuori); in alto no, lì ci sono i pulsanti
     multiTouch(this, 4);
     const corsia = (p) => {
       const w = puntatore(this, p);
-      if (w.y < 110) return null;
-      const k = Math.round((w.x - xPad(0)) / PAD.passo);
-      return k >= 0 && k <= 3 && Math.abs(w.x - xPad(k)) <= PAD.passo / 2 + 8 ? k : null;
+      if (w.y < V.cima + 12) return null;
+      const u = (w.x - V.cx) / ((V.wColpo / 4) * V.sc(V.zDi(w.y))) + 1.5;
+      return u < -1.1 || u > 4.1 ? null : Phaser.Math.Clamp(Math.round(u), 0, 3);
     };
     this.input.on('pointerdown', (p) => {
       const k = corsia(p);
@@ -228,7 +297,7 @@ export class XfactorScene extends MicrogiocoBase {
 
   // un pad premuto (quando = il momento, in secondi di canzone)
   premi(k, quando) {
-    if (!this.inCorso || !this.pronto) return;
+    if (!this.inCorso || !this.caricata) return;
     const F = this.cfg.finestre;
     this.premuti[k] = true;
     this.accesi[k] = Math.max(this.accesi[k], 0.45);
@@ -250,17 +319,17 @@ export class XfactorScene extends MicrogiocoBase {
 
   rilascia(k, pausa = false) {
     this.premuti[k] = false;
-    // una nota lunga lasciata prima della fine della scia
+    // una nota lunga lasciata prima della fine della scia (il resto della scia diventa grigio)
     for (const n of this.note) {
       if (!n.tenuta || n.pad !== k) continue;
       n.tenuta = false;
-      if (!pausa && this.pos < n.t + n.dur - this.cfg.finestre.buono) { this.mostra(k, 'mollata'); this.serie = 0; this.hud(); }
+      if (!pausa && this.pos < n.t + n.dur - this.cfg.finestre.buono) { n.mollata = true; this.mostra(k, 'mollata'); this.serie = 0; this.hud(); }
       else this.finitaLunga(n);
     }
   }
 
   colpita(n, esito) {
-    const c = this.cfg;
+    const c = this.cfg, prima = this.molt();
     n.esito = esito;
     if (n.dur > 0) n.tenuta = true;
     const v = c.punti[esito] * this.molt() * this.fattore;
@@ -272,11 +341,41 @@ export class XfactorScene extends MicrogiocoBase {
     if (this.ovattata) { this.ovattata = false; this.song?.ovatta(20000); this.song?.velocita(1); }
     this.accesi[n.pad] = 1;
     this.mostra(n.pad, esito);
-    if (this.soglieSerie?.some(([n]) => n === this.serie)) { scritta(this, 392, 112, `${this.serie} DI FILA!`, { size: 10, color: '#ffe14a', durata: 500 }); stelle(this, 392, 112, 6, 960); }
+    this.fiammata(n.pad, esito === 'perfetto' ? 1 : 0.75);
+    // un traguardo della serie: fiamme su tutti i pad, la scritta e le stelle
+    if (this.soglieSerie?.some(([q]) => q === this.serie)) {
+      scritta(this, 240, V.colpo - 46, `${this.serie} DI FILA!`, { size: 11, color: '#ffe14a', durata: 550 });
+      // (le stelle dietro la scritta: davanti la coprivano)
+      stelle(this, 240, V.colpo - 46, 8, 940);
+      for (let k = 0; k < 4; k++) if (k !== n.pad) this.time.delayedCall(40 * k, () => this.fiammata(k, 1.1));
+    }
+    if (this.molt() > prima) this.bagliore = 1;
     // i cantanti si gasano, i giudici annuiscono
     if (this.serie >= 5 && this.serie % 5 === 0) this.reagisci('gasato', 0.5);
     for (const g of this.giudici) if (g.precisa && Math.random() < 0.3) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI + 2, duration: 90, yoyo: true });
     this.hud();
+  }
+
+  // la fiammata del colpo: una fiamma del colore della corsia che sale dal pad, e le scintille.
+  // Con la serie (moltiplicatore) le fiamme sono più alte e le scintille di più
+  fiammata(k, forza = 1) {
+    const x = V.xDi(k, 0), y = V.colpo, m = this.molt(), alta = forza * (1 + (m - 1) * 0.35);
+    const f = im(this, x, y + 3, 'fiammaPad', 1).setOrigin(0.5, 1).setDepth(27).setTint(COLORI[k]).setBlendMode(Phaser.BlendModes.ADD);
+    const s0 = scalaDi('fiammaPad', 1);
+    f.setScale(s0 * 1.2, s0 * 0.5 * alta);
+    this.tweens.add({ targets: f, scaleY: s0 * 1.5 * alta, scaleX: s0 * 0.8, alpha: 0, duration: 300 + 60 * m, ease: 'Quad.out', onComplete: () => f.destroy() });
+    const anello = this.add.ellipse(x, y, 30, 12).setStrokeStyle(2, COLORI[k], 1).setDepth(27).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: anello, scaleX: 1.7, scaleY: 1.7, alpha: 0, duration: 260, onComplete: () => anello.destroy() });
+    this.scintille(k, m > 1 ? 7 : 4);
+  }
+
+  scintille(k, quante) {
+    const x = V.xDi(k, 0), y = V.colpo - 2;
+    for (let i = 0; i < quante; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, d = 12 + Math.random() * 22;
+      const s = im(this, x + (Math.random() - 0.5) * 16, y, 'scintillaPad', 0.7 + Math.random() * 0.6).setDepth(27).setTint(i % 2 ? 0xffffff : COLORI[k]).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: s, x: s.x + Math.cos(a) * d, y: s.y + Math.sin(a) * d, alpha: 0, duration: 280 + Math.random() * 200, ease: 'Quad.out', onComplete: () => s.destroy() });
+    }
   }
 
   finitaLunga(n) {
@@ -285,6 +384,7 @@ export class XfactorScene extends MicrogiocoBase {
     this.punti += this.cfg.punti.lunga * this.molt() * this.fattore;
     this.lunghe++;
     this.mostra(n.pad, 'tenuta');
+    this.fiammata(n.pad, 0.9);
     this.hud();
   }
 
@@ -293,6 +393,7 @@ export class XfactorScene extends MicrogiocoBase {
     n.esito = 'mancato';
     this.mancati++; this.mancatiFila++;
     this.serie = 0;
+    this.rossi[n.pad] = 1;
     this.mostra(n.pad, 'mancato');
     vibra(40);
     // l'errore si sente sulla canzone: ovattata e graffiata; con tre errori di fila resta così e rallenta
@@ -323,8 +424,11 @@ export class XfactorScene extends MicrogiocoBase {
   mostra(k, esito) {
     const t = this.esiti[k], [s, col] = ESITI[esito];
     this.tweens.killTweensOf(t);
-    t.setText(s).setColor(col).setAlpha(1).setY(PAD.y - 18).setScale(esito === 'perfetto' ? 1.15 : 1);
-    this.tweens.add({ targets: t, y: PAD.y - 30, alpha: 0, duration: 520, delay: 120 });
+    // (le corsie 2 e 4 un po' più in alto: i PERFETTO! di due corsie vicine, uno accanto all'altro, si
+    // toccavano e si leggevano come una parola sola)
+    const y = V.colpo - 24 - (k % 2) * 9;
+    t.setText(s).setColor(col).setAlpha(1).setY(y).setScale(esito === 'perfetto' ? 1.06 : 1);
+    this.tweens.add({ targets: t, y: y - 12, alpha: 0, duration: 480, delay: 100 });
   }
 
   get precisione() {
@@ -335,7 +439,9 @@ export class XfactorScene extends MicrogiocoBase {
   hud() {
     this.testoPunti.setText(puntiHud(this.punti));
     const m = this.molt();
-    this.testoSerie.setText(this.serie >= 3 ? `SERIE ${this.serie}${m > 1 ? `  x${numero(m, m % 1 ? 1 : 0)}` : ''}` : '');
+    // (col moltiplicatore, del colore dei bordi della strada)
+    this.testoSerie.setText(this.serie >= 3 ? `SERIE ${this.serie}${m > 1 ? `  x${numero(m, m % 1 ? 1 : 0)}` : ''}` : '')
+      .setColor(m > 1 ? '#' + BORDI.reduce((col, [q, c]) => (m >= q ? c : col), 0).toString(16).padStart(6, '0') : '#ffe14a');
     const fatte = this.perfetti + this.buoni + this.mancati;
     this.testoPrecisione.setText(fatte ? `PRECISIONE ${Math.round(this.precisione * 100)}%` : '');
     // le lucine dei giudici: verdi se la precisione passa la loro soglia (si ridisegnano solo se cambiano)
@@ -384,17 +490,19 @@ export class XfactorScene extends MicrogiocoBase {
       this.nAtto = atto;
       if (!primo || atto > 0 || !this.lampo) {
         Audio.sfx('bonus');
-        // (sopra le corsie, in alto: non deve coprire le note che scendono)
-        scritta(this, 240, 27, c.atti[atto].nome, { size: 13, color: atto === 2 ? '#ff6b5a' : '#ffe14a', durata: 900, depth: 950 });
+        // (in alto, sopra la strada: non deve coprire le note che scendono)
+        scritta(this, 240, 40, c.atti[atto].nome, { size: 13, color: atto === 2 ? '#ff6b5a' : '#ffe14a', durata: 900, depth: 950 });
       }
-      // (in piedi di poco: le teste non devono arrivare a metà dei pad, dove si colpisce)
+      // (in piedi di poco: le teste non devono coprire i cantanti)
       if (c.atti[atto].inPiedi) for (const g of this.giudici) this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI - 4, duration: 300, ease: 'Back.out' });
     }
+    this.cantaChi(this.pos);
     this.battito();
     this.disegna(dt);
   }
 
-  // i cantanti cantano a tempo: a ogni battito aprono la bocca e molleggiano (di più sui battiti forti)
+  // A ogni battito chi canta apre la bocca e molleggia (di più sui battiti forti); chi fa il coro
+  // canta solo sul primo della battuta, e gli scappa una notina. Chi suona va a tempo dietro la console.
   battito() {
     if (!this.battiti) return;
     let b = this.nBattito;
@@ -403,17 +511,29 @@ export class XfactorScene extends MicrogiocoBase {
     this.nBattito = b;
     const c = this.cfg, forte = this.forti[b];
     this.cantanti.forEach((img, k) => {
-      if (this.pos < this.faccia[k]) return;
-      const tocca = this.nAtto === 0 ? b % 4 < 2 === (k === 0) : true;     // nella strofa cantano a turno
-      img.setTexture(`${c.cantanti[k]}_${tocca ? (this.nAtto === 2 && forte ? 'acuto' : 'canta') : 'palco'}`).setFlipX(k === 1);
-      const sy = img.scaleY, k0 = forte ? 0.94 : 0.97;
+      if (this.pos < this.faccia[k] || this.tweens.isTweening(img)) return;
+      const su = this.chiCanta === 'insieme' || this.chiCanta === c.cantanti[k];
+      const posa = su ? (this.nAtto === 2 && forte ? 'acuto' : b % 2 || forte ? 'canta' : 'palco') : forte ? 'canta' : 'palco';
+      img.setTexture(`${c.cantanti[k]}_${posa}`).setFlipX(k === 1);
+      const sy = scalaDi(img.texture.key, this.taglie[k]), k0 = su ? (forte ? 0.93 : 0.96) : 0.98;
+      img.setScale(sy);
       this.tweens.add({ targets: img, scaleY: { from: sy * k0, to: sy }, duration: 180, ease: 'Quad.out' });
+      if (!su && forte) this.notina(k);
     });
-    this.tweens.add({ targets: this.io, y: { from: PROVINO.piedi + 6, to: PROVINO.piedi + 4 }, duration: 160 });
+    this.cartellini.forEach((cart) => this.tweens.add({ targets: cart, scale: { from: forte ? 1.12 : 1.05, to: 1 }, duration: 160 }));
+    this.tweens.add({ targets: this.io, y: { from: PROVINO.ioPiedi + 2, to: PROVINO.ioPiedi }, duration: 160 });
+    this.lampoBattito = forte ? 1 : 0.5;
+  }
+
+  // la notina del coro: esce dalla bocca di chi fa il coro e sale ondeggiando
+  notina(k) {
+    const img = this.cantanti[k], x = img.x + (k ? -8 : 8), y = img.y - 96 * this.taglie[k] * 1.5 + 22;
+    const n = im(this, x, y, 'notina', 0.9).setDepth(36).setTint(Phaser.Display.Color.HexStringToColor(this.colori[k]).color).setAlpha(0.9);
+    this.tweens.add({ targets: n, y: y - 24, x: x + (k ? -10 : 10), alpha: 0, angle: (k ? -1 : 1) * 20, duration: 900, ease: 'Sine.out', onComplete: () => n.destroy() });
   }
 
   disegna(dt) {
-    const c = this.cfg, P = PROVINO, A = c.atti[this.nAtto] ?? c.atti[0], v = this.pos;
+    const c = this.cfg, P = PROVINO, A = c.atti[this.nAtto] ?? c.atti[0], v = this.pos, ant = c.anticipo;
     // i fasci delle luci: girano a tempo; nel finale i riflettori puntano i cantanti
     const g = this.fasci, luci = A.luci * (this.ovattata ? 0.4 : 1);
     g.clear();
@@ -424,43 +544,102 @@ export class XfactorScene extends MicrogiocoBase {
       g.fillStyle(col, 0.07 * luci);
       g.fillTriangle(x, -4, tx - 34, lung, tx + 34, lung);
     });
-    // i pad: accesi del colore della nota quando li colpisci, e un po' quando li premi
-    const p = this.gPad;
+
+    // la strada: le righe dei battiti scorrono verso i pad (più marcate sul primo della battuta)
+    const R = this.gRighe, L = this.gLuce, zF = V.zFondo;
+    R.clear(); L.clear();
+    this.strada.setAlpha(this.ovattata ? 0.7 : 1);
+    if (this.battiti) {
+      for (let i = Math.max(0, this.nBattito - 1); i < this.battiti.length; i++) {
+        const z = (this.battiti[i] - v) / ant;
+        if (z > 1) break;
+        if (z < zF) continue;
+        const y = V.yDi(z), forte = this.forti[i], nebbia = Math.min(1, (1 - z) * 4);
+        R.lineStyle((forte ? 1.6 : 0.8) * V.sc(z), 0xffffff, (forte ? 0.32 : 0.14) * nebbia);
+        R.lineBetween(V.xDi(-0.5, z), y, V.xDi(3.5, z), y);
+      }
+    }
+    // i bordi: si accendono col moltiplicatore della serie, pulsano coi battiti e quando sale il moltiplicatore
+    const m = this.molt(), colB = BORDI.reduce((col, [q, cc]) => (m >= q ? cc : col), BORDI[0][1]);
+    this.lampoBattito = Math.max(0, (this.lampoBattito ?? 0) - dt * 4);
+    this.bagliore = Math.max(0, (this.bagliore ?? 0) - dt * 1.5);
+    const forza = (m > 1 ? 0.55 : 0.18) + this.lampoBattito * 0.25 + this.bagliore * 0.6;
+    for (const k of [-0.5, 3.5]) {
+      L.lineStyle(7 + this.bagliore * 6, colB, 0.16 * forza); L.lineBetween(V.xDi(k, 1), V.cima, V.xDi(k, zF), 270);
+      L.lineStyle(2.2, colB, Math.min(1, 0.5 + forza)); L.lineBetween(V.xDi(k, 1), V.cima, V.xDi(k, zF), 270);
+    }
+
+    // i pad: un anello del colore della corsia; premuto si abbassa e si accende, sul colpo brilla
+    const p = this.gPad, y0 = V.colpo, rx = V.wColpo / 8 - 4;
     p.clear();
     for (let k = 0; k < 4; k++) {
       this.accesi[k] = Math.max(this.premuti[k] ? 0.35 : 0, this.accesi[k] - dt * 3);
-      const x = xPad(k) - PAD.w / 2, a = this.accesi[k];
-      p.fillStyle(COLORI[k], 0.25 + a * 0.75); p.fillRoundedRect(x, PAD.y - PAD.h / 2, PAD.w, PAD.h, 3);
-      p.lineStyle(1.5, COLORI[k], 1); p.strokeRoundedRect(x, PAD.y - PAD.h / 2, PAD.w, PAD.h, 3);
-      if (a > 0.5) { p.fillStyle(COLORI[k], (a - 0.5) * 0.5); p.fillCircle(xPad(k), PAD.y, 18 + a * 6); }
+      this.rossi[k] = Math.max(0, this.rossi[k] - dt * 3);
+      const x = V.xDi(k, 0), a = this.accesi[k], giu = this.premuti[k] ? 1.5 : 0;
+      p.fillStyle(0x000000, 0.45); p.fillEllipse(x, y0 + 3, rx * 2 + 4, 19);
+      p.fillStyle(0x15101f, 1); p.fillEllipse(x, y0 + giu, rx * 2 + 2, 17);
+      p.lineStyle(3, COLORI[k], 0.6 + a * 0.4); p.strokeEllipse(x, y0 + giu, rx * 2 - 2, 14);
+      p.fillStyle(COLORI[k], 0.16 + a * 0.84); p.fillEllipse(x, y0 + giu, rx * 1.3, 8.5);
+      if (this.rossi[k] > 0) { p.lineStyle(2, 0xff3a2e, this.rossi[k]); p.strokeEllipse(x, y0, rx * 2 + 4, 18); }
+      if (a > 0.4) { L.fillStyle(COLORI[k], (a - 0.4) * 0.5); L.fillEllipse(x, y0, rx * 2 + 16 * a, 24 * a); }
     }
-    // le note: cerchi che scendono verso il loro pad; quelle lunghe con la scia
-    const n = this.gNote, vel = (PAD.y - PAD.cima) / c.anticipo;
-    n.clear();
+
+    // le note: le gemme scendono lungo la loro corsia, e diventano grandi avvicinandosi; quelle
+    // lunghe con la scia (accesa mentre la tieni, grigia se l'hai mollata); gli accordi con la sbarretta
+    const S = this.gScie;
+    S.clear();
+    let usate = 0, accordo = null;
     for (let i = this.iProssima; i < this.note.length; i++) {
-      const q = this.note[i];
-      if (q.t - v > c.anticipo) break;
-      if (q.esito && !q.tenuta && q.esito !== 'mancato') continue;
-      const x = xPad(q.pad), yT = Math.min(PAD.y, PAD.y - (q.t - v) * vel), col = COLORI[q.pad];
-      if (q.dur > 0) {
-        const yF = PAD.y - (q.t + q.dur - v) * vel;
-        if (yF < PAD.y) { n.fillStyle(col, q.esito === 'mancato' ? 0.18 : q.tenuta ? 0.75 : 0.5); n.fillRect(x - 4.5, Math.max(PAD.cima - 6, yF), 9, Math.min(PAD.y, q.tenuta ? PAD.y : yT) - Math.max(PAD.cima - 6, yF)); }
+      const q = this.note[i], z = (q.t - v) / ant;
+      if (z > 1) break;
+      const x = (zz) => V.xDi(q.pad, zz), col = COLORI[q.pad];
+      // la scia, dalla testa (o dal pad, se la tieni) alla fine
+      if (q.dur > 0 && !q.chiusa) {
+        const zT = Math.max(zF, q.tenuta ? 0 : z), zC = Math.min(1, (q.t + q.dur - v) / ant);
+        if (zC > zT) {
+          const spenta = q.esito === 'mancato' || q.mollata, onda = q.tenuta ? Math.sin(v * 40) * 1.2 : 0;
+          const w = (zz, k) => (k * V.sc(zz)), pezzi = 8;
+          for (let j = 0; j < pezzi; j++) {
+            const za = zT + ((zC - zT) * j) / pezzi, zb = zT + ((zC - zT) * (j + 1)) / pezzi, oa = j % 2 ? onda : -onda;
+            S.fillStyle(spenta ? 0x5a5470 : col, spenta ? 0.45 : q.tenuta ? 0.95 : 0.7);
+            S.fillPoints([{ x: x(za) - w(za, 5) + oa, y: V.yDi(za) }, { x: x(za) + w(za, 5) + oa, y: V.yDi(za) }, { x: x(zb) + w(zb, 5) - oa, y: V.yDi(zb) }, { x: x(zb) - w(zb, 5) - oa, y: V.yDi(zb) }], true);
+            if (!spenta) { S.fillStyle(0xffffff, q.tenuta ? 0.75 : 0.35); S.fillPoints([{ x: x(za) - w(za, 1.4) + oa, y: V.yDi(za) }, { x: x(za) + w(za, 1.4) + oa, y: V.yDi(za) }, { x: x(zb) + w(zb, 1.4) - oa, y: V.yDi(zb) }, { x: x(zb) - w(zb, 1.4) - oa, y: V.yDi(zb) }], true); }
+          }
+          if (q.tenuta) { L.fillStyle(col, 0.35); L.fillEllipse(x(0), y0, rx * 2 + 10, 20); }
+        }
       }
-      // (la mancata, grigia, affonda appena nel pad e sparisce: sotto ci sono le facce dei giudici)
-      if (q.esito === 'mancato') { const yM = PAD.y - (q.t - v) * vel; if (yM < PAD.y + 6) { n.fillStyle(0x5a5470, 0.6); n.fillCircle(x, yM, 7); } continue; }
-      if (q.tenuta) continue;
-      const y = PAD.y - (q.t - v) * vel;
-      if (y < PAD.cima - 8) continue;
-      n.fillStyle(0x12101a, 0.9); n.fillCircle(x, y, 9.5);
-      n.fillStyle(col, 1); n.fillCircle(x, y, 8);
-      n.fillStyle(0xffffff, 0.75); n.fillCircle(x - 2.5, y - 2.5, 2.4);
+      // la gemma: sparisce quando la prendi; mancata, diventa grigia e scivola giù, fuori dalla strada
+      if ((q.esito && q.esito !== 'mancato') || z < zF || q.tenuta) continue;
+      const s = V.sc(z), y = V.yDi(z), nebbia = Math.min(1, (1 - z) * 6);
+      const gm = this.gemma(usate++);
+      gm.setTexture(`gemma${q.pad}`).setPosition(x(z), y - 1.5 * s).setScale(scalaDi('gemma0', s * 0.95)).setVisible(true)
+        .setAlpha(q.esito === 'mancato' ? 0.55 * nebbia : nebbia).setDepth(26 - z);
+      if (q.esito === 'mancato') gm.setTint(0x6a6480); else gm.clearTint();
+      // la sbarretta dell'accordo, tra le gemme che arrivano insieme
+      if (q.accordo && !q.esito) {
+        if (accordo && accordo.t === q.t) { S.lineStyle(2.4 * s, 0xffffff, 0.7 * nebbia); S.lineBetween(accordo.x, y, x(z), y); }
+        accordo = { t: q.t, x: x(z) };
+      }
     }
+    for (let i = usate; i < this.gemme.length; i++) this.gemme[i].setVisible(false);
+    // le scintille della nota lunga tenuta
+    if (this.note.some((q) => q.tenuta) && v >= this.prossimaScintilla) {
+      this.prossimaScintilla = v + 0.09;
+      for (const q of this.note) if (q.tenuta) this.scintille(q.pad, 1);
+    }
+
     // gli accendini: più è lunga la serie, più se ne alzano
     const quanti = Math.min(1, this.serie / 25);
     for (const a of this.accendini) {
       const su = quanti > a.soglia, al = a.img.alpha + ((su ? 1 : 0) - a.img.alpha) * Math.min(1, dt * 4);
       a.img.setAlpha(al).setY(268 - al * 16 + Math.sin(v * 2 + a.fase) * 1.2).setAngle(Math.sin(v * 1.6 + a.fase) * 8);
     }
+  }
+
+  // le gemme sono immagini riusate di fotogramma in fotogramma (se ne crea una solo quando servono di più)
+  gemma(i) {
+    if (!this.gemme[i]) this.gemme[i] = im(this, 0, 0, 'gemma0').setDepth(26);
+    return this.gemme[i];
   }
 
   // ---------- la fine ----------
@@ -493,10 +672,12 @@ export class XfactorScene extends MicrogiocoBase {
   // quattro secondi; si salta con un tocco, INVIO o SPAZIO.
   finale(ris, fatto) {
     const c = this.cfg, P = PROVINO, v = this.verdetto();
-    for (const o of [this.gNote, this.gPad, this.gCorsie, this.testoSerie, this.testoPunti, this.testoPrecisione, this.no, ...this.esiti]) o.setVisible(false);
+    for (const o of [this.strada, this.gRighe, this.gLuce, this.gPad, this.gScie, ...this.gemme, ...this.tasti, this.testoSerie, this.testoPunti, this.testoPrecisione, this.no, ...this.esiti, ...this.cartellini]) o.setVisible(false);
+    // (i riflettori si spengono: il verdetto è per tutti e due)
+    this.tweens.add({ targets: [...this.riflettori, ...this.pozze], alpha: 0, duration: 250 });
     this.tweens.killTweensOf(this.buio);
     this.tweens.add({ targets: this.buio, fillAlpha: 0.5, duration: 250 });
-    this.cantanti.forEach((img, k) => img.setTexture(`${c.cantanti[k]}_palco`).setFlipX(k === 1).setY(P.piedi));
+    this.cantanti.forEach((img, k) => { this.tweens.killTweensOf(img); img.setTexture(`${c.cantanti[k]}_palco`).setFlipX(k === 1).clearTint().setScale(scalaDi(`${c.cantanti[k]}_palco`, TAGLIA.cantante)).setPosition(P.cantanti[k], P.piedi); });
     this.giudici.forEach((g, i) => { g.img.setTexture(`giudice${i}_normale`); this.tweens.add({ targets: g.img, y: PIEDI_GIUDICI, duration: 200 }); });
     let chiuso = false;
     const fine = () => { if (chiuso) return; chiuso = true; fatto(); };
@@ -504,8 +685,8 @@ export class XfactorScene extends MicrogiocoBase {
       for (const k of ['ENTER', 'SPACE']) this.input.keyboard.once('keydown-' + k, fine);
       this.input.once('pointerdown', fine);
     });
-    const titolo = txt(this, 240, 72, 'IL VERDETTO...', { size: 16, color: '#ffe14a', depth: 960 });
-    const frase = txt(this, 240, 100, '', { size: 8, color: '#ffffff', depth: 960, wrap: 380 });
+    const titolo = txt(this, 240, 128, 'IL VERDETTO...', { size: 16, color: '#ffe14a', depth: 960 });
+    const frase = txt(this, 240, 156, '', { size: 8, color: '#ffffff', depth: 960, wrap: 380 });
     const cartelli = [];
     v.voti.forEach((si, i) => this.time.delayedCall(280 + i * 500, () => {
       const g = this.giudici[i];
@@ -521,13 +702,13 @@ export class XfactorScene extends MicrogiocoBase {
     this.time.delayedCall(280 + v.voti.length * 500 + 120, () => {
       titolo.setText(ris.titoloFine).setColor(ris.vittoria ? '#7dff9a' : '#ff6b5a').setFontSize(22 * 1.3);
       this.tweens.add({ targets: titolo, scale: { from: 1.6, to: 1 }, duration: 220, ease: 'Back.out' });
-      cartelli.forEach((t, i) => this.tweens.add({ targets: t, x: this.giudici[i].x + 15, y: P.lucine + 1, scale: 0.5, duration: 220, ease: 'Quad.out' }));
+      cartelli.forEach((t, i) => this.tweens.add({ targets: t, x: this.giudici[i].x + (i % 2 ? -15 : 15), y: P.lucine + 1, scale: 0.5, duration: 220, ease: 'Quad.out' }));
       if (ris.vittoria) this.festa(); else this.colpa();
     });
     this.time.delayedCall(3900, fine);
   }
 
-  // passato: coriandoli, i due cantanti si abbracciano, il giudice commosso piange a fontana
+  // passato: coriandoli, i due cantanti si abbracciano al centro, il giudice commosso piange a fontana
   festa() {
     const c = this.cfg, P = PROVINO, COL = [0xff5a6a, 0x5ab4ff, 0xffe14a, 0x7dff9a, 0xff9ac4, 0xb06aff];
     Audio.sfx('vittoria'); Audio.sfx('applauso');
@@ -537,12 +718,14 @@ export class XfactorScene extends MicrogiocoBase {
       this.tweens.add({ targets: r, y: 280, x: r.x + (Math.random() - 0.5) * 70, angle: r.angle + 500, duration: 1300 + Math.random() * 700, onComplete: () => r.destroy() });
     } });
     this.cantanti.forEach((img, k) => {
-      img.setTexture(`${c.cantanti[k]}_gasato`).setDepth(28);   // (davanti alla console)
-      this.tweens.add({ targets: img, x: P.io + (k ? 58 : -58), duration: 420, ease: 'Quad.out' });
+      img.setTexture(`${c.cantanti[k]}_gasato`).setDepth(28);
+      this.tweens.add({ targets: img, x: P.io + (k ? 34 : -34), duration: 420, ease: 'Quad.out' });
+      // (i riflettori li seguono: adesso cantano tutti e due)
+      this.tweens.add({ targets: [this.riflettori[k], this.pozze[k]], x: P.io + (k ? 34 : -34), alpha: 1, duration: 420, ease: 'Quad.out' });
       this.tweens.add({ targets: img, y: P.piedi - 9, duration: 180, yoyo: true, repeat: 5, delay: 420 });
     });
     this.io.setTexture(`${this.giocatore.id}_felice`);
-    this.tweens.add({ targets: this.io, y: P.piedi - 8, duration: 190, yoyo: true, repeat: 5 });
+    this.tweens.add({ targets: this.io, y: P.ioPiedi - 8, duration: 190, yoyo: true, repeat: 5 });
     const g = this.giudici[3];
     this.time.addEvent({ delay: 40, repeat: 40, callback: () => {
       for (const s of [-1, 1]) {
@@ -558,14 +741,15 @@ export class XfactorScene extends MicrogiocoBase {
     const c = this.cfg, P = PROVINO;
     Audio.sfx('sconfitta'); Audio.sfx('buu');
     this.fasci.setVisible(false);
+    for (const o of [...this.riflettori, ...this.pozze]) o.setVisible(false);
     for (const a of this.accendini) a.img.setVisible(false);
     this.tweens.add({ targets: this.buio, fillAlpha: 0.78, duration: 350 });
     this.cantanti.forEach((img, k) => {
-      img.setTexture(`${c.cantanti[k]}_indica`).setFlipX(k === 1);
-      this.tweens.add({ targets: img, x: P.cantanti[k] + (k ? -60 : 60), duration: 260, ease: 'Quad.out' });
+      img.setTexture(`${c.cantanti[k]}_indica`).setFlipX(k === 1).setDepth(28);
+      this.tweens.add({ targets: img, x: P.cantanti[k] + (k ? -70 : 70), duration: 260, ease: 'Quad.out' });
     });
     this.io.setTexture(`${this.giocatore.id}_triste`);
     this.tweens.add({ targets: this.io, x: P.io + 2, duration: 55, yoyo: true, repeat: 20 });
-    this.time.delayedCall(300, () => fumetto(this, P.cantanti[0] + 78, P.piedi - 96, caso(c.frasiColpa), 1300, 962));
+    this.time.delayedCall(300, () => fumetto(this, P.cantanti[0] + 84, P.piedi - 96, caso(c.frasiColpa), 1300, 962));
   }
 }
