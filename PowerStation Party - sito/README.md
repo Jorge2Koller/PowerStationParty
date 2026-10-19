@@ -767,6 +767,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     giallo): ci si passa sopra
   - nel prato e sotto il portico i cani sono al sicuro, ma dopo qualche secondo tornano
     sul vialetto
+  - occhio a stare dietro la coda: se la macchina in retromarcia ti arriva addosso, SBAM! KO!
+    voli di lato e resti steso 2 secondi, con le stelline che girano (se ne spegne una per ogni
+    terzo del KO) e gli uccellini. Intanto non puoi fare niente. Poi ti rialzi e per un secondo
+    e mezzo lampeggi: lì la macchina non ti stende di nuovo. Il KO non costa vite né punti, solo
+    tempo (`durataKO`, `voloKO` e `invulnerabileKO` in config)
   - tre atti: tranquillo; dal 12° secondo EMILIO SI DISTRAE (radio, bandana, telefono: va
     più forte); a 12 secondi dalla fine PASSA IL GATTO e tutti i cani gli vanno dietro.
     Allora Pastaffi esce di casa, prende in braccio il cane più vicino alla macchina e lo
@@ -788,9 +793,15 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
     ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
 - Provini a X-Factor (SUONA!: fai la base a Tini e Oli su "Cambiare Aria", la loro canzone vera):
-  - sei dietro la console coi 4 pad luminosi; le note sono cerchi che scendono verso il loro pad,
-    a tempo con la canzone: si colpiscono quando toccano il pad (PERFETTO, BUONO, MANCATO), e il
-    pad si accende del colore della nota. Le note lunghe si tengono finché finisce la scia
+  - come in Guitar Hero: al centro del palco una strada in prospettiva parte dalla console in
+    fondo e arriva in basso a 4 pad colorati (verde, rosso, giallo, blu). Le note scendono lungo
+    le corsie e si ingrandiscono mentre arrivano: si colpiscono quando toccano il pad (PERFETTO,
+    BUONO, MANCATO), e a ogni colpo esce una fiammata del colore della corsia. Le note lunghe sono
+    scie da tenere premute, gli accordi due note legate da una sbarretta. Con la serie i bordi della
+    strada si accendono e le fiamme crescono, e a 10, 20 e 40 colpi di fila arrivano le stelle
+  - chi canta si vede: il cantante attivo viene avanti sotto il riflettore col nome sopra la
+    testa, l'altro fa un passo indietro col cartellino CORO, e ai cambi compare "TOCCA A TINI!" o
+    "INSIEME!" (lo legge dalle `voci` della mappa)
   - tastiera: D F J K (o le frecce), da sinistra a destra; dito e mouse: si tocca il pad (o la sua
     corsia nella metà bassa dello schermo), anche con più dita insieme
   - l'errore si sente sulla canzone vera: a ogni nota mancata si ovatta per mezzo secondo e il
@@ -809,11 +820,14 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     il microgioco e si butta quando finisce; il tempo è quello dell'audio, col **Ritardo audio**
     delle Impostazioni. Con la pausa canzone e note si fermano insieme. Senza audio si gioca lo
     stesso, col proprio orologio
-  - la mappa delle note è una per livello (FACILE solo i battiti forti, NORMALE battiti e qualche
-    attacco, DIFFICILE attacchi fitti, note lunghe e doppie): la stessa per tutti, in sfida
+  - la mappa delle note è una per livello, la stessa per tutti, in sfida: le note cadono sui colpi
+    che si sentono, niente note dove la canzone si ferma, note lunghe sulle frasi tenute, accordi nel
+    gran finale (FACILE meno note, DIFFICILE più fitte e con gli accordi anche nel pezzo forte). Nel
+    Lampo la strofa dell'Oli e, dal 7,5° secondo, IL PEZZO FORTE! col Tini
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `finestre`
     (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
-    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fa `strumenti/beatmap.py` (vedi
+    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fanno `strumenti/beatmap.py` e
+    `strumenti/griglia.py` (vedi
     "La canzone di X-Factor" più sotto)
 - La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli, il Sego e il Guerra, che si sono imbucati):
   - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
@@ -1079,6 +1093,16 @@ poi, ogni volta:
 ```bash
 strumenti\.venv\Scripts\python strumenti\beatmap.py percorso\della\canzone-intera.mp3
 ```
+
+Le note di ogni livello le scrive poi `strumenti/griglia.py` (Python normale, senza librosa: beatmap.py
+lo lancia da solo alla fine), che riscrive solo le note e lascia battiti, atti e voci come sono. Per
+rifare solo le note, per esempio dopo aver cambiato le sue regole (scritte in cima allo script):
+
+```bash
+py strumenti\griglia.py
+```
+
+Usa ffmpeg per sentire i colpi nei due ritagli; senza ffmpeg le note le fa solo dai battiti.
 
 In memoria, decodificato, il ritaglio da 35 secondi pesa circa 6,7 MB (a 48 kHz, come su iPhone) e
 quello da 15 circa 2,9 MB; ce n'è caricato uno solo, solo durante il microgioco. Se su qualche

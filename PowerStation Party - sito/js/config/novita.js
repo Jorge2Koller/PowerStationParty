@@ -8,8 +8,9 @@ export default {
     'Dalla scheda di valutazione, la seconda parte:',
     'SPALMA IL BOTA! rifatto: strofina la crema sui cerchi rossi prima che si scotti',
     "L'INCUBO DEGLI SCAPOLI come Just Dance: fai la mossa quando arriva la scheda",
-    "X-FACTOR: nel pezzo cantano tutti e due, prima l'Oli e poi il Tini",
+    "X-FACTOR come Guitar Hero, e nel pezzo cantano tutti e due: l'Oli e il Tini",
     'LA SPINA: arriva lo Zere con la vuvuzela blu, e ogni atto è più difficile',
     'IL PASSAGGIORGIO: ogni tanto le chiavi finiscono lontano, e il parcheggio si muove',
+    "EMILIO IN RETROMARCIA: se stai dietro la macchina, KO per 2 secondi",
   ],
 };
