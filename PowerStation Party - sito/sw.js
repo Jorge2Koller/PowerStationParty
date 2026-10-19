@@ -2,7 +2,7 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party-6';   // versione 6: le anteprime dei microgiochi (prima: la canzone di X-Factor, Fasi 3-7)
+const CACHE = 'powerstation-party-7';   // versione 7: la canzone di X-Factor a due voci e le anteprime nuove (prima: le anteprime dei microgiochi)
 // i ritagli della canzone di "Provini a X-Factor" e la sua mappa delle note, e i riquadri della lista
 // dei microgiochi: si scaricano subito, all'installazione (in tutto 0,9 MB), così il gioco installato li
 // ha anche senza rete (le foto grandi delle anteprime si salvano la prima volta che si vedono)

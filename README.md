@@ -682,18 +682,17 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - tre atti lungo la salita: LA SALITA; I TORNANTI! (due tornanti e uno strappo); STRAPPO E
     SPRINT! Il Passaseo va del suo passo, uguale per tutti nel round (seme): arriva in cima in
     32-34 secondi, e la salita è lunga apposta
-- Spalma il Bota! (SPALMA!, col mouse o col dito: una giornata al lido in tre atti):
-  - LA CREMA: tieni premuto e passa la mano sul Bota, coprilo tutto (la crema ancora non si
-    scioglie): ogni % di pelle coperta sono punti
-  - L'OMBRELLONE (dal 12° secondo): la crema comincia a sciogliersi e una MACCHIA DI SOLE scivola
-    sul Bota; la mano diventa l'ombrellone (segue il mouse o il dito): tieni la sua ombra sulla
-    macchia. Il vento ogni tanto lo sposta
-  - GABBIANI E ONDE (dal 24°): si gira a pancia in giù e il sole accende le ZONE CALDE (cerchi
-    rossi): coprile tutte di crema prima che si scottino e si spengono. I gabbiani vengono a
-    rubare la crema: un clic (o un tocco) li scaccia, se no per un po' niente crema. Un'onda lava
-    la crema dalle gambe
-  - niente crema su occhi e bocca; se ci finiscono sotto la mano perché si è mosso lui, non conta
-  - (il gioco delle zone calde da solo resta pronto per un futuro Lampo da 5 secondi)
+- Spalma il Bota! (SPALMA!, un gesto solo: strofina la crema sulle scottature):
+  - il sole tira un raggio sul Bota e lì nasce un CERCHIO ROSSO, con un anello che fa da timer:
+    tieni premuto e strofina (mouse o dito) sul cerchio; dove passi resta la crema bianca e
+    l'anello interno diventa verde. Quando il cerchio è quasi tutto coperto si spegne (SPENTA!,
+    PRESTO! se lo fai prima di metà anello); se l'anello finisce prima, SCOTTATO! e quella pelle
+    resta rossa fino alla fine. La crema non finisce mai
+  - la prima scottatura ha la scritta STROFINA QUI!, e un clic da fermo lascia una noce di crema
+  - tastiera: FRECCE (o WASD) muovono la mano, SPAZIO tenuto strofina
+  - tre atti: UNA ALLA VOLTA (il Bota sta fermo); dal 12° secondo PIÙ SOLE! (due scottature
+    insieme, e il Bota si allunga a prendere il telefono o la birra: i cerchi si spostano con
+    lui); dal 24° SI GIRA! (a pancia in giù, tre insieme e ogni tanto una grande che vale doppio)
 - Il Passaggiorgio (ACCHIAPPA!: stasera guida Giorgio, per forza):
   - Giorgio corre verso le macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV
     di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
@@ -727,17 +726,19 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     `piovra.js`), e lo schiaffo prende anche un po' accanto al tentacolo (`raggioTentacolo`)
   - tre atti: dal 12° secondo IL PETRI SI MUOVE; dal 24° TENTACOLI A SORPRESA (sbucano da
     sotto un tavolino o dalla consolle)
-- L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna):
-  - le frecce scendono al centro a tempo di musica: premi quella giusta quando arriva sul
-    bersaglio in basso, con le FRECCE o WASD; col dito (o col mouse) tocca il quarto di schermo
-    della freccia: da sinistra, sinistra / giù / su / destra
-  - perfetto o buono: balli, la pista pende verso di te e le ragazze passano dalla tua parte;
-    mancata o premuta a vuoto: tornano dal Manna, che intanto tira sempre un po'
-  - le frecce d'oro valgono il doppio ma vanno prese precise; ogni 10 di fila il moltiplicatore
-    sale di 0,5 (fino a x3)
-  - dal 12° secondo LE FRECCE D'ORO; dal 24° il Manna si scatena, la musica accelera e arriva
-    qualche freccia DOPPIA (due tasti o due dita insieme, con più tempo per prenderla)
-  - le frecce sono le stesse per tutti i giocatori del round
+- L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna, come Just Dance):
+  - in basso scorrono a tempo di musica le schede delle mosse (pittogrammi al neon: braccia al
+    cielo, giù, a sinistra, a destra, battimani): quando una scheda entra nel riquadro, fai la
+    mossa. Tastiera: FRECCE (o WASD) e SPAZIO per le mani; col dito (o col mouse) si striscia
+    come la freccia e si tocca per le mani
+  - il tuo personaggio balla la mossa che fai, e il Manna fa quella giusta a tempo
+  - ogni mossa è PERFETTO, BUONO, MANCATA o SBAGLIATA; la serie moltiplica i punti (x1,5 e poi x2)
+  - le ragazze si conquistano coi punti e non si perdono più: la terza è il bronzo, la quarta
+    l'argento, la quinta l'oro
+  - 35 mosse, sempre sui battiti e al massimo due di fila; tre atti: il primo ha le pause, dall'11°
+    secondo LE MOSSE D'ORO! (valgono di più), dal 23° IL MANNA SI SCATENA! (più fitto, e la musica
+    accelera come prima)
+  - le mosse sono le stesse per tutti i giocatori del round
 - Emilio in Retromarcia (SPINGI!: fai uscire Emilio dal cancello senza che tocchi i cani):
   - FRECCE (o WASD) per muoverti; col mouse, clic sul punto del vialetto dove andare;
     col dito, trascina (il personaggio sta un po' sopra il polpastrello)
@@ -786,12 +787,14 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     prendere le note. Toccare a vuoto vicino a una nota azzera la serie
   - note prese: i cantanti si gasano, i giudici annuiscono, il pubblico alza gli accendini; note
     mancate: il cantante ti guarda malissimo, il produttore preme il NO, i fischi
-  - tre atti, allineati alla canzone: LA STROFA (il crescendo: note lente sui battiti forti); dal
-    12° secondo IL PEZZO FORTE! (parte il beat pieno, note più fitte, luci a tutta); dal 24° IL
-    GRAN FINALE! (note fitte e lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
+  - tre atti, allineati alla canzone, che ora ha tutti e due i cantanti: LA STROFA (canta l'Oli:
+    note lente sui battiti forti); dall'11° secondo IL PEZZO FORTE! (canta il Tini, parte il beat
+    pieno, note più fitte, luci a tutta); dal 26° IL GRAN FINALE! (il ritornello: note fitte e
+    lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
   - alla fine i quattro giudici (inventati) votano la precisione, uno alla volta: con almeno 3 SÌ
     si passa (SEI AI BOOTCAMP!). Le lucine sul tavolo dicono già come la pensano
-  - la canzone è un ritaglio di 35 secondi (15 in Lampo, dal pezzo forte), si carica quando parte
+  - la canzone è un ritaglio di 35 secondi (15 in Lampo: la fine della strofa dell'Oli e l'inizio di
+    quella del Tini), si carica quando parte
     il microgioco e si butta quando finisce; il tempo è quello dell'audio, col **Ritardo audio**
     delle Impostazioni. Con la pausa canzone e note si fermano insieme. Senza audio si gioca lo
     stesso, col proprio orologio
@@ -948,9 +951,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Il Passo del Passaseo** (35 s): 0,1 punti per metro, 0,5 per pedalata perfetta (doppia allo
   sprint); se arrivi in cima prima del Passaseo, +20 e +110 per ogni secondo di vantaggio. Se
   nessuno arriva in cima, vince chi è più avanti allo scadere.
-- **Spalma il Bota!** (35 s): 0,4 per ogni % di pelle coperta di crema alla fine del primo atto, 3 al
-  secondo con l'ombra sulla macchia di sole, +5 per ogni zona calda spenta, +3 per ogni gabbiano
-  scacciato; se finisci sotto il 16% di pelle scottata, +50 e 10 per ogni punto sotto il 16.
+- **Spalma il Bota!** (35 s): 4 per ogni scottatura spenta, +2 se entro metà del suo tempo, il doppio
+  se è grande, per la serie (x1,5 dopo 5 di fila, x2 dopo 10); -3 per ogni scottato (mai sotto zero).
+  Vittoria con 15 spente (il bronzo): fino ad allora il totale si ferma a 90. In Lampo bastano 5.
 - **Il Passaggiorgio** (35 s): ogni guidata vale 10 più della precedente (10, 20, 30, 40...), +2 ogni
   volta che Giorgio viene tirato fuori (+2 se era già quasi dentro), +5 se lo fermi o lo tiri giù
   dalla macchina di Emilio, -10 per ogni passaggio scroccato, -3 per il sosia (mai sotto zero).
@@ -958,9 +961,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Petri Tentacolari** (35 s): ogni ragazza salvata vale più della precedente (2,8 x quante ne hai
   salvate: 3, 6, 8, 11...), più la serie (+2 alla seconda di fila, fino a +8); -10 per ogni ragazza
   ancora agganciata alla fine, ma con 8 salvate non si scende sotto il bronzo. Vittoria con 8 ragazze.
-- **L'Incubo degli Scapoli** (35 s): freccia perfetta 1, buona 0,5 (d'oro il doppio), per il
-  moltiplicatore della serie; alla fine le ragazze dalla tua parte: sotto le 3 niente, 3 = +70,
-  4 = +140, 5 = +200.
+- **L'Incubo degli Scapoli** (35 s): mossa perfetta 5, buona 3, d'oro +2, per il moltiplicatore della
+  serie (+0,5 ogni 6 di fila, fino a x2). Le ragazze arrivano a 20, 50, 100, 200 e 300 punti (in
+  Lampo al 40%): vittoria con 3 ragazze, cioè il bronzo.
 - **Emilio in Retromarcia** (35 s): VIA LIBERA, ogni scatto della macchina finito senza spaventare
   nessun cane: il primo di fila vale 4, il secondo 8, il terzo 12... (uno spavento azzera la serie);
   +5 per ogni cane tolto dalla zona rossa all'ultimo; se Emilio esce dal cancello, le vite rimaste
@@ -1041,14 +1044,16 @@ dicono in anticipo com'è la serata di un seme.
 ## La canzone di X-Factor
 
 "Provini a X-Factor" si suona su una canzone vera, "Cambiare Aria" del Tini e dell'Oli. Nel sito ci
-sono solo due ritagli, in mono (`audio/cambiare-aria.mp3`, 35 secondi, e `audio/cambiare-aria-lampo.mp3`,
-15 secondi, dal pezzo forte), e la mappa delle note `js/config/microgiochi/xfactor-mappa.json` (i
-battiti, dove cominciano gli atti e le note di ogni livello). La canzone intera sta fuori dal sito,
-in `riferimenti/`, e non va caricata su GitHub.
+sono solo due ritagli, in mono: `audio/cambiare-aria.mp3`, 35 secondi (dalla canzone, da 0:48,9 a
+1:24,1: la fine della strofa dell'Oli, la strofa del Tini e il ritornello), e
+`audio/cambiare-aria-lampo.mp3`, 15 secondi (da 0:52,7 a 1:07,7: l'Oli e poi il Tini). C'è poi la mappa
+delle note `js/config/microgiochi/xfactor-mappa.json`: i battiti (la canzone va a 128 bpm esatti),
+dove cominciano gli atti, chi canta e quando (`voci`: l'Oli, il Tini o insieme) e le note di ogni
+livello. La canzone intera sta fuori dal sito e non va caricata su GitHub.
 
 Ritagli e mappa li fa `strumenti/beatmap.py` (fuori dal sito), con librosa (battiti e attacchi della
 canzone) e ffmpeg (i ritagli, con la dissolvenza): se cambia la canzone, o i tagli scritti in cima
-allo script, basta rilanciarlo. La prima volta:
+allo script, basta rilanciarlo, con la canzone intera come argomento. La prima volta:
 
 ```bash
 py -m venv strumenti\.venv
@@ -1061,7 +1066,7 @@ strumenti\.venv\Scripts\python -m pip install librosa soundfile
 poi, ogni volta:
 
 ```bash
-strumenti\.venv\Scripts\python strumenti\beatmap.py
+strumenti\.venv\Scripts\python strumenti\beatmap.py percorso\della\canzone-intera.mp3
 ```
 
 In memoria, decodificato, il ritaglio da 35 secondi pesa circa 6,7 MB (a 48 kHz, come su iPhone) e
@@ -1138,8 +1143,8 @@ js/
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
-                         c'è pelle, la spiaggia col telo, sole, tubetto, mano,
-                         gabbiano, onda
+                         c'è pelle, la spiaggia col telo, sole, mano, telefono e
+                         lattina
     oggetti.js           Golf di ReGrorio, pinte, spina, clienti, attrezzi del
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
                          finestre con le persiane, fumogeni, ombrelloni,
