@@ -13,7 +13,8 @@
 //    T.aggiorna(dt);                 // a ogni fotogramma
 //    T.avversarioTira(k, voglio);    // il tiro di un avversario mosso dal computer
 //  suEsito(e) arriva alla fine di ogni tiro: e = { chi: 'io' | 'loro', tipo: 'centro' | 'rimbalzo'
-//  | 'fuori' | 'rete', bicchiere, bordo, fiamme, ultimo }.
+//  | 'fuori' | 'rete', bicchiere, bordo, fiamme, ultimo, tiratore } (tiratore = l'id di chi ha
+//  tirato: serve allo schiaffo di Marsupino, js/beerpong/schiaffo.js).
 //  I bicchieri sono oggetti { x, y, riga, su } (vedi triangolo in motore.js): quelli "lontani" sono
 //  degli avversari, quelli "vicini" di chi tira. Il tavolo spegne "su" quando la pallina entra.
 // ============================================================
@@ -288,7 +289,7 @@ export class Tavolo {
     if (!bersagli.length || !this.avv.length) return false;
     const a = this.avv[k % this.avv.length], bers = bersagli[Math.floor(this.rnd() * bersagli.length)];
     const da = { x: (a.x - CAM.cx) / proietta(0, TAV.L + 0.12).k, y: TAV.L + 0.12, h: 0.26 };
-    this.palla('loro', tiroAvversario(bers, voglio, this.vicini, this.cfg.tiro, this.rnd, da));
+    this.palla('loro', tiroAvversario(bers, voglio, this.vicini, this.cfg.tiro, this.rnd, da)).di = a.id;   // (chi l'ha tirata)
     colpetto(this.scene, a.img, 1.08, 0.93);
     Audio.sfx('lancio');
     return true;
@@ -385,7 +386,7 @@ export class Tavolo {
     }
     const ultimo = !!b.dramma;
     if (this.dramma?.b === b) this.fineDramma(preso);
-    this.o.suEsito?.({ chi: b.chi, tipo: es.tipo, bicchiere: c?.c ?? null, bordo: !!es.bordo, fiamme, ultimo });
+    this.o.suEsito?.({ chi: b.chi, tipo: es.tipo, bicchiere: c?.c ?? null, bordo: !!es.bordo, fiamme, ultimo, tiratore: io ? this.tiratore.id : b.di });
   }
 
   // un bicchiere centrato sparisce, con lo schizzo di birra

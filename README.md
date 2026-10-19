@@ -561,8 +561,15 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   qualunque punto dello schermo e alzalo nella zona verde (il pulsante SPILLA in basso è
   solo un promemoria)
   - i clienti ordinano pinte, boccali (grandi: si riempiono piano) e calici (zona verde
-    strettissima); dal 12° secondo l'ORA DI PUNTA, dal 24° Beppe FA I DISPETTI: urta il
-    bancone e la zona verde balla
+    strettissima)
+  - tre atti a fasi, ognuno più difficile: SPILLA! (solo pinte); dal 12° secondo ORA DI PUNTA!
+    (più veloce, arrivano boccali e calici, e la zona verde cambia altezza da un bicchiere
+    all'altro); dal 24° LO ZERE SI SCATENA!: ogni tanto alza la vuvuzela blu, prende fiato (sopra
+    di lui un "!") e la suona, e finché suona la zona verde balla e il bicchiere trema. In Lampo
+    gli atti cominciano a 0, 5 e 10 secondi
+  - lo Zere sta in piedi a destra del bancone e fa il tifo (nei primi due atti dà un colpetto di
+    vuvuzela a ogni PERFETTA); il bar è pieno: due avventori in piedi con la pinta che brindano, e
+    alle pareti le foto incorniciate del gruppo
   - al bancone, di spalle, quattro personaggi giocabili a caso (disegnati da dietro: capelli,
     pettinatura, cappello e maglia dei personaggi veri)
   - Beppe ha la sua giornata: dal seme del round esce quanto è in forma (e ogni pinta è un po'
@@ -620,6 +627,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - se una mano ha già preso un piatto, colpiscila per riportarlo indietro
   - col guanto da forno servono due schiaffi; le finte tornano indietro da sole
   - schiaffo a vuoto: la tua mano resta dolorante per un attimo
+  - la mano che dà gli schiaffi è quella di chi gioca: giovane e liscia (non quella vecchia di
+    Guerra), con la pelle del personaggio, il polsino del suo colore e la manica del suo vestito
+  - in Lampo i tre atti arrivano in proporzione ai 15 secondi
 - Sego, sono sotto casa! (LANCIA!):
   - mouse e dito: appoggia, tira indietro come una fionda, lascia (tiri più giù = più in alto).
     Per la forza piena basta tirare di poco col mouse, e se premi in fondo allo schermo basta
@@ -634,13 +644,25 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
 - TorRONDAcelli (SPARA!):
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
-  - la palla ci mette di più ad arrivare lontano: mira un po' avanti alla bagnarola
+  - tre armi, si cambiano coi tasti 1, 2, 3, con la rotella del mouse o coi pulsanti a destra
+    (sul telefono si toccano, e toccarli non spara). Quella scelta si vede sul pulsante, nel nome
+    sopra i pulsanti e sulla canna montata sull'affusto:
+    - CANNONE: quello di prima, coi colpi contati (i pallini in alto); la palla ci mette di più ad
+      arrivare lontano: mira un po' avanti alla bagnarola
+    - MORTAIO: tiro a parabola lenta (il cerchio rosso dice dove cadrà), fa saltare un tratto di
+      mare, buono per i gruppi; si ricarica piano
+    - SILURO: corre dritto dalla riva e affonda la prima bagnarola che trova, anche il galeone e
+      il sottomarino sott'acqua
   - le bagnarole dei pirati (inventati): lo SQUALOTTO (gommone a forma di squalo, 1 colpo), il
-    CIGNO PIRATA (pedalò, 2 colpi) e il GALEONE PAPERA (galeone gonfiabile, 3 colpi). Se toccano riva si prendono un
-    ombrellone: affondali mentre scappano e l'ombrellone torna
-  - munizioni: poche (i pallini in alto). Il Generale lancia una cassa ogni tanto, che
-    atterra da sola sul cannone; un colpo torna anche da solo ogni tanto
-  - tre atti: gommoni e pedalò; dal 12° secondo ARRIVA IL GALEONE; dal 24° ARREMBAGGIO
+    CIGNO PIRATA (pedalò, 2 colpi), il GALEONE PAPERA (galeone gonfiabile, 3 colpi), la BANANA BOAT
+    (veloce, a zig-zag), le CIAMBELLE che arrivano in gruppo (FLOTTIGLIA!) e il SOTTOMARINO PAPERO
+    (si immerge: sott'acqua lo prende solo il siluro). Se toccano riva si prendono un ombrellone:
+    affondali mentre scappano e l'ombrellone torna. Affondarne più d'una con un colpo è una
+    DOPPIETTA o una TRIPLETTA
+  - munizioni del cannone: il Generale lancia una cassa ogni tanto, che atterra da sola sul
+    cannone; un colpo torna anche da solo ogni tanto
+  - tre atti: gommoni, pedalò e flottiglie; dal 12° secondo ARRIVA IL GALEONE! (e le banane); dal
+    24° ARREMBAGGIO! (il sottomarino). In più ondate a ore fisse: DUE GALEONI!, BANANE IN VISTA!
 - L'Ingiocabile (blackjack):
   - 1, 2, 3 o clic/tocco sulle fiches: punti 10, 25 o 50
   - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
@@ -682,24 +704,27 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - tre atti lungo la salita: LA SALITA; I TORNANTI! (due tornanti e uno strappo); STRAPPO E
     SPRINT! Il Passaseo va del suo passo, uguale per tutti nel round (seme): arriva in cima in
     32-34 secondi, e la salita è lunga apposta
-- Spalma il Bota! (SPALMA!, col mouse o col dito: una giornata al lido in tre atti):
-  - LA CREMA: tieni premuto e passa la mano sul Bota, coprilo tutto (la crema ancora non si
-    scioglie): ogni % di pelle coperta sono punti
-  - L'OMBRELLONE (dal 12° secondo): la crema comincia a sciogliersi e una MACCHIA DI SOLE scivola
-    sul Bota; la mano diventa l'ombrellone (segue il mouse o il dito): tieni la sua ombra sulla
-    macchia. Il vento ogni tanto lo sposta
-  - GABBIANI E ONDE (dal 24°): si gira a pancia in giù e il sole accende le ZONE CALDE (cerchi
-    rossi): coprile tutte di crema prima che si scottino e si spengono. I gabbiani vengono a
-    rubare la crema: un clic (o un tocco) li scaccia, se no per un po' niente crema. Un'onda lava
-    la crema dalle gambe
-  - niente crema su occhi e bocca; se ci finiscono sotto la mano perché si è mosso lui, non conta
-  - (il gioco delle zone calde da solo resta pronto per un futuro Lampo da 5 secondi)
+- Spalma il Bota! (SPALMA!, un gesto solo: strofina la crema sulle scottature):
+  - il sole tira un raggio sul Bota e lì nasce un CERCHIO ROSSO, con un anello che fa da timer:
+    tieni premuto e strofina (mouse o dito) sul cerchio; dove passi resta la crema bianca e
+    l'anello interno diventa verde. Quando il cerchio è quasi tutto coperto si spegne (SPENTA!,
+    PRESTO! se lo fai prima di metà anello); se l'anello finisce prima, SCOTTATO! e quella pelle
+    resta rossa fino alla fine. La crema non finisce mai
+  - la prima scottatura ha la scritta STROFINA QUI!, e un clic da fermo lascia una noce di crema
+  - tastiera: FRECCE (o WASD) muovono la mano, SPAZIO tenuto strofina
+  - tre atti: UNA ALLA VOLTA (il Bota sta fermo); dal 12° secondo PIÙ SOLE! (due scottature
+    insieme, e il Bota si allunga a prendere il telefono o la birra: i cerchi si spostano con
+    lui); dal 24° SI GIRA! (a pancia in giù, tre insieme e ogni tanto una grande che vale doppio)
 - Il Passaggiorgio (ACCHIAPPA!: stasera guida Giorgio, per forza):
   - Giorgio corre verso le macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV
     di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
     e vola in mezzo al parcheggio. Se la chiude, la macchina parte con lui dentro e torna
     dopo qualche secondo (passaggio scroccato)
-  - quando è a terra, trascina le chiavi (in basso a destra) fino a lui: va alla sua A3
+  - quando è a terra, trascina le chiavi fino a lui: va alla sua A3. Di solito sono in basso a
+    destra, ma ogni tanto (mai due volte di fila) Giorgio le lancia apposta in mezzo al
+    parcheggio o sul tetto dell'A3, e bisogna andarle a prendere lì (si prendono anche al volo;
+    se le lasci lontano da lui tornano dove erano cadute). Quando sono lontane, Giorgio resta a
+    terra un attimo di più
     impolverata e si mette al volante (poi scende con una scusa e si ricomincia)
   - tastiera: FRECCE SINISTRA/DESTRA scelgono la macchina, SPAZIO lo tira fuori, INVIO gli
     lancia le chiavi quando è a terra
@@ -727,17 +752,19 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     `piovra.js`), e lo schiaffo prende anche un po' accanto al tentacolo (`raggioTentacolo`)
   - tre atti: dal 12° secondo IL PETRI SI MUOVE; dal 24° TENTACOLI A SORPRESA (sbucano da
     sotto un tavolino o dalla consolle)
-- L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna):
-  - le frecce scendono al centro a tempo di musica: premi quella giusta quando arriva sul
-    bersaglio in basso, con le FRECCE o WASD; col dito (o col mouse) tocca il quarto di schermo
-    della freccia: da sinistra, sinistra / giù / su / destra
-  - perfetto o buono: balli, la pista pende verso di te e le ragazze passano dalla tua parte;
-    mancata o premuta a vuoto: tornano dal Manna, che intanto tira sempre un po'
-  - le frecce d'oro valgono il doppio ma vanno prese precise; ogni 10 di fila il moltiplicatore
-    sale di 0,5 (fino a x3)
-  - dal 12° secondo LE FRECCE D'ORO; dal 24° il Manna si scatena, la musica accelera e arriva
-    qualche freccia DOPPIA (due tasti o due dita insieme, con più tempo per prenderla)
-  - le frecce sono le stesse per tutti i giocatori del round
+- L'Incubo degli Scapoli (BALLA!, sfida di ballo contro il Manna, come Just Dance):
+  - in basso scorrono a tempo di musica le schede delle mosse (pittogrammi al neon: braccia al
+    cielo, giù, a sinistra, a destra, battimani): quando una scheda entra nel riquadro, fai la
+    mossa. Tastiera: FRECCE (o WASD) e SPAZIO per le mani; col dito (o col mouse) si striscia
+    come la freccia e si tocca per le mani
+  - il tuo personaggio balla la mossa che fai, e il Manna fa quella giusta a tempo
+  - ogni mossa è PERFETTO, BUONO, MANCATA o SBAGLIATA; la serie moltiplica i punti (x1,5 e poi x2)
+  - le ragazze si conquistano coi punti e non si perdono più: la terza è il bronzo, la quarta
+    l'argento, la quinta l'oro
+  - 35 mosse, sempre sui battiti e al massimo due di fila; tre atti: il primo ha le pause, dall'11°
+    secondo LE MOSSE D'ORO! (valgono di più), dal 23° IL MANNA SI SCATENA! (più fitto, e la musica
+    accelera come prima)
+  - le mosse sono le stesse per tutti i giocatori del round
 - Emilio in Retromarcia (SPINGI!: fai uscire Emilio dal cancello senza che tocchi i cani):
   - FRECCE (o WASD) per muoverti; col mouse, clic sul punto del vialetto dove andare;
     col dito, trascina (il personaggio sta un po' sopra il polpastrello)
@@ -755,6 +782,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     giallo): ci si passa sopra
   - nel prato e sotto il portico i cani sono al sicuro, ma dopo qualche secondo tornano
     sul vialetto
+  - occhio a stare dietro la coda: se la macchina in retromarcia ti arriva addosso, SBAM! KO!
+    voli di lato e resti steso 2 secondi, con le stelline che girano (se ne spegne una per ogni
+    terzo del KO) e gli uccellini. Intanto non puoi fare niente. Poi ti rialzi e per un secondo
+    e mezzo lampeggi: lì la macchina non ti stende di nuovo. Il KO non costa vite né punti, solo
+    tempo (`durataKO`, `voloKO` e `invulnerabileKO` in config)
   - tre atti: tranquillo; dal 12° secondo EMILIO SI DISTRAE (radio, bandana, telefono: va
     più forte); a 12 secondi dalla fine PASSA IL GATTO e tutti i cani gli vanno dietro.
     Allora Pastaffi esce di casa, prende in braccio il cane più vicino alla macchina e lo
@@ -775,10 +807,19 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - anche i veterani bevono quelli che gli centri: più bevono, meno centrano
   - tre atti: RISCALDAMENTO; dal 12° secondo SI BEVE! (tirano più spesso e più precisi); dal 24°
     ULTIMO GIRO!, e Marsupino disturba (la mira sobbalza)
+  - accanto a Marsupino c'è ReGrorio: ogni volta che Marsupino sbaglia un tiro si gira arrabbiato e
+    SCIAF!, Greg barcolla con le stelline e la guancia rossa (se gioca Greg, lo schiaffo arriva al
+    suo ritratto). Solo di contorno: punti e tiri non cambiano
 - Provini a X-Factor (SUONA!: fai la base a Tini e Oli su "Cambiare Aria", la loro canzone vera):
-  - sei dietro la console coi 4 pad luminosi; le note sono cerchi che scendono verso il loro pad,
-    a tempo con la canzone: si colpiscono quando toccano il pad (PERFETTO, BUONO, MANCATO), e il
-    pad si accende del colore della nota. Le note lunghe si tengono finché finisce la scia
+  - come in Guitar Hero: al centro del palco una strada in prospettiva parte dalla console in
+    fondo e arriva in basso a 4 pad colorati (verde, rosso, giallo, blu). Le note scendono lungo
+    le corsie e si ingrandiscono mentre arrivano: si colpiscono quando toccano il pad (PERFETTO,
+    BUONO, MANCATO), e a ogni colpo esce una fiammata del colore della corsia. Le note lunghe sono
+    scie da tenere premute, gli accordi due note legate da una sbarretta. Con la serie i bordi della
+    strada si accendono e le fiamme crescono, e a 10, 20 e 40 colpi di fila arrivano le stelle
+  - chi canta si vede: il cantante attivo viene avanti sotto il riflettore col nome sopra la
+    testa, l'altro fa un passo indietro col cartellino CORO, e ai cambi compare "TOCCA A TINI!" o
+    "INSIEME!" (lo legge dalle `voci` della mappa)
   - tastiera: D F J K (o le frecce), da sinistra a destra; dito e mouse: si tocca il pad (o la sua
     corsia nella metà bassa dello schermo), anche con più dita insieme
   - l'errore si sente sulla canzone vera: a ogni nota mancata si ovatta per mezzo secondo e il
@@ -786,20 +827,25 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     prendere le note. Toccare a vuoto vicino a una nota azzera la serie
   - note prese: i cantanti si gasano, i giudici annuiscono, il pubblico alza gli accendini; note
     mancate: il cantante ti guarda malissimo, il produttore preme il NO, i fischi
-  - tre atti, allineati alla canzone: LA STROFA (il crescendo: note lente sui battiti forti); dal
-    12° secondo IL PEZZO FORTE! (parte il beat pieno, note più fitte, luci a tutta); dal 24° IL
-    GRAN FINALE! (note fitte e lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
+  - tre atti, allineati alla canzone, che ora ha tutti e due i cantanti: LA STROFA (canta l'Oli:
+    note lente sui battiti forti); dall'11° secondo IL PEZZO FORTE! (canta il Tini, parte il beat
+    pieno, note più fitte, luci a tutta); dal 26° IL GRAN FINALE! (il ritornello: note fitte e
+    lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
   - alla fine i quattro giudici (inventati) votano la precisione, uno alla volta: con almeno 3 SÌ
     si passa (SEI AI BOOTCAMP!). Le lucine sul tavolo dicono già come la pensano
-  - la canzone è un ritaglio di 35 secondi (15 in Lampo, dal pezzo forte), si carica quando parte
+  - la canzone è un ritaglio di 35 secondi (15 in Lampo: la fine della strofa dell'Oli e l'inizio di
+    quella del Tini), si carica quando parte
     il microgioco e si butta quando finisce; il tempo è quello dell'audio, col **Ritardo audio**
     delle Impostazioni. Con la pausa canzone e note si fermano insieme. Senza audio si gioca lo
     stesso, col proprio orologio
-  - la mappa delle note è una per livello (FACILE solo i battiti forti, NORMALE battiti e qualche
-    attacco, DIFFICILE attacchi fitti, note lunghe e doppie): la stessa per tutti, in sfida
+  - la mappa delle note è una per livello, la stessa per tutti, in sfida: le note cadono sui colpi
+    che si sentono, niente note dove la canzone si ferma, note lunghe sulle frasi tenute, accordi nel
+    gran finale (FACILE meno note, DIFFICILE più fitte e con gli accordi anche nel pezzo forte). Nel
+    Lampo la strofa dell'Oli e, dal 7,5° secondo, IL PEZZO FORTE! col Tini
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `finestre`
     (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
-    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fa `strumenti/beatmap.py` (vedi
+    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fanno `strumenti/beatmap.py` e
+    `strumenti/griglia.py` (vedi
     "La canzone di X-Factor" più sotto)
 - La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli, il Sego e il Guerra, che si sono imbucati):
   - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
@@ -930,15 +976,17 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Il Panino** (35 s): +5 per ogni ingrediente al momento giusto; ogni ordine servito vale più del
   precedente (10, 16, 34, 64, 106...), +10 se fatto in meno di 8 s; -2 per un ingrediente fuori
   ordine, -5 per un crollo, -8 per una schifezza (il totale non va sotto zero). Vittoria con 3 ordini.
-- **Guerra** (35 s): schiaffo +5, +8 se la mano era già vicina al piatto, +4 se stava trascinando via
+- **Guerra** (35 s): schiaffo +4, +8 se la mano era già vicina al piatto, +3 se stava trascinando via
   un piatto, +2 per il guanto; alla fine i piatti ancora tuoi: sotto i 3 niente, 3 = +50, 4 = +80,
   5 = +120. Persi tutti, finisce prima.
 - **Sego** (35 s): +5 per ogni fumogeno in una finestra aperta (+9 nella stanza di Franci), -3 per
   quelli sprecati. Se Franci esce (80% di fumo in casa, 65% in Lampo): +40 e +15 per ogni secondo che
   avanza, e vale almeno il bronzo; se non esce, un quinto della percentuale di fumo, e il totale si
   ferma a 90 (la vittoria è farlo uscire).
-- **TorRONDAcelli** (35 s): +10 per ogni bagnarola affondata (+5 se lontana), +5 per ogni
-  ombrellone ripreso; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +40, 4 = +70, 5 = +100.
+- **TorRONDAcelli** (35 s): per ogni bagnarola affondata gommone 2, pedalò 3, galeone 5, banana 4,
+  ciambella 1, sottomarino 6 (+1 se lontana); +5 per ogni ombrellone ripreso, +3 per ogni bagnarola in
+  più affondata con lo stesso colpo; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +50,
+  4 = +100, 5 = +180. Vittoria con 3 ombrelloni salvati (il bronzo): senza, il totale si ferma a 90.
 - **L'Ingiocabile** (35 s): 1 punto per ogni fiche vinta (sopra le 100 di partenza). Le mani vinte
   giocate tutte da pro (le scelte uguali alla strategia di base) il banco le paga il doppio.
   Vittoria con 100 fiches vinte. Al verde, finisce prima.
@@ -948,9 +996,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Il Passo del Passaseo** (35 s): 0,1 punti per metro, 0,5 per pedalata perfetta (doppia allo
   sprint); se arrivi in cima prima del Passaseo, +20 e +110 per ogni secondo di vantaggio. Se
   nessuno arriva in cima, vince chi è più avanti allo scadere.
-- **Spalma il Bota!** (35 s): 0,4 per ogni % di pelle coperta di crema alla fine del primo atto, 3 al
-  secondo con l'ombra sulla macchia di sole, +5 per ogni zona calda spenta, +3 per ogni gabbiano
-  scacciato; se finisci sotto il 16% di pelle scottata, +50 e 10 per ogni punto sotto il 16.
+- **Spalma il Bota!** (35 s): 4 per ogni scottatura spenta, +2 se entro metà del suo tempo, il doppio
+  se è grande, per la serie (x1,5 dopo 5 di fila, x2 dopo 10); -3 per ogni scottato (mai sotto zero).
+  Vittoria con 15 spente (il bronzo): fino ad allora il totale si ferma a 90. In Lampo bastano 5.
 - **Il Passaggiorgio** (35 s): ogni guidata vale 10 più della precedente (10, 20, 30, 40...), +2 ogni
   volta che Giorgio viene tirato fuori (+2 se era già quasi dentro), +5 se lo fermi o lo tiri giù
   dalla macchina di Emilio, -10 per ogni passaggio scroccato, -3 per il sosia (mai sotto zero).
@@ -958,9 +1006,9 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
 - **Petri Tentacolari** (35 s): ogni ragazza salvata vale più della precedente (2,8 x quante ne hai
   salvate: 3, 6, 8, 11...), più la serie (+2 alla seconda di fila, fino a +8); -10 per ogni ragazza
   ancora agganciata alla fine, ma con 8 salvate non si scende sotto il bronzo. Vittoria con 8 ragazze.
-- **L'Incubo degli Scapoli** (35 s): freccia perfetta 1, buona 0,5 (d'oro il doppio), per il
-  moltiplicatore della serie; alla fine le ragazze dalla tua parte: sotto le 3 niente, 3 = +70,
-  4 = +140, 5 = +200.
+- **L'Incubo degli Scapoli** (35 s): mossa perfetta 5, buona 3, d'oro +2, per il moltiplicatore della
+  serie (+0,5 ogni 6 di fila, fino a x2). Le ragazze arrivano a 20, 50, 100, 200 e 300 punti (in
+  Lampo al 40%): vittoria con 3 ragazze, cioè il bronzo.
 - **Emilio in Retromarcia** (35 s): VIA LIBERA, ogni scatto della macchina finito senza spaventare
   nessun cane: il primo di fila vale 4, il secondo 8, il terzo 12... (uno spavento azzera la serie);
   +5 per ogni cane tolto dalla zona rossa all'ultimo; se Emilio esce dal cancello, le vite rimaste
@@ -1041,14 +1089,16 @@ dicono in anticipo com'è la serata di un seme.
 ## La canzone di X-Factor
 
 "Provini a X-Factor" si suona su una canzone vera, "Cambiare Aria" del Tini e dell'Oli. Nel sito ci
-sono solo due ritagli, in mono (`audio/cambiare-aria.mp3`, 35 secondi, e `audio/cambiare-aria-lampo.mp3`,
-15 secondi, dal pezzo forte), e la mappa delle note `js/config/microgiochi/xfactor-mappa.json` (i
-battiti, dove cominciano gli atti e le note di ogni livello). La canzone intera sta fuori dal sito,
-in `riferimenti/`, e non va caricata su GitHub.
+sono solo due ritagli, in mono: `audio/cambiare-aria.mp3`, 35 secondi (dalla canzone, da 0:48,9 a
+1:24,1: la fine della strofa dell'Oli, la strofa del Tini e il ritornello), e
+`audio/cambiare-aria-lampo.mp3`, 15 secondi (da 0:52,7 a 1:07,7: l'Oli e poi il Tini). C'è poi la mappa
+delle note `js/config/microgiochi/xfactor-mappa.json`: i battiti (la canzone va a 128 bpm esatti),
+dove cominciano gli atti, chi canta e quando (`voci`: l'Oli, il Tini o insieme) e le note di ogni
+livello. La canzone intera sta fuori dal sito e non va caricata su GitHub.
 
 Ritagli e mappa li fa `strumenti/beatmap.py` (fuori dal sito), con librosa (battiti e attacchi della
 canzone) e ffmpeg (i ritagli, con la dissolvenza): se cambia la canzone, o i tagli scritti in cima
-allo script, basta rilanciarlo. La prima volta:
+allo script, basta rilanciarlo, con la canzone intera come argomento. La prima volta:
 
 ```bash
 py -m venv strumenti\.venv
@@ -1061,8 +1111,18 @@ strumenti\.venv\Scripts\python -m pip install librosa soundfile
 poi, ogni volta:
 
 ```bash
-strumenti\.venv\Scripts\python strumenti\beatmap.py
+strumenti\.venv\Scripts\python strumenti\beatmap.py percorso\della\canzone-intera.mp3
 ```
+
+Le note di ogni livello le scrive poi `strumenti/griglia.py` (Python normale, senza librosa: beatmap.py
+lo lancia da solo alla fine), che riscrive solo le note e lascia battiti, atti e voci come sono. Per
+rifare solo le note, per esempio dopo aver cambiato le sue regole (scritte in cima allo script):
+
+```bash
+py strumenti\griglia.py
+```
+
+Usa ffmpeg per sentire i colpi nei due ritagli; senza ffmpeg le note le fa solo dai battiti.
 
 In memoria, decodificato, il ritaglio da 35 secondi pesa circa 6,7 MB (a 48 kHz, come su iPhone) e
 quello da 15 circa 2,9 MB; ce n'è caricato uno solo, solo durante il microgioco. Se su qualche
@@ -1133,13 +1193,14 @@ js/
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES), e i gruppi di immagini che si
                          creano solo quando servono (gruppoPigro, usaGruppi): vedi sotto
-    personaggi.js        i ventitré personaggi (con Emilio, Pastaffi, i cantanti Tini e
-                         Oli, il Boni, Lori, Michele e il Giso), le ragazze delle due discoteche, il buttafuori e i quattro
+    personaggi.js        i ventiquattro personaggi (con Emilio, Pastaffi, i cantanti Tini e
+                         Oli, il Boni, Lori, Michele, il Giso e lo Zere), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
-                         c'è pelle, la spiaggia col telo, sole, tubetto, mano,
-                         gabbiano, onda
+                         c'è pelle, la spiaggia col telo, sole, mano, telefono e
+                         lattina
+    powerstation.js      il bar della Spina: le foto incorniciate del gruppo alle pareti
     oggetti.js           Golf di ReGrorio, pinte, spina, clienti, attrezzi del
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
                          finestre con le persiane, fumogeni, ombrelloni,

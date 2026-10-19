@@ -500,6 +500,62 @@ function manoMia(c) {
   manoAperta(c, '#e9b58d');
 }
 
+// La mano di chi gioca in "Guerra, via quelle mani!" (40x80 unità, il centro del dorso in (20, 34)):
+// giovane e liscia, così non si confonde con quelle di Guerra (niente peli, nocche e tendini), con
+// le dita unite dello schiaffo; al polso il polsino di spugna col colore del giocatore (quello del
+// suo nome), sotto l'avambraccio e la manica rimboccata del suo vestito, che sfuma verso il basso.
+// p = l'aspetto del personaggio (aspettoDi in sprites.js), colore = il suo colore del gioco.
+// dita: come DITA_GUERRA, ma più sottili e più vicine
+const DITA_GIOVANI = [[13.3, -0.12, 12, 4.9, 4.2], [18.1, -0.04, 14.6, 5.1, 4.4], [22.9, 0.05, 14, 5, 4.3], [27.3, 0.14, 11, 4.6, 3.9]];
+export function manoGiocatore(c, p, colore) {
+  const S = p.pelle ?? '#e9b58d', scu = scuro(S, 0.2), v = p.vestito ?? {};
+  // la stoffa della manica: quella del vestito (del croupier la manica sua); chi non ha maniche
+  // (il costume da bagno) mette una maglietta del suo colore
+  const stoffa = v.manica ?? (v.colore && v.tipo !== 'costume' ? v.colore : colore);
+  const pollice = () => { c.beginPath(); c.moveTo(13.6, 41); c.quadraticCurveTo(7.4, 38.6, 5.4, 31.6); c.quadraticCurveTo(4.6, 28.2, 7, 27.8); c.quadraticCurveTo(9.4, 27.8, 10.4, 31.2); c.quadraticCurveTo(11.8, 34.6, 15.4, 35); c.closePath(); };
+  const dorso = () => { c.beginPath(); c.moveTo(10.8, 28.5); c.quadraticCurveTo(20, 25, 29.4, 28.5); c.quadraticCurveTo(30.2, 37, 26.8, 43); c.lineTo(26.6, 47); c.lineTo(13.4, 47); c.lineTo(13.2, 43); c.quadraticCurveTo(9.8, 37, 10.8, 28.5); c.closePath(); };
+  const braccio = () => { c.beginPath(); c.moveTo(13.6, 44); c.lineTo(12.2, 68); c.lineTo(27.8, 68); c.lineTo(26.4, 44); c.closePath(); };
+  // prima tutti i contorni, poi tutti i riempimenti: la mano sembra un pezzo solo
+  for (const d of DITA_GIOVANI) { ditoGuerra(c, d, 28.5); tratto(c, CONT, 2.4); }
+  pollice(); tratto(c, CONT, 2.4);
+  dorso(); tratto(c, CONT, 2.4);
+  braccio(); tratto(c, CONT, 2.4);
+  braccio(); c.fillStyle = gradL(c, 12, 0, 28, 0, [[0, scuro(S, 0.16)], [0.45, chiaro(S, 0.06)], [1, scuro(S, 0.2)]]); c.fill();
+  for (const d of DITA_GIOVANI) { const q = ditoGuerra(c, d, 28.5); c.fillStyle = gradL(c, d[0] - q.nx * 2.6, 0, d[0] + q.nx * 2.6, 0, [[0, scuro(S, 0.12)], [0.45, chiaro(S, 0.1)], [1, scuro(S, 0.08)]]); c.fill(); }
+  pollice(); c.fillStyle = gradL(c, 4, 0, 15, 0, [[0, scuro(S, 0.14)], [0.6, S]]); c.fill();
+  dorso(); c.fillStyle = gradL(c, 10, 0, 30, 0, [[0, scuro(S, 0.1)], [0.45, chiaro(S, 0.1)], [1, scuro(S, 0.14)]]); c.fill();
+  // pelle liscia: un riflesso sul dorso e appena una piega alla base di ogni dito
+  ellisse(c, 17.6, 35, 3.6, 6, -0.25); c.fillStyle = 'rgba(255,255,255,0.2)'; c.fill();
+  for (const d of DITA_GIOVANI) {
+    const q = ditoGuerra(c, d, 28.5), L = d[2], k = 0.55, px = d[0] + q.dx * L * k, py = 28.5 + q.dy * L * k, w = d[3] * 0.3;
+    c.beginPath(); c.moveTo(px - q.nx * w, py - q.ny * w); c.quadraticCurveTo(px + q.dx * 0.6, py + q.dy * 0.6, px + q.nx * w, py + q.ny * w); tratto(c, alfa(scu, 0.55), 0.6);
+    // l'unghia corta e pulita, col suo riflesso
+    const ux = q.tx - q.dx * 1.5, uy = q.ty - q.dy * 1.5;
+    ellisse(c, ux, uy, d[4] * 0.3, d[4] * 0.38, d[1]); c.fillStyle = mix(S, '#fff2ee', 0.6); c.fill(); tratto(c, alfa(scu, 0.5), 0.45);
+    ellisse(c, ux - 0.4, uy - 0.4, 0.45, 0.6, d[1]); c.fillStyle = 'rgba(255,255,255,0.8)'; c.fill();
+  }
+  ellisse(c, 6.6, 29.6, 1.3, 1.7, -0.5); c.fillStyle = mix(S, '#fff2ee', 0.6); c.fill(); tratto(c, alfa(scu, 0.5), 0.45);
+  // il polsino di spugna col colore di chi gioca, a due righe bianche
+  const fascia = () => rrect(c, 11.4, 45.6, 17.2, 8.6, 2.6);
+  fascia(); c.fillStyle = gradL(c, 11, 0, 29, 0, [[0, scuro(colore, 0.28)], [0.45, chiaro(colore, 0.12)], [1, scuro(colore, 0.32)]]); c.fill();
+  c.save(); fascia(); c.clip();
+  c.fillStyle = 'rgba(255,255,255,0.92)'; c.fillRect(11, 47.6, 18, 1.4); c.fillRect(11, 51, 18, 1.4);
+  const r = casuale(17);
+  c.fillStyle = 'rgba(0,0,0,0.16)';
+  for (let i = 0; i < 40; i++) { ellisse(c, 11.6 + r() * 17, 45.8 + r() * 8.2, 0.35, 0.35); c.fill(); }   // la spugna
+  c.restore();
+  fascia(); tratto(c, CONT, 1.6);
+  // la manica rimboccata (il risvolto) e sotto la stoffa che scende verso chi gioca
+  rrect(c, 9.4, 70, 21.2, 12, 2); c.fillStyle = gradL(c, 9, 0, 31, 0, [[0, scuro(stoffa, 0.4)], [0.5, scuro(stoffa, 0.12)], [1, scuro(stoffa, 0.42)]]); c.fill(); tratto(c, CONT, 1.6);
+  const risvolto = () => rrect(c, 8.4, 63.6, 23.2, 8.4, 3);
+  risvolto(); c.fillStyle = gradL(c, 8, 0, 32, 0, [[0, scuro(stoffa, 0.25)], [0.45, chiaro(stoffa, 0.16)], [1, scuro(stoffa, 0.3)]]); c.fill(); tratto(c, CONT, 1.8);
+  c.beginPath(); c.moveTo(9.6, 67.8); c.quadraticCurveTo(20, 69.2, 30.4, 67.8); tratto(c, alfa(scuro(stoffa, 0.5), 0.7), 0.7);
+  // in fondo la manica sfuma (il braccio continua fuori dall'immagine)
+  c.save(); c.globalCompositeOperation = 'destination-out';
+  c.fillStyle = gradL(c, 0, 72, 0, 80, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,1)']]); c.fillRect(0, 72, 40, 8);
+  c.restore();
+}
+
 // ------------------------------------------------------------
 //  SEGO, SONO SOTTO CASA: finestre con le persiane (58x44, vano 32x36 al centro), fumogeni
 // ------------------------------------------------------------
@@ -827,6 +883,80 @@ function spruzzo(c) {
   }
 }
 
+// Le bagnarole nuove (scheda di valutazione: "più barche"), viste dalla riva come le altre:
+// la BANANA BOAT (72x32, tre pirati a cavalcioni: veloce e a zig-zag) e il SOTTOMARINO PAPERO
+// (72x36, ogni tanto va sott'acqua e resta fuori solo il periscopio)
+function bananaBoat(c) {
+  // i pirati prima: la banana davanti copre le gambe
+  pirata(c, 19, 12, 0.9, 2); pirata(c, 35, 13, 0.9, 0); pirata(c, 51, 12, 0.9, 1);
+  c.beginPath(); c.moveTo(66, 12); c.lineTo(66, 0.5); tratto(c, '#8a5a2a', 1);
+  bandiera(c, 66, 0.5, 6, 5, true);
+  const corpo = () => { c.beginPath(); c.moveTo(2, 12); c.quadraticCurveTo(8, 22, 36, 22); c.quadraticCurveTo(62, 22, 70, 10); c.quadraticCurveTo(72.5, 13.5, 69, 18); c.quadraticCurveTo(60, 31, 36, 31); c.quadraticCurveTo(10, 31, 3, 19); c.quadraticCurveTo(0, 15, 2, 12); c.closePath(); };
+  corpo(); c.fillStyle = gradL(c, 0, 18, 0, 31, [[0, '#fff07a'], [0.5, '#ffd83a'], [1, '#d8a01e']]); c.fill();
+  c.save(); corpo(); c.clip();
+  for (const y of [25.5, 28]) { c.beginPath(); c.moveTo(4, y - 6); c.quadraticCurveTo(36, y + 2, 70, y - 12); tratto(c, 'rgba(160,110,20,0.45)', 0.8); }   // le costole
+  lucido(c, 14, 22.5, 40, 1.8);
+  ellisse(c, 2.5, 14, 3, 3); c.fillStyle = '#5a4010'; c.fill();                                              // le punte scure
+  ellisse(c, 70, 13, 3, 3.5); c.fill();
+  c.restore();
+  corpo(); tratto(c, CONT, 1.3);
+  // le maniglie davanti a ogni pirata
+  for (const x of [25, 41, 57]) { c.beginPath(); c.arc(x, 22.5, 2.2, Math.PI, 0); tratto(c, '#2a2a30', 1); }
+}
+
+function sottomarino(c) {
+  // la torretta col pirata che guarda fuori, il periscopio e la bandiera
+  pirata(c, 33, 8, 0.75, 3);
+  rrect(c, 24, 11, 20, 13, [4, 4, 1, 1]); c.fillStyle = gradL(c, 24, 0, 44, 0, [[0, '#e8a81e'], [0.5, '#ffd83a'], [1, '#d8901e']]); c.fill(); tratto(c, CONT, 1);
+  rrect(c, 23, 10, 22, 3, 1.5); c.fillStyle = '#ff8a2a'; c.fill(); tratto(c, CONT, 0.8);
+  c.beginPath(); c.moveTo(41, 10); c.lineTo(41, 1.5); c.lineTo(46.5, 1.5); tratto(c, CONT, 2.6);
+  c.beginPath(); c.moveTo(41, 10); c.lineTo(41, 1.5); c.lineTo(46.5, 1.5); tratto(c, '#9aa2ae', 1.4);
+  rrect(c, 45.5, 0, 2.4, 3, 0.8); c.fillStyle = '#3fa0d0'; c.fill(); tratto(c, CONT, 0.6);
+  c.beginPath(); c.moveTo(26, 11); c.lineTo(26, 3); tratto(c, '#8a5a2a', 0.9);
+  bandiera(c, 18.5, 3, 7.5, 5, false);
+  // lo scafo a paperella: giallo, col becco arancione davanti e gli oblò
+  const scafo = () => { c.beginPath(); c.moveTo(6, 27); c.quadraticCurveTo(8, 19, 36, 19.5); c.quadraticCurveTo(62, 20, 66, 25); c.quadraticCurveTo(68, 34, 52, 35); c.lineTo(18, 35); c.quadraticCurveTo(4, 34.5, 6, 27); c.closePath(); };
+  scafo(); c.fillStyle = gradL(c, 0, 19, 0, 35, [[0, '#fff07a'], [0.6, '#f2c43a'], [1, '#c8901e']]); c.fill();
+  c.save(); scafo(); c.clip(); lucido(c, 12, 21, 40, 2); c.fillStyle = 'rgba(40,120,170,0.35)'; c.fillRect(0, 32.5, 72, 4); c.restore();
+  scafo(); tratto(c, CONT, 1.3);
+  for (const x of [20, 31, 42]) { ellisse(c, x, 27.5, 3, 3); c.fillStyle = '#e8e8ee'; c.fill(); tratto(c, CONT, 0.8); ellisse(c, x, 27.5, 1.8, 1.8); c.fillStyle = '#5ab4e0'; c.fill(); }
+  poli(c, [[65, 25], [71.5, 27.5], [65.5, 30]]); c.fillStyle = '#f08a1e'; c.fill(); tratto(c, CONT, 0.8);   // il becco
+  ellisse(c, 59, 24.5, 1.6, 1.8); c.fillStyle = '#1c1c22'; c.fill();
+  // l'elica a poppa
+  for (const dy of [-3, 3]) { ellisse(c, 4.5, 28 + dy, 1.4, 2.6); c.fillStyle = '#c8ccd4'; c.fill(); tratto(c, CONT, 0.6); }
+}
+
+// Le armi di chi gioca (oltre al cannone): il MORTAIO (corto e largo, spara a parabola) e il
+// LANCIASILURI (un tubo col siluro che spunta). Stesse misure e stesso perno del cannone (4, 8),
+// così si scambiano sull'affusto; fanno anche da icona nei pulsanti delle armi.
+function mortaio(c) {
+  poli(c, [[2, 3.5], [23, 1.5], [23, 14.5], [2, 12.5]]); c.fillStyle = gradL(c, 0, 1.5, 0, 14.5, [[0, '#7a8a4a'], [0.4, '#4a5a2a'], [1, '#262e14']]); c.fill(); tratto(c, '#000000', 1);
+  for (const x of [8, 15]) { c.fillStyle = '#c8a040'; c.fillRect(x, 2.6 - (x - 8) * 0.05, 2.4, 11 + (x - 8) * 0.1); }
+  rrect(c, 21, 0, 6, 16, 2); c.fillStyle = '#3a4620'; c.fill(); tratto(c, '#000000', 1);
+  ellisse(c, 26.5, 8, 1.6, 6); c.fillStyle = '#0c0c10'; c.fill();                                           // la bocca
+  c.fillStyle = 'rgba(255,255,255,0.3)'; c.fillRect(5, 4.5, 15, 1.2);
+}
+function lanciasiluri(c) {
+  rrect(c, 2, 3, 30, 10, [5, 2, 2, 5]); c.fillStyle = gradL(c, 0, 3, 0, 13, [[0, '#8ab0c8'], [0.4, '#3a6a8a'], [1, '#1a3448']]); c.fill(); tratto(c, '#000000', 1);
+  for (const x of [10, 20]) { c.fillStyle = '#f2c43a'; c.fillRect(x, 3.5, 2.5, 9); c.fillStyle = '#1c1c22'; c.fillRect(x + 0.8, 3.5, 0.9, 9); }
+  // il siluro che spunta: muso rosso
+  rrect(c, 30, 4.8, 7, 6.4, [1, 3.2, 3.2, 1]); c.fillStyle = '#e8463a'; c.fill(); tratto(c, '#000000', 0.8);
+  c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(5, 4.5, 24, 1.2);
+}
+// il siluro in corsa, visto da dietro mentre si allontana (muso in alto): 10x18
+function siluro(c) {
+  poli(c, [[1, 17], [5, 13], [9, 17]]); c.fillStyle = '#5a6270'; c.fill(); tratto(c, CONT, 0.6);              // le alette
+  rrect(c, 2.5, 3, 5, 13, 2.5); c.fillStyle = gradL(c, 2.5, 0, 7.5, 0, [[0, '#6a7280'], [0.5, '#c8ccd4'], [1, '#4a5260']]); c.fill(); tratto(c, CONT, 0.8);
+  ellisse(c, 5, 3.6, 2.5, 2.6); c.fillStyle = '#e8463a'; c.fill(); tratto(c, CONT, 0.7);
+}
+// la bomba del mortaio, con la miccia accesa: 12x12
+function bombaMortaio(c) {
+  ellisse(c, 6, 7, 4.6, 4.6); c.fillStyle = gradR(c, 4.6, 5.6, 0.4, 4.6, [[0, '#8a9a5a'], [1, '#1e2610']]); c.fill(); tratto(c, '#000000', 0.8);
+  c.fillStyle = '#f2c43a'; c.fillRect(1.6, 6.2, 8.8, 1.4);
+  c.beginPath(); c.moveTo(6, 2.6); c.quadraticCurveTo(7, 0.8, 9, 1.2); tratto(c, '#c8a060', 0.9);
+  ellisse(c, 9.4, 1.2, 1.2, 1.2); c.fillStyle = '#ffd84a'; c.fill();
+}
+
 function creaRonda(scene) {
   for (const t of ['gommone', 'pedalo']) tela(scene, 'barca_' + t, 64, 36, (c) => bagnarola(c, t), 5);
   tela(scene, 'barca_galeone', 90, 64, (c) => bagnarola(c, 'galeone'), 5);
@@ -837,6 +967,13 @@ function creaRonda(scene) {
   tela(scene, 'pirataNuota', 24, 18, pirataNuota, 6);
   tela(scene, 'spruzzo', 24, 20, spruzzo, 5);
   tela(scene, 'palla', 8, 8, (c) => { ellisse(c, 4, 4, 3.6, 3.6); c.fillStyle = gradR(c, 3, 3, 0.3, 3.6, [[0, '#8a8e9a'], [1, '#141418']]); c.fill(); }, 8);
+  // (scheda di valutazione: più bagnarole e più armi)
+  tela(scene, 'barca_banana', 72, 32, bananaBoat, 5);
+  tela(scene, 'barca_sottomarino', 72, 36, sottomarino, 5);
+  tela(scene, 'mortaio', 40, 16, mortaio, 6);
+  tela(scene, 'lanciasiluri', 40, 16, lanciasiluri, 6);
+  tela(scene, 'siluro', 10, 18, siluro, 6);
+  tela(scene, 'bombaMortaio', 12, 12, bombaMortaio, 8);
 }
 
 // ------------------------------------------------------------
