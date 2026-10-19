@@ -306,6 +306,9 @@ def main():
     dest = SITO / 'js' / 'config' / 'microgiochi' / 'xfactor-mappa.json'
     dest.write_text(json.dumps(dati, ensure_ascii=False, separators=(',', ':')), encoding='utf-8', newline='\n')
     print(f'  mappa: {dest.relative_to(RADICE)} ({dest.stat().st_size / 1024:.0f} KB)')
+    # le note come in Guitar Hero (scheda di valutazione): le rifà strumenti/griglia.py, sopra i
+    # battiti, gli atti e i ritagli appena scritti (quelle di mappa() qui sopra si buttano)
+    subprocess.run([sys.executable, str(QUI / 'griglia.py'), str(dest)], check=True)
 
 
 if __name__ == '__main__':
