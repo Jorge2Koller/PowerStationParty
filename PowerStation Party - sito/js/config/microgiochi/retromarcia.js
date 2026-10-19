@@ -11,12 +11,12 @@ export default {
   cast: ['pastaffi'],      // altri personaggi della storia: chi li sceglie qui gioca "contro se stesso"
   comandi: [
     'FRECCE (o WASD), oppure clic sul vialetto: muoviti',
-    'Cammina contro un cane: lo spingi via dalla ZONA ROSSA dietro la macchina',
+    'Cammina contro un cane: lo spingi via dalla ZONA ROSSA (ma se la macchina ti tocca: KO!)',
     'SPAZIO o tasto destro: lancia biscotti e palline. BIP BIP: la macchina parte!',
   ],
   comandiTouch: [
     'Trascina il dito sul vialetto: ti muovi',
-    'Cammina contro un cane: lo spingi via dalla ZONA ROSSA dietro la macchina',
+    'Cammina contro un cane: lo spingi via dalla ZONA ROSSA (ma se la macchina ti tocca: KO!)',
     'Tocca biscotto o pallina, poi dove lanciarli. BIP BIP: la macchina parte!',
   ],
   obiettivo: 'Fai uscire Emilio dal cancello: al massimo uno spavento!',
@@ -47,6 +47,14 @@ export default {
   velSpinta: 80,           // velocità del cane appena spinto (unità/s)...
   durataSpinta: 0.7,       //   ...per tanti secondi, rallentando: fa una trentina di unità
   spintaFuori: 0.45,       // un cane spinto dentro la corsia della macchina devia di tanto verso il bordo più vicino (0 = va solo dove lo spingi)
+  // (scheda di valutazione: "se ti metti dietro la macchina dovrebbe lasciarti per terra se ti
+  // tocca, tipo un KO di 2 secondi"; prima la coda ti spingeva e basta) se la macchina in moto ti
+  // arriva addosso con la coda, fai un volo di lato, fuori dalla corsia, e resti steso con le
+  // stelline che girano: non ti muovi, non lanci, non spingi e non raccogli. Non costa vite né punti:
+  // costa il tempo, coi cani che intanto fanno di testa loro.
+  durataKO: 2,             // secondi KO, dal botto a quando ti rialzi (il volo compreso)
+  voloKO: 0.45,            //   ...di cui tanti in volo, prima di toccare terra
+  invulnerabileKO: 1.5,    // appena rialzato, per tanti secondi lampeggi e la macchina non ti stende di nuovo (fa solo da muro)
   // --- lanci e munizioni ---
   munizioni: { biscotto: 2, pallina: 2 },   // con quante cominci
   maxMunizioni: 4,         // quante ne puoi tenere, per tipo
@@ -126,6 +134,8 @@ export default {
     telefono: ['Chi è che scrive?', 'Pronto? Sto uscendo!'],
   },
   frasiIncidente: ['NOOO! Il mio cucciolo!', 'Da dove è sbucato?!', 'Non ti avevo visto!', 'Mi viene un infarto!'],
+  // Emilio quando ti stende in retromarcia (non se ne accorge neanche)
+  frasiKO: ['Ho preso una buca?', "Cos'era quel botto?", 'Chi è che bussa dietro?', 'Mi sa che ho preso un sasso'],
   frasiPastaffi: ['PAPÀ, IL GATTO!', 'PAPÀ, FERMO!'],
   // Pastaffi (Denny) dalla porta di casa, quando Emilio tocca un cane
   frasiPastaffiSpavento: ["Babbo, non un'altra volta!!!!"],

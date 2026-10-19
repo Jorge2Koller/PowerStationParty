@@ -10,7 +10,9 @@
 //  ruota, quello della pallina la rincorre, il goloso va dietro ai biscotti.
 //  IL GIOCATORE: li SPINGE camminandoci contro, LANCIA biscotti e palline (SPAZIO: un tiro in
 //  avanti; tasto destro: lì dove punti; il gioco sceglie da solo quello che serve: il biscotto
-//  per il goloso, la pallina per l'altro) e RACCOGLIE quelli che compaiono in giro.
+//  per il goloso, la pallina per l'altro) e RACCOGLIE quelli che compaiono in giro. Se si mette
+//  dietro la coda e la macchina in moto gli arriva addosso, finisce per terra KO per un paio di
+//  secondi (le stelline che girano): poi si rialza e per un attimo lampeggia.
 //  Tre atti: all'inizio tranquillo; da 12 secondi EMILIO SI DISTRAE (radio, bandana, telefono:
 //  va più forte); negli ultimi 12 PASSA IL GATTO e tutti i cani gli vanno dietro, nella zona
 //  rossa: Pastaffi esce di casa, ne prende in braccio uno e lo porta nel prato (ed Emilio
@@ -20,7 +22,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { VIALETTO as V, CANE } from '../grafica/vialetto.js';
-import { txt, im, scalaDi, scritta, stelle, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, vibra, multiTouch } from '../fx.js';
+import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, vibra, multiTouch } from '../fx.js';
 
 const S = V.strada, K = V.corsia, CAMPO = V.campo, A = V.auto;
 const TAGLIA = 0.4;                         // grandezza dei personaggi sul vialetto
@@ -97,9 +99,12 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.portiera = im(this, 0, 0, 'wagonPortiera', SCALA_AUTO).setOrigin(23 / 26, 2.4 / 44).setDepth(pr + 3).setVisible(false);
 
     // --- io e i cani ---
-    this.io = { x: 250, y: 214, dx: 1, dy: 0, fermo: true, key: '', tEspr: 0,
+    // (ko: il volo e il tempo a terra, quando la macchina mi stende; tIntoccabile: dopo, quanto lampeggio ancora)
+    this.io = { x: 250, y: 214, dx: 1, dy: 0, fermo: true, key: '', tEspr: 0, ko: null, tIntoccabile: 0,
       ombra: this.add.ellipse(250, 213, 22, 6, 0x000000, 0.3).setDepth(9),
       img: im(this, 250, 214, `${id}_normale`, TAGLIA).setOrigin(0.5, 1) };
+    // le stelline che girano sulla testa di chi è KO: una si spegne per ogni terzo del tempo che passa
+    this.stelleKO = [0, 1, 2].map(() => im(this, 0, 0, 'stella', 1.1).setVisible(false));
     const posti = [[318, 146], [300, 210], [392, 206], [350, 132], [420, 172]];
     this.cani = c.cani.map((d, i) => {
       const [x, y] = posti[i % posti.length];
@@ -228,6 +233,13 @@ export class RetromarciaScene extends MicrogiocoBase {
 
   muovi(dt) {
     const c = this.cfg, io = this.io, t = this.tasti, Au = this.auto;
+    if (io.ko) return this.aggiornaKO(dt);
+    // appena rialzato lampeggio: la macchina, per ora, fa solo da muro
+    if (io.tIntoccabile > 0) {
+      io.tIntoccabile -= dt;
+      const a = io.tIntoccabile > 0 && Math.floor(io.tIntoccabile * 10) % 2 ? 0.35 : 1;
+      io.img.setAlpha(a); io.ombra.setAlpha(a);
+    }
     let vx = 0, vy = 0;
     const dx = (t.dx.isDown || t.d.isDown ? 1 : 0) - (t.sx.isDown || t.a.isDown ? 1 : 0);
     const dy = (t.giu.isDown || t.s.isDown ? 1 : 0) - (t.su.isDown || t.w.isDown ? 1 : 0);
@@ -247,6 +259,8 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.nelCampo(io);
     // la macchina non si attraversa: fuori dal lato più vicino
     const x0 = Au.x - LUNGA - 5, x1 = Au.x + 7, y0 = K.y - K.prof - 5, y1 = K.y + 5;
+    // ...ma se sto dietro la coda e la macchina mi viene addosso, mi stende (vedi travolto)
+    if (Au.v > 2 && io.tIntoccabile <= 0 && io.x > Au.x - 6 && io.x < x1 && io.y > y0 && io.y < y1) return this.travolto();
     if (io.x > x0 && io.x < x1 && io.y > y0 && io.y < y1) {
       const fuori = [[io.x - x0, () => { io.x = x0; }], [x1 - io.x, () => { io.x = x1; }], [io.y - y0, () => { io.y = y0; }], [y1 - io.y, () => { io.y = y1; }]];
       fuori.sort((a, b) => a[0] - b[0])[0][1]();
@@ -280,6 +294,72 @@ export class RetromarciaScene extends MicrogiocoBase {
     Object.assign(k, { stato: 'spinto', t: c.durataSpinta, vx: (ux / L) * c.velSpinta, vy: (uy / L) * c.velSpinta, oggetto: null, meta: null });
   }
 
+  // La macchina in retromarcia mi è arrivata addosso con la coda (scheda di valutazione: "se ti
+  // metti dietro la macchina dovrebbe lasciarti per terra se ti tocca"): SBAM, un volo di lato fuori
+  // dalla corsia (così la macchina passa e non mi ripiglia) e giù steso, KO. Emilio neanche se ne
+  // accorge e va avanti: il guaio è che intanto i cani fanno quello che vogliono.
+  travolto() {
+    const c = this.cfg, io = this.io, su = io.y < CENTRO;
+    const x1 = limita(io.x + 24, CAMPO.x0 + 14, CAMPO.x1 - 14), y1 = su ? K.y - K.prof - 13 : K.y + 14;
+    io.ko = { t: 0, x0: io.x, y0: io.y, x1, y1, cip: 0.5, giu: false };
+    io.tIntoccabile = 0; io.fermo = true;
+    this.meta = null;
+    this.armato = null;
+    io.key = `${this.giocatore.id}_shock`;
+    io.img.setTexture(io.key).setAlpha(1).setFlipX(false);
+    io.ombra.setAlpha(1);
+    Audio.sfx('sbam');
+    vibra(100);
+    scuoti(this, 160, 0.007);
+    stelle(this, io.x, io.y - 22, 6, 950);
+    scritta(this, limita(io.x + 10, 60, 420), io.y - 82, 'SBAM! KO!', { size: 12, color: '#ffe14a', durata: 800, depth: 955 });
+    if (this.auto.stato !== 'incidente') this.parlaEmilio(caso(c.frasiKO), 1400);
+    this.aggiornaHud(true);
+    this.aggiornaKO(0);
+  }
+
+  // il volo, poi steso con le stelline, poi in piedi
+  aggiornaKO(dt) {
+    const c = this.cfg, io = this.io, K0 = io.ko, T = this.trascorso;
+    K0.t += dt;
+    const e = Math.min(1, K0.t / c.voloKO);
+    io.x = lerp(K0.x0, K0.x1, e); io.y = lerp(K0.y0, K0.y1, e);
+    // in volo gira su se stesso; a terra resta steso, con la testa dalla parte opposta alla macchina
+    // (il centro della figura scende da mezza altezza, in piedi, a mezza larghezza, stesa)
+    const alto = Math.sin(e * Math.PI) * 16, w = io.img.displayWidth, h = io.img.displayHeight;
+    if (e < 1) io.img.setOrigin(0.5, 0.5).setAngle(e * 84 + Math.sin(e * Math.PI) * 200).setPosition(io.x, io.y - lerp(h * 0.5, w * 0.42, e) - alto);
+    else {
+      if (!K0.giu) {
+        K0.giu = true;
+        Audio.sfx('tonfo');
+        fumo(this, io.x, io.y - 2, 4, 99 + io.y);
+        colpetto(this, io.img, 1.15, 0.85);
+      }
+      io.img.setOrigin(0.5, 0.5).setAngle(84).setPosition(io.x, io.y - w * 0.42);
+    }
+    io.img.setDepth(100 + io.y);
+    io.ombra.setPosition(io.x, io.y - 1).setScale(e < 1 ? 1 - alto / 40 : 2.1, 1);
+    // le stelline (da quando tocco terra): girano in tondo sopra la testa, e una si spegne per ogni
+    // terzo del KO che passa (così si vede quanto manca a rialzarsi)
+    const resta = c.durataKO - K0.t, hx = io.x + h * 0.2, hy = io.y - w * 0.42 - 26;
+    this.stelleKO.forEach((s, i) => {
+      const a = T * 6 + (i * Math.PI * 2) / 3, accesa = K0.giu && resta > (i * c.durataKO) / 3;
+      s.setVisible(accesa).setPosition(hx + Math.cos(a) * 16, hy + Math.sin(a) * 5).setAngle(T * 300).setDepth(100 + io.y + (Math.sin(a) > 0 ? 0.5 : -0.5));
+    });
+    // e gli uccellini cantano
+    if (K0.giu && (K0.cip -= dt) <= 0) { K0.cip = 0.7; Audio.sfx('cipCip'); }
+    if (resta > 0) return;
+    // in piedi! (per un attimo lampeggio: la macchina non mi stende di nuovo)
+    io.ko = null;
+    io.tIntoccabile = c.invulnerabileKO;
+    io.key = `${this.giocatore.id}_normale`;
+    io.img.setTexture(io.key).setOrigin(0.5, 1).setAngle(0).setPosition(io.x, io.y);
+    io.ombra.setScale(1);
+    for (const s of this.stelleKO) s.setVisible(false);
+    colpetto(this, io.img, 0.85, 1.2);
+    Audio.sfx('salto');
+  }
+
   // --- lanci ---
   // cosa lanciare: quello che piace al cane più vicino alla zona rossa (il biscotto al goloso, la
   // pallina all'altro); se è finito, l'altro
@@ -302,6 +382,7 @@ export class RetromarciaScene extends MicrogiocoBase {
   }
 
   toccaIcona(tipo, colDito) {
+    if (this.io.ko) return this.avviso('SEI KO!');
     if (colDito) {
       // col dito: l'icona si "arma", il prossimo tocco sul vialetto è il lancio
       if (this.muni[tipo] <= 0) this.avviso(`${NOMI[tipo]}: FINITE!`);
@@ -314,6 +395,7 @@ export class RetromarciaScene extends MicrogiocoBase {
   lancia(x, y, voluto) {
     const c = this.cfg, io = this.io;
     if (!this.inCorso) return;
+    if (io.ko) return this.avviso('SEI KO!');     // steso per terra non si lancia niente
     const tipo = voluto && this.muni[voluto] > 0 ? voluto : this.sceltaAuto();
     if (this.muni[tipo] <= 0) return this.avviso('NIENTE DA LANCIARE!');
     this.muni[tipo]--;
@@ -775,7 +857,7 @@ export class RetromarciaScene extends MicrogiocoBase {
     }
     // ...e ci si passa sopra per prenderla
     for (const r of this.raccolte) {
-      if (Math.hypot(r.x - io.x, r.y - io.y) > 14 || this.muni[r.tipo] >= c.maxMunizioni) continue;
+      if (io.ko || Math.hypot(r.x - io.x, r.y - io.y) > 14 || this.muni[r.tipo] >= c.maxMunizioni) continue;
       r.preso = true;
       this.tweens.killTweensOf(r.img); this.tweens.killTweensOf(r.alone);
       r.img.destroy(); r.alone.destroy();
@@ -854,7 +936,7 @@ export class RetromarciaScene extends MicrogiocoBase {
     const id = this.giocatore.id, Au = this.auto, n = this.cani.length;
     this.fum?.destroy();
     this.gZona.clear(); this.gMira.clear();
-    for (const o of [...this.hudV, this.io.img, this.io.ombra, this.pasta?.img, this.pasta?.ombra, this.gatto?.img, this.luce, this.schermo, this.portiera, this.emilioGiu,
+    for (const o of [...this.hudV, ...this.stelleKO, this.io.img, this.io.ombra, this.pasta?.img, this.pasta?.ombra, this.gatto?.img, this.luce, this.schermo, this.portiera, this.emilioGiu,
       ...this.cani.flatMap((k) => [k.img, k.ombra, k.etichetta]), ...this.oggetti.map((o) => o.img), ...this.voli.map((v) => v.img), ...this.raccolte.flatMap((r) => [r.img, r.alone])]) o?.setVisible(false);
     this.testa.setVisible(true);
     Audio.sfx('tempo');
