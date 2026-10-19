@@ -56,6 +56,18 @@ export const PERSONAGGI = {
     stile: 'grigio', barba: 'nessuna', naso: [11, 13], orecchie: 11, sorriso: -1,
     vestito: { tipo: 'tshirt', colore: '#6dc0ee', collo: 'giro' }, pantaloni: '#2d313c', scarpe: '#3a3a40',
   },
+  // lo Zere (La Spina del PowerStation): giovane, capelli scuri corti sfumati ai lati, barba scura
+  // corta e piena che segue la mascella, pelle chiara, palpebre un po' basse; giacca blu scuro su
+  // una maglietta bianca. Ha sempre in mano la sua vuvuzela BLU (accessorio): all'ultimo atto la
+  // suona (la posa 'vuvuzela', creata dalla scena). Non è giocabile.
+  zere: {
+    pelle: '#f2cbb0', capelli: '#1f1813', capelliLuce: '#55463c', occhi: '#4a2e1a',
+    sopra: '#1a120d', sopraSpess: 8.5, palpebra: [0.24, 0.24],
+    faccia: { top: 46, larg: 57, mascella: 51, mascellaY: 152, mento: 30, mentoY: 180 },
+    stile: 'sfumato', barba: 'curata', naso: [10, 13], orecchie: 10, sorriso: 3,
+    vestito: { tipo: 'giacca', colore: '#1e2a4a', sotto: '#f6f6f2' }, pantaloni: '#2b3142', scarpe: '#f2f2f2',
+    accessorio: 'vuvuzela',
+  },
   // Marsupino: testa rasata, barba folta e scura, occhiali da sole neri,
   // giacca blu aperta su maglietta bianca, corporatura robusta, scarpe bianche
   marsupino: {
@@ -758,6 +770,42 @@ function barba(c, p) {
     forma(); tratto(c, CONT, 2.4);
     // la barba di qualche giorno sulle guance, appena
     c.save(); sagomaTesta(c, f); c.clip(); puntini(160, CX - 56, 132, 112, 40, 0.16); c.restore();
+    return;
+  }
+  if (p.barba === 'curata') {
+    // barba corta ma piena e ben definita (lo Zere): scura e fitta su guance basse, mascella e mento,
+    // coi baffi uniti; segue il contorno del viso sporgendo appena, senza scendere sotto il mento.
+    // Sulle guance parte più in basso delle barbe lunghe (dalla punta del naso, non dagli occhi).
+    // Le labbra restano scoperte (il buco col pari e dispari), così la bocca si vede
+    const L = f.larg;
+    const guance = () => {
+      c.moveTo(CX - L + 5, 110);
+      c.bezierCurveTo(CX - L + 10, 126, CX - 40, 137, CX - 27, 141);
+      c.quadraticCurveTo(CX - 13, 139, CX, 143); c.quadraticCurveTo(CX + 13, 139, CX + 27, 141);
+      c.bezierCurveTo(CX + 40, 137, CX + L - 10, 126, CX + L - 5, 110);
+    };
+    const zona = () => {
+      c.beginPath(); c.moveTo(CX - L - 6, 108); guance(); c.lineTo(CX + L + 6, 108); c.lineTo(CX + L + 8, 215); c.lineTo(CX - L - 8, 215); c.closePath();
+      c.moveTo(CX - 13, 155); c.quadraticCurveTo(CX, 151, CX + 13, 155); c.quadraticCurveTo(CX + 11, 164, CX, 165); c.quadraticCurveTo(CX - 11, 164, CX - 13, 155); c.closePath();
+    };
+    const sagoma = () => sagomaTesta(c, { ...f, larg: L + 1.5, mascella: f.mascella + 2.5, mento: f.mento + 3, mentoY: f.mentoY + 4 });
+    c.save(); zona(); c.clip('evenodd');
+    sagoma(); c.fillStyle = gradL(c, 0, 110, 0, f.mentoY + 4, [[0, H], [0.55, chiaro(H, 0.06)], [1, scuro(H, 0.22)]]); c.fill();
+    c.save(); sagoma(); c.clip();
+    c.globalAlpha = 0.6;
+    for (let i = 0; i < 190; i++) {
+      const x = CX - L + r() * L * 2, y = 110 + r() * (f.mentoY - 104), d = (x - CX) * 0.05;
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + d, y + 2, x + d * 1.4, y + 4 + r() * 2); tratto(c, i % 4 ? p.capelliLuce : scuro(H, 0.5), 1.2);
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    sagoma(); tratto(c, CONT, 3);
+    c.restore();
+    // il bordo netto sulle guance (fatto dal barbiere) e intorno alle labbra
+    c.save(); sagoma(); c.clip();
+    c.beginPath(); guance(); tratto(c, scuro(H, 0.25), 2.2);
+    c.beginPath(); c.moveTo(CX - 13, 155); c.quadraticCurveTo(CX, 151, CX + 13, 155); c.quadraticCurveTo(CX + 11, 164, CX, 165); c.quadraticCurveTo(CX - 11, 164, CX - 13, 155); tratto(c, scuro(H, 0.3), 1.6);
+    c.restore();
     return;
   }
   if (p.barba === 'nessuna') return;
@@ -2090,6 +2138,9 @@ const POSE = {
   // (Pastaffi col cane in braccio). Con o.maniSopra le braccia si ridisegnano sopra la testa.
   maniInTesta: [[33, 196], [70, 168], [50, 84]],
   porta: [[33, 196], [44, 224], [20, 232]],
+  // "La Spina del PowerStation": lo Zere che suona la vuvuzela (la mano destra alla guancia regge il
+  // bocchino, il gomito in fuori; l'altra mano sul fianco)
+  vuvuzela: { sx: [[33, 196], [58, 212], [44, 232]], dx: [[33, 196], [62, 196], [27, 140]] },
   // sul palco (i cantanti di "Provini a X-Factor"): il microfono davanti alla bocca, e "ti
   // indico" (il braccio destro teso di lato, col dito puntato: dito = true)
   microfono: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [53, 215], [27, 185]] },
@@ -2129,6 +2180,25 @@ const POSE = {
   blocchetto: { sx: [[33, 196], [44, 222], [14, 214]], dx: [[33, 196], [46, 222], [22, 206]] },
 };
 
+// la vuvuzela blu, disegnata lungo l'asse x: il bocchino in (0, 0), la campana in (L, 0). Un cono
+// lungo e stretto che si apre solo in fondo; l'apertura della campana si vede di sbieco (un'ellisse)
+export const BLU_VUVUZELA = '#1f6fe8';
+export function vuvuzela(c, L) {
+  const B = BLU_VUVUZELA;
+  const forma = () => {
+    c.beginPath(); c.moveTo(0, -2.8);
+    c.lineTo(L * 0.7, -6.4); c.quadraticCurveTo(L * 0.9, -7.6, L, -17);
+    c.lineTo(L, 17); c.quadraticCurveTo(L * 0.9, 7.6, L * 0.7, 6.4);
+    c.lineTo(0, 2.8); c.closePath();
+  };
+  forma(); c.fillStyle = gradL(c, 0, -14, 0, 14, [[0, chiaro(B, 0.5)], [0.4, B], [1, scuro(B, 0.42)]]); c.fill(); tratto(c, CONT, 2.6);
+  c.beginPath(); c.moveTo(5, -1.4); c.lineTo(L * 0.68, -4); tratto(c, 'rgba(255,255,255,0.6)', 1.5);     // il riflesso
+  for (const k of [0.3, 0.5]) { c.beginPath(); c.moveTo(L * k, -2.8 - 3.6 * k / 0.7); c.lineTo(L * k, 2.8 + 3.6 * k / 0.7); tratto(c, scuro(B, 0.35), 1.6); }   // le giunture
+  ellisse(c, L, 0, 4.6, 17); c.fillStyle = scuro(B, 0.5); c.fill(); tratto(c, CONT, 2.4);
+  ellisse(c, L + 0.9, 0, 2.6, 11.5); c.fillStyle = '#0b1c40'; c.fill();
+  rrect(c, -2, -3.8, 6, 7.6, 1.8); c.fillStyle = chiaro(B, 0.3); c.fill(); tratto(c, CONT, 1.6);           // il bocchino
+}
+
 // quello che un personaggio tiene in mano (x, y = la mano destra; p = il personaggio)
 function accessorio(c, tipo, x, y, p) {
   if (tipo === 'microfono') {
@@ -2141,6 +2211,31 @@ function accessorio(c, tipo, x, y, p) {
     c.restore();
     c.beginPath(); c.moveTo(tx - 6, ty + 6.5); c.lineTo(tx + 6.6, ty - 5.8); tratto(c, '#e23b4e', 2.2);    // la fascetta colorata
     // il pugno torna sopra al manico
+    if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
+  }
+  if (tipo === 'vuvuzela') {
+    // la vuvuzela BLU dello Zere. Con la mano vicino alla bocca la suona: il bocchino è sulle labbra
+    // e la tromba va di lato verso l'alto, passando per il pugno. Se no la tiene in pugno dritta in
+    // su, come una fiaccola (un po' più dritta se ha il braccio alzato, così resta nel disegno)
+    const bx = CX + 4, by = 158, suona = Math.hypot(x - bx, y - by) < 45;
+    const a = suona ? Math.atan2(y - by, x - bx) : y < 200 ? -1.42 : -1.2, L = suona ? 92 : 84;
+    const [ax, ay] = suona ? [bx, by] : [x - 14 * Math.cos(a), y - 14 * Math.sin(a)];
+    c.save(); c.translate(ax, ay); c.rotate(a); vuvuzela(c, L); c.restore();
+    if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
+  }
+  if (tipo === 'birra') {
+    // una pinta di bionda con la schiuma (gli avventori della Spina): il pugno la tiene in basso
+    const vetro = () => { c.beginPath(); c.moveTo(x - 10, y - 32); c.lineTo(x + 10, y - 32); c.lineTo(x + 8, y + 8); c.lineTo(x - 8, y + 8); c.closePath(); };
+    vetro(); c.fillStyle = 'rgba(235,245,255,0.6)'; c.fill();
+    c.save(); vetro(); c.clip();
+    c.fillStyle = gradL(c, 0, y - 26, 0, y + 8, [[0, '#ffc23a'], [1, '#e08a12']]); c.fillRect(x - 11, y - 26, 22, 35);
+    c.fillStyle = '#fffbe8'; c.fillRect(x - 11, y - 33, 22, 8);
+    c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(x - 6, y - 23, 2.4, 27);
+    c.restore();
+    vetro(); tratto(c, CONT, 2);
+    for (const [dx, r] of [[-6, 4.5], [0, 5.5], [6, 4.5]]) { ellisse(c, x + dx, y - 33, r, 3.6); c.fillStyle = '#fffbe8'; c.fill(); }
     if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
     return;
   }
