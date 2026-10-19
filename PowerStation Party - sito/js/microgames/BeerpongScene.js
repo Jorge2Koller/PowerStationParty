@@ -3,7 +3,8 @@
 //  Si tira ai 10 bicchieri dei veterani (finiti quelli, ne rimettono 6, con un bonus); intanto loro
 //  tirano ai tuoi a ritmo regolare. Ogni bicchiere che ti centrano lo bevi: la sbronza sale
 //  (allegro, brillo, sbronzo) e mirare diventa un'impresa. Anche loro bevono i bicchieri che gli
-//  centri, e più bevono meno centrano. Se resti senza bicchieri finisce prima.
+//  centri, e più bevono meno centrano. Se resti senza bicchieri finisce prima. Quando Marsupino
+//  sbaglia un tiro, se la prende con Greg che gli sta accanto: SCIAF! (js/beerpong/schiaffo.js).
 //  Il tavolo, il tiro, la sbronza, le gag e le reazioni sono gli stessi della modalità BEER PONG
 //  (js/beerpong/): qui ci sono solo i veterani, i punti e i tre atti.
 //  I tiri dei veterani escono dal seme del round: uguali per tutti i giocatori.
@@ -16,6 +17,7 @@ import { livellato } from '../livelli.js';
 import { FACCE_SBRONZA } from '../sprites.js';
 import { txt, scritta, fumetto, caso, scuoti, puntiHud, numero, quanti } from '../fx.js';
 import { Tavolo } from '../beerpong/tavolo.js';
+import { Schiaffo } from '../beerpong/schiaffo.js';
 import { triangolo, livelloSbronza } from '../beerpong/motore.js';
 
 const tra = ([a, b], r) => a + r() * (b - a);
@@ -46,13 +48,18 @@ export class BeerpongScene extends MicrogiocoBase {
     this.mieiBic = rastrelliera(c.bicchieriMiei);
     this.loroBic = rastrelliera(c.bicchieriVeterani);
 
+    // (Greg sta accanto a Marsupino per prendersi gli schiaffi: non fa anche lo spettatore)
+    const sc = c.schiaffo, io = this.giocatore.id.replace('Bis', '');
     this.T = new Tavolo(this, {
       cfg: this.motore, peso: c.sbronzaPeso, rnd: this.rnd, musica: c.musica ?? 'gioco',
-      escludi: [this.giocatore.id.replace('Bis', ''), ...c.veterani],
+      escludi: [io, ...c.veterani, ...(sc ? [sc.a] : [])],
       suEsito: (e) => this.esito(e),
     });
     this.T.imposta({ tiratore: this.giocatore, avversari: c.veterani, lontani: this.loroBic, vicini: this.mieiBic });
     this.T.attivo = true;
+    // lo schiaffo di Marsupino (se gioca Greg, lo prende il suo ritratto)
+    const m = sc && this.T.avv.find((a) => a.id === sc.chi);
+    this.schiaffo = m ? new Schiaffo(this.T, sc, m, io === sc.a) : null;
 
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, depth: 1001, size: 9 });
     this.testoConto = txt(this, 474, 49, '', { ox: 1, depth: 1001, size: 7, color: '#ffe14a' });
@@ -111,6 +118,9 @@ export class BeerpongScene extends MicrogiocoBase {
   disturba() {
     const c = this.cfg, T = this.T, m = T.avv.find((a) => a.id === 'marsupino') ?? T.avv[T.avv.length - 1];
     if (!m || !T.attivo) return;
+    // mentre sta schiaffeggiando Greg ha da fare: il disturbo slitta di un attimo (se no i due
+    // fumetti si coprono sopra la sua testa)
+    if (this.schiaffo?.occupato) { this.tDisturbo = Math.min(this.tDisturbo, 0.6); return; }
     const furioso = m.id === 'marsupino' && this.textures.exists('marsupino_rabbia');
     if (furioso) m.img.setTexture('marsupino_rabbia');
     fumetto(this, m.x + 24, m.img.y - m.alto - 2, caso(c.disturbo.frasi), 900, 920);
@@ -125,6 +135,8 @@ export class BeerpongScene extends MicrogiocoBase {
     if (!this.inCorso) return;
     const c = this.cfg, T = this.T, S = this.motore.sbronza;
     const preso = e.tipo === 'centro' || e.tipo === 'rimbalzo';
+    // Marsupino ha sbagliato: se la prende con Greg
+    if (!preso && e.chi === 'loro' && e.tiratore === c.schiaffo?.chi) this.schiaffo?.dai();
     if (!preso) return;
     if (e.chi === 'io') {
       this.tolti++;
@@ -175,6 +187,7 @@ export class BeerpongScene extends MicrogiocoBase {
   finale(ris, fatto) {
     const c = this.cfg, T = this.T, secco = T.mieiInPiedi === 0;
     T.ferma();
+    this.schiaffo?.finale(ris.vittoria);
     for (const o of [this.testoPunti, this.testoConto]) o.setVisible(false);
     Audio.sfx(secco ? 'sconfitta' : 'tempo');
     scritta(this, 240, 104, ris.titoloFine, { size: 30, color: '#ffffff', durata: 900, depth: 960 });
