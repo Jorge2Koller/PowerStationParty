@@ -561,8 +561,15 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   qualunque punto dello schermo e alzalo nella zona verde (il pulsante SPILLA in basso è
   solo un promemoria)
   - i clienti ordinano pinte, boccali (grandi: si riempiono piano) e calici (zona verde
-    strettissima); dal 12° secondo l'ORA DI PUNTA, dal 24° Beppe FA I DISPETTI: urta il
-    bancone e la zona verde balla
+    strettissima)
+  - tre atti a fasi, ognuno più difficile: SPILLA! (solo pinte); dal 12° secondo ORA DI PUNTA!
+    (più veloce, arrivano boccali e calici, e la zona verde cambia altezza da un bicchiere
+    all'altro); dal 24° LO ZERE SI SCATENA!: ogni tanto alza la vuvuzela blu, prende fiato (sopra
+    di lui un "!") e la suona, e finché suona la zona verde balla e il bicchiere trema. In Lampo
+    gli atti cominciano a 0, 5 e 10 secondi
+  - lo Zere sta in piedi a destra del bancone e fa il tifo (nei primi due atti dà un colpetto di
+    vuvuzela a ogni PERFETTA); il bar è pieno: due avventori in piedi con la pinta che brindano, e
+    alle pareti le foto incorniciate del gruppo
   - al bancone, di spalle, quattro personaggi giocabili a caso (disegnati da dietro: capelli,
     pettinatura, cappello e maglia dei personaggi veri)
   - Beppe ha la sua giornata: dal seme del round esce quanto è in forma (e ogni pinta è un po'
@@ -698,7 +705,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     di Sego), apre una portiera e ci si infila: clic o tocco su di lui prima che la chiuda,
     e vola in mezzo al parcheggio. Se la chiude, la macchina parte con lui dentro e torna
     dopo qualche secondo (passaggio scroccato)
-  - quando è a terra, trascina le chiavi (in basso a destra) fino a lui: va alla sua A3
+  - quando è a terra, trascina le chiavi fino a lui: va alla sua A3. Di solito sono in basso a
+    destra, ma ogni tanto (mai due volte di fila) Giorgio le lancia apposta in mezzo al
+    parcheggio o sul tetto dell'A3, e bisogna andarle a prendere lì (si prendono anche al volo;
+    se le lasci lontano da lui tornano dove erano cadute). Quando sono lontane, Giorgio resta a
+    terra un attimo di più
     impolverata e si mette al volante (poi scende con una scusa e si ricomincia)
   - tastiera: FRECCE SINISTRA/DESTRA scelgono la macchina, SPAZIO lo tira fuori, INVIO gli
     lancia le chiavi quando è a terra
@@ -1138,13 +1149,14 @@ js/
   grafica/               tutta la grafica, vettoriale e disegnata via codice
     base.js              strumenti di disegno, risoluzione (RES), e i gruppi di immagini che si
                          creano solo quando servono (gruppoPigro, usaGruppi): vedi sotto
-    personaggi.js        i ventitré personaggi (con Emilio, Pastaffi, i cantanti Tini e
-                         Oli, il Boni, Lori, Michele e il Giso), le ragazze delle due discoteche, il buttafuori e i quattro
+    personaggi.js        i ventiquattro personaggi (con Emilio, Pastaffi, i cantanti Tini e
+                         Oli, il Boni, Lori, Michele, il Giso e lo Zere), le ragazze delle due discoteche, il buttafuori e i quattro
                          giudici del provino: tratti, espressioni, vestiti
     marco.js             primo piano per la barba: maschere, zone delicate
     bota.js              il Bota sdraiato visto dall'alto (davanti e dietro), dove
                          c'è pelle, la spiaggia col telo, sole, mano, telefono e
                          lattina
+    powerstation.js      il bar della Spina: le foto incorniciate del gruppo alle pareti
     oggetti.js           Golf di ReGrorio, pinte, spina, clienti, attrezzi del
                          barbiere, panino e ingredienti, mani di Guerra, piatti,
                          finestre con le persiane, fumogeni, ombrelloni,
