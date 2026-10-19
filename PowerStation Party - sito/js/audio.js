@@ -50,6 +50,34 @@ function rumore(t, d, v = 0.15, freq = 2000, tipo = 'bandpass') {
 
 const arp = (t, note, passoT = 0.07, d = 0.12, v = 0.08) => note.forEach((n, i) => nota(midi(n), t + i * passoT, d, 'square', v));
 
+// La vuvuzela (lo Zere, nella Spina): il ronzio da stadio è un si bemolle basso, nasale e pieno di
+// armoniche. Due onde a dente di sega appena stonate tra loro (il battimento) più l'ottava sopra,
+// passate in un filtro stretto verso i 900 Hz (il naso della tromba di plastica); entra con uno
+// strappo all'insù, trema un po' (il fiato) e si ferma secca. d = quanto dura, v = volume
+function vuvuzela(t, d, v) {
+  const f = 233, filtro = ac.createBiquadFilter(), g = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain();
+  filtro.type = 'bandpass'; filtro.frequency.value = 900; filtro.Q.value = 1.3;
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.exponentialRampToValueAtTime(v, t + 0.05);
+  g.gain.setValueAtTime(v, t + d - 0.08);
+  g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  filtro.connect(g); g.connect(uscita);
+  lfo.frequency.value = 5.5; lg.gain.value = 3.5;
+  lfo.connect(lg);
+  for (const [k, tipo, vv] of [[1, 'sawtooth', 0.5], [1.009, 'sawtooth', 0.5], [2.004, 'square', 0.16]]) {
+    const o = ac.createOscillator(), og = ac.createGain();
+    o.type = tipo;
+    o.frequency.setValueAtTime(f * k * 0.8, t);
+    o.frequency.exponentialRampToValueAtTime(f * k, t + 0.08);
+    lg.connect(o.frequency);
+    og.gain.value = vv;
+    o.connect(og); og.connect(filtro);
+    o.start(t); o.stop(t + d + 0.02);
+  }
+  lfo.start(t); lfo.stop(t + d + 0.02);
+  rumore(t, d * 0.9, 0.02, 1500);   // il fiato
+}
+
 // Effetti sonori: nome -> funzione(t)
 const SFX = {
   muovi: (t) => nota(660, t, 0.05, 'square', 0.05),
@@ -72,6 +100,10 @@ const SFX = {
   starnuto: (t) => { rumore(t, 0.3, 0.25, 1400); nota(800, t, 0.25, 'square', 0.07, 180); },
   sbadiglio: (t) => nota(420, t, 0.9, 'triangle', 0.09, 170),
   tsk: (t) => { rumore(t, 0.04, 0.12, 6000, 'highpass'); rumore(t + 0.09, 0.04, 0.1, 6000, 'highpass'); },
+  // la Spina: lo Zere suona la vuvuzela (lunga quanto la suonata, 1,3 s) e il colpetto di quando
+  // fa il tifo per una PERFETTA
+  vuvuzela: (t) => vuvuzela(t, 1.3, 0.5),
+  vuvuzelina: (t) => vuvuzela(t, 0.28, 0.3),
   tempo: (t) => arp(t, [84, 79, 84], 0.12, 0.2),
   // panino
   lancio: (t) => { rumore(t, 0.16, 0.05, 1800); nota(420, t, 0.16, 'triangle', 0.05, 900); },
