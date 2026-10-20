@@ -843,7 +843,8 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     "Stare Up" un attimo di Tini (la fine di una sua frase), poi l'Oli sulla base vuota; il pezzo forte
     parte all'8° secondo, quando entra il basso, il Tini entra al 22° e il finale, il suo ritornello,
     parte dal 25°. In "Stare Bene" la strofa bassa dell'Oli e uno stacco; al 13° parte l'ultimo
-    ritornello, il pezzo forte, dove entra il Tini, e dal 23° il gran finale
+    ritornello, il pezzo forte, dove entra il Tini e cantano tutti e due insieme, e dal 23° il gran
+    finale
   - alla fine i quattro giudici (inventati) votano la precisione, uno alla volta: con almeno 3 SÌ
     si passa (SEI AI BOOTCAMP!). Le lucine sul tavolo dicono già come la pensano
   - ogni canzone è un ritaglio di 35 secondi (15 in Lampo), si carica
@@ -854,10 +855,10 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     cadono sui colpi che si sentono, niente note dove la canzone si ferma, note lunghe sulle frasi
     tenute, accordi nel gran finale (FACILE meno note, DIFFICILE più fitte e con gli accordi anche nel
     pezzo forte). A parità di livello le canzoni sono difficili uguali (provato coi giocatori
-    simulati) e danno gli stessi punti. Nel Lampo, sempre l'Oli e poi il Tini: in quello di "Fuori
+    simulati) e danno gli stessi punti. Nel Lampo, sempre prima l'Oli e poi il Tini: in quello di "Fuori
     Dagli Schemi" il pezzo forte (il Tini dal 3° secondo) e, dal 13°, l'ingresso del ritornello; in
     quello di "Stare Up" il pezzo forte (il Tini dall'8° secondo) e dall'11° il finale; in quello di
-    "Stare Bene" la strofa e, dall'8° secondo, IL PEZZO FORTE! col Tini
+    "Stare Bene" la strofa e, dall'8° secondo, IL PEZZO FORTE! con tutti e due
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `finestre`
     (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
     `giudici`, `errori`; le note in `xfactor-<canzone>.json`, che fanno `strumenti/beatmap.py` e
@@ -1123,7 +1124,7 @@ titolo, `frasiNo`), e la scena scarica solo la mappa della canzone che suona.
 |---|---|---|---|
 | Fuori Dagli Schemi (89 bpm) | da 1:26,8 a 2:01,9 | da 1:40,3 a 1:55,8 | l'Oli fino a 1:43,0, poi il Tini (con uno stacco a 1:48-1:52) |
 | Stare Up (86 bpm) | da 0:54,3 a 1:29,9 | da 1:08,3 a 1:23,6 | la fine di una frase del Tini, l'Oli da 0:55,7 a 1:16,0, poi il Tini |
-| Stare Bene (92 bpm) | da 1:52,2 a 2:27,4 | da 1:57,4 a 2:12,4 | l'Oli fino a 2:05,2, poi il Tini (l'ultimo ritornello) |
+| Stare Bene (92 bpm) | da 1:52,2 a 2:27,4 | da 1:57,4 a 2:12,4 | l'Oli fino a 2:05,2, poi tutti e due insieme (l'ultimo ritornello) |
 
 Le canzoni intere non vanno su GitHub (sono dei cantanti: nel sito vanno solo i ritagli): stanno nella
 cartella `canzoni/` nella radice del repository, che è nel `.gitignore`. Gli script stanno in
@@ -1211,11 +1212,13 @@ campione più simile. I campioni stanno in `strumenti/voci-campioni.npz`; quelli
 non c'è più (come il ritaglio di "Cambiare Aria", tolto dal sito) restano quelli salvati lì.
 
 Quello che si è visto con cinque canzoni: le due voci si somigliano parecchio, e la stessa voce cambia
-molto da un pezzo all'altro (l'Oli canta tra 125 e 260 Hz, il Tini da 130 a 415, secondo la canzone: in
-"Stare Bene" il Tini dell'ultimo ritornello sta sui 185 Hz). Dentro la stessa canzone si separano bene:
-coi campioni da metà dei tratti confermati, sull'altra metà, 329 finestre giuste su 352, 8 sbagliate e le
-altre "non sicure". Tra canzoni diverse, alla stessa altezza, molto meno: coi campioni delle altre
-canzoni, del Tini di "Stare Bene" 4 finestre sono giuste, 10 dicono l'Oli e 16 "non sicuro". (All'inizio
+molto da un pezzo all'altro (l'Oli canta tra 125 e 260 Hz, il Tini da 130 a 415, secondo la canzone).
+Dentro la stessa canzone si separano bene: coi campioni da metà dei tratti confermati, sull'altra metà, 297
+finestre giuste su 317, 6 sbagliate e le altre "non sicure". Tra canzoni diverse, alla stessa altezza,
+molto meno: coi campioni delle altre canzoni, dell'Oli di "Non ti resisto" (207 Hz) 30 finestre sono
+giuste, 22 dicono il Tini e 49 "non sicuro". E dove cantano tutti e due insieme (l'ultimo ritornello di
+"Stare Bene") il riconoscimento dice "non sicuro", o uno dei due: lì decide l'orecchio, e quei tratti non
+sono campioni di nessuno. (All'inizio
 sembrava ancora peggio, ma era colpa di un campione sbagliato: in Cambiare Aria era segnato l'Oli fino a
 10,8 secondi e poi il Tini, invece l'Oli canta fino al gran finale.) Per questo una canzone con un pezzo
 sicuro di tutti e due in `CONFERMATI` si riconosce coi suoi campioni; una nuova, senza, coi campioni delle

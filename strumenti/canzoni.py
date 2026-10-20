@@ -82,8 +82,8 @@ CANZONI = [
         'battuta': 112.182,
         'voci': [
             (112.0, 125.0, 'oli'),     # l'Oli fino a 2:05
-            (125.0, 147.5, 'tini'),    # il Tini nell'ultimo ritornello, a voce più bassa del solito (185 Hz):
-        ],                             # il riconoscimento diceva "non sicuro", l'ha sentito Riccardo
+            (125.0, 147.5, 'insieme'), # l'ultimo ritornello: entra il Tini e canta anche l'Oli, tutti e
+        ],                             # due insieme (l'ha sentito Riccardo; il riconoscimento diceva "non sicuro")
         # (coi giocatori simulati, a NORMALE e DIFFICILE veniva un filo più difficile delle altre: con
         # meno note per battuta torna pari)
         'densita': {'normale': 0.8, 'difficile': 0.8},

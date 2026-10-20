@@ -66,9 +66,10 @@ CONFERMATI = [
     # "è Oli"; e 0:46-0:57, la stessa voce, prima del finale): lì il riconoscimento coi campioni delle
     # altre canzoni diceva il Tini
     (CANZONI / 'non-ti-resisto.mp3', [(46, 57, 'oli'), (101, 133.5, 'oli'), (78, 91.4, 'tini'), (146, 172, 'tini')]),
-    # la parte finale: l'Oli fino a 2:05, poi il Tini nell'ultimo ritornello (il riconoscimento diceva
-    # "non sicuro"; Riccardo: "è il Tini", prima "da 2:06", poi "da 2:05")
-    (CANZONI / 'stare-bene.mp3', [(112.5, 124.6, 'oli'), (125.6, 146.0, 'tini')]),
+    # la parte finale: l'Oli fino a 2:05; poi l'ultimo ritornello, dove canta il Tini ma "sta cantando
+    # anche l'Oli" (Riccardo, 20 ottobre): tutti e due insieme, quindi non è un campione di nessuno dei
+    # due (il riconoscimento lì diceva "non sicuro")
+    (CANZONI / 'stare-bene.mp3', [(112.5, 124.6, 'oli')]),
     # l'Oli da 1:27 a 1:43 (anche 1:32-1:38, la voce più alta: "è Oli"), poi il Tini ("da 1:43 parte il
     # Tini") e il suo ritornello
     (CANZONI / 'fuori-dagli-schemi.mp3', [(87, 102.6, 'oli'), (103.4, 108, 'tini'), (112, 121.5, 'tini')]),

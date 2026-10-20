@@ -87,10 +87,11 @@ export default {
       ritagli: { intero: 'audio/stare-bene.mp3', lampo: 'audio/stare-bene-lampo.mp3' },
       mappa: 'js/config/microgiochi/xfactor-stare-bene.json', offset: 0,
       bpm: 92, inizio: { intero: 112.156, lampo: 117.374 },
-      // dalla parte finale: la strofa bassa dell'Oli, lo stacco, e l'ultimo ritornello, dove entra il Tini
+      // dalla parte finale: la strofa bassa dell'Oli, lo stacco, e l'ultimo ritornello, dove entra il Tini e
+      // cantano tutti e due
       sezioni: [
         { da: 112.156, a: 125.200, cantante: 'oli' },     // la strofa (fino a 13 s del ritaglio)
-        { da: 125.200, a: 147.375, cantante: 'tini' },    // il pezzo forte e il gran finale
+        { da: 125.200, a: 147.375, cantante: 'insieme' }, // il pezzo forte e il gran finale: il ritornello, tutti e due
       ],
       frasiNo: { 'MC CATENA': 'Stare bene? Io adesso no.', 'IL PRODUTTORE': 'Stare bene... a casa, magari.' },
     },
