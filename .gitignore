@@ -1,0 +1,4 @@
+# le canzoni intere (sono dei cantanti: nel sito vanno solo i ritagli)
+canzoni/
+# i pezzi da ascoltare per controllare chi canta (li fa strumenti/voci.py)
+strumenti/verifica/

@@ -138,6 +138,19 @@ export const Sessione = {
   get idCorrente() { return this.lista[this.indice]; },
   // (durante la prova: un seme suo, così la prova non è la stessa partita di quella vera)
   get seme() { return this.semeProva ?? this.semi?.[this.indice] ?? (Math.random() * 2 ** 32) >>> 0; },
+  // Per i microgiochi con più canzoni (X-Factor, l'elenco "canzoni" della sua configurazione): quale
+  // suona in questo turno (il numero nell'elenco). Nella sfida la decide il seme del round, quello vero
+  // e non quello della prova (tutti i giocatori, e la prova, la stessa canzone; la Sfida del giorno ha i
+  // semi del giorno, quindi la stessa canzone per tutti); in allenamento quella scelta nell'introduzione
+  // (scegliCanzone, che vale finché la pagina resta aperta), se no anche lì il seme, cioè una a caso
+  canzone(id) {
+    const n = CONFIG.microgiochi[id]?.canzoni?.length ?? 0;
+    if (n < 2) return 0;
+    const scelta = this.modo === 'allenamento' ? this.scelteCanzoni?.[id] : null;
+    if (scelta != null && scelta < n) return scelta;
+    return (this.semi?.[this.indice] ?? 0) % n;
+  },
+  scegliCanzone(id, i) { this.scelteCanzoni = { ...this.scelteCanzoni, [id]: i }; },
   // chi gioca adesso (numero del giocatore): a ogni round comincia quello dopo
   get turno() {
     if (this.solo != null) return this.solo;

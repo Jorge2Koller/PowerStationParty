@@ -318,6 +318,10 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
   `verbo` nel suo file di configurazione): si vede sotto il titolo (anche quando il titolo va su
   due righe) e chiude il conto alla rovescia al posto di VIA!. Durante il 3-2-1 l'introduzione
   si scurisce, così il numero si legge sopra il riquadro dei comandi.
+- **La canzone** (Provini a X-Factor, che ne ha più d'una): sotto il verbo, il titolo e gli
+  artisti. Nella sfida la decide il round (la stessa per tutti i giocatori, e per la prova); in
+  Allenamento si cambia con SINISTRA/DESTRA o toccando le frecce ai lati, e allora PROVA e
+  PRONTO! si scelgono con SU/GIÙ (o col mouse, o col dito).
 - **Risultati**: il punteggio sale con un ticchettio, poi arriva la **medaglia** (bronzo,
   argento o oro) col timbro; accanto, quanto manca alla prossima. Il riquadro si allunga col
   riepilogo (una o due righe) e i trofei appena presi arrivano dal basso, senza coprire
@@ -810,7 +814,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - accanto a Marsupino c'è ReGrorio: ogni volta che Marsupino sbaglia un tiro si gira arrabbiato e
     SCIAF!, Greg barcolla con le stelline e la guancia rossa (se gioca Greg, lo schiaffo arriva al
     suo ritratto). Solo di contorno: punti e tiri non cambiano
-- Provini a X-Factor (SUONA!: fai la base a Tini e Oli su "Cambiare Aria", la loro canzone vera):
+- Provini a X-Factor (SUONA!: fai la base a Tini e Oli su una delle loro canzoni vere dei Corso
+  Italia: "Fuori Dagli Schemi", "Stare Up" o "Stare Bene"):
+  - la canzone: nella sfida la decide il round (la stessa per tutti, Sfida del giorno compresa); in
+    Allenamento si sceglie nell'introduzione (SINISTRA/DESTRA o le frecce col dito; se non si
+    sceglie, una a caso). Il titolo si vede nell'introduzione e in alto durante la canzone
   - come in Guitar Hero: al centro del palco una strada in prospettiva parte dalla console in
     fondo e arriva in basso a 4 pad colorati (verde, rosso, giallo, blu). Le note scendono lungo
     le corsie e si ingrandiscono mentre arrivano: si colpiscono quando toccano il pad (PERFETTO,
@@ -827,26 +835,33 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     prendere le note. Toccare a vuoto vicino a una nota azzera la serie
   - note prese: i cantanti si gasano, i giudici annuiscono, il pubblico alza gli accendini; note
     mancate: il cantante ti guarda malissimo, il produttore preme il NO, i fischi
-  - tre atti, allineati alla canzone, che ora ha tutti e due i cantanti: LA STROFA (canta l'Oli:
-    note lente sui battiti forti); dall'11° secondo IL PEZZO FORTE! (canta il Tini, parte il beat
-    pieno, note più fitte, luci a tutta); dal 26° IL GRAN FINALE! (il ritornello: note fitte e
-    lunghe, riflettori, tutti in piedi, e l'esplosione di note in fondo)
+  - tre atti, allineati alla canzone, in cui cantano tutti e due, uno dopo l'altro: LA STROFA (note
+    lente sui battiti forti), IL PEZZO FORTE! (parte il beat pieno, note più fitte, luci a tutta),
+    IL GRAN FINALE! (il ritornello: note fitte e lunghe, riflettori, tutti in piedi, e l'esplosione
+    di note in fondo). In "Fuori Dagli Schemi" la strofa dell'Oli, che dall'8° secondo si alza col
+    pezzo forte; il Tini entra al 16°, poi uno stacco e al 27° il gran finale, il suo ritornello. In
+    "Stare Up" un attimo di Tini (la fine di una sua frase), poi l'Oli sulla base vuota; il pezzo forte
+    parte all'8° secondo, quando entra il basso, il Tini entra al 22° e il finale, il suo ritornello,
+    parte dal 25°. In "Stare Bene" la strofa bassa dell'Oli e uno stacco; al 13° parte l'ultimo
+    ritornello, il pezzo forte, dove entra il Tini, e dal 23° il gran finale
   - alla fine i quattro giudici (inventati) votano la precisione, uno alla volta: con almeno 3 SÌ
     si passa (SEI AI BOOTCAMP!). Le lucine sul tavolo dicono già come la pensano
-  - la canzone è un ritaglio di 35 secondi (15 in Lampo: la fine della strofa dell'Oli e l'inizio di
-    quella del Tini), si carica quando parte
-    il microgioco e si butta quando finisce; il tempo è quello dell'audio, col **Ritardo audio**
-    delle Impostazioni. Con la pausa canzone e note si fermano insieme. Senza audio si gioca lo
-    stesso, col proprio orologio
-  - la mappa delle note è una per livello, la stessa per tutti, in sfida: le note cadono sui colpi
-    che si sentono, niente note dove la canzone si ferma, note lunghe sulle frasi tenute, accordi nel
-    gran finale (FACILE meno note, DIFFICILE più fitte e con gli accordi anche nel pezzo forte). Nel
-    Lampo la strofa dell'Oli e, dal 7,5° secondo, IL PEZZO FORTE! col Tini
+  - ogni canzone è un ritaglio di 35 secondi (15 in Lampo), si carica
+    quando parte il microgioco e si butta quando finisce (ce n'è in memoria una sola); il tempo è
+    quello dell'audio, col **Ritardo audio** delle Impostazioni. Con la pausa canzone e note si
+    fermano insieme. Senza audio si gioca lo stesso, col proprio orologio
+  - la mappa delle note è una per canzone e per livello, la stessa per tutti, in sfida: le note
+    cadono sui colpi che si sentono, niente note dove la canzone si ferma, note lunghe sulle frasi
+    tenute, accordi nel gran finale (FACILE meno note, DIFFICILE più fitte e con gli accordi anche nel
+    pezzo forte). A parità di livello le canzoni sono difficili uguali (provato coi giocatori
+    simulati) e danno gli stessi punti. Nel Lampo, sempre l'Oli e poi il Tini: in quello di "Fuori
+    Dagli Schemi" il pezzo forte (il Tini dal 3° secondo) e, dal 13°, l'ingresso del ritornello; in
+    quello di "Stare Up" il pezzo forte (il Tini dall'8° secondo) e dall'11° il finale; in quello di
+    "Stare Bene" la strofa e, dall'8° secondo, IL PEZZO FORTE! col Tini
   - per renderlo più facile o più difficile, in `js/config/microgiochi/xfactor.js`: `finestre`
     (quanto si può sbagliare il tempo), `anticipo` (quanto prima si vede la nota), le `soglia` dei
-    `giudici`, `errori`; le note in `xfactor-mappa.json`, che fanno `strumenti/beatmap.py` e
-    `strumenti/griglia.py` (vedi
-    "La canzone di X-Factor" più sotto)
+    `giudici`, `errori`; le note in `xfactor-<canzone>.json`, che fanno `strumenti/beatmap.py` e
+    `strumenti/griglia.py` (vedi "Le canzoni di X-Factor" più sotto)
 - La pizza dal Boni (CONDISCI!: fai le pizze del Boni e copri Oli, il Sego e il Guerra, che si sono imbucati):
   - il Boni grida la pizza e il foglietto mostra ingredienti e quantità; dopo un attimo si gira e
     la pizza va fatta A MEMORIA. Toccandolo (o TAB) lo si rivede un momento, ma si perde il bonus
@@ -1021,12 +1036,19 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   moltiplicatore della serie (x1,5 dopo 10 note di fila, x2 dopo 20, x3 dopo 40; un errore la
   azzera), +1 per ogni nota lunga tenuta fino in fondo, +10 per ogni SÌ dei giudici. Le note di
   FACILE (meno) valgono di più e quelle di DIFFICILE (più) di meno, e la serie si conta in
-  proporzione: in tutto si fanno i punti di NORMALE. I giudici votano la precisione (PERFETTO 1,
-  BUONO 0,6, MANCATO 0): il Commosso dice SÌ dal 33%, la Diva dal 52%, MC Catena dal 64%, il
-  Produttore dall'84%; con 3 SÌ su 4 si passa. Il provino passato è il bronzo: senza 3 SÌ il
-  totale si ferma a 90, con 3 SÌ sale almeno a 100. Coi giocatori simulati: chi è bravo arriva
-  all'argento, l'oro vuole quasi tutte le note perfette; chi tocca a caso non passa mai. In
-  Lampo (15 secondi, il ritaglio dal pezzo forte) decide il verdetto e i punti sono quelli e basta.
+  proporzione: in tutto si fanno i punti di 61 note (24 in Lampo: quelle di NORMALE di "Cambiare
+  Aria", la prima canzone, su cui sono tarati i livelli: `notePunti` in `xfactor.js`), così ogni
+  canzone e ogni livello danno gli stessi punti anche se le mappe hanno più o meno note (tutte
+  perfette: 370-385 su ogni canzone e livello, 128-137 in Lampo). I giudici votano la precisione
+  (PERFETTO 1, BUONO 0,6, MANCATO 0): il Commosso dice SÌ dal 33%, la Diva dal 52%, MC Catena dal
+  64%, il Produttore dall'84%; con 3 SÌ su 4 si passa. Il provino passato è il bronzo: senza 3 SÌ
+  il totale si ferma a 90, con 3 SÌ sale almeno a 100. Dal 20 ottobre è un filo più difficile
+  (finestre del PERFETTO e del BUONO più strette del 6%, note più svelte del 5%, e circa il 10% di
+  note in più, un po' più fitte). Coi giocatori
+  simulati: a NORMALE chi sbaglia il tempo di 75 ms passa il provino poco più di una volta su tre
+  (prima due su tre), chi sbaglia di 48 ms prende l'argento una volta su tre (prima due su tre);
+  l'oro vuole quasi tutte le note perfette; chi tocca a caso non passa mai. In Lampo (15 secondi) decide il verdetto e i punti sono
+  quelli e basta.
 - **La pizza dal Boni** (35 s): ogni pizza giusta vale più della precedente (30, 35, 40, 45...),
   +5 se consegnata entro 8 secondi senza rivedere il foglietto, +2 per ogni pizza giusta di fila
   dopo la prima. Vittoria con 3 pizze giuste (il bronzo; 6 pizze perfette sono l'oro) senza farsi
@@ -1086,19 +1108,46 @@ lo ferma e `scena.premi(x, y)` è un clic lì; `programma` e `serata` di `Scontr
 dicono in anticipo com'è la serata di un seme.
 (Le Perle di Denny e Scontrino, prego!, arrivati dopo, nelle prove non ci sono ancora.)
 
-## La canzone di X-Factor
+## Le canzoni di X-Factor
 
-"Provini a X-Factor" si suona su una canzone vera, "Cambiare Aria" del Tini e dell'Oli. Nel sito ci
-sono solo due ritagli, in mono: `audio/cambiare-aria.mp3`, 35 secondi (dalla canzone, da 0:48,9 a
-1:24,1: la fine della strofa dell'Oli, la strofa del Tini e il ritornello), e
-`audio/cambiare-aria-lampo.mp3`, 15 secondi (da 0:52,7 a 1:07,7: l'Oli e poi il Tini). C'è poi la mappa
-delle note `js/config/microgiochi/xfactor-mappa.json`: i battiti (la canzone va a 128 bpm esatti),
-dove cominciano gli atti, chi canta e quando (`voci`: l'Oli, il Tini o insieme) e le note di ogni
-livello. La canzone intera sta fuori dal sito e non va caricata su GitHub.
+"Provini a X-Factor" si suona su canzoni vere del Tini e dell'Oli, dei Corso Italia: "Fuori Dagli Schemi",
+"Stare Up" e "Stare Bene". (Prima c'erano anche "Cambiare Aria" e "Non ti resisto": tolte il 20 ottobre
+2026; dei loro campioni delle voci si parla più sotto.) Nel sito, per ogni canzone, ci sono solo due
+ritagli, in mono, `audio/<id>.mp3` (35 secondi) e `audio/<id>-lampo.mp3` (15), e la mappa delle note
+`js/config/microgiochi/xfactor-<id>.json`: i battiti, dove cominciano gli atti, chi canta e quando
+(`voci`: l'Oli, il Tini o insieme) e le note di ogni livello. Nel gioco l'elenco è `canzoni` in
+`js/config/microgiochi/xfactor.js` (titolo, artisti, ritagli, mappa, e le battute dei giudici sul
+titolo, `frasiNo`), e la scena scarica solo la mappa della canzone che suona.
 
-Ritagli e mappa li fa `strumenti/beatmap.py` (fuori dal sito), con librosa (battiti e attacchi della
-canzone) e ffmpeg (i ritagli, con la dissolvenza): se cambia la canzone, o i tagli scritti in cima
-allo script, basta rilanciarlo, con la canzone intera come argomento. La prima volta:
+| Canzone | Ritaglio da 35 s | Lampo (15 s) | Chi canta (nel ritaglio da 35 s) |
+|---|---|---|---|
+| Fuori Dagli Schemi (89 bpm) | da 1:26,8 a 2:01,9 | da 1:40,3 a 1:55,8 | l'Oli fino a 1:43,0, poi il Tini (con uno stacco a 1:48-1:52) |
+| Stare Up (86 bpm) | da 0:54,3 a 1:29,9 | da 1:08,3 a 1:23,6 | la fine di una frase del Tini, l'Oli da 0:55,7 a 1:16,0, poi il Tini |
+| Stare Bene (92 bpm) | da 1:52,2 a 2:27,4 | da 1:57,4 a 2:12,4 | l'Oli fino a 2:05,2, poi il Tini (l'ultimo ritornello) |
+
+Le canzoni intere non vanno su GitHub (sono dei cantanti: nel sito vanno solo i ritagli): stanno nella
+cartella `canzoni/` nella radice del repository, che è nel `.gitignore`. Gli script stanno in
+`strumenti/`, e la loro configurazione è `strumenti/canzoni.py`: una voce per canzone, con la canzone
+intera, il tempo, i tagli, gli atti, il primo battito di una battuta e chi canta (spiegati in cima al
+file). "Stare Up" è `fissa`: i suoi ritagli e la sua mappa sono quelli del sito e non si rifanno.
+
+### Una canzone nuova
+
+1. La canzone intera in `canzoni/` (per esempio `canzoni/la-nuova.mp3`: il nome del file è l'id).
+2. Chi canta: la scaletta la fa `strumenti/voci.py` (qui sotto), e la si controlla a orecchio. Chi canta
+   non si indovina, e `insieme` si scrive solo se lo si è sentito.
+3. I tagli: 35 e 15 secondi (un filo di più va bene: stanno sui battiti), con tutti e due i cantanti, uno
+   dopo l'altro, e i tre atti (la strofa, il pezzo forte, il gran finale) allineati a com'è fatta la
+   canzone, sui primi battiti delle battute (`battuta` in `canzoni.py`; nella mappa, `forti` dice
+   quali sono).
+4. Una voce in `strumenti/canzoni.py` e una in `canzoni` di `xfactor.js`, poi `beatmap.py` con l'id
+   della canzone; in `sw.js` l'id va in `CANZONI` (i ritagli e la mappa si scaricano all'installazione)
+   e la versione della cache sale di uno.
+
+### Ritagli e mappe
+
+Li fa `strumenti/beatmap.py`, con librosa (battiti e attacchi della canzone) e ffmpeg (i ritagli, con la
+dissolvenza). La prima volta:
 
 ```bash
 py -m venv strumenti\.venv
@@ -1108,27 +1157,107 @@ py -m venv strumenti\.venv
 strumenti\.venv\Scripts\python -m pip install librosa soundfile
 ```
 
-poi, ogni volta:
+poi, ogni volta: tutte le canzoni (tranne quelle fisse), o solo quelle scritte dopo.
 
 ```bash
-strumenti\.venv\Scripts\python strumenti\beatmap.py percorso\della\canzone-intera.mp3
+strumenti\.venv\Scripts\python strumenti\beatmap.py
 ```
+
+```bash
+strumenti\.venv\Scripts\python strumenti\beatmap.py stare-bene
+```
+
+I battiti sono una griglia a tempo fisso: prima la retta che passa meglio per i battiti trovati da
+librosa, vicino ai ritagli (in "Stare Up", nei primi 30 secondi, librosa prende il controtempo: con la
+retta su tutta la canzone i battiti dei ritagli scivolavano di 30-60 ms), poi il tempo e la fase su cui
+gli attacchi cadono meglio (in "Fuori Dagli Schemi" librosa a tratti segue i piatti in controtempo e la
+retta dava 90,09 bpm: la canzone va a 89,00 fissi). Il primo battito della battuta lo dice `battuta` in
+`canzoni.py`: dai bassi, con la cassa forte sull'1 e sul 3, a volte veniva il 3.
 
 Le note di ogni livello le scrive poi `strumenti/griglia.py` (Python normale, senza librosa: beatmap.py
 lo lancia da solo alla fine), che riscrive solo le note e lascia battiti, atti e voci come sono. Per
-rifare solo le note, per esempio dopo aver cambiato le sue regole (scritte in cima allo script):
+rifare solo le note, per esempio dopo aver cambiato le sue regole (scritte in cima allo script), di
+tutte le canzoni (tranne le fisse) o di una:
 
 ```bash
 py strumenti\griglia.py
 ```
 
-Usa ffmpeg per sentire i colpi nei due ritagli; senza ffmpeg le note le fa solo dai battiti.
+```bash
+py strumenti\griglia.py stare-bene
+```
 
-In memoria, decodificato, il ritaglio da 35 secondi pesa circa 6,7 MB (a 48 kHz, come su iPhone) e
-quello da 15 circa 2,9 MB; ce n'è caricato uno solo, solo durante il microgioco. Se su qualche
-telefono le note sembrano tutte un filo in anticipo o in ritardo rispetto alla musica, c'è
-`canzone.offset` nella configurazione (secondi da aggiungere a ogni nota); per le cuffie Bluetooth
-c'è il Ritardo audio delle Impostazioni.
+Usa ffmpeg per sentire i colpi nei due ritagli; senza ffmpeg le note le fa solo dai battiti. I livelli
+sono tarati su "Cambiare Aria" (128 bpm), la prima canzone del microgioco: anche ora che non c'è più il
+metro resta quello, e così i punti (`notePunti` in `xfactor.js`). Su una canzone più lenta griglia.py
+mette più note per battuta (le stesse al secondo), tiene la distanza minima tra due note uguale in
+secondi e fa durare le note lunghe gli stessi secondi; a NORMALE due note non sono mai più vicine di 0,4
+secondi, salvo una sincope per battuta. (Dal 20 ottobre le note sono circa il 10% in più a ogni livello e
+un filo più difficili: a NORMALE una sincope per battuta invece che ogni due, a DIFFICILE il gran finale
+più fitto e l'accordo anche all'inizio della strofa.) `densita` in `canzoni.py` ritocca ancora, se serve ("Stare
+Bene" ha 0,8 a NORMALE e DIFFICILE). Così, coi giocatori simulati (un errore di tempo che cresce sulle
+note fitte, sugli accordi e sui salti), le tre canzoni vengono difficili come "Cambiare Aria": a pari
+bravura la precisione cambia di un paio di punti al massimo, a ogni livello, e anche quante volte si
+passa il provino. (Nel Lampo, a NORMALE, le canzoni lente hanno poche note, 15 in 15 secondi: si
+tengono di più le note lunghe.)
+
+### Chi canta: strumenti/voci.py
+
+Riconosce chi canta dalla voce, non dalla base: prima isola la voce dalla musica (Demucs), poi la guarda a
+finestre di 1,6 secondi, una ogni 0,4: se c'è qualcuno che canta, l'"impronta" della voce (Resemblyzer,
+che riconosce chi parla) e quanto è alta. I campioni dell'Oli e del Tini vengono dai tratti confermati a
+orecchio (`CONFERMATI`, in cima allo script), uno per voce e per canzone, e ogni finestra va a chi ha il
+campione più simile. I campioni stanno in `strumenti/voci-campioni.npz`; quelli di una canzone il cui file
+non c'è più (come il ritaglio di "Cambiare Aria", tolto dal sito) restano quelli salvati lì.
+
+Quello che si è visto con cinque canzoni: le due voci si somigliano parecchio, e la stessa voce cambia
+molto da un pezzo all'altro (l'Oli canta tra 125 e 260 Hz, il Tini da 130 a 415, secondo la canzone: in
+"Stare Bene" il Tini dell'ultimo ritornello sta sui 185 Hz). Dentro la stessa canzone si separano bene:
+coi campioni da metà dei tratti confermati, sull'altra metà, 329 finestre giuste su 352, 8 sbagliate e le
+altre "non sicure". Tra canzoni diverse, alla stessa altezza, molto meno: coi campioni delle altre
+canzoni, del Tini di "Stare Bene" 4 finestre sono giuste, 10 dicono l'Oli e 16 "non sicuro". (All'inizio
+sembrava ancora peggio, ma era colpa di un campione sbagliato: in Cambiare Aria era segnato l'Oli fino a
+10,8 secondi e poi il Tini, invece l'Oli canta fino al gran finale.) Per questo una canzone con un pezzo
+sicuro di tutti e due in `CONFERMATI` si riconosce coi suoi campioni; una nuova, senza, coi campioni delle
+altre, ed è solo una prima idea (lo script lo scrive): si sente a orecchio un pezzo di ognuno, lo si mette
+in `CONFERMATI`, si rifanno i campioni e si rilancia, e il resto della canzone lo trova lui.
+
+La prima volta (oltre a librosa; con torch la cartella `strumenti\.venv` arriva a circa 1 GB):
+
+```bash
+strumenti\.venv\Scripts\python -m pip install torch torchaudio demucs webrtcvad-wheels
+```
+
+```bash
+strumenti\.venv\Scripts\python -m pip install resemblyzer --no-deps
+```
+
+(resemblyzer vuole webrtcvad, che su Python 3.13 non si compila: webrtcvad-wheels è lo stesso, già
+pronto.) Poi i campioni (e le prove), e la scaletta di una canzone:
+
+```bash
+strumenti\.venv\Scripts\python strumenti\voci.py campioni
+```
+
+```bash
+strumenti\.venv\Scripts\python strumenti\voci.py canzoni\la-nuova.mp3
+```
+
+La scaletta è a blocchi di qualche secondo (l'Oli, il Tini, "non sicuro", "nessuno"), con da che parte
+pende e quanto è alta la voce; in `strumenti/verifica/` c'è un pezzo da ascoltare per ogni blocco (per
+esempio `stare-up_1m05-1m12_oli.mp3`: con `--senza-audio` non si fanno, e si controlla sulla canzone coi
+minuti della scaletta) e la voce isolata di ogni canzone. `strumenti/verifica/` non va su GitHub (è nel
+`.gitignore`). Quando una scaletta è confermata (o corretta) a orecchio, i suoi tratti sicuri vanno in
+`CONFERMATI` e si rifanno i campioni (`voci.py campioni`).
+
+### In memoria
+
+Decodificato, un ritaglio da 35 secondi pesa circa 6,8 MB (a 48 kHz, come su iPhone) e uno da 15 circa
+3 MB: ce n'è caricato uno solo, quello della canzone che suona, solo durante il microgioco (si carica
+quando parte e si butta quando finisce). Le mappe sono di 4 KB l'una. Se su qualche telefono le note
+sembrano tutte un filo in anticipo o in ritardo rispetto alla musica, c'è `offset` nella voce della
+canzone in `xfactor.js` (secondi da aggiungere a ogni nota); per le cuffie Bluetooth c'è il Ritardo
+audio delle Impostazioni.
 
 ## Struttura
 
@@ -1136,8 +1265,8 @@ c'è il Ritardo audio delle Impostazioni.
 index.html               pagina del gioco (telefono: zona sicura, "Gira il telefono")
 manifest.json            nome, icone e orientamento per la schermata Home
 sw.js                    service worker: il gioco offline dopo la prima visita (i ritagli
-                         della canzone di X-Factor li scarica subito)
-audio/                   i ritagli di "Cambiare Aria" per X-Factor (35 e 15 secondi, mono)
+                         delle canzoni di X-Factor e le loro mappe li scarica subito)
+audio/                   i ritagli delle canzoni di X-Factor (35 e 15 secondi, mono)
 icone/anteprime/         le foto dei microgiochi per la sala (strumenti/anteprime.py)
 icone/                   la copertina (sfondo del menu, copertina.webp), le icone per la
                          schermata Home ricavate da lei e l'anteprima dei link (copertina-og.jpg)

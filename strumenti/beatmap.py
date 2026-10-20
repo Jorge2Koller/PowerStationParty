@@ -1,15 +1,19 @@
-# Prepara "Provini a X-Factor" a partire da una canzone vera: i due ritagli audio (con ffmpeg) e la
-# mappa delle note per ogni livello (con librosa, dai battiti e dagli attacchi della canzone).
-# Si rilancia se cambia la canzone (o i tagli qui sotto); il gioco legge solo i file che scrive:
-#   PowerStation Party - sito/audio/cambiare-aria.mp3        il ritaglio da 35 s
-#   PowerStation Party - sito/audio/cambiare-aria-lampo.mp3  il ritaglio da 15 s (Lampo)
-#   PowerStation Party - sito/js/config/microgiochi/xfactor-mappa.json   battiti, atti, voci e note
-# La canzone intera non è nel repository (è dei due cantanti: nel sito vanno solo i ritagli): la si
-# tiene a parte e si passa allo script come primo argomento.
+# Prepara "Provini a X-Factor" a partire dalle canzoni vere: per ogni canzone di strumenti/canzoni.py i
+# due ritagli audio (con ffmpeg) e la mappa delle note per ogni livello (con librosa, dai battiti e dagli
+# attacchi della canzone). Si rilancia se cambia una canzone (o i suoi tagli, in canzoni.py); il gioco
+# legge solo i file che scrive, nel sito (<id> è quello della canzone in canzoni.py):
+#   PowerStation Party - sito/audio/<id>.mp3            il ritaglio da 35 s
+#   PowerStation Party - sito/audio/<id>-lampo.mp3      il ritaglio da 15 s (Lampo)
+#   PowerStation Party - sito/js/config/microgiochi/xfactor-<id>.json   battiti, atti, voci e note
+# Le canzoni intere non vanno su GitHub (sono dei cantanti: nel sito vanno solo i ritagli): stanno in
+# canzoni/ nella radice del repository, che è nel .gitignore.
+# Le canzoni "fisse" (fissa: True in canzoni.py, come Stare Up) si saltano: i loro ritagli sono
+# quelli del sito e non si rifanno.
 #
-# Uso, dalla cartella del progetto (la prima volta: py -m venv strumenti\.venv e poi
+# Uso, dalla cartella del repository (la prima volta: py -m venv strumenti\.venv e poi
 # strumenti\.venv\Scripts\python -m pip install librosa soundfile; serve anche ffmpeg):
-#   strumenti\.venv\Scripts\python strumenti\beatmap.py percorso\della\canzone-intera.mp3
+#   strumenti\.venv\Scripts\python strumenti\beatmap.py              tutte le canzoni (tranne le fisse)
+#   strumenti\.venv\Scripts\python strumenti\beatmap.py stare-bene   solo quella (o quelle: più id)
 import json
 import subprocess
 import sys
@@ -18,40 +22,24 @@ from pathlib import Path
 import numpy as np
 import librosa
 
+from canzoni import CANZONI
+
 QUI = Path(__file__).resolve().parent
 RADICE = QUI.parent
 SITO = RADICE / 'PowerStation Party - sito'
-CANZONE = Path(sys.argv[1]) if len(sys.argv) > 1 else None   # la canzone intera (vedi sopra)
 
-TITOLO = 'Cambiare Aria'
-# il tempo da cui librosa parte a cercare i battiti (scheda di valutazione: le analisi della canzone
-# danno 128,00 bpm esatti, un battito ogni 0,46875 s; erano 129)
-BPM_CIRCA = 128
-# i ritagli, in secondi nella canzone (si spostano sul battito più vicino): il microgioco e il Lampo
-# (scheda di valutazione: "La canzone deve avere sia una parte del primo cantante che del secondo":
-# ora tutti e due i ritagli hanno la fine della strofa del primo e la strofa del secondo, e
-# l'intero anche il ritornello; erano 17,93-53,10 e 30,12-45,12, col primo cantante solo)
-RITAGLI = {'intero': (48.908, 84.064, 'audio/cambiare-aria.mp3'), 'lampo': (52.658, 67.658, 'audio/cambiare-aria-lampo.mp3')}
-# dove cominciano i tre atti, nella canzone: la strofa (la fine di quella del primo cantante), il
-# pezzo forte (la strofa del secondo), il gran finale (il ritornello); erano 17,93, 30,12 e 41,82
-ATTI = [48.908, 60.158, 75.158]
-# Chi canta, e quando, nella canzone (secondi; i confini si spostano sul battito più vicino): dalle
-# analisi della voce (A, il primo cantante, sta sui 130-175 Hz; B sui 235-265 Hz). 'AB' = tutti e due
-# insieme, 'nessuna' = non canta nessuno (non si scrive). Bastano i pezzi dentro i ritagli: la mappa
-# ne ha l'elenco per ogni ritaglio ("voci"), per la scena.
-VOCI = [
-    (48.908, 59.7, 'A'),      # la fine della strofa di A (qui la canzone è filtrata, un po' ovattata)
-    (59.7, 75.158, 'B'),      # la strofa di B: attacca un battito prima del pezzo forte
-    (75.158, 79.2, 'AB'),     # il ritornello: il gancio (A o tutti e due insieme: non è sicuro)
-    (79.2, 82.0, 'B'),        # ...le risposte di B
-    (82.0, 84.064, 'AB'),     # ...e di nuovo il gancio
-]
-# Chi è A e chi è B, coi nomi dei personaggi del gioco ('oli' = Vanz De La Cruz, 'tini' = Social
-# Tedio). Dall'audio non si può sapere: si parte da chi canta per primo in tutta la canzone (A, già
-# da 15,1 s), che è Vanz, cioè l'Oli: è l'artista principale e ha pubblicato lui il pezzo (e Giorgio
-# l'ha confermato). Se fosse il contrario basta scambiare questi due e rilanciare lo script.
-VOCE_A, VOCE_B = 'oli', 'tini'
-CANTANTE = {'A': VOCE_A, 'B': VOCE_B, 'AB': 'insieme', 'nessuna': None}
+# La canzone su cui si lavora: le mette prepara(), da canzoni.py, prima di ogni canzone.
+CANZONE = None      # la canzone intera
+TITOLO = ''
+BPM_CIRCA = 128     # il tempo da cui librosa parte a cercare i battiti
+RITAGLI = {}        # nome -> (da, a, file): i ritagli, in secondi nella canzone (si spostano sul battito più vicino)
+ATTI = []           # dove cominciano i tre atti, nella canzone: la strofa, il pezzo forte, il gran finale
+# Chi canta, e quando, nella canzone (secondi; i confini si spostano sul battito più vicino): 'oli',
+# 'tini', 'insieme' (solo se l'abbiamo sentito a orecchio) o 'nessuno' (non si scrive). Bastano i pezzi
+# dentro i ritagli: la mappa ne ha l'elenco per ogni ritaglio ("voci"), per la scena.
+VOCI = []
+CANTANTI = ('oli', 'tini', 'insieme')
+BATTUTA = None      # (facoltativo) un primo battito di battuta, in secondi della canzone
 BITRATE = '112k'           # mono: circa 0,5 MB il ritaglio intero
 DISSOLVENZA = 0.3          # secondi, in entrata e in uscita
 PRIMA_NOTA = 1.3           # secondi: prima nessuna nota (le note devono avere il tempo di scendere)
@@ -88,31 +76,50 @@ def analizza():
     # stacchi tra i battiti, che vanno a passi di un frame dell'analisi, 23 ms: veniva 20 frame =
     # 0,4644 s, cioè 129,2 bpm invece di 128, e i mezzi battiti delle note in più scivolavano fuori
     # tempo; e i battiti erano proprio quelli trovati, che nel pezzo filtrato, 45-60 s, ballano fino
-    # a 60 ms)
+    # a 60 ms). La retta si fa sui battiti vicino ai ritagli (da 20 s prima a 20 s dopo): se in un
+    # pezzo della canzone librosa prende il controtempo (in Stare Up i primi 30 s, quasi 0,2 s fuori),
+    # su tutta la canzone esce un filo storta, e nei ritagli i battiti scivolavano di 30-60 ms
+    lo = min(da for da, _, _ in RITAGLI.values()) - 20
+    hi = max(a for _, a, _ in RITAGLI.values()) + 20
     k = np.arange(len(pulita))
-    buoni = np.ones(len(pulita), bool)
+    buoni = (pulita >= lo) & (pulita <= hi)
     for _ in range(3):
         T, t0 = np.polyfit(k[buoni], pulita[buoni], 1)
         scarto = pulita - (t0 + T * k)
-        buoni = np.abs(scarto) < 2.5 * scarto[buoni].std()
+        buoni &= np.abs(scarto) < 2.5 * scarto[buoni].std()
+    # Poi la griglia si rifinisce sugli attacchi: tra i tempi vicini a quello della retta (più o meno
+    # 1,5%) e tutte le fasi, quella su cui l'inviluppo degli attacchi (a 3 ms) è più forte, vicino ai
+    # ritagli. Serve quando librosa in un tratto prende il controtempo dei piatti (mezzo battito fuori):
+    # in Fuori Dagli Schemi la retta dava 90,09 bpm, e la canzone va a 89,00 fissi
+    lo, hi = max(0.5, lo), min(len(y) / sr - 0.5, hi)
+    fine = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
+    fps = sr / 64
+    def sui_colpi(T_, t0_):
+        tt = t0_ + T_ * np.arange(int(np.ceil((lo - t0_) / T_)), int((hi - t0_) / T_))
+        return float(fine[(tt * fps).astype(int)].mean())
+    _, T, t0 = max((sui_colpi(T_, f), T_, f) for T_ in np.linspace(T * 0.985, T * 1.015, 151) for f in np.arange(0, T_, 0.004))
     # t0 sull'attacco vero: i battiti di librosa cadono circa 40 ms dopo (l'inviluppo degli attacchi
     # guarda finestre di 93 ms). L'attacco è dove il suono ripiegato sul battito (il massimo di |y|
-    # ogni millisecondo, in media su tutti i battiti) sale più di colpo, da 100 ms prima a 20 ms dopo
+    # ogni millisecondo, in media sui battiti vicino ai ritagli) sale più di colpo, da 100 ms prima a 20 ms dopo
     passo = sr // 1000
     picchi = np.abs(y[:len(y) // passo * passo]).reshape(-1, passo).max(axis=1)
-    centri = t0 + T * np.arange(int(np.ceil((1 - t0) / T)), int((len(y) / sr - 1 - t0) / T))
+    centri = t0 + T * np.arange(int(np.ceil((max(1, lo) - t0) / T)), int((min(len(y) / sr - 1, hi) - t0) / T))
     fasi = np.arange(-100, 21)
     piega = [picchi[((centri + f / 1000) * sr / passo).astype(int)].mean() for f in fasi]
     anticipo = -int(fasi[int(np.argmax(np.diff(piega))) + 1])
     t0 -= anticipo / 1000
     griglia = t0 + T * np.arange(int(np.ceil(-t0 / T)), int((len(y) / sr - t0) / T) + 1)
-    # il battito forte della battuta (in 4): quello con più bassi, nel pezzo forte
+    # il battito forte della battuta (in 4): quello scritto in canzoni.py ("battuta"), se c'è; se no
+    # quello con più bassi, nel pezzo forte (con la cassa forte sull'1 e sul 3, a volte prende il 3)
     S = np.abs(librosa.stft(y, hop_length=hop))
     freqs = librosa.fft_frequencies(sr=sr)
-    basse = S[freqs < 150].sum(axis=0)
-    fr = np.clip(librosa.time_to_frames(griglia, sr=sr, hop_length=hop), 0, S.shape[1] - 1)
-    nel = (griglia >= ATTI[1]) & (griglia < ATTI[1] + 23)
-    fase = int(np.argmax([basse[fr[nel & (np.arange(len(griglia)) % 4 == f)]].mean() for f in range(4)]))
+    if BATTUTA is not None:
+        fase = int(np.argmin(np.abs(griglia - BATTUTA))) % 4
+    else:
+        basse = S[freqs < 150].sum(axis=0)
+        fr = np.clip(librosa.time_to_frames(griglia, sr=sr, hop_length=hop), 0, S.shape[1] - 1)
+        nel = (griglia >= ATTI[1]) & (griglia < ATTI[1] + 23)
+        fase = int(np.argmax([basse[fr[nel & (np.arange(len(griglia)) % 4 == f)]].mean() for f in range(4)]))
     # gli attacchi, con la loro forza; il "colore" del suono (centroide spettrale) per scegliere il pad
     oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop)
     on = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, hop_length=hop, units='frames', backtrack=False)
@@ -133,8 +140,8 @@ def voci(G, da, a):
     out = []
     for v0, v1, voce in VOCI:
         x0, x1 = max(da, vicino(G, v0)), min(a, vicino(G, v1))
-        if CANTANTE[voce] and x1 - x0 > 1e-6:
-            out.append({'da': round(x0 - da, 3), 'a': round(x1 - da, 3), 'cantante': CANTANTE[voce]})
+        if voce in CANTANTI and x1 - x0 > 1e-6:
+            out.append({'da': round(x0 - da, 3), 'a': round(x1 - da, 3), 'cantante': voce})
     return out
 
 
@@ -268,15 +275,28 @@ def ritaglia(da, a, dest):
     return dest.stat().st_size
 
 
-def main():
-    if CANZONE is None or not CANZONE.is_file():
-        sys.exit('Manca la canzone intera (non è nel repository): passala come primo argomento,\n'
-                 '  strumenti\\.venv\\Scripts\\python strumenti\\beatmap.py percorso\\della\\canzone-intera.mp3')
+def prepara(c):
+    # la canzone su cui si lavora, da canzoni.py
+    global CANZONE, TITOLO, BPM_CIRCA, RITAGLI, ATTI, VOCI, BATTUTA
+    CANZONE = RADICE / c['intera']
+    TITOLO = c['titolo']
+    BPM_CIRCA = c['bpm']
+    RITAGLI = {nome: (da, a, f'audio/{c["id"]}{"" if nome == "intero" else "-" + nome}.mp3') for nome, (da, a) in c['ritagli'].items()}
+    ATTI = list(c['atti'])
+    VOCI = list(c['voci'])
+    BATTUTA = c.get('battuta')
+
+
+def fai(c):
+    global ATTI
+    prepara(c)
+    if not CANZONE.is_file():
+        print(f'{TITOLO}: manca la canzone intera, {CANZONE.relative_to(RADICE)} (non è nel repository: va messa lì)')
+        return False
     A = analizza()
     G = A['griglia']
     print(f'{TITOLO}: {60 / A["T"]:.2f} bpm, battito {A["T"]:.4f} s, battito forte in fase {A["fase"]}, '
           f'griglia {A["anticipo"]} ms prima dei battiti di librosa (un battito a {vicino(G, 30):.3f} s)')
-    global ATTI
     ATTI = [vicino(G, t) for t in ATTI]
     dati = {'canzone': TITOLO, 'bpm': round(60 / A['T'], 3), 'battito': round(A['T'], 5), 'ritagli': {}}
     for nome, (da0, a0, file) in RITAGLI.items():
@@ -299,16 +319,30 @@ def main():
             r['atti'][1] = 0.0
         dati['ritagli'][nome] = r
         print(f'  {nome}: {da:.3f}-{a:.3f} s ({a - da:.3f} s), atti {r["atti"]}, {file} {dim / 1024:.0f} KB')
-        for liv, m in r['mappe'].items():
-            per = [sum(1 for n in m if (r['atti'][k] or 0) <= n[0] < ([x for x in r['atti'][k + 1:] if x is not None] + [1e9])[0]) for k in range(3) if r['atti'][k] is not None]
-            print(f'    {liv:9s} {len(m):3d} note (per atto {per}), lunghe {sum(1 for n in m if n[2])}')
         print('    voci     ', ', '.join(f'{v["cantante"]} {v["da"]}-{v["a"]}' for v in r['voci']))
-    dest = SITO / 'js' / 'config' / 'microgiochi' / 'xfactor-mappa.json'
+    dest = SITO / 'js' / 'config' / 'microgiochi' / f'xfactor-{c["id"]}.json'
     dest.write_text(json.dumps(dati, ensure_ascii=False, separators=(',', ':')), encoding='utf-8', newline='\n')
     print(f'  mappa: {dest.relative_to(RADICE)} ({dest.stat().st_size / 1024:.0f} KB)')
     # le note come in Guitar Hero (scheda di valutazione): le rifà strumenti/griglia.py, sopra i
     # battiti, gli atti e i ritagli appena scritti (quelle di mappa() qui sopra si buttano)
-    subprocess.run([sys.executable, str(QUI / 'griglia.py'), str(dest)], check=True)
+    subprocess.run([sys.executable, str(QUI / 'griglia.py'), c['id']], check=True)
+    return True
+
+
+def main():
+    chieste = sys.argv[1:]
+    sconosciute = [x for x in chieste if x not in {c['id'] for c in CANZONI}]
+    if sconosciute:
+        sys.exit(f'Canzoni che non ci sono in strumenti/canzoni.py: {", ".join(sconosciute)} (ci sono: {", ".join(c["id"] for c in CANZONI)})')
+    ok = True
+    for c in CANZONI:
+        if chieste and c['id'] not in chieste:
+            continue
+        if c.get('fissa'):
+            print(f'{c["titolo"]}: fissa, non si rifà (i suoi ritagli sono quelli del sito; per rifarla togli "fissa" in canzoni.py)')
+            continue
+        ok = fai(c) and ok
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == '__main__':

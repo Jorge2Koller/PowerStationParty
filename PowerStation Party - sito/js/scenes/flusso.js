@@ -54,8 +54,9 @@ function sfotto(G, ordine) {
 }
 
 // I due pulsanti in fondo all'introduzione: PROVA e PRONTO! (frecce + SPAZIO o INVIO, P per la prova,
-// oppure un clic o un tocco sul pulsante). primaProva = il cursore parte su PROVA.
-function sceltaProva(scene, y, primaProva, prova, pronto) {
+// oppure un clic o un tocco sul pulsante). primaProva = il cursore parte su PROVA. frecce = i due tasti
+// che spostano il cursore (SU/GIÙ quando SINISTRA/DESTRA servono ad altro, come a scegliere la canzone)
+function sceltaProva(scene, y, primaProva, prova, pronto, frecce = ['LEFT', 'RIGHT']) {
   const voci = [{ testo: 'PROVA', x: 186, w: 78, fn: prova }, { testo: 'PRONTO!', x: 294, w: 96, fn: pronto }];
   const c = scene.add.container(0, 0).setDepth(20);
   let sel = primaProva ? 0 : 1, fatto = false, attivo = false;
@@ -87,7 +88,7 @@ function sceltaProva(scene, y, primaProva, prova, pronto) {
   scene.time.delayedCall(350, () => {
     attivo = true;
     const k = scene.input.keyboard, ok = (e) => { if (!e.repeat) scegli(sel, true); };
-    k.on('keydown-LEFT', () => muovi(0)); k.on('keydown-RIGHT', () => muovi(1));
+    k.on('keydown-' + frecce[0], () => muovi(0)); k.on('keydown-' + frecce[1], () => muovi(1));
     k.on('keydown-SPACE', ok); k.on('keydown-ENTER', ok);
     k.on('keydown-P', (e) => { if (!e.repeat) { muovi(0); scegli(0, true); } });
   });
@@ -133,6 +134,46 @@ export class IntroScene extends Phaser.Scene {
       sotto = v.y + v.height / 2;
       this.tweens.add({ targets: v, alpha: 1, delay: 350, duration: 200 });
       this.tweens.add({ targets: v, scale: 1.12, delay: 550, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    }
+    // la canzone, nei microgiochi che ne hanno più d'una (Provini a X-Factor): quale suona in questo
+    // turno (Sessione.canzone). In Allenamento si sceglie: SINISTRA/DESTRA, o un clic o un tocco sulle
+    // frecce (e PROVA/PRONTO! allora vanno con SU/GIÙ)
+    const canzoni = m.canzoni?.length > 1 ? m.canzoni : null, sceglieCanzone = !!canzoni && S.modo === 'allenamento';
+    if (canzoni) {
+      // il titolo e, più piccoli, gli artisti, in una riga stretta (le frecce non devono toccare i
+      // personaggi ai lati)
+      const y = sotto + 9, tt = txt(this, 0, y, '', { size: 7.5, color: '#ffe14a', ox: 0 }), ta = txt(this, 0, y + 0.5, '', { size: 6, color: '#fff3d6', ox: 0 });
+      let largo = 0;
+      const scrivi = () => {
+        const b = canzoni[S.canzone(id)];
+        tt.setText(b.titolo.toUpperCase()); ta.setText(b.di);
+        // (le scritte hanno già 3 pixel di margine per lato: attaccate, restano staccate di 6)
+        largo = tt.width + ta.width;
+        tt.x = 240 - largo / 2; ta.x = tt.x + tt.width;
+      };
+      scrivi();
+      if (sceglieCanzone) {
+        const frecce = [-1, 1].map((d) => {
+          const t = txt(this, 0, y, d < 0 ? '<' : '>', { size: 10, color: '#ffe14a' });
+          const z = this.add.zone(0, y, 30, 22).setInteractive({ useHandCursor: true }).on('pointerdown', () => cambia(d));
+          return { d, t, z };
+        });
+        const metti = () => frecce.forEach(({ d, t, z }) => { t.x = z.x = 240 + d * (largo / 2 + 12); });
+        const cambia = (d) => {
+          S.scegliCanzone(id, (S.canzone(id) + d + canzoni.length) % canzoni.length);
+          Audio.sfx('muovi');
+          scrivi();
+          metti();
+        };
+        metti();
+        this.tweens.add({ targets: frecce.map((f) => f.t), alpha: 0.45, duration: 450, yoyo: true, repeat: -1 });
+        // (come per PROVA/PRONTO!: un attimo prima di ascoltare i tasti)
+        this.time.delayedCall(350, () => {
+          this.input.keyboard.on('keydown-LEFT', () => cambia(-1));
+          this.input.keyboard.on('keydown-RIGHT', () => cambia(1));
+        });
+      }
+      sotto = y + 9;
     }
 
     // PROVA o PRONTO!: prima di ogni turno si può provare il microgioco (una partita come quella vera,
@@ -212,7 +253,7 @@ export class IntroScene extends Phaser.Scene {
       this.time.delayedCall(conto.length * 650, () => this.scene.start('mg_' + id));
     };
     const prova = () => { Audio.sfx('scegli'); S.prova = true; this.scene.start('mg_' + id); };
-    const bottoni = dallaProva ? null : sceltaProva(this, yPronto, !Salvataggio.dati.visti[id] && Salvataggio.impostazioni.provaLampo !== false, prova, parti);
+    const bottoni = dallaProva ? null : sceltaProva(this, yPronto, !Salvataggio.dati.visti[id] && Salvataggio.impostazioni.provaLampo !== false, prova, parti, sceglieCanzone ? ['UP', 'DOWN'] : undefined);
     if (dallaProva) parti();
   }
 }

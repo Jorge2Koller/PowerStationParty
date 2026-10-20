@@ -2,16 +2,12 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.10-scheda2',
+  versione: '2026.10-xfactor-tre-canzoni',
   titolo: 'NOVITÀ',
   voci: [
-    'Dalla scheda di valutazione, la seconda parte:',
-    'SPALMA IL BOTA! rifatto: strofina la crema sui cerchi rossi prima che si scotti',
-    "L'INCUBO DEGLI SCAPOLI come Just Dance: fai la mossa quando arriva la scheda",
-    "X-FACTOR come Guitar Hero, e nel pezzo cantano tutti e due: l'Oli e il Tini",
-    'LA SPINA: arriva lo Zere con la vuvuzela blu, e ogni atto è più difficile',
-    'TORRONDACELLI: mortaio e siluro, banane, ciambelle e il sottomarino papero',
-    'PASSAGGIORGIO chiavi lontane; RETROMARCIA KO; BEER PONG lo schiaffo a Greg',
-    'GUERRA: la mano è la tua, e le sue sono più svelte',
+    'X-Factor: arrivano Stare Bene e Fuori Dagli Schemi!',
+    'E c\'è anche "Stare Up": tre canzoni dei Corso Italia',
+    'Nella sfida la canzone la decide il round: la stessa per tutti',
+    'In Allenamento si sceglie prima di partire: SINISTRA/DESTRA o le frecce',
   ],
 };

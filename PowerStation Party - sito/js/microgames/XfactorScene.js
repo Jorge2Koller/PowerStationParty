@@ -1,11 +1,13 @@
-// Microgioco 17: "Provini a X-Factor" - suona "Cambiare Aria" del Tini e dell'Oli sui pad. SUONA!
+// Microgioco 17: "Provini a X-Factor" - suona una canzone del Tini e dell'Oli sui pad. SUONA!
 //
 //  Il palco di un talent show (inventato), con la grafica di Guitar Hero (scheda di valutazione:
 //  "rifare come Guitar Hero le note e la griglia"): in mezzo l'autostrada delle note in prospettiva,
 //  che parte dalla console di chi suona (in fondo al palco, davanti alla grande X) e arriva ai 4 pad
-//  colorati in basso (verde, rosso, giallo, blu). La canzone è vera (un ritaglio di 35 secondi, 15 in
-//  Lampo): le note scendono lungo le corsie, a tempo coi colpi della canzone (la mappa è in
-//  xfactor-mappa.json, una per livello: la fanno strumenti/beatmap.py e strumenti/griglia.py). Si
+//  colorati in basso (verde, rosso, giallo, blu). Le canzoni sono vere ("canzoni" in config: Fuori
+//  Dagli Schemi, Stare Up, Stare Bene; quale suona lo dice Sessione.canzone, e il titolo si vede in alto), ognuna un
+//  ritaglio di 35 secondi (15 in Lampo): le note scendono lungo le corsie, a tempo coi colpi della
+//  canzone (la mappa di ogni canzone è in xfactor-<canzone>.json, una per livello: la fanno
+//  strumenti/beatmap.py e strumenti/griglia.py). Si
 //  colpiscono quando arrivano sul pad: PERFETTO, BUONO, MANCATO; le note lunghe sono scie da tenere,
 //  nel gran finale arrivano gli accordi (due pad insieme). Ogni colpo fa una fiammata del colore
 //  della corsia; con la serie i bordi della strada si accendono (giallo, arancio, azzurro) e le
@@ -22,7 +24,9 @@
 //  Il tempo è quello della canzone (l'orologio dell'audio, meno la latenza e il ritardo audio delle
 //  Impostazioni); senza audio si va col proprio orologio. La canzone è la stessa per tutti: nella
 //  sfida, a pari livello, tutti suonano la stessa mappa.
-//  Il ritaglio si carica e si decodifica quando parte il microgioco e si butta quando finisce.
+//  Il ritaglio si carica e si decodifica quando parte il microgioco e si butta quando finisce: in
+//  memoria c'è una canzone decodificata alla volta (sull'iPhone conta), e si scarica solo la mappa
+//  della canzone che suona.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
@@ -38,7 +42,7 @@ const CODICI = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3, ArrowLeft: 0, ArrowDown: 1,
 const ESITI = { perfetto: ['PERFETTO!', '#7dff9a'], buono: ['BUONO', '#ffe14a'], mancato: ['MANCATO', '#ff6b5a'], vuoto: ['A VUOTO', '#ff9a8a'], mollata: ['MOLLATA!', '#ff9a8a'], tenuta: ['TENUTA!', '#7dff9a'] };
 // il colore dei bordi della strada col moltiplicatore della serie (x1, x1,5, x2, x3)
 const BORDI = [[1, 0x9a8cc8], [1.5, 0xffe14a], [2, 0xff9a2e], [3, 0x6ae0ff]];
-let MAPPA = null;   // la mappa delle note: si scarica la prima volta e resta (è piccola, 5 KB)
+const MAPPE = {};   // le mappe delle note, per file: ognuna si scarica la prima volta che suona e resta (5 KB)
 
 export class XfactorScene extends MicrogiocoBase {
   constructor() { super('xfactor'); }
@@ -48,6 +52,7 @@ export class XfactorScene extends MicrogiocoBase {
 
   prepara() {
     this.lampo = Sessione.tipo === 'lampo';
+    this.brano = this.cfg.canzoni[Sessione.canzone(this.id)] ?? this.cfg.canzoni[0];
     // (si chiamava "pronto", come il pulsante PRONTO! della prova in MicrogiocoBase: lo copriva, e
     // nella prova PRONTO non funzionava)
     this.caricata = false;
@@ -90,24 +95,27 @@ export class XfactorScene extends MicrogiocoBase {
 
   // ---------- la canzone e la mappa ----------
   async carica() {
-    const c = this.cfg;
+    const B = this.brano, quale = this.lampo ? 'lampo' : 'intero';
     this.attesa = txt(this, 240, 150, 'SI ACCENDONO LE LUCI...', { size: 12, color: '#ffe14a', depth: 1000 });
     this.tweens.add({ targets: this.attesa, alpha: 0.4, duration: 380, yoyo: true, repeat: -1 });
-    try { if (!MAPPA) MAPPA = await (await fetch(c.canzone.mappa)).json(); } catch (e) { MAPPA = null; }
-    const R = MAPPA?.ritagli?.[this.lampo ? 'lampo' : 'intero'] ?? null;
-    const buffer = R ? await Audio.carica(R.file) : null;
+    try { if (!MAPPE[B.mappa]) MAPPE[B.mappa] = await (await fetch(B.mappa)).json(); } catch (e) { delete MAPPE[B.mappa]; }
+    const R = MAPPE[B.mappa]?.ritagli?.[quale] ?? null;
+    // (il ritaglio della config; se manca, quello scritto nella mappa)
+    const file = B.ritagli?.[quale] ?? R?.file;
+    const buffer = file ? await Audio.carica(file) : null;
     // (la scena può essersi chiusa nel frattempo)
     if (!this.sys.isActive() && !this.sys.isPaused()) return;
     this.avvia(R, buffer);
   }
 
   avvia(R, buffer) {
-    const c = this.cfg, fine = this.durata - 0.15, off = c.canzone.offset ?? 0;
-    // senza mappa (non si è potuta scaricare): una nota ogni due battiti, sui quattro pad in giro (i
-    // tagli e gli atti sono quelli dei ritagli, a 128 bpm: servono per le sezioni dei cantanti)
+    const c = this.cfg, B = this.brano, fine = this.durata - 0.15, off = B.offset ?? 0;
+    // senza mappa (non si è potuta scaricare): una nota ogni due battiti, sui quattro pad in giro (il
+    // tempo e l'inizio del ritaglio dalla config: servono per le sezioni dei cantanti; gli atti a 11 e
+    // 26 secondi, come in un ritaglio tipo)
     if (!R) {
-      const b = 60 / 128;
-      R = { da: this.lampo ? 52.621 : 48.871, atti: this.lampo ? [0, 7.5, null] : [0, 11.25, 26.25], battiti: [], forti: [], mappe: {} };
+      const b = 60 / (B.bpm ?? 128);
+      R = { da: B.inizio?.[this.lampo ? 'lampo' : 'intero'] ?? 0, atti: this.lampo ? [0, 7.5, null] : [0, 11.25, 26.25], battiti: [], forti: [], mappe: {} };
       for (let t = 0; t < this.durata; t += b) { R.battiti.push(t); R.forti.push(R.battiti.length % 4 === 1 ? 1 : 0); }
       R.mappe.normale = R.battiti.filter((t, i) => t > 1.3 && i % 2 === 0).map((t, i) => [t, i % 4, 0]);
     }
@@ -116,8 +124,9 @@ export class XfactorScene extends MicrogiocoBase {
     this.note = mappa.map(([t, pad, dur]) => ({ t: t + off, pad, dur: Math.min(dur, fine - t), esito: null, tenuta: false }));
     // gli accordi: le note che arrivano insieme si legano con una sbarretta (si vede che vanno prese insieme)
     this.note.forEach((n, i) => { n.accordo = this.note[i - 1]?.t === n.t || this.note[i + 1]?.t === n.t; });
-    // a FACILE le note sono meno e valgono di più (e a DIFFICILE il contrario): in tutto, i punti di NORMALE
-    const rif = (R.mappe.normale ?? mappa).filter((n) => n[0] < fine).length;
+    // a FACILE le note sono meno e valgono di più (e a DIFFICILE il contrario): in tutto, i punti di
+    // notePunti note (le stesse per tutte le canzoni: tutte fanno gli stessi punti)
+    const rif = c.notePunti?.[this.lampo ? 'lampo' : 'intero'] ?? (R.mappe.normale ?? mappa).filter((n) => n[0] < fine).length;
     this.fattore = rif / Math.max(1, this.note.length);
     // ...e anche la serie: con meno note il moltiplicatore arriva prima (10 di fila a NORMALE sono 5 a FACILE)
     this.soglieSerie = c.serie.map(([n, k]) => [Math.max(3, Math.round(n / this.fattore)), k]);
@@ -128,7 +137,7 @@ export class XfactorScene extends MicrogiocoBase {
     // strumenti/beatmap.py); se la mappa non le ha, le sezioni della config, che sono in secondi della
     // canzone intera e qui diventano secondi del ritaglio (quelle che nel ritaglio durano un attimo,
     // all'inizio o alla fine, non contano)
-    const voci = R.voci?.length ? R.voci : (c.sezioni ?? []).map((s) => ({ ...s, da: s.da - (R.da ?? 0), a: s.a - (R.da ?? 0) }));
+    const voci = R.voci?.length ? R.voci : (B.sezioni ?? []).map((s) => ({ ...s, da: s.da - (R.da ?? 0), a: s.a - (R.da ?? 0) }));
     this.sezioni = voci.map((s) => ({ ...s, da: s.da + off, a: s.a + off })).filter((s) => s.a > 0.3 && s.da < this.durata - 0.3);
     this.cantaChi(0, true);
     this.attesa.destroy();
@@ -198,6 +207,12 @@ export class XfactorScene extends MicrogiocoBase {
       const x = 14 + i * 26.5 + (i % 3) * 4, a = im(this, x, 268, 'accendino').setOrigin(0.5, 0).setDepth(34).setAlpha(0);
       this.accendini.push({ img: a, x, fase: i * 1.7, soglia: ((i * 7) % 18) / 18 });
     }
+    // la canzone che suona, in alto in mezzo (tra il nome di chi gioca e il tempo), su una riga: sotto
+    // arrivano le scritte degli atti
+    const ti = txt(this, 0, 22, this.brano.titolo.toUpperCase(), { size: 8, color: '#ffe14a', depth: 1001, ox: 0 });
+    const di = txt(this, 0, 22.5, this.brano.di, { size: 6, color: '#fff3d6', depth: 1001, ox: 0 });
+    ti.x = 240 - (ti.width + di.width) / 2;
+    di.x = ti.x + ti.width;           // (con i 3 pixel di margine per lato delle scritte: 6 di stacco)
     this.testoPunti = txt(this, 474, 36, puntiHud(0), { size: 9, ox: 1, depth: 1001 });
     this.testoPrecisione = txt(this, 474, 48, '', { size: 7, ox: 1, depth: 1001, color: '#fff3d6' });
   }
@@ -697,7 +712,9 @@ export class XfactorScene extends MicrogiocoBase {
       cartelli.push(t);
       this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 160, ease: 'Quad.in' });
       this.lucine.fillStyle(si ? 0x4ade80 : 0xff3a2e, 0.35).fillCircle(g.x, P.lucine, 6.5).fillStyle(si ? 0x4ade80 : 0xff3a2e, 1).fillCircle(g.x, P.lucine, 3.2);
-      frase.setText(`${g.nome}: "${caso(si ? g.si : g.no)}"`).setColor(si ? '#c8ffd4' : '#ffc8c0');
+      // (al NO, anche la battuta sul titolo della canzone che suona, se ce l'ha: frasiNo in config)
+      const no = this.brano.frasiNo?.[g.nome] ? [...g.no, this.brano.frasiNo[g.nome]] : g.no;
+      frase.setText(`${g.nome}: "${caso(si ? g.si : no)}"`).setColor(si ? '#c8ffd4' : '#ffc8c0');
     }));
     this.time.delayedCall(280 + v.voti.length * 500 + 120, () => {
       titolo.setText(ris.titoloFine).setColor(ris.vittoria ? '#7dff9a' : '#ff6b5a').setFontSize(22 * 1.3);

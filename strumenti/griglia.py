@@ -23,9 +23,17 @@
 # Senza ffmpeg (o senza i ritagli audio) le note si fanno lo stesso, solo dai battiti: il ritmo dal
 # posto nella battuta, le note lunghe alla fine delle frasi di quattro battute.
 #
+# Le canzoni sono quelle di strumenti/canzoni.py, una mappa ciascuna (xfactor-<id>.json). I livelli
+# qui sotto sono tarati su Cambiare Aria (128 bpm), la prima canzone del microgioco (ora non c'è più, ma il
+# metro resta quello): su una canzone più lenta le battute durano di più e
+# le note per battuta crescono in proporzione (le stesse al secondo), e la distanza minima tra due note
+# resta la stessa in secondi (ma mai sotto la nota più corta). "densita" in canzoni.py ritocca ancora
+# (un numero, o uno per livello: {'normale': 0.9}).
 # Serve solo Python (nessuna libreria) e ffmpeg, come per beatmap.py, che alla fine lo lancia da solo.
-# Uso, dalla cartella del progetto (senza argomenti, la mappa del sito):
-#   py strumenti\griglia.py [percorso\della\xfactor-mappa.json]
+# Uso, dalla cartella del progetto:
+#   py strumenti\griglia.py                 tutte le canzoni (tranne le fisse, come Stare Up)
+#   py strumenti\griglia.py stare-bene      solo quella (o quelle: più id; una fissa si rifà solo così)
+#   py strumenti\griglia.py percorso\della\mappa.json   una mappa qualsiasi (al tempo dei livelli)
 import array
 import json
 import math
@@ -34,11 +42,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+from canzoni import CANZONI
+
 QUI = Path(__file__).resolve().parent
-MAPPA = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else QUI.parent / 'PowerStation Party - sito' / 'js' / 'config' / 'microgiochi' / 'xfactor-mappa.json'
-SITO = MAPPA.parents[3]     # (la mappa sta in <sito>/js/config/microgiochi/: i file audio sono relativi al sito)
+MAPPE = QUI.parent / 'PowerStation Party - sito' / 'js' / 'config' / 'microgiochi'
+SITO = MAPPE.parents[2]     # (la mappa sta in <sito>/js/config/microgiochi/: i file audio sono relativi al sito)
+BATTITO_LIVELLI = 60 / 128  # il battito di Cambiare Aria, su cui sono tarati i livelli (il metro)
 
 PRIMA_NOTA = 1.3            # secondi: prima nessuna nota (devono avere il tempo di scendere)
+# quanto dura il microgioco ("durata" in xfactor.js, il Lampo in config.js): il gioco butta le note
+# da 0,15 s prima della fine, anche se il ritaglio dura un attimo di più (sta sui battiti)
+GIOCO = {'intero': 35, 'lampo': 15}
 ULTIMA = 0.3                # secondi alla fine del ritaglio senza note (la dissolvenza)
 # le bande per il "colore" dei colpi (Hz): cassa, basso, voce, voce alta, rullante, piatti
 BANDE = [(30, 120), (120, 300), (300, 800), (800, 2000), (2000, 5000), (5000, 12000)]
@@ -55,20 +69,31 @@ STACCO = 0.72
 #   battito = quanto un battito passa avanti a un mezzo battito (più è basso, più sincopi)
 #   lunghe  = quante note lunghe nel ritaglio intero (nel Lampo la metà, arrotondata in su)
 #   salto   = il salto massimo di pad tra due note vicine
+#   minimo  = (facoltativo) la distanza minima tra due note in secondi, a qualsiasi tempo, salvo
+#   vicine    coppie di note più vicine per battuta (le sincopi; 0,5 = una ogni due battute). A
+#             NORMALE in Cambiare Aria due note non sono mai più vicine di un battito (0,47 s); su una
+#             canzone lenta i mezzi battiti (0,35 s a 86 bpm) la facevano più difficile, coi bot, e
+#             senza nessuno troppo facile: con una sincope ogni due battute viene uguale
 # Le note in tutto restano più o meno quelle di prima (FACILE 34, NORMALE 64, DIFFICILE 108: nella
 # scheda la difficoltà era "giusta"); in più ci sono gli accordi.
+# (20 ottobre, "aumenta di poco il numero e la difficoltà delle note": circa il 10% di note in più a
+# ogni livello; a FACILE nel pezzo forte, a NORMALE una sincope per battuta invece che ogni due e i
+# mezzi battiti un po' più spesso al posto dei battiti deboli, a DIFFICILE il gran finale più fitto
+# (i sedicesimi anche nel pezzo forte sbilanciavano il Lampo tra le canzoni) e l'accordo anche
+# all'inizio della strofa. Erano: FACILE 2, 2, 3; NORMALE 3,5, 4, 4,5 con una sincope ogni due battute
+# e battito 0,4; DIFFICILE 5, 5,5, 7 e battito 0,3)
 LIVELLI = {
     'facile': {
-        'battuta': [2, 2, 3], 'passo': [1, 1, 1], 'stacco': [2, 2, 1],
+        'battuta': [2, 2.3, 3], 'passo': [1, 1, 1], 'stacco': [2, 2, 1],
         'accordi': [None, None, None], 'battito': 0.7, 'lunghe': 2, 'salto': 2,
     },
     'normale': {
-        'battuta': [3.5, 4, 4.5], 'passo': [0.5, 0.5, 0.5], 'stacco': [1, 0.5, 0.5],
-        'accordi': [None, 'inizio', 'forti'], 'battito': 0.4, 'lunghe': 3, 'salto': 2,
+        'battuta': [3.8, 4.4, 4.9], 'passo': [0.5, 0.5, 0.5], 'stacco': [1, 0.5, 0.5],
+        'accordi': [None, 'inizio', 'forti'], 'battito': 0.35, 'lunghe': 3, 'salto': 2, 'minimo': 0.4, 'vicine': 1,
     },
     'difficile': {
-        'battuta': [5, 5.5, 7], 'passo': [0.5, 0.5, 0.25], 'stacco': [0.5, 0.5, 0.25],
-        'accordi': [None, 'forti', 'forti'], 'battito': 0.3, 'lunghe': 5, 'salto': 3,
+        'battuta': [5.4, 6, 8.5], 'passo': [0.5, 0.5, 0.25], 'stacco': [0.5, 0.5, 0.25],
+        'accordi': ['inizio', 'forti', 'forti'], 'battito': 0.25, 'lunghe': 5, 'salto': 3,
     },
 }
 
@@ -183,7 +208,7 @@ def tenute(R, env, C, intero, ferme):
     # battiti, la voce resta forte ma non attacca più (una nota tenuta); meglio se poco dopo la
     # canzone respira (la frase finisce lì). Ognuna col suo punteggio.
     T = (R['battiti'][-1] - R['battiti'][0]) / (len(R['battiti']) - 1)
-    fine = R['durata'] - ULTIMA - (5 * T if intero else 3 * T)
+    fine = suona(R, intero) - (5 * T if intero else 3 * T)
     adatte = [c for c in C if not c['q'] % 2 and PRIMA_NOTA + 0.8 <= c['t'] <= fine and c['i'] not in ferme]
     if env is None:
         # senza audio: alla fine delle frasi (il primo battito dell'ultima battuta di ogni quattro)
@@ -209,11 +234,28 @@ def nuova(c, **altro):
     return {'t': c['t'], 'colore': c['colore'], 'forza': c['forza'], 'i': c['i'], 'q': c['q'], 'nella': c['nella'], 'pad': [], 'dur': 0, **altro}
 
 
-def mappa(R, C, env, liv, intero, ferme):
-    P = LIVELLI[liv]
+def suona(R, intero):
+    # fin dove si mettono le note: la fine del ritaglio (meno la dissolvenza) o del microgioco
+    return min(R['durata'] - ULTIMA, GIOCO['intero' if intero else 'lampo'] - 0.15)
+
+
+def al_tempo(P, T, densita):
+    # i livelli al tempo della canzone: le note per battuta crescono con la battuta (r = quante volte
+    # il battito è più lungo di quello di Cambiare Aria), lo stacco resta lo stesso in secondi
+    # (arrotondato in giù alla nota più corta dell'atto, e mai sotto)
+    r = T / BATTITO_LIVELLI
+    if abs(r - 1) < 0.02 and densita == 1:
+        return P
+    stacco = [max(p, math.floor(s / r / p + 1e-6) * p) for s, p in zip(P['stacco'], P['passo'])]
+    # (e le note lunghe durano gli stessi secondi, circa: 3 battiti a 128 bpm, 2 a 86)
+    return {**P, 'battuta': [round(b * r * densita, 2) for b in P['battuta']], 'stacco': stacco, 'tenuta': max(2, round(3 / r))}
+
+
+def mappa(R, C, env, liv, intero, ferme, densita=1):
     B = R['battiti']
     T = (B[-1] - B[0]) / (len(B) - 1)
-    fine = R['durata'] - ULTIMA
+    P = al_tempo(LIVELLI[liv], T, densita)
+    fine = suona(R, intero)
     # (negli stacchi niente note: la canzone si ferma, chi suona respira)
     ok = [c for c in C if PRIMA_NOTA <= c['t'] <= fine - 0.1 and c['i'] not in ferme]
     for c in ok:
@@ -228,13 +270,20 @@ def mappa(R, C, env, liv, intero, ferme):
     for c in ok:
         k = P['battuta'][atto_di(R, c['t'] + T) if c['nella'] == 0 and c['q'] == 0 else c['atto']]
         quota.setdefault(c['battuta'], int(k) + (1 if (k % 1) and c['battuta'] % 2 else 0))
-    prese, tempi = {}, []
+    prese, tempi, vicine = {}, [], {}
     for c in sorted(ok, key=lambda c: -punti(c)):
         passo, stacco = P['passo'][c['atto']], P['stacco'][c['atto']] * T - 0.02
         if (c['q'] / 4) % passo > 1e-6 or prese.get(c['battuta'], 0) >= quota[c['battuta']]:
             continue
-        if any(abs(c['t'] - u) < stacco for u in tempi):
+        d = min((abs(c['t'] - u) for u in tempi), default=9)
+        if d < stacco:
             continue
+        if d < P.get('minimo', 0) - 0.02:
+            # (con la virgola, come "battuta": 0,5 = una battuta sì e una no)
+            v = P.get('vicine', 0)
+            if vicine.get(c['battuta'], 0) >= int(v) + (1 if (v % 1) and c['battuta'] % 2 else 0):
+                continue
+            vicine[c['battuta']] = vicine.get(c['battuta'], 0) + 1
         prese[c['battuta']] = prese.get(c['battuta'], 0) + 1
         tempi.append(c['t'])
         c['presa'] = True
@@ -243,7 +292,7 @@ def mappa(R, C, env, liv, intero, ferme):
 
     # 2) le note lunghe: sulle frasi tenute (vedi tenute()), sparse negli atti (prima il gran finale,
     # poi il pezzo forte, poi la strofa, e di nuovo), almeno 3,5 secondi l'una dall'altra; se lì non
-    # c'è una nota, si aggiunge. Durano 3 battiti (meno, se dopo arriva una nota: vedi in fondo)
+    # c'è una nota, si aggiunge. Durano 3 battiti, a 128 bpm (meno, se dopo arriva una nota: vedi in fondo)
     quante = P['lunghe'] if intero else (P['lunghe'] + 1) // 2
     prove = tenute(R, env, C, intero, ferme)
     per_atto = {}
@@ -263,7 +312,7 @@ def mappa(R, C, env, liv, intero, ferme):
     for c in lunghe:
         stacco = P['stacco'][c['atto']] * T - 0.02
         note = [m for m in note if abs(m['t'] - c['t']) >= stacco]
-        n = nuova(c, dur=3 * T - 0.12)
+        n = nuova(c, dur=P.get('tenuta', 3) * T - 0.12)
         note.append(n)
         note.sort(key=lambda m: m['t'])
         if liv != 'difficile':
@@ -291,9 +340,10 @@ def mappa(R, C, env, liv, intero, ferme):
     # intero, se c'è posto) il colpo finale. Prima dell'accordo lungo, un respiro di un battito
     forti = [c for c in ok if c['q'] == 0 and c['nella'] == 0 and c['t'] + 2 * T <= fine]
     if forti:
-        ultimo = forti[-1] if not intero else next((c for c in reversed(forti) if c['t'] + 4 * T <= fine), forti[-1])
-        dur = min(3 * T, fine - ultimo['t']) - 0.12
-        colpo = next((c for c in ok if c['q'] == 0 and c['nella'] == 0 and c['t'] >= ultimo['t'] + 3.5 * T), None) if intero else None
+        tenuta = P.get('tenuta', 3)
+        ultimo = forti[-1] if not intero else next((c for c in reversed(forti) if c['t'] + (tenuta + 1) * T <= fine), forti[-1])
+        dur = min(tenuta * T, fine - ultimo['t']) - 0.12
+        colpo = next((c for c in ok if c['q'] == 0 and c['nella'] == 0 and c['t'] >= ultimo['t'] + (tenuta + 0.5) * T), None) if intero else None
         note = [m for m in note if m['t'] < ultimo['t'] - T + 0.02]
         note.append({'t': ultimo['t'], 'colore': ultimo['colore'], 'forza': 9, 'i': ultimo['i'], 'q': 0, 'nella': 0, 'pad': [], 'dur': dur, 'accordo': True, 'base': 1, 'finale': True})
         if colpo:
@@ -386,9 +436,9 @@ def atti_lampo(dati):
             R['atti'] = atti
 
 
-def main():
-    dati = json.loads(MAPPA.read_text(encoding='utf-8'))
-    print(f'{dati.get("canzone", "?")}: le note di {MAPPA.name}')
+def note(percorso, densita=1):
+    dati = json.loads(percorso.read_text(encoding='utf-8'))
+    print(f'{dati.get("canzone", "?")}: le note di {percorso.name}' + (f' (densità {densita})' if densita != 1 else ''))
     atti_lampo(dati)
     for nome, R in dati['ritagli'].items():
         print(f'{nome}: {R["durata"]} s, atti {R["atti"]}')
@@ -404,15 +454,33 @@ def main():
             print(f'  stacchi (niente note) ai battiti delle {", ".join(f"{R["battiti"][i]:.2f}" for i in sorted(ferme))} s')
         intero = nome == 'intero'
         C = analizza(R, env, sposta)
-        R['mappe'] = {liv: mappa(R, C, env, liv, intero, ferme) for liv in LIVELLI}
+        R['mappe'] = {liv: mappa(R, C, env, liv, intero, ferme, densita.get(liv, 1) if isinstance(densita, dict) else densita) for liv in LIVELLI}
         for liv, m in R['mappe'].items():
             atti = [a for a in R['atti'] if a is not None]
             per = [sum(1 for n in m if a0 <= n[0] < a1) for a0, a1 in zip(atti, atti[1:] + [1e9])]
             tempi = sorted({n[0] for n in m})
             mezzi = sum(1 for t in tempi if min(abs(t - b - sposta) for b in R['battiti']) > 0.05)
             print(f'  {liv:9s} {len(m):3d} note (per atto {per}), accordi {len(m) - len(tempi)}, lunghe {sum(1 for n in m if n[2])}, fuori dai battiti {mezzi}')
-    MAPPA.write_text(json.dumps(dati, ensure_ascii=False, separators=(',', ':')), encoding='utf-8', newline='\n')
-    print(f'mappa: {MAPPA} ({MAPPA.stat().st_size / 1024:.0f} KB)')
+    percorso.write_text(json.dumps(dati, ensure_ascii=False, separators=(',', ':')), encoding='utf-8', newline='\n')
+    print(f'mappa: {percorso} ({percorso.stat().st_size / 1024:.0f} KB)')
+
+
+def main():
+    chieste = sys.argv[1:]
+    if len(chieste) == 1 and chieste[0].endswith('.json'):
+        note(Path(chieste[0]).resolve())
+        return
+    sconosciute = [x for x in chieste if x not in {c['id'] for c in CANZONI}]
+    if sconosciute:
+        sys.exit(f'Canzoni che non ci sono in strumenti/canzoni.py: {", ".join(sconosciute)} (ci sono: {", ".join(c["id"] for c in CANZONI)})')
+    for c in CANZONI:
+        if (chieste and c['id'] not in chieste) or (not chieste and c.get('fissa')):
+            continue
+        dest = MAPPE / f'xfactor-{c["id"]}.json'
+        if not dest.is_file():
+            print(f'{c["titolo"]}: manca la mappa {dest.name} (la fa strumenti/beatmap.py)')
+            continue
+        note(dest, c.get('densita', 1))
 
 
 if __name__ == '__main__':

@@ -2,13 +2,16 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party-7';   // versione 7: la canzone di X-Factor a due voci e le anteprime nuove (prima: le anteprime dei microgiochi)
-// i ritagli della canzone di "Provini a X-Factor" e la sua mappa delle note, e i riquadri della lista
-// dei microgiochi: si scaricano subito, all'installazione (in tutto 0,9 MB), così il gioco installato li
-// ha anche senza rete (le foto grandi delle anteprime si salvano la prima volta che si vedono)
+const CACHE = 'powerstation-party-9';   // versione 9: X-Factor con Fuori Dagli Schemi, Stare Up e Stare Bene (prima: con Cambiare Aria e Non ti resisto)
+// le canzoni di "Provini a X-Factor" (come "canzoni" in js/config/microgiochi/xfactor.js: per ognuna i
+// due ritagli e la mappa delle note) e i riquadri della lista dei microgiochi: si scaricano subito,
+// all'installazione (in tutto 3,3 MB), così il gioco installato li ha anche senza rete (le foto grandi
+// delle anteprime si salvano la prima volta che si vedono). Qui vanno solo file che ci sono: se ne
+// manca uno, non si salva niente
+const CANZONI = ['fuori-dagli-schemi', 'stare-up', 'stare-bene'];
 const MICROGIOCHI = ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida',
   'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino'];
-const SUBITO = ['audio/cambiare-aria.mp3', 'audio/cambiare-aria-lampo.mp3', 'js/config/microgiochi/xfactor-mappa.json',
+const SUBITO = [...CANZONI.flatMap((id) => [`audio/${id}.mp3`, `audio/${id}-lampo.mp3`, `js/config/microgiochi/xfactor-${id}.json`]),
   ...MICROGIOCHI.map((id) => `icone/anteprime/${id}.webp`)];
 const FONT = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
