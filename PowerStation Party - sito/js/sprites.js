@@ -253,11 +253,12 @@ export function creaTexture(scene) {
 // sfondo, col nome della texture). Quando parte un microgioco si creano i suoi e si buttano gli
 // altri (MicrogiocoBase). Un microgioco nuovo con immagini sue: un gruppoPigro qui sopra e una riga
 // qui. (Il Passaggiorgio usa la station wagon di Emilio, la Retromarcia il telefono del Bota, il beer
-// pong il cane del Vialetto per la gag; la ballata prende anche i gruppi delle sue vignette.)
+// pong il cane del Vialetto per la gag; la ballata prende anche i gruppi delle sue vignette. Le Perle
+// di Denny non ne hanno: il Pallaio di sera e le pose le crea il microgioco e le butta alla fine.)
 export const GRUPPI_MICROGIOCHI = {
   spina: ['bgPub', 'bancone'], regrorio: ['bgStrada'], barba: ['marco', 'bgBarbiere'], panino: ['bgBar', 'banconeBar'],
   mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
   palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
   scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
-  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: ['pallaio'], scontrino: ['pizzeria'],
+  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: [], scontrino: ['pizzeria'],
 };

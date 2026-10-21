@@ -2,7 +2,7 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party-9';   // versione 9: X-Factor con Fuori Dagli Schemi, Stare Up e Stare Bene (prima: con Cambiare Aria e Non ti resisto)
+const CACHE = 'powerstation-party-10';   // versione 10: Le Perle di Denny al tavolo del Pallaio (prima: X-Factor con tre canzoni dei Corso Italia)
 // le canzoni di "Provini a X-Factor" (come "canzoni" in js/config/microgiochi/xfactor.js: per ognuna i
 // due ritagli e la mappa delle note) e i riquadri della lista dei microgiochi: si scaricano subito,
 // all'installazione (in tutto 3,3 MB), così il gioco installato li ha anche senza rete (le foto grandi

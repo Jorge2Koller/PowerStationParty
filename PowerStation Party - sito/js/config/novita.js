@@ -2,12 +2,12 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.10-xfactor-tre-canzoni',
+  versione: '2026.10-perle-pallaio',
   titolo: 'NOVITÀ',
   voci: [
-    'X-Factor: arrivano Stare Bene e Fuori Dagli Schemi!',
-    'E c\'è anche "Stare Up": tre canzoni dei Corso Italia',
-    'Nella sfida la canzone la decide il round: la stessa per tutti',
-    'In Allenamento si sceglie prima di partire: SINISTRA/DESTRA o le frecce',
+    'Le Perle di Denny: ora al tavolo del Pallaio, con tanti proverbi nuovi!',
+    'Sul telefono quello che scrivi si vede subito, grande, sopra la tastiera',
+    'Nella sfida ognuno ha i suoi proverbi: niente doppioni tra giocatori',
+    'X-Factor: Stare Bene, Fuori Dagli Schemi e Stare Up dei Corso Italia',
   ],
 };

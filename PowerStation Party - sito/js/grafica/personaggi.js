@@ -2149,6 +2149,9 @@ const POSE = {
   orecchie: [[33, 196], [70, 176], [60, 122]],
   // il grande saggio (Denny, "Le Perle di Denny"): una mano sul petto, l'altra alzata col dito in su
   saggio: { sx: [[33, 196], [44, 224], [12, 204]], dx: [[33, 196], [58, 194], [62, 160]], dito: true },
+  // ...e chi lo ascolta al tavolo, che lo indica ridendo (il braccio teso in su, di traverso)
+  indicaSu: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 184], [86, 160]], dito: true },
+  indicaTe: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [56, 200], [74, 192]], dito: true },
   // "La pizza dal Boni": la pala tenuta dritta (la sinistra in basso sul manico), le mani a coppa
   // davanti alla bocca per gridare l'ordinazione (con o.maniSopra), la corsa a pugni stretti, la
   // caraffa alla bocca, la pala alzata sopra la testa per cacciare gli imbucati

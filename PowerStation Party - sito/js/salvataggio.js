@@ -43,6 +43,7 @@ const nuovo = () => ({
   pinte: 0,                 // la valuta del gioco (Fase 4)
   visti: {},                // microgiochi già incontrati (per la prova lampo, Fase 3)
   novita: '',               // l'ultima versione di cui si è vista la schermata "Novità" (Fase 3)
+  proverbiRecenti: [],      // Le Perle di Denny: gli ultimi proverbi usciti (una sigla ciascuno), dal più vecchio al più nuovo
 });
 
 // Da una versione dei dati alla successiva: MIGRAZIONI[n](dati) porta dalla n alla n+1.
@@ -72,6 +73,7 @@ function completa(d) {
   for (const k of ['registro', 'statistiche', 'record', 'trofei', 'sblocchi', 'visti']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (typeof out.pinte !== 'number' || !isFinite(out.pinte)) out.pinte = 0;
   if (out.giocatori && !Array.isArray(out.giocatori)) out.giocatori = null;
+  if (!Array.isArray(out.proverbiRecenti)) out.proverbiRecenti = [];
   return out;
 }
 

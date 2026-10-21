@@ -914,29 +914,59 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     (nessuna vignetta parte al posto giusto), folate e finte escono dal seme del round. In Lampo si gioca la riga in alto:
     tre strofe e la morale
   - si gioca anche senza audio: la casella illuminata, l'arco e il cerchio dicono dove e quando
-- Le Perle di Denny (CORREGGI!: al Pallaio Denny, il figlio di Emilio, fa il grande saggio e
-  sbaglia i proverbi con totale convinzione):
+- Le Perle di Denny (CORREGGI!: al Pallaio, di sera, Denny, il figlio di Emilio, siede a capotavola,
+  fa il grande saggio e sbaglia i proverbi con totale convinzione):
+  - la saletta del Pallaio (`js/grafica/pallaioSera.js`): muro di mattoni, lampadine a filo, il
+    frigo delle birre acceso, i poster, le bandierine, sedie spaiate e, in fondo, il ping pong del
+    Beer Pong. Il tavolo di legno è in prospettiva, visto dal fondo come da chi ci siede, con sopra
+    birre, patatine, il posacenere col fumo, le carte e un mazzo di chiavi
+  - tutti seduti, coi personaggi di sempre alla scala degli altri microgiochi (taglia 0,6; Denny
+    0,7, appena più grande): il tavolo li copre dalla vita in giù. Denny è in fondo al centro, sotto
+    la lampada, col dito alzato, la mano sul petto e gli occhi socchiusi; ai due lati lunghi siedono
+    tre ascoltatori (gli altri giocatori della partita e, se sono meno, altri personaggi del gioco
+    a caso, senza doppioni) e chi gioca, davanti a destra, col suo nome sopra nel suo colore. Con
+    più di 4 giocatori al tavolo ne siedono 3 oltre a chi gioca
+  - il fumetto di Denny è largo un terzo dello schermo, accanto alla sua testa: il testo va a capo
+    e il fumetto si allunga in giù, con la barra del tempo subito sotto. La casella sta in basso al
+    centro, su una fascia scura staccata dal tavolo
   - ogni proverbio arriva intero nel fumetto, con una sola parola sbagliata: si scrive quella
     giusta e si preme INVIO. Sul computer si scrive e basta, senza clic (mentre si scrive le
     scorciatoie del gioco tacciono, tranne ESC per la pausa); sul telefono si tocca SCRIVI, che
-    apre la tastiera, e si manda con Invio o con OK. Con la tastiera aperta fumetto, casella e
-    barra del tempo salgono nella parte che resta visibile, Denny si fa piccolo e sopra la barra si
-    legge quello che stai scrivendo (SCRIVI: ...), anche dove la casella finisce sotto la tastiera
+    apre la tastiera, e si manda con Invio o con OK; la tastiera resta aperta da un proverbio
+    all'altro. Quello che si scrive si vede subito nella casella grande, col cursore che lampeggia
+    (la disegna il gioco, vedi `js/casella.js`). Con la tastiera aperta fumetto, barra del tempo e
+    casella salgono nella parte che resta visibile e il tavolo si fa piccolo, in basso a destra,
+    senza coprirli
   - maiuscole, spazi prima e dopo, accenti e apostrofi non contano; dalle parole di 5 lettere in su
     va bene anche un errore di battitura. La parola sbagliata di Denny non vale mai
-  - giusta: la parola sbagliata si cancella con una riga rossa e sopra arriva quella giusta, Denny
-    si offende e ribatte, e arriva subito il proverbio dopo. Sbagliata: la casella trema, Denny
-    gongola e si riprova. Ogni proverbio ha la sua barra del tempo: se finisce, Denny la
-    proclama VERITÀ DEFINITIVA, si vede il proverbio giusto e si passa al dopo, senza punti
+  - giusta: la parola sbagliata si cancella con una riga rossa e sopra arriva quella giusta; il
+    tavolo ride di Denny, ognuno a modo suo (chi batte la mano sul tavolo, chi sputa la birra e poi
+    si piega dal ridere, chi lo indica: quello in fondo a destra), chi gioca esulta, Denny incrocia
+    le braccia offeso e ribatte, e arriva subito il proverbio dopo. Sbagliata: la casella trema, il
+    tavolo ride di chi gioca (e lo indica), lui piange, Denny gongola e si riprova. Ogni proverbio ha la sua barra
+    del tempo: se finisce, Denny la proclama VERITÀ DEFINITIVA, il tavolo annuisce convinto, si vede
+    il proverbio giusto e si passa al dopo, senza punti. Nell'attesa al tavolo si beve, ci si
+    guarda, qualcuno sbadiglia
   - le PERLE ORIGINALI (gli sbagli veri di Denny, `perla: true`) valgono doppio
   - tre atti: LE PERLE DI DENNY (la parola sbagliata è sottolineata, tempo largo); dal 12° secondo
-    TROVALA TU! (non più sottolineata); dal 24° DENNY SI SCATENA! (parla in fretta e dopo un paio
-    di secondi il fumetto sbiadisce: resta la casella). A FACILE la parola è sempre sottolineata,
+    TROVALA TU! (non più sottolineata); dal 24° DENNY SI SCATENA! (sale in piedi sulla sedia, parla
+    in fretta, il tavolo ride prima che finisca e dopo un paio di secondi il fumetto sbiadisce:
+    resta la casella). Alla fine, se vinci il tavolo ti applaude e Denny incrocia le braccia, offeso;
+    se perdi Denny brinda da solo sulla sedia e il tavolo applaude lui. A FACILE la parola è sempre sottolineata,
     c'è la prima lettera in grigio nella casella e più tempo; a DIFFICILE mai sottolineata, meno
     tempo e nessun errore di battitura
-  - i proverbi sono in `proverbi` di `js/config/microgiochi/proverbi.js`: una riga ciascuno, il
-    proverbio giusto con tra [quadre] la parola da scrivere, `dice` la parola sbagliata di Denny,
-    `perla: true` se è un suo sbaglio vero. L'ordine esce dal seme del round e da chi gioca (ognuno li trova in un ordine diverso), senza ripetizioni
+  - i proverbi (69: 23 facili, 23 medi, 23 difficili) sono in `proverbi` di
+    `js/config/microgiochi/proverbi.js`: una riga ciascuno, il proverbio giusto con tra [quadre] la
+    parola da scrivere, `dice` la parola sbagliata di Denny, `livello` (`facile`, `medio`,
+    `difficile`) e `perla: true` se è un suo sbaglio vero
+  - proverbi diversi per ogni giocatore: dal seme del round ogni livello si mescola una volta e si
+    divide in blocchi uguali, uno per giocatore della partita, senza sovrapposizioni (con 2
+    giocatori 11 per livello a testa, con 4 cinque, con 8 due; in Allenamento e Da solo il blocco è
+    uno, tutto). Ogni atto pesca dal suo livello: il primo i facili, il secondo i medi, il terzo i
+    difficili. Gli ultimi proverbi usciti (`recenti`, 45) si ricordano nel salvataggio e vanno in
+    fondo; se un blocco finisce si prendono quelli avanzati e poi quelli usati meno di recente.
+    Nella Sfida del giorno i recenti non contano: i proverbi sono gli stessi per tutti, con la
+    stessa regola dei blocchi
 - Scontrino, prego! (SCONTRINO!: nella pizzeria al taglio "Da Michele" chi gioca è il vice del
   Giso, il paladino degli scontrini, e tiene d'occhio Michele alla cassa):
   - una regola sola: chi esce deve avere in mano lo scontrino, il foglietto BIANCO (bello grande,
@@ -1304,8 +1334,10 @@ js/
   torneo.js              il tabellone del Torneo (eliminazione diretta)
   progressi.js           statistiche, record, albo d'oro, trofei, Pinte, acquisti e costumi
   dialogo.js             finestra HTML sopra al gioco (codice del salvataggio, conferme)
-  casella.js             casella di testo HTML sopra al gioco (Le Perle di Denny): sul telefono
-                         apre la tastiera (pulsante SCRIVI), dice se è aperta e quanto si vede
+  casella.js             casella di testo per Le Perle di Denny: un <input> vero ma invisibile,
+                         dentro il contenitore del canvas (anche a schermo intero), che sul
+                         telefono apre la tastiera (pulsante SCRIVI) e dice se è aperta e quanto
+                         si vede; il testo e il cursore li disegna il gioco
   compat.js              aggiunte per i browser più vecchi (Safari)
   dispositivo.js         computer o telefono? (eTouch, ?touch=1)
   main.js                avvio di Phaser, scene, audio, telefono in verticale e in sottofondo
@@ -1355,6 +1387,9 @@ js/
     pallaio.js           il Pallaio visto da dietro le spalle di chi tira, il tavolo da
                          ping pong in prospettiva, la rete, i bicchieri di plastica pieni
                          di birra, la pallina, la mano, la lampadina, la giacca
+    pallaioSera.js       "Le Perle di Denny": la saletta del Pallaio di sera (mattoni,
+                         boiserie, frigo delle birre, poster, bandierine, sedie, il ping
+                         pong in fondo), in una texture sola a bassa densità
     provino.js           il palco del talent (inventato) di "Provini a X-Factor": la grande
                          X luminosa, i fari, il tavolo dei giudici, il pubblico con gli
                          accendini (la console coi pad la disegna la scena)
@@ -1516,9 +1551,14 @@ cuore (`lori_canta`), che alza la bacchetta (`lori_alza`), che batte (`lori_batt
 mano alla casella). Le pose sono in `POSE` (`pala`, `grida`, `corre`, `beve`, `caccia`, `cuore`,
 `alza`, `batte`, `gratta`, `inchino`), gli oggetti in mano (`pala`, `palaAlta`, `caraffa`) in
 `accessorio()`. Per "Le Perle di Denny" Denny da grande saggio (la posa `saggio`: dito alzato e
-mano sul petto, con la faccia di sufficienza), offeso, che gongola, che si arrende e che proclama
-dalla sedia: le crea la scena quando parte e le butta alla fine (`preparaPosa` in `js/sprites.js`,
-densità più alta perché si vede in grande). Per "Scontrino, prego!" Michele è a due pezzi, corpo
+mano sul petto, con la faccia di sufficienza), che proclama e che brinda (la posa `alza` con la
+`birra`); offeso e gongola sono le sue facce di sempre (`sufficienza`, `felice`). Chi siede al
+tavolo ha la birra in mano (`spritz` con la `birra`, come alla Spina), ride con la birra alzata,
+beve, applaude (`mossaBatti`) e, secondo il suo ruolo, batte sul tavolo (`aVoce` e `cassa`) o
+indica (`indicaSu` verso Denny, `indicaTe` verso chi gioca); per sputare la birra, sbadigliare e
+piangere bastano le facce che ci sono già. Le pose le crea la scena quando parte, a una densità
+giusta per la loro taglia (`preparaPosa` in `js/sprites.js`), e le butta alla fine; il tavolo e le
+cose sopra sono disegnati con le Graphics. Per "Scontrino, prego!" Michele è a due pezzi, corpo
 e testa (`preparaCorpo` e `preparaTesta` in `js/sprites.js`), così cambia faccia senza cambiare
 posa: le pose alla cassa (`cassa`, `taglia` con la `mezzaluna`, `strappa`, `aVoce`, `tasca`) e le
 facce (`fischia`, l'espressione nuova di chi fischietta guardando altrove, `occhiolino`, `parla`,
