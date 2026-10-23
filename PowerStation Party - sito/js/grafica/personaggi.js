@@ -451,6 +451,18 @@ export function disegnaNuca(c, p) {
   for (const y of [166, 173]) { c.beginPath(); c.moveTo(CX - 14, y); c.quadraticCurveTo(CX, y + 3, CX + 14, y); tratto(c, alfa(scuro(p.pelle, 0.5), 0.5), 1.6); }   // pieghe del collo
 }
 
+// paonazzo dallo sforzo (p.paonazzo = quanto, da 0 a 1): la faccia si fa rossa, di più in alto
+// (Giorgio che tira la cordicella del fuoribordo). Come la furia, ma senza la vena
+function paonazzo(c, p) {
+  const a = p.paonazzo;
+  c.save();
+  sagomaTesta(c, p.faccia); c.clip();
+  c.fillStyle = gradL(c, 0, p.faccia.top, 0, p.faccia.mentoY, [[0, `rgba(226,40,28,${0.5 * a})`], [0.6, `rgba(226,50,34,${0.3 * a})`], [1, `rgba(226,60,40,${0.16 * a})`]]);
+  c.fillRect(0, 0, 192, 288);
+  c.restore();
+  sagomaTesta(c, p.faccia); tratto(c, CONT, 3);
+}
+
 // paonazzo dalla rabbia: la faccia diventa rossa (di più in alto) e in fronte pulsa una vena
 function furia(c, p) {
   c.save();
@@ -1864,6 +1876,56 @@ function occhialiTondi(c, p, espr) {
 // cappelli: basco militare, piegato da un lato, con lo stemma; bandana da motociclista
 function cappello(c, p) {
   const k = p.cappello;
+  if (k.tipo === 'marinaio') {
+    // il cappello da marinaio (Giorgio in "Capitan Ghiori"): bianco e tondo, la cupola in cima alla
+    // testa e la tesa rivoltata all'insù tutt'intorno, con l'ancora blu davanti
+    const f = p.faccia, L = f.larg, yb = f.top + 16, A = k.ancora ?? '#22305e';
+    const tesa = () => {
+      c.beginPath(); c.moveTo(CX - L - 8, yb + 8);
+      c.quadraticCurveTo(CX - L - 10, yb - 12, CX - L + 4, yb - 14);
+      c.quadraticCurveTo(CX, yb - 6, CX + L - 4, yb - 14);
+      c.quadraticCurveTo(CX + L + 10, yb - 12, CX + L + 8, yb + 8);
+      c.quadraticCurveTo(CX, yb + 20, CX - L - 8, yb + 8); c.closePath();
+    };
+    // (la cupola è alta e larga: copre anche i capelli voluminosi, che escono solo ai lati, sotto la tesa)
+    const cupola = () => {
+      c.beginPath(); c.moveTo(CX - L - 4, yb - 2);
+      c.bezierCurveTo(CX - L - 4, f.top - 62, CX + L + 4, f.top - 62, CX + L + 4, yb - 2); c.closePath();
+    };
+    cupola(); c.fillStyle = gradR(c, CX - 16, f.top - 20, 4, 78, [[0, '#ffffff'], [1, scuro(k.colore, 0.12)]]); c.fill(); tratto(c, CONT, 3);
+    c.beginPath(); c.moveTo(CX - 30, f.top - 14); c.quadraticCurveTo(CX - 14, f.top - 28, CX + 4, f.top - 28); tratto(c, 'rgba(255,255,255,0.75)', 2.6);
+    tesa(); c.fillStyle = gradL(c, 0, yb - 14, 0, yb + 16, [[0, '#ffffff'], [0.6, k.colore], [1, scuro(k.colore, 0.16)]]); c.fill(); tratto(c, CONT, 3);
+    c.beginPath(); c.moveTo(CX - L - 2, yb + 1); c.quadraticCurveTo(CX, yb + 12, CX + L + 2, yb + 1); tratto(c, 'rgba(0,0,0,0.12)', 1.6);   // la piega
+    // l'ancora: il fusto, l'anello in cima, la traversa e i due bracci ricurvi
+    const ax = CX, ay = yb - 1;
+    c.beginPath(); c.moveTo(ax, ay - 9); c.lineTo(ax, ay + 7); tratto(c, A, 3);
+    ellisse(c, ax, ay - 11.5, 2.6, 2.6); tratto(c, A, 1.8);
+    c.beginPath(); c.moveTo(ax - 5, ay - 5); c.lineTo(ax + 5, ay - 5); tratto(c, A, 2.4);
+    c.beginPath(); c.moveTo(ax - 7.5, ay + 1); c.quadraticCurveTo(ax - 6, ay + 8, ax, ay + 8); c.quadraticCurveTo(ax + 6, ay + 8, ax + 7.5, ay + 1); tratto(c, A, 2.4);
+    for (const sx of [-1, 1]) { poli(c, [[ax + sx * 7.5, ay - 1], [ax + sx * 9.5, ay + 3], [ax + sx * 5.5, ay + 2.5]]); c.fillStyle = A; c.fill(); }
+    return;
+  }
+  if (k.tipo === 'pescatore') {
+    // il cappellino da pescatore (Giorgio in barca): la cupola morbida calcata in testa, la fascia e
+    // la tesa tutt'intorno, un po' piegata in giù, con le cuciture
+    const f = p.faccia, L = f.larg, yb = f.top + 24;
+    const tesa = (a0, a1) => { c.beginPath(); c.ellipse(CX, yb + 2, L + 20, 11, 0, a0, a1); };
+    tesa(Math.PI, Math.PI * 2); c.lineTo(CX + L + 20, yb + 2); c.fillStyle = scuro(k.colore, 0.18); c.fill(); tratto(c, CONT, 2.8);   // la tesa dietro
+    const cupola = () => {
+      c.beginPath(); c.moveTo(CX - L - 5, yb + 3);
+      c.bezierCurveTo(CX - L - 7, f.top - 12, CX - 32, f.top - 25, CX, f.top - 25);
+      c.bezierCurveTo(CX + 32, f.top - 25, CX + L + 7, f.top - 12, CX + L + 5, yb + 3);
+      c.quadraticCurveTo(CX, yb + 9, CX - L - 5, yb + 3); c.closePath();
+    };
+    cupola(); c.fillStyle = gradR(c, CX - 14, f.top - 8, 4, 80, [[0, chiaro(k.colore, 0.22)], [1, k.colore]]); c.fill(); tratto(c, CONT, 3);
+    c.save(); cupola(); c.clip();
+    c.fillStyle = k.fascia ?? scuro(k.colore, 0.35); c.fillRect(0, yb - 9, 192, 9);
+    for (const dx of [-24, 0, 24]) { c.beginPath(); c.moveTo(CX + dx * 0.4, f.top - 24); c.quadraticCurveTo(CX + dx * 1.2, f.top - 6, CX + dx * 1.5, yb - 9); tratto(c, 'rgba(0,0,0,0.14)', 1.3); }
+    c.restore();
+    tesa(0, Math.PI); c.closePath(); c.fillStyle = gradL(c, 0, yb, 0, yb + 13, [[0, chiaro(k.colore, 0.06)], [1, scuro(k.colore, 0.2)]]); c.fill(); tratto(c, CONT, 2.8);   // la tesa davanti
+    c.setLineDash([2.4, 2.2]); c.beginPath(); c.ellipse(CX, yb + 2, L + 14, 7.5, 0, 0.08, Math.PI - 0.08); tratto(c, 'rgba(0,0,0,0.3)', 1.1); c.setLineDash([]);
+    return;
+  }
   if (k.tipo === 'bandana') {
     // copre la testa fino a metà fronte, annodata di lato con le due code che pendono
     const f = p.faccia, L = f.larg, y0 = f.top + 37;
@@ -2033,6 +2095,7 @@ export function disegnaTesta(c, p, espr = 'normale', o = {}) {
     if (p.chiazze || p.segnoOcchiali) scottatura(c, p);
     if (p.gote) gote(c, p);
     if (espr === 'rabbia') furia(c, p);
+    else if (p.paonazzo) paonazzo(c, p);
     if (p.anziano) rughe(c, p);
     if (conBarba && p.barba !== 'piena') barba(c, p);
     for (const s of [-1, 1]) { occhio(c, p, s, espr); if (!p.sopraDavanti) sopracciglio(c, p, s, espr); }
@@ -2050,10 +2113,23 @@ export function disegnaTesta(c, p, espr = 'normale', o = {}) {
     lacrime(c, espr);
     // il sudore di chi è stato beccato (Michele, quando non batte lo scontrino)
     if (p.sudore) { goccia(c, CX - 52, 86, 5.5); goccia(c, CX + 55, 98, 5); goccia(c, CX + 46, 70, 3.8); }
+    if (p.occhialini) occhialini(c, p);
     if (p.occhiali) occhiali(c, p, espr);
     if (p.travestimento) travestimento(c, p);
   }
   if (o.corona) corona(c, o);
+}
+
+// gli occhialini da nuoto alzati sulla fronte (Greg in "Capitan Ghiori"): l'elastico che gira dietro
+// la testa e le due lenti a goccia, colorate e lucide (p.occhialini = il colore)
+function occhialini(c, p) {
+  const f = p.faccia, L = f.larg, y = f.top + 34, col = p.occhialini;
+  c.beginPath(); c.moveTo(CX - L - 2, y + 4); c.quadraticCurveTo(CX, y - 6, CX + L + 2, y + 4); tratto(c, CONT, 6); tratto(c, '#2a2f3a', 3.6);
+  for (const s of [-1, 1]) {
+    ellisse(c, CX + s * 19, y, 13, 9, s * 0.12); c.fillStyle = gradL(c, 0, y - 9, 0, y + 9, [[0, chiaro(col, 0.35)], [1, scuro(col, 0.2)]]); c.fill(); tratto(c, CONT, 2.6);
+    ellisse(c, CX + s * 19 - 4, y - 3, 4, 2.4, -0.4); c.fillStyle = 'rgba(255,255,255,0.7)'; c.fill();
+  }
+  c.beginPath(); c.moveTo(CX - 6, y + 1); c.lineTo(CX + 6, y + 1); tratto(c, CONT, 3.4); tratto(c, '#2a2f3a', 1.6);   // il ponticello
 }
 
 // Le guance rosse di chi ha bevuto (p.gote = quanto, da 0 a 1): le facce da sbronza del beer pong.
@@ -2152,6 +2228,14 @@ const POSE = {
   // ...e chi lo ascolta al tavolo, che lo indica ridendo (il braccio teso in su, di traverso)
   indicaSu: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 184], [86, 160]], dito: true },
   indicaTe: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [56, 200], [74, 192]], dito: true },
+  // "Capitan Ghiori" (Giorgio sul gommone): la mano giù di lato sulla maniglia della cordicella del
+  // fuoribordo, l'altra sul fianco (impugna); lo strappo, il braccio che tira su e di traverso (strappo);
+  // le braccia tese di lato a spingere la barca, in acqua (spinge)
+  impugna: { sx: [[33, 196], [58, 214], [78, 234]], dx: [[33, 196], [50, 214], [30, 232]] },
+  strappo: { sx: [[33, 196], [52, 176], [44, 128]], dx: [[33, 196], [56, 212], [40, 232]] },
+  spinge: { sx: [[33, 196], [8, 206], [-18, 202]], dx: [[33, 196], [60, 202], [86, 198]] },
+  // ...e Greg che nuota a rana lì vicino (le braccia aperte sul pelo dell'acqua)
+  nuota: [[33, 196], [62, 200], [88, 192]],
   // "La pizza dal Boni": la pala tenuta dritta (la sinistra in basso sul manico), le mani a coppa
   // davanti alla bocca per gridare l'ordinazione (con o.maniSopra), la corsa a pugni stretti, la
   // caraffa alla bocca, la pala alzata sopra la testa per cacciare gli imbucati
@@ -2333,7 +2417,7 @@ export function fiori(c, p, x0, y0, w, h, seme, k = 1) {
 }
 
 function braccio(c, p, punti, pollice) {
-  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione', 'divisa'].includes(v.tipo) || v.maniche === 'lunghe';
+  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione', 'divisa', 'marinaio'].includes(v.tipo) || v.maniche === 'lunghe';
   const manica = v.manica ?? v.colore;
   const linea = (a, b, m) => { c.beginPath(); c.moveTo(...a); c.lineTo(...b); if (m) c.lineTo(...m); };
   // palestrato: braccio più grosso, e il bicipite gonfio tra spalla e gomito
@@ -2347,6 +2431,13 @@ function braccio(c, p, punti, pollice) {
     // polsino a coste, più scuro
     const a = punti[1], b = punti[2];
     linea([lerp(a[0], b[0], 0.7), lerp(a[1], b[1], 0.7)], b); tratto(c, scuro(manica, 0.22), 13);
+  }
+  if (v.tipo === 'marinaio') {
+    // il polsino blu della casacca da marinaio, con due righe bianche
+    const a = punti[1], b = punti[2], pt = (t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+    linea(pt(0.62), b); tratto(c, v.collo, 13);
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L * 6.5, ny = dx / L * 6.5;
+    for (const t of [0.7, 0.8]) { const [x, y] = pt(t); c.beginPath(); c.moveTo(x - nx, y - ny); c.lineTo(x + nx, y + ny); tratto(c, v.righe ?? '#ffffff', 1.5); }
   }
   if (p.fascia && punti[0][0] < CX) {
     // la fascia al braccio (il Giso, sul braccio a sinistra): gialla, con la scritta CONTROLLO SCONTRINI
@@ -2447,6 +2538,10 @@ function corpo(c, p, espr, o = {}) {
         c.restore();
       }
       gamba(); tratto(c, CONT, 3);
+      if (p.arrotolati) {
+        rrect(c, x + 2.5, 257, 14, 19, 4); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 2.6);
+        rrect(c, x - 1.5, 251, 22, 8, 3); c.fillStyle = chiaro(p.pantaloni, 0.14); c.fill(); tratto(c, CONT, 2.4);
+      }
       if (p.larghi) { c.beginPath(); c.moveTo(x + 6, 252); c.lineTo(x + 4.5, 272); c.moveTo(x + 14, 256); c.lineTo(x + 16, 273); tratto(c, 'rgba(0,0,0,0.22)', 1.4); }   // pieghe
     }
     const xs = x - (s < 0 ? 7 : 1);
@@ -2896,6 +2991,19 @@ function corpo(c, p, espr, o = {}) {
     for (const s of [-1, 1]) { poli(c, [[CX + s * 0.8, 185], [CX + s * 15, 179], [CX + s * 12.5, 201]]); c.fillStyle = v.camicia; c.fill(); tratto(c, CONT, 1.6); }
     ellisse(c, CX, 188.5, 1.5, 1.5); c.fillStyle = '#ffffff'; c.fill(); tratto(c, 'rgba(0,0,0,0.5)', 0.7);
   }
+  if (v.tipo === 'marinaio') {
+    // il grande colletto alla marinara, blu navy con due righe bianche: scende sulle spalle e si chiude
+    // a V sul petto; nella V il fazzoletto blu annodato, con le due code
+    const C = v.collo, W = v.righe ?? '#ffffff';
+    for (const sd of [-1, 1]) {
+      const fascia = () => { c.beginPath(); c.moveTo(CX + sd * 2, 216); c.lineTo(CX + sd * 34, 186); c.quadraticCurveTo(CX + sd * 28, 180, CX + sd * 17, 180); c.lineTo(CX + sd * 2, 203); c.closePath(); };
+      fascia(); c.fillStyle = C; c.fill(); tratto(c, CONT, 2);
+      for (const d of [3.2, 6]) { c.beginPath(); c.moveTo(CX + sd * (2 + d * 0.3), 216 - d * 1.4); c.lineTo(CX + sd * (34 - d * 0.9), 186 - d * 0.4); tratto(c, W, 1.3); }
+    }
+    // il fazzoletto: il nodo e le due code che scendono
+    for (const sd of [-1, 1]) { poli(c, [[CX + sd * 1, 214], [CX + sd * 7, 214], [CX + sd * 9.5, 236], [CX + sd * 3, 233]]); c.fillStyle = scuro(C, 0.1); c.fill(); tratto(c, CONT, 1.6); }
+    ellisse(c, CX, 213, 6.5, 5); c.fillStyle = C; c.fill(); tratto(c, CONT, 1.8);
+  }
   if (v.tipo === 'polo') {
     // il colletto della polo, piatto sulle spalle
     for (const s of [-1, 1]) { poli(c, [[CX + s * 2, 182], [CX + s * 13, 176], [CX + s * 25, 182], [CX + s * 12, 192]]); c.fillStyle = chiaro(v.colore, 0.4); c.fill(); tratto(c, CONT, 1.6); }
@@ -2929,6 +3037,28 @@ function corpo(c, p, espr, o = {}) {
     rrect(c, CX - 15, 242, 30, 13, 2.5); tratto(c, alfa(scuro(G, 0.4), 0.9), 1.3);
     rrect(c, CX - fianchi - 1, 222, fianchi * 2 + 2, 6.5, 2); c.fillStyle = scuro(G, 0.06); c.fill(); tratto(c, CONT, 1.8);
     for (const s of [-1, 1]) { c.beginPath(); c.moveTo(CX + s * (fianchi - 4), 227); c.quadraticCurveTo(CX + s * (fianchi + 2), 238, CX + s * (fianchi - 1), 246); tratto(c, CONT, 3.6); tratto(c, G, 1.8); }
+  }
+  if (p.salvagente) {
+    // il gilet salvagente (Giorgio in barca): due pannelli imbottiti sul davanti, aperto al centro
+    // sulla maglia, con la fascia riflettente, le cuciture delle imbottiture e due cinghie con la fibbia
+    const G = p.salvagente, lato = 37 + g * 0.5;
+    for (const s of [-1, 1]) {
+      const pann = () => {
+        c.beginPath(); c.moveTo(CX + s * 7, 187); c.quadraticCurveTo(CX + s * 11, 178, CX + s * 23, 179);
+        c.quadraticCurveTo(CX + s * (lato + 3), 184, CX + s * (lato + 1), 201); c.lineTo(CX + s * (lato - 2), 246);
+        c.quadraticCurveTo(CX + s * 20, 252, CX + s * 6, 248); c.closePath();
+      };
+      pann(); c.fillStyle = gradL(c, CX + s * 6, 0, CX + s * lato, 0, [[0, chiaro(G, 0.14)], [1, scuro(G, 0.16)]]); c.fill();
+      c.save(); pann(); c.clip();
+      for (const y of [208, 227]) { c.fillStyle = 'rgba(0,0,0,0.14)'; c.fillRect(CX - 60, y, 120, 2); }
+      c.fillStyle = '#dfe3ea'; c.fillRect(CX - 60, 193, 120, 5); c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(CX - 60, 197, 120, 1);
+      c.restore();
+      pann(); tratto(c, CONT, 2.6);
+    }
+    for (const y of [216, 236]) {
+      rrect(c, CX - 10, y - 2.5, 20, 5, 1.5); c.fillStyle = '#1c1c22'; c.fill();
+      rrect(c, CX - 4, y - 4, 8, 8, 1.8); c.fillStyle = '#34343c'; c.fill(); tratto(c, CONT, 1.3);
+    }
   }
   if (v.tipo === 'piumino') {
     // catenina, colletto della camicia e collo alto del piumino

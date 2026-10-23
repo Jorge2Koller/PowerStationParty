@@ -19,6 +19,9 @@ export default {
     'Lascia cadere schifezze e ingredienti fuori ordine. Piano: la pila alta crolla!',
   ],
   obiettivo: 'Servi almeno 3 ordini!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivoPanini: 1, obiettivo: 'Servi almeno 1 ordine!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // (ritarate col giocatore automatico: quello bravo serve 2-3 ordini, 145-200 punti; a caso 0-14;

@@ -4,7 +4,7 @@
 //  punto mirato. Da una finestra aperta entra e la stanza si riempie di fumo, che
 //  passa piano alle stanze accanto e si dirada col tempo. Sul muro o sulle persiane
 //  chiuse rimbalza nel cortile: fumo sprecato che copre la vista per un po'.
-//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (65% in Lampo: soglia e sogliaLampo in config).
+//  Le finestre sbattono col vento e Franci le chiude. All'80% di fumo esce (60% in Lampo: soglia e sogliaLampo in config).
 //  Comandi: mouse e dito (fionda: appoggia, tira indietro e lascia), tastiera (frecce per
 //  mirare + SPAZIO tenuto: la forza sale e scende, si lancia al rilascio).
 //  Tre atti: all'inizio calma; poi TIRA VENTO (le finestre sbattono più spesso); alla fine

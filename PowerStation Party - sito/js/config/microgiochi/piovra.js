@@ -11,14 +11,17 @@ export default {
   comandi: [
     'Clicca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'CLIC sui tentacoli del Petri: SCIAF! (tastiera: TAB ragazza, FRECCE, SPAZIO schiaffo)',
-    'Aiuti (in basso o 1 e 2): BIRRA GRATIS (poi clicca dove lanciarla) e AMICO IN MEZZO',
+    'Aiuti (in basso o 1 e 2): BIRRA GRATIS (poi clicca dove lanciarla) e L\'AMICO, che sgrida il Petri: molla tutte!',
   ],
   comandiTouch: [
     'Tocca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'Tocca i tentacoli del Petri: SCIAF! Mollano la presa (anche con un altro dito)',
-    'Aiuti in basso: BIRRA GRATIS (poi tocca dove lanciarla) e AMICO IN MEZZO',
+    'Aiuti in basso: BIRRA GRATIS (poi tocca dove lanciarla) e L\'AMICO, che sgrida il Petri: molla tutte!',
   ],
   obiettivo: 'Fai scappare almeno 8 ragazze!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivoSalvate: 3, obiettivo: 'Fai scappare almeno 3 ragazze!', stringi: ['fasi'], sorpresaDa: 10.3 },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Revisione 4, la stessa scala per tutti (erano 60 / 150 / 250): 8 salvate, l'obiettivo, sono il bronzo.
@@ -45,10 +48,12 @@ export default {
   raggioDito: 4,           // col dito un po' di più
   // aiuti
   birra: { ricarica: 9, durata: 3, velPetri: 170 },   // (era lo shottino: stesso effetto, il Petri ci si fionda)
-  // l'amico in mezzo: sempre O'Sfurnacchiat. Si mette davanti alla ragazza più in pericolo e la
-  // segue (vel); i tentacoli che gli passano a meno di "raggio" sbattono, e non si possono prendere
-  // né lei né chi gli sta a meno di "scudo"
-  amico: { id: 'marco', ricarica: 11, durata: 4.5, raggio: 20, scudo: 34, vel: 120 },
+  // l'amico: sempre O'Sfurnacchiat. Arriva davanti al Petri e lo sgrida: il Petri molla subito tutte le
+  // ragazze (scappano da sole verso il tavolo delle amiche) e ritira i tentacoli, anche quelli a
+  // sorpresa, e per "durata" secondi resta mortificato e fermo. (Prima si metteva davanti a una
+  // ragazza sola e la proteggeva per 4,5 secondi, con la ricarica a 11: serviva poco. Ora che libera
+  // tutte insieme la ricarica è un po' più lunga)
+  amico: { id: 'marco', ricarica: 13, durata: 2.5 },
   fraseAmico: 'Gnamo Petri, falla finita',
   versoPetri: 'Grrhhh...',          // il verso gutturale del Petri, prima del lamento
   lamentoPetri: 'Gnamooo DeLu',
@@ -72,11 +77,10 @@ export default {
   frasiSalva: ['Ciao ciao!', 'Salva!', 'Grazie!', 'Arrivo, ragazze!'],
   frasiSchiaffo: ['Ahia!', 'Era per salutare!', 'Che manesca!', 'Ma dai!'],
   frasiBirra: ['Birra gratis?! Arrivo!', 'Una birra! Mia!', 'Offre la casa?!'],
-  frasiAmico: ['Ehi, io no!', 'Petri, calmati!', 'Giù le mani!', 'Fermo lì!'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 }, amico: { ricarica: 9, durata: 5.5, scudo: 40 } },
-    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 }, amico: { ricarica: 13, durata: 3.5, scudo: 28 } },
+    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 }, amico: { ricarica: 11, durata: 3 } },
+    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 }, amico: { ricarica: 15, durata: 2 } },
   },
 };

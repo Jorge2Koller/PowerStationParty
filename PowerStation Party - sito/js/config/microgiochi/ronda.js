@@ -27,9 +27,11 @@ export default {
   // Scheda di valutazione ("troppo facile"): le bagnarole sono quasi il doppio ma valgono meno. Il
   // bronzo sono 3 ombrelloni salvati: senza, il totale si ferma a tettoPrima (a caccia e basta, con
   // la spiaggia persa, si faceva il bronzo lo stesso); con, è almeno il bronzo, e argento e oro
-  // vengono dalle bagnarole affondate e dagli ombrelloni in più. Simulato su Normale: chi spara a
-  // caso fa 10-20, chi mira così così col cannone e basta li perde tutti (70), chi mira bene e usa
-  // le tre armi ne salva 3 (150-180) o 4 (220); l'oro vuole tutti e 5.
+  // vengono dalle bagnarole affondate e dagli ombrelloni in più. Simulato su Normale (ottobre 2026,
+  // coi nemici di meno): chi spara a caso non ne salva nessuno (5-15), chi mira così così col cannone
+  // e basta ne salva 4 o 5 (150-270, bronzo o argento), chi mira e anticipa abbastanza bene 5 su 5
+  // quasi sempre (265, argento), chi è bravo e usa le tre armi tutti e 5 con tante bagnarole (300-317,
+  // oro). Su Difficile il giocatore medio ne salva ancora 3 o 4, quello scarso quasi nessuno.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoOmbrelloni: 3,
   tettoPrima: 90,
@@ -57,8 +59,9 @@ export default {
   puntiRipreso: 5,        // ombrellone recuperato da una bagnarola in fuga
   bonusMulti: 3,          // per ogni bagnarola in più affondata con lo stesso colpo (DOPPIETTA! ...)
   // a fine partita, gli ombrelloni ancora piantati (da 0 a 5): sotto i 3 niente, poi sempre di più
-  // (prima 15 a ombrellone; poi 0/0/0/40/70/100: ora l'ombrellone in più vale più di prima)
-  bonusOmbrelloni: [0, 0, 0, 50, 100, 180],
+  // (prima 15 a ombrellone; poi 0/0/0/40/70/100: ora l'ombrellone in più vale più di prima. Tutti e 5
+  // valevano 180: coi nemici di meno ci sono meno punti da caccia, e l'oro non lo prendeva nessuno)
+  bonusOmbrelloni: [0, 0, 0, 50, 100, 210],
   // bagnarole: colpi per affondarle e lentezza rispetto alla velocità della fase
   // (nuove: la BANANA BOAT, veloce e a zig-zag; le CIAMBELLE, pirati a nuoto che arrivano in
   // gruppo, lente; il SOTTOMARINO, che va sott'acqua e lì lo prende solo il siluro)
@@ -73,22 +76,22 @@ export default {
   atti: [
     // (più difficile dopo la serata di prova: prima 2,4/1,7/1,1 secondi, velocità 17/22/28, zig-zag 0/10/20;
     // scheda di valutazione: più bagnarole in arrivo insieme, erano 3/4/6, e più tipi; nell'ARREMBAGGIO
-    // l'intervallo e la velocità sono un po' meno, erano 0,95 e 31: ci sono anche le ondate)
-    { da: 0, intervallo: 1.9, vel: 20, maxBarche: 4, tipi: { gommone: 0.6, pedalo: 0.4 }, zigzag: 6 },
-    { da: 12, nome: 'ARRIVA IL GALEONE!', frase: 'Il galeone! Tre colpi!', subito: 'galeone', intervallo: 1.35, vel: 26, maxBarche: 6, tipi: { gommone: 0.35, pedalo: 0.3, galeone: 0.15, banana: 0.2 }, zigzag: 14 },
-    { da: 24, nome: 'ARREMBAGGIO!', frase: 'Sottomarino! Usa il siluro!', subito: 'sottomarino', intervallo: 1.3, vel: 29, maxBarche: 7, tipi: { gommone: 0.3, pedalo: 0.2, galeone: 0.15, banana: 0.2, sottomarino: 0.15 }, zigzag: 24 },
+    // l'intervallo e la velocità sono un po' meno, erano 0,95 e 31: ci sono anche le ondate.
+    // Poi, ottobre 2026, "decisamente troppo difficile": meno nemici. Erano 4/6/7 bagnarole insieme,
+    // una ogni 1,9/1,35/1,3 secondi, velocità 20/26/29)
+    { da: 0, intervallo: 2.4, vel: 18, maxBarche: 3, tipi: { gommone: 0.6, pedalo: 0.4 }, zigzag: 6 },
+    { da: 12, nome: 'ARRIVA IL GALEONE!', frase: 'Il galeone! Tre colpi!', subito: 'galeone', intervallo: 1.8, vel: 22, maxBarche: 4, tipi: { gommone: 0.35, pedalo: 0.3, galeone: 0.15, banana: 0.2 }, zigzag: 14 },
+    { da: 24, nome: 'ARREMBAGGIO!', frase: 'Sottomarino! Usa il siluro!', subito: 'sottomarino', intervallo: 1.6, vel: 25, maxBarche: 5, tipi: { gommone: 0.3, pedalo: 0.2, galeone: 0.15, banana: 0.2, sottomarino: 0.15 }, zigzag: 24 },
   ],
   // Le ondate: gruppi che arrivano insieme a un'ora precisa (secondi, come gli atti), in più delle
   // bagnarole normali e senza contare nel massimo. Le ciambelle in gruppo sono il bersaglio del mortaio.
+  // (ottobre 2026, meno nemici: tolti i due galeoni a 15 secondi e la flottiglia a 17, che aveva 5
+  // ciambelle; le altre flottiglie avevano 4 e 6 ciambelle, le banane a 20 secondi erano 2)
   ondate: [
-    { t: 5, tipo: 'ciambella', quante: 4, nome: 'FLOTTIGLIA!' },
+    { t: 5, tipo: 'ciambella', quante: 3, nome: 'FLOTTIGLIA!' },
     { t: 9, tipo: 'banana', quante: 1 },
-    // (i due galeoni a 22 secondi toccavano riva proprio alla fine, insieme all'ARREMBAGGIO:
-    // ombrellone perso senza rimedio)
-    { t: 15, tipo: 'galeone', quante: 2, nome: 'DUE GALEONI!' },
-    { t: 17, tipo: 'ciambella', quante: 5, nome: 'FLOTTIGLIA!' },
-    { t: 20, tipo: 'banana', quante: 2, nome: 'BANANE IN VISTA!' },
-    { t: 26, tipo: 'ciambella', quante: 6, nome: 'FLOTTIGLIA!' },
+    { t: 20, tipo: 'banana', quante: 1, nome: 'BANANA IN VISTA!' },
+    { t: 26, tipo: 'ciambella', quante: 4, nome: 'FLOTTIGLIA!' },
   ],
   frasi: ['FUOCO!', 'Mirate alla chiglia!', 'Non un passo indietro!', 'Difendete gli ombrelloni!', 'Avanti, soldato!', 'Ricaricate!', 'Mortaio sui gruppi!', 'Il siluro non perdona!'],
   frasiCassa: ['Munizioni!', 'Prendi, soldato!', 'Al volo!'],

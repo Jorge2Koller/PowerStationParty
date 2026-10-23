@@ -54,6 +54,14 @@ export class MicrogiocoBase extends Phaser.Scene {
     this.giocatore = Sessione.inScena;
     this.livello = Sessione.livello;
     this._cfg = livellato(CONFIG.microgiochi[this.id], this.livello);
+    // In Lampo (15 secondi) vale anche la sezione "lampo" della configurazione, sopra le altre: comandi
+    // e obiettivo (li mostra l'introduzione), i numeri dell'obiettivo, e "stringi" = gli elenchi a
+    // tempo (atti, fasi) i cui inizi (da) si stringono nei 15 secondi, in proporzione
+    if (Sessione.tipo === 'lampo' && this._cfg.lampo) {
+      const L = this._cfg.lampo, k = CONFIG.modalita.lampo.durata / this._cfg.durata;
+      this._cfg = { ...this._cfg, ...L };
+      for (const nome of L.stringi ?? []) this._cfg[nome] = this._cfg[nome].map((x) => ({ ...x, da: x.da * k }));
+    }
     preparaGiocatore(this, Sessione.giocatore.id, Sessione.controSeStesso);
     this.prova = !!Sessione.prova;
     Sessione.prova = false;   // (vale per questa partita sola)

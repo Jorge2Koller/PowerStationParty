@@ -19,6 +19,9 @@ export default {
     'Evita naso, labbra, occhi e nei. LAMA PIENA: sciacquala nella bacinella',
   ],
   obiettivo: "Radi almeno il 75% della barba!",
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { soglia: 35, obiettivo: 'Radi almeno il 35% della barba!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Revisione 4, la stessa scala per tutti (erano 50 / 85 / 102, e si vinceva con l'85%: il bronzo

@@ -234,6 +234,21 @@ const SFX = {
     o.start(t); lfo.start(t); o.stop(t + d + 0.02); lfo.stop(t + d + 0.02);
     rumore(t, d, 0.02, 3200);
   },
+  // Capitan Ghiori: il fuoribordo del Danda 2. Lo strappo della cordicella (lo "zzip" che sale), il
+  // colpo di tosse a ogni strappo ("brum... prff"), l'avviamento (il ruggito che sale e gira), il
+  // motore che va (un pezzo da ripetere), lo scoppiettio, il "puf puf" quando si spegne e il motore
+  // che muore (tre colpi sempre più lenti e bassi)
+  strappo: (t) => { rumore(t, 0.12, 0.12, 2600, 'highpass'); nota(240, t, 0.12, 'sawtooth', 0.035, 520); },
+  brum: (t) => { for (let i = 0; i < 3; i++) nota(62 + i * 9, t + 0.03 + i * 0.05, 0.07, 'sawtooth', 0.1, 50 + i * 8); rumore(t + 0.2, 0.16, 0.16, 600, 'lowpass'); },
+  avviamento: (t) => {
+    for (let i = 0; i < 8; i++) nota(60 + i * 7, t + i * 0.045, 0.06, 'sawtooth', 0.1, 55 + i * 7);
+    nota(110, t + 0.36, 0.7, 'sawtooth', 0.09, 190); nota(55, t + 0.36, 0.7, 'square', 0.06, 95);
+    rumore(t + 0.3, 0.75, 0.12, 500, 'lowpass');
+  },
+  motoreVa: (t) => { for (let i = 0; i < 6; i++) nota(150 + (i % 2) * 12, t + i * 0.07, 0.07, 'sawtooth', 0.045, 140); rumore(t, 0.42, 0.05, 700, 'lowpass'); },
+  scoppietta: (t) => { rumore(t, 0.09, 0.3, 700, 'lowpass'); nota(110, t, 0.08, 'square', 0.08, 60); },
+  pufpuf: (t) => { for (const [dt, f] of [[0, 120], [0.32, 95]]) { rumore(t + dt, 0.16, 0.22, 450, 'lowpass'); nota(f, t + dt, 0.14, 'square', 0.07, f * 0.55); } },
+  muore: (t) => { for (const [dt, f] of [[0, 120], [0.18, 100], [0.42, 80], [0.75, 60]]) { rumore(t + dt, 0.1, 0.2, 500, 'lowpass'); nota(f, t + dt, 0.1, 'sawtooth', 0.07, f * 0.6); } },
 };
 
 // Musica: lead (onda quadra) + basso (triangolare), un passo = un ottavo

@@ -19,6 +19,9 @@ export default {
     'Riempi la casa di fumo fino alla tacca gialla: Franci esce!',
   ],
   obiettivo: 'Fai uscire Franci di casa!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: Franci fuori vale 50 + 2 al secondo avanzato + i fumogeni a segno.
   // Revisione 4, la stessa scala per tutti (erano 40 / 110 / 170): far uscire Franci è il bronzo;
@@ -29,9 +32,9 @@ export default {
   // almeno il bronzo: la vittoria è farlo uscire, come dice l'obiettivo)
   tettoPrima: 90,
   soglia: 80,             // % di fumo in casa a cui Franci esce
-  // in Lampo (15 secondi, solo il primo atto) la soglia è più bassa: col fumo di adesso all'80% non
+  // in Lampo (15 secondi, coi tre atti stretti) la soglia è più bassa: col fumo di adesso all'80% non
   // ci arrivava quasi nessuno. Comandi e HUD non dicono il numero: c'è la tacca gialla sulla barra
-  sogliaLampo: 65,
+  sogliaLampo: 60,         // (era 65 quando il Lampo aveva solo il primo atto, più tranquillo)
   // punti
   puntiFinestra: 5,       // fumogeno entrato da una finestra (era 3)
   puntiFranci: 9,         // ...nella stanza dove c'è Franci (era 6)

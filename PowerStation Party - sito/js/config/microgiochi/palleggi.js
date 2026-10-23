@@ -19,6 +19,9 @@ export default {
     "Conta la serie più lunga: da 12 di fila in su vale tanto. Il pallone d'oro vale 20!",
   ],
   obiettivo: 'Fai una serie di almeno 12 palleggi!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivoSerie: 6, obiettivo: 'Fai una serie di almeno 6 palleggi!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Revisione 4, la stessa scala per tutti (erano 180 / 380 / 600): una serie di 12 (l'obiettivo) è

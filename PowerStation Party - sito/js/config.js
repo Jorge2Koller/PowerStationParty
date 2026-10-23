@@ -27,6 +27,7 @@ import pizza from './config/microgiochi/pizza.js';
 import ballata from './config/microgiochi/ballata.js';
 import proverbi from './config/microgiochi/proverbi.js';
 import scontrino from './config/microgiochi/scontrino.js';
+import baratti from './config/microgiochi/baratti.js';
 import beerpong from './config/beerpong.js';
 import { sfotto, sfottoTanti, frasiPareggio } from './config/frasi.js';
 import premi from './config/premi.js';
@@ -89,10 +90,10 @@ export const CONFIG = {
 
   // Ordine dei microgiochi nella modalità sfida
   // (la sfida veloce li pesca a caso da questa lista)
-  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino'],
+  ordineSfida: ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida', 'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino', 'baratti'],
 
   // un file per microgioco, nell'ordine della raccolta (vedi js/config/microgiochi/)
-  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor, pizza, ballata, proverbi, scontrino },
+  microgiochi: { spina, regrorio, barba, panino, mani, sego, ronda, blackjack, palleggi, passaseo, bota, guida, piovra, scapoli, retromarcia, beerpong: beerpongMicro, xfactor, pizza, ballata, proverbi, scontrino, baratti },
 
   // il beer pong: il tiro, la sbronza, le gag e le reazioni, in comune tra il microgioco qui sopra
   // e la modalità BEER PONG (js/config/beerpong.js)

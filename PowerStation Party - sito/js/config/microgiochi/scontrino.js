@@ -26,6 +26,9 @@ export default {
     'Fermi uno onesto? Falso allarme. Se Michele grida ASPETTA, aspetta!',
   ],
   obiettivo: 'Becca 6 furbi, con al massimo 2 falsi allarmi!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivo: 'Becca 3 furbi, con al massimo 1 falso allarme!' },
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). L'obiettivo è il
   // bronzo: finché non è raggiunto (6 imbrogli presi e non più di 2 falsi allarmi) il totale si ferma a
   // tettoPrima; quando lo è, sale almeno al bronzo. Argento e oro vengono dai punti.

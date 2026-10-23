@@ -13,7 +13,7 @@
 //  un ombrellone e scappa: affondala prima che sparisca all'orizzonte e l'ombrellone torna.
 //  Tre atti (in Lampo si stringono nei suoi 15 secondi): prima gommoni e pedalò, poi ARRIVA IL
 //  GALEONE (con le banane), alla fine l'ARREMBAGGIO (coi sottomarini); in mezzo, le ondate
-//  (FLOTTIGLIA! di ciambelle, due galeoni...). Le bagnarole arrivano uguali per tutti (seme del round).
+//  (FLOTTIGLIA! di ciambelle, le banane). Le bagnarole arrivano uguali per tutti (seme del round).
 //  (Scheda di valutazione: "monotono, troppo facile": prima c'erano solo il cannone e tre tipi di
 //  bagnarole, ora tre armi, sei tipi e le ondate.)
 import { MicrogiocoBase } from './MicrogiocoBase.js';

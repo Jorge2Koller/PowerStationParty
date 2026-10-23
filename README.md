@@ -5,7 +5,7 @@ giocatori sullo stesso schermo (ci si passa la tastiera o il telefono). Ognuno
 sceglie il suo personaggio, tutti giocano lo stesso microgioco, un turno a testa,
 e vince il round chi fa più punti.
 
-I microgiochi sono ventuno:
+I microgiochi sono ventidue:
 
 | id | Titolo | Ospite |
 |----|--------|--------|
@@ -30,6 +30,7 @@ I microgiochi sono ventuno:
 | `ballata` | La ballata del Pallaio | Lori, il cantastorie |
 | `proverbi` | Le Perle di Denny | Denny (Pastaffi, il figlio di Emilio) |
 | `scontrino` | Scontrino, prego! | Michele, alla cassa (col Giso, il paladino degli scontrini) |
+| `baratti` | Capitan Ghiori | Giorgio, sul suo gommone (il Danda 2) |
 
 Il beer pong c'è anche come **modalità** (la partita vera tra di voi, a tiri alternati): vedi
 "Modalità" e "Beer pong" qui sotto.
@@ -208,7 +209,8 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
        classifica.
    - **PARTY**
      - **Lampo**: 6 microgiochi da 15 secondi, e si parte subito (niente 3-2-1). I punti,
-       più corti, non contano per medaglie e record (si vince con la condizione del microgioco).
+       più corti, non contano per le medaglie e i record normali: il Lampo ha i suoi **record
+       Lampo**, a parte (si vince con la condizione del microgioco). Si gioca anche da soli.
      - **Squadre** (da 4 giocatori): ROSSI contro BLU, in ordine di scelta (il 1°, il 3°,
        il 5°... sono rossi; il 2°, il 4°... blu). A ogni round conta la media dei punti
        sfida della squadra, così vale anche con squadre dispari. Vince la squadra con più
@@ -232,6 +234,9 @@ Dal menu, **GIOCA** porta a tre schermate, una dopo l'altra:
      microgiochi, stesso mazzo, stesse Golf...), a livello NORMALE. Si può rigiocare: resta
      il punteggio migliore del giorno; la prima volta valgono 5 Pinte, e si contano i giorni
      di fila.
+   - **Lampo**: 6 microgiochi da 15 secondi pescati a caso, uno dopo l'altro. Alla fine la
+     schermata LAMPO col punteggio di ogni microgioco in punti sfida (da 0 a 100), il totale e il
+     record del Lampo da soli (`statistiche.lampoSolo`, nel salvataggio).
 
    Numeri e regole di Lampo, Da solo, Squadre, Torneo, Sfida del giorno e Beer Pong sono in
    `js/config/modalita.js`.
@@ -278,6 +283,12 @@ vederne l'anteprima, e col clic si gioca; col dito il primo tocco sceglie e il s
 partire; da tastiera le frecce e INVIO. **A CASO** (o R) fa saltare il cursore tra i riquadri e si
 gioca dove si ferma. Da soli, in alto a destra, il livello (L, o un tocco).
 
+Sopra GIOCA! c'è la **versione**: NORMALE 35 s o LAMPO 15 s, e si cambia col tasto V o con un clic o
+un tocco sulla pillola. In LAMPO il titolo diventa ALLENAMENTO LAMPO (o PARTITA SINGOLA LAMPO), i
+riquadri hanno il fulmine e la scheda mostra i 15 secondi, l'obiettivo del Lampo e il record Lampo
+(la medaglia no: in Lampo non conta); GIOCA! fa partire la versione Lampo, e RIPROVA e la rivincita
+restano in Lampo. La scelta si ricorda nel salvataggio (`impostazioni.listaLampo`).
+
 Le foto sono in `icone/anteprime/` (`<id>.webp` il riquadro, `<id>-1.webp`... le tre dell'anteprima):
 le scatta `strumenti/anteprime.py`, che apre ogni microgioco nel browser, lo gioca un po' a caso e lo
 ferma in tre momenti. Si rilancia quando un microgioco cambia aspetto (anche uno solo:
@@ -286,7 +297,7 @@ ferma in tre momenti. Si rilancia quando un microgioco cambia aspetto (anche uno
 Tutto quello che il gioco ricorda sta in un **salvataggio** unico (`js/salvataggio.js`, nel
 `localStorage` del browser): impostazioni, personaggi dell'ultima partita, un registro degli
 ultimi punteggi di ogni microgioco (serve a ritarare le medaglie) e, più avanti, statistiche,
-record, trofei e Pinte. Ha un numero di versione: quando la forma dei dati cambia, i
+record (quelli del Lampo a parte, in `recordLampo`), trofei e Pinte. Ha un numero di versione: quando la forma dei dati cambia, i
 salvataggi vecchi si aggiornano da soli (dalla versione 2, con i punti di tutti i microgiochi
 sulla stessa scala, i record e i "migliore" ripartono da zero; trofei, medaglie e Pinte restano,
 e chi aveva comprato Lampo o Da solo riprende le sue 30 Pinte). Al primo avvio il gioco chiede
@@ -329,7 +340,8 @@ Sempre dalle Impostazioni, alla riga **Salvataggio**:
   senza è SCONFITTA, in tutti i microgiochi (la regola è in un posto solo,
   `MicrogiocoBase.termina`). L'obiettivo scritto nei comandi (4 guidate, 3 SÌ, 3 ragazze...) è
   tarato per coincidere col bronzo; il finale animato e il titolo seguono sempre il risultato.
-  In Lampo, dove le medaglie non contano, decide l'obiettivo del microgioco.
+  In Lampo, dove le medaglie non contano, decide l'obiettivo del microgioco, e al posto della
+  medaglia c'è il record Lampo del microgioco (NUOVO RECORD LAMPO!, o quello da battere).
 - **Premi buffi**: a fine sfida, prima della classifica finale, fino a tre premi ("Lo
   specialista", "Mani di burro", "L'eterno secondo", "Il diesel"...), calcolati dai punti
   sfida dei round (`js/premi.js`, titoli e frasi in `js/config/premi.js`).
@@ -380,6 +392,7 @@ di ogni musica).
 | La pizza dal Boni | `osteria` | osteria, tarantella in 6/8 | 112 | Sol maggiore | +7% |
 | Le Perle di Denny | `quiz` | quiz, rilassata e sorniona | 100 | Fa maggiore | +5% |
 | Scontrino, prego! | `guardie` | guardie e ladri, comica e staccata | 126 | Si♭ maggiore | +7% |
+| Capitan Ghiori | `marinara` | canzone da marinai, in 6/8 | 108 | Re minore | +7% |
 
 **Musiche che non cambiano**: i giochi a tempo di musica hanno note, battute o colpi sincronizzati con
 la base, quindi tengono la loro (in `TRACCE`, in `js/audio.js`): L'Incubo degli Scapoli (`pista`),
@@ -496,7 +509,9 @@ Vale anche per i personaggi di contorno, elencati in `cast` nella sezione del
 microgioco (Pastaffi in "Emilio in Retromarcia", Oli in "Provini a X-Factor"). Pastaffi è anche
 Denny, l'ospite di "Le Perle di Denny": chi lo sceglie lì gioca contro se stesso. In "Scontrino,
 prego!" giocano contro se stessi Michele (l'ospite, alla cassa) e il Giso (nel `cast`): il vice
-del Giso, lì, è il doppione.
+del Giso, lì, è il doppione. In "Capitan Ghiori" giocano contro se stessi Giorgio (l'ospite, a poppa
+del suo gommone: a prua, a incitarlo, c'è il suo doppione) e Greg (nel `cast`): se gioca Greg, a prua
+c'è lui e in acqua nuota il suo doppione.
 
 ### Beer pong
 
@@ -644,7 +659,7 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     CHIUDE TUTTO
   - la traiettoria tratteggiata e il mirino dicono dove arriva: verde = finestra
     aperta, rosso = persiane chiuse, grigio = muro
-  - la tacca gialla sulla barra del fumo è dove Franci esce: all'80%, al 65% in Lampo
+  - la tacca gialla sulla barra del fumo è dove Franci esce: all'80%, al 60% in Lampo
 - TorRONDAcelli (SPARA!):
   - mouse: punta sul mare e clicca per sparare; tastiera: FRECCE + SPAZIO;
     dito: tocca il mare dove vuoi colpire
@@ -665,8 +680,11 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     DOPPIETTA o una TRIPLETTA
   - munizioni del cannone: il Generale lancia una cassa ogni tanto, che atterra da sola sul
     cannone; un colpo torna anche da solo ogni tanto
-  - tre atti: gommoni, pedalò e flottiglie; dal 12° secondo ARRIVA IL GALEONE! (e le banane); dal
-    24° ARREMBAGGIO! (il sottomarino). In più ondate a ore fisse: DUE GALEONI!, BANANE IN VISTA!
+  - tre atti: gommoni e pedalò, al massimo 3 in arrivo insieme; dal 12° secondo ARRIVA IL GALEONE!
+    (e le banane, fino a 4 insieme); dal 24° ARREMBAGGIO! (il sottomarino, fino a 5 insieme). In più
+    ondate a ore fisse: due FLOTTIGLIE di ciambelle (3 al 5° secondo, 4 al 26°) e due banane (al 9°
+    e al 20°: BANANA IN VISTA!). Ottobre 2026, più facile: prima erano 4/6/7 insieme, più veloci, con
+    DUE GALEONI! a 15 secondi e tre flottiglie da 4, 5 e 6
 - L'Ingiocabile (blackjack):
   - 1, 2, 3 o clic/tocco sulle fiches: punti 10, 25 o 50
   - C o SPAZIO = carta, S o INVIO = stai, D = raddoppia (anche coi pulsanti)
@@ -747,9 +765,12 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     chiacchierare. Tocca il tentacolo (SCIAF!) per liberarla; col dito si può guidare una
     ragazza e intanto schiaffeggiare con un altro dito
   - aiuti in basso, con la ricarica: BIRRA GRATIS (poi tocca dove lanciarla: il Petri ci si
-    fionda e molla tutto) e AMICO IN MEZZO: arriva O'Sfurnacchiat ("Gnamo Petri, falla
-    finita"), si mette davanti alla ragazza più in pericolo e la segue; i tentacoli che gli
-    passano contro sbattono (BONK!) e lei e chi le sta accanto non si possono prendere
+    fionda e molla tutto) e L'AMICO: arriva O'Sfurnacchiat, si piazza davanti al Petri, lo
+    indica e lo sgrida ("Gnamo Petri, falla finita"). Il Petri risponde ("Gnamooo DeLu"), molla
+    TUTTE le ragazze in un colpo e ritira tutti i tentacoli, anche quelli a sorpresa; per due
+    secondi e mezzo resta mortificato (testa bassa, tentacoli fermi, niente tentacoli nuovi:
+    `amico.durata` in `piovra.js`). Le ragazze liberate corrono da sole al tavolo delle amiche, e
+    se ci arrivano sono salve; poi il Petri riparte e l'amico se ne va
   - tastiera: TAB sceglie la ragazza, FRECCE la guidano, SPAZIO schiaffo al tentacolo più
     vicino a lei, 1 e 2 gli aiuti (la birra va da sola nel punto più lontano dalle ragazze)
   - dal computer (mouse o trackpad) i tentacoli vanno un po' più piano che col dito (`velPC` in
@@ -795,6 +816,9 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
     più forte); a 12 secondi dalla fine PASSA IL GATTO e tutti i cani gli vanno dietro.
     Allora Pastaffi esce di casa, prende in braccio il cane più vicino alla macchina e lo
     porta nel prato (ed Emilio inchioda per un secondo)
+  - in Lampo il vialetto è lungo uguale: Emilio parte prima e fa scatti più svelti, con meno
+    attesa tra uno e l'altro (la sezione `lampo` della configurazione), e il gatto passa a 5
+    secondi dalla fine
   - i cani stanno nell'array `cani` di `js/config/microgiochi/retromarcia.js`: nome, colore
     del collare, personalità (`pigro`, `pallina`, `goloso`), taglia, macchia. Si possono
     rinominare, togliere o aggiungere; chi non ha il nome si chiama da solo Morgan, col
@@ -998,6 +1022,45 @@ modalità nel blocco `beerpong` di `js/config/modalita.js`.
   - clienti, trucchi e distrazioni escono dal seme del round: nella stessa sfida tutti trovano
     gli stessi clienti negli stessi momenti (Sfida del giorno compresa). Il nome del locale
     (sull'insegna, sulla polo di Michele e nei testi) è `nomeLocale` nella configurazione
+- Capitan Ghiori (TIRA!: nel golfo di Baratti, in una giornata grigia, il gommone di Giorgio, il
+  Danda 2, non parte: l'avviamento elettrico è morto, "La batteria è a terra!"):
+  - Giorgio, vestito da marinaio (il cappello bianco tondo con l'ancora blu, la casacca bianca a
+    maniche lunghe col colletto blu a due righe bianche e il fazzoletto blu, i polsini blu a righe, i
+    pantaloni bianchi; viso e capelli sono i suoi), è in piedi a poppa
+    col piede sul fuoribordo e la cordicella in mano; chi gioca è seduto a prua e lo incita. Un
+    solo comando: SPAZIO, il clic o un tocco in qualunque punto (anche con due dita). Contano al
+    massimo `premuteAlSecondo` pressioni al secondo (10): quelle in più non contano, così vince il
+    ritmo e non il dito più veloce
+  - CARICA ("TIRA!"): ogni pressione è uno strappo e la barra dei GIRI, a sinistra, sale; se
+    rallenti scende da sola. A ogni strappo il motore tossisce ("brum... prff"), esce il fumo e
+    Giorgio tira con tutto il corpo
+  - STRAPPO FINALE ("ORA!"): a barra piena, in alto compare il contagiri con la lancetta che va
+    avanti e indietro e la zona verde che lampeggia (al centro, in giallo, il PERFETTO). Conta UN
+    colpo: nel verde il motore parte con un ruggito e una nuvola di fumo, il gommone fa 15 metri tra
+    i barchini ormeggiati, poi "puf puf" e si ricomincia dalla carica; fuori dal verde (anche
+    premendo ancora a raffica) il motore muore, Giorgio si dispera o si siede di colpo sul tubolare
+    e la barra torna a metà. Se non premi, dopo un po' la lancetta sparisce e la barra si scarica
+  - tre atti: SI PARTE! (mare calmo, la barra sale svelta e scende piano, zona larga); dal 12°
+    secondo INGOLFATO! (fumo nero, la barra sale più piano e scende più svelta, zona più stretta);
+    dal 24° ARRIVA LA BURRASCA! (le onde fanno ondeggiare il gommone, la zona verde si sposta, la
+    lancetta corre). Giorgio è sempre più sudato e paonazzo. A FACILE la barra sale
+    più svelta e scende più piano, la zona è più larga e la lancetta più lenta; a DIFFICILE il
+    contrario
+  - dal secondo atto, nell'acqua bassa vicino ai motori delle barche ormeggiate, nuota GREG
+    (fuori dall'acqua dal petto in su, con gli occhialini da nuoto sulla fronte), terrorizzato
+    dalle eliche: ogni tanto guarda sott'acqua e scatta via, e dice le sue frasi (`frasiGreg`).
+    Quando il motore del Danda parte scappa velocissimo tra gli schizzi (`frasiGregMotore`), poi
+    torna piano; nella burrasca è ancora più agitato
+  - in alto i metri che mancano alla boa rossa in fondo al golfo (la vittoria: 5 partenze) e a
+    destra punti e partenze. Alla fine, se vinci il Danda 2 sfreccia oltre la boa con la scia
+    bianca, Giorgio al volante e il cappello da marinaio che vola via (e Greg che scappa); se perdi
+    Giorgio scende nell'acqua
+    bassa, coi pantaloni arrotolati, e spinge il gommone a piedi, mentre da riva qualcuno ride
+  - in Lampo solo lo strappo puro: niente lancetta, a barra piena il motore parte da solo; bastano
+    3 partenze. Comandi e obiettivo del Lampo li mostra l'introduzione (la sezione `lampo` della
+    configurazione)
+  - la zona verde di ogni strappo finale esce dal seme del round: alla stessa partenza tutti
+    trovano la zona nello stesso punto
 - ESC: pausa — M: audio sì/no (sul telefono: la pausa con due tocchi in alto a destra, l'audio dalla pausa)
 
 Sul telefono, dove il browser lo permette (Android), colpi ed errori fanno vibrare
@@ -1011,6 +1074,15 @@ comandi è tarato per coincidere col bronzo. Dove l'obiettivo è un numero (piat
 ragazze, guidate, ordini...) quel che lo raggiunge vale sempre di più, così sotto l'obiettivo non
 si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori automatici
 (`test/bot.py`: bravo, a caso, fermo; chi tocca a caso o sta fermo non prende mai il bronzo).
+
+**In Lampo** (15 secondi) le medaglie non contano: si vince con l'obiettivo del Lampo, che
+l'introduzione mostra al posto di quello normale (la sezione `lampo` della configurazione), e i
+punti vanno nel record Lampo. Gli atti a tempo si stringono nei 15 secondi. Dove l'obiettivo
+cambia: la Barba il 35% rasato; il Panino 1 ordine; l'Ingiocabile 43 fiches; MaraZio una serie di 6
+palleggi; il Bota 5 scottature spente; il Passaggiorgio 2 guidate; il Petri 3 ragazze; la pizza 1
+pizza giusta senza far scoprire tutti e tre; la ballata 3 strofe giuste su 4; le Perle 3 proverbi;
+lo Scontrino 3 furbi con al massimo un falso allarme; Capitan Ghiori 3 partenze; Sego il 60% di fumo.
+Gli altri hanno lo stesso obiettivo, in meno tempo.
 
 - **La Spina** (35 s): pinta 15, boccale 24, calice 27, +9 se PERFETTA; Beppe fa 18 a pinta. Il
   punteggio è la sfida con Beppe: 100 a pari punti, più quanto lo batti (o meno quanto ti batte).
@@ -1026,13 +1098,13 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   un piatto, +2 per il guanto; alla fine i piatti ancora tuoi: sotto i 3 niente, 3 = +50, 4 = +80,
   5 = +120. Persi tutti, finisce prima.
 - **Sego** (35 s): +5 per ogni fumogeno in una finestra aperta (+9 nella stanza di Franci), -3 per
-  quelli sprecati. Se Franci esce (80% di fumo in casa, 65% in Lampo): +40 e +15 per ogni secondo che
+  quelli sprecati. Se Franci esce (80% di fumo in casa, 60% in Lampo): +40 e +15 per ogni secondo che
   avanza, e vale almeno il bronzo; se non esce, un quinto della percentuale di fumo, e il totale si
   ferma a 90 (la vittoria è farlo uscire).
 - **TorRONDAcelli** (35 s): per ogni bagnarola affondata gommone 2, pedalò 3, galeone 5, banana 4,
   ciambella 1, sottomarino 6 (+1 se lontana); +5 per ogni ombrellone ripreso, +3 per ogni bagnarola in
   più affondata con lo stesso colpo; alla fine gli ombrelloni piantati: sotto i 3 niente, 3 = +50,
-  4 = +100, 5 = +180. Vittoria con 3 ombrelloni salvati (il bronzo): senza, il totale si ferma a 90.
+  4 = +100, 5 = +210. Vittoria con 3 ombrelloni salvati (il bronzo): senza, il totale si ferma a 90.
 - **L'Ingiocabile** (35 s): 1 punto per ogni fiche vinta (sopra le 100 di partenza). Le mani vinte
   giocate tutte da pro (le scelte uguali alla strategia di base) il banco le paga il doppio.
   Vittoria con 100 fiches vinte. Al verde, finisce prima.
@@ -1095,6 +1167,16 @@ si arriva al bronzo e sopra si sale in fretta verso l'oro. Tarati coi giocatori 
   sesto lo porta almeno a 100 e da lì non si scende più sotto. Coi giocatori simulati: chi è
   bravo arriva all'argento (una decina di proverbi), l'oro vuole 13-14 proverbi quasi tutti
   veloci. In Lampo (15 secondi) bastano 3 giusti e i punti sono quelli e basta.
+- **Capitan Ghiori** (35 s): +10 per ogni volta che il motore parte, +5 se lo strappo finale è al
+  centro della zona verde (PERFETTO), +1 per ogni metro fatto dal gommone (15 a partenza); uno
+  strappo finale sbagliato non dà punti ma non ne toglie. Vittoria: la boa rossa, cioè 5 partenze,
+  che sono il bronzo: finché non ci arrivi se ne vedono al massimo 90, quando ci arrivi c'è il
+  totale (contato tutto) e almeno 100. Coi giocatori simulati, a NORMALE: chi è lento (5-6 colpi
+  al secondo, poco preciso) arriva alla boa tre volte su quattro, chi è medio prende quasi sempre
+  l'argento, chi è bravo l'argento vicino all'oro, l'oro vuole il ritmo pieno e quasi tutti
+  PERFETTO; chi preme sempre a raffica non fa partire il motore mai, chi sta fermo nemmeno. A
+  DIFFICILE il lento non arriva alla boa e il medio una volta su due. In Lampo (15 secondi, solo lo
+  strappo) bastano 3 partenze e i punti sono quelli e basta.
 - **Scontrino, prego!** (35 s): +10 per ogni imbroglio scoperto, +5 se lo becchi entro 0,6 secondi
   da quando il cliente si gira verso la porta, per il moltiplicatore della serie (x1,5 dopo 3
   presi di fila, x2 dopo 5; un falso allarme o uno che scappa la azzerano); -5 per ogni falso
@@ -1137,7 +1219,11 @@ sgattaiola; `ultimo`: lo scontrino gli arriva al volo; `t.P` da quando si può f
 gira verso la porta, `t.D` quando ci arriva), `scena.bersaglio()` dice chi ferma SPAZIO, `scena.premi()`
 lo ferma e `scena.premi(x, y)` è un clic lì; `programma` e `serata` di `ScontrinoScene.js`
 dicono in anticipo com'è la serata di un seme.
-(Le Perle di Denny e Scontrino, prego!, arrivati dopo, nelle prove non ci sono ancora.)
+In Capitan Ghiori la barra è `scena.giri` (0..1) e la fase `scena.stato` ('carica', 'lancetta',
+'corsa', 'puf', 'sbagliato'); `scena.premi(ora)` è una pressione (ora = l'orologio in ms, per il
+limite delle pressioni al secondo: un giocatore simulato passa il suo); durante lo strappo finale
+la lancetta è `scena.lancetta` e la zona verde `scena.zonaCentro` e `scena.zonaAmp`.
+(Le Perle di Denny, Scontrino, prego! e Capitan Ghiori, arrivati dopo, nelle prove non ci sono ancora.)
 
 ## Le canzoni di X-Factor
 
@@ -1400,6 +1486,9 @@ js/
                          con le lucine, il cartellone del cantastorie, il telo, i tavolini,
                          e le vignette (vignetta(): piccole scene coi personaggi e gli
                          oggetti del gioco, composte all'inizio di ogni ballata)
+    baratti.js           "Capitan Ghiori": il golfo di Baratti in una giornata grigia, il
+                         Danda 2 (il gommone di Giorgio, in due pezzi: dietro e davanti a chi
+                         c'è sopra), i barchini ormeggiati da ricolorare, la riva di ciottoli
     pizzeria.js          "Scontrino, prego!": la pizzeria al taglio di Michele vista di fronte
                          (lavagna, orologio, arco, insegna col nome del locale, porta d'uscita),
                          il banco con la vetrina e la cassa (display e stampante), i clienti a
@@ -1417,7 +1506,7 @@ js/
   scenes/bancone.js      il Bancone (negozio delle Pinte)
   scenes/profilo.js      il Profilo: personaggi, trofei, record, albo d'oro
   scenes/livelli.js      i livelli di ogni giocatore (l'handicap)
-  scenes/modalita.js     la fine della partita Da solo
+  scenes/modalita.js     la fine della partita Da solo e del Lampo da soli
   scenes/torneo.js       il tabellone del Torneo, la fine della Sfida del giorno, le
                          classifiche a Squadre
   scenes/beerpong.js     la modalità BEER PONG: le squadre, la partita, la fine
@@ -1433,6 +1522,7 @@ js/
     BotaScene.js  GuidaScene.js  PiovraScene.js  ScapoliScene.js
     RetromarciaScene.js  BeerpongScene.js  XfactorScene.js
     PizzaScene.js  BallataScene.js  ProverbiScene.js  ScontrinoScene.js
+    BarattiScene.js
 ```
 
 Le immagini sono tutte disegnate dal codice, all'avvio. Gli sfondi e le immagini che servono a un
@@ -1488,6 +1578,15 @@ Per ritoccare un personaggio basta cambiare i suoi parametri in cima a
   1), `barba: 'pizzettoPieno'` (il pizzetto coi baffi folti, con `barbaGrigi` = i fili grigi),
   `grembiule: colore`, `sudore: true` (le gocce di chi è beccato); `fischietto: colore` (appeso
   al collo) e `fascia: { colore, testo }` (al braccio, con la scritta CONTROLLO SCONTRINI)
+- di Giorgio in barca ("Capitan Ghiori"): `cappello: { tipo: 'marinaio', colore, ancora }` (il
+  cappello da marinaio, bianco e tondo, con l'ancora), `vestito.tipo: 'marinaio'` (la casacca: con
+  `collo` = il colore del colletto, del fazzoletto e dei polsini, `righe` = le loro righe),
+  `paonazzo` (da 0 a 1: la faccia rossa dallo sforzo, senza la vena della rabbia) e `arrotolati:
+  true` (i pantaloni arrotolati sotto il ginocchio); le pose `impugna`, `strappo` (la cordicella) e
+  `spinge`. Ci sono ancora, ma Capitan Ghiori non li usa più, `cappello: { tipo: 'pescatore',
+  colore, fascia }` (il cappellino da pescatore) e `salvagente: colore` (il gilet)
+- di Greg in acqua ("Capitan Ghiori"): `occhialini: colore` (gli occhialini da nuoto alzati sulla
+  fronte) e la posa `nuota` (le braccia aperte a rana sul pelo dell'acqua)
 - `corporatura` (1 = normale, 1.2 = robusta) e `pancia` (quanto sporge il pancione:
   Marsupino ha 1.36 e 10), `muscoli: true` per il fisico da palestrato (il Bota: spalle
   larghe, vita stretta, pettorali, addominali e bicipiti), `labbra`, `sopraDritte`,
@@ -1653,6 +1752,11 @@ export class MioGiocoScene extends MicrogiocoBase {
    - `obiettivo` e tutti i parametri di difficoltà del tuo gioco
    - facoltativo: `musica`, il nome di una musica di `js/config/musiche.js` (se no `gioco`):
      meglio una nuova, scritta apposta (vedi "Musiche")
+   - facoltativo: `lampo: { comandi, comandiTouch, obiettivo }`, se in Lampo il gioco cambia
+     (l'introduzione in Lampo mostra quelli), e `trofeo`, un nome tutto suo per il trofeo d'oro
+     (se no è "Oro: <titolo>"). In Lampo la sezione `lampo` vale sopra le altre (la unisce
+     `MicrogiocoBase`): ci vanno anche i valori che cambiano (soglie, velocità, obiettivi) e
+     `stringi: ['atti']`, gli elenchi a tempo i cui `da` si stringono in proporzione nei 15 secondi
    
    Poi in `js/config.js` importalo (`import miogioco from './config/microgiochi/miogioco.js';`),
    aggiungilo a `microgiochi: { ... }` e inserisci `'miogioco'` in `ordineSfida` se deve entrare

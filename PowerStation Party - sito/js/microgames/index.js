@@ -21,6 +21,7 @@ import { PizzaScene } from './PizzaScene.js';
 import { BallataScene } from './BallataScene.js';
 import { ProverbiScene } from './ProverbiScene.js';
 import { ScontrinoScene } from './ScontrinoScene.js';
+import { BarattiScene } from './BarattiScene.js';
 
 export const MICROGIOCHI = {
   spina: SpinaScene,
@@ -44,4 +45,5 @@ export const MICROGIOCHI = {
   ballata: BallataScene,
   proverbi: ProverbiScene,
   scontrino: ScontrinoScene,
+  baratti: BarattiScene,
 };

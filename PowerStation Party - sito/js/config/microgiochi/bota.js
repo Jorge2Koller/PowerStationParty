@@ -22,6 +22,9 @@ export default {
     "Prima che finisca l'anello, se no si scotta!",
   ],
   obiettivo: 'Spegni 15 scottature!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivo: 'Spegni 5 scottature!' },
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). L'obiettivo è il
   // bronzo: finché non hai spento obiettivoSpente scottature il totale si ferma a tettoPrima; quando
   // ci sei sale almeno al bronzo. Argento e oro vengono dai punti (velocità e serie).

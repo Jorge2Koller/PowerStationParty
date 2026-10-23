@@ -20,6 +20,14 @@ export default {
     'Tocca biscotto o pallina, poi dove lanciarli. BIP BIP: la macchina parte!',
   ],
   obiettivo: 'Fai uscire Emilio dal cancello: al massimo uno spavento!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. Il vialetto resta lungo uguale: per uscire in tempo Emilio parte prima e
+  // fa scatti più svelti, con meno attesa tra uno e l'altro (coi valori normali, in 15 secondi arrivava
+  // a metà vialetto). Il gatto passa in proporzione (a 5 secondi dalla fine, non a 12)
+  lampo: {
+    primaPartenza: 1, velInizio: 56, velFine: 80, scatto: [0.8, 1.4], pausaInizio: 0.5, pausaFine: 0.35, arrivo: 0.7,
+    avvisoInizio: 0.65, avvisoFine: 0.5, accelerazione: 120, frenata: 180, durataIncidente: 1.4, nuoveInizio: 2.5, nuoveFine: 2,
+  },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Revisione 4, la stessa scala per tutti (erano 80 / 120 / 170; prima ancora 60 / 110 / 160: chi

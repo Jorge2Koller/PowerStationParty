@@ -53,7 +53,8 @@ export function elencoTrofei() {
   const T = CONFIG.trofei, sbloccati = Salvataggio.dati.trofei;
   const oro = giochi().map((id) => ({
     id: 'oro_' + id, gioco: id,
-    nome: T.oro.nome.replace('{titolo}', CONFIG.microgiochi[id].titolo),
+    // (un microgioco può dare al suo trofeo un nome tutto suo: il campo trofeo, es. Capitan Ghiori)
+    nome: CONFIG.microgiochi[id].trofeo ?? T.oro.nome.replace('{titolo}', CONFIG.microgiochi[id].titolo),
     descrizione: T.oro.descrizione.replace('{titolo}', CONFIG.microgiochi[id].titolo),
   }));
   return [...T.generali, ...oro].map((t) => ({ ...t, sbloccato: !!sbloccati[t.id], giorno: sbloccati[t.id] ?? null }));
@@ -139,6 +140,24 @@ export const Progressi = {
     const trofei = controlla({ turno: t });
     Salvataggio.segna();
     return { pinte, medaglia: tipo, record: record && t.punteggio > 0 && !!vecchio, trofei };
+  },
+
+  // dopo un turno in Lampo (15 secondi): solo il record Lampo di quel microgioco, a parte da quelli
+  // normali (in Lampo niente medaglie, statistiche e Pinte, come sempre)
+  dopoTurnoLampo(t) {
+    const R = Salvataggio.dati.recordLampo, vecchio = R[t.id];
+    const record = t.punteggio > 0 && (!vecchio || t.punteggio > vecchio.punteggio);
+    if (record) R[t.id] = { punteggio: t.punteggio, chi: t.giocatore.id, nome: t.giocatore.nome, giorno: Date.now() };
+    Salvataggio.segna();
+    return { record: record && !!vecchio, primo: record && !vecchio };
+  },
+
+  // il Lampo da soli finito (una volta sola): il totale in punti sfida e il migliore di sempre
+  dopoLampoSolo(punti) {
+    const s = st(), prima = s.lampoSolo ?? null, record = prima == null || punti > prima;
+    if (record) s.lampoSolo = punti;
+    Salvataggio.segna();
+    return { migliore: s.lampoSolo, record, primo: prima == null };
   },
 
   // a fine sfida (una volta sola: S.registrata)

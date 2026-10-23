@@ -20,6 +20,9 @@ export default {
     'Prima è sottolineata, poi trovala tu. Le PERLE: doppio!',
   ],
   obiettivo: 'Correggi almeno 6 proverbi!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivo: 'Correggi almeno 3 proverbi!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 6 proverbi giusti
   // (l'obiettivo) sono il bronzo: fino a 5 il totale si ferma a tettoPrima, il sesto lo porta almeno
   // al bronzo, e da lì non si scende più sotto.

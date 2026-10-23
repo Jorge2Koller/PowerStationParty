@@ -13,7 +13,7 @@ import { NovitaScene } from './scenes/novita.js';
 import { BanconeScene } from './scenes/bancone.js';
 import { ProfiloScene } from './scenes/profilo.js';
 import { LivelliScene } from './scenes/livelli.js';
-import { FineSolitarioScene } from './scenes/modalita.js';
+import { FineSolitarioScene, FineLampoScene } from './scenes/modalita.js';
 import { TorneoScene, FineGiornoScene } from './scenes/torneo.js';
 import { BeerPongSquadreScene, BeerPongScene, BeerPongFineScene } from './scenes/beerpong.js';
 import { ImpostazioniScene, RitardoScene } from './scenes/impostazioni.js';
@@ -51,7 +51,7 @@ function avvia() {
     // velocità per 4 secondi; ne bastano pochi
     fps: { panicMax: 20 },
     scene: [BootScene, MenuScene, GiocatoriScene, PersonaggiScene, ModalitaScene, AllenamentoScene, ComandiScene, IntroScene,
-      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, RitardoScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, TorneoScene, FineGiornoScene,
+      ...Object.values(MICROGIOCHI), RisultatoScene, ClassificaScene, PremiScene, FinaleScene, ImpostazioniScene, RitardoScene, NovitaScene, BanconeScene, ProfiloScene, LivelliScene, FineSolitarioScene, FineLampoScene, TorneoScene, FineGiornoScene,
       BeerPongSquadreScene, BeerPongScene, BeerPongFineScene, PausaScene],
   });
   controllaVerso();

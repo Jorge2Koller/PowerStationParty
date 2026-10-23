@@ -28,6 +28,7 @@ export const IMPOSTAZIONI = {
   provaLampo: true,         // prima dei microgiochi mai giocati il cursore dell'Intro parte su PROVA
   velocitaTesti: 'normale', // 'lenta' | 'normale' | 'veloce': quanto restano a schermo scritte e fumetti
   tremolio: true,           // lo schermo che trema sui colpi
+  listaLampo: false,        // la versione scelta nella lista dei microgiochi (Allenamento, Partita singola): false = NORMALE, true = LAMPO
   ritardoAudio: 0,          // ms: quanto arriva in ritardo il suono (cuffie e casse Bluetooth); misurato nelle Impostazioni
 };
 
@@ -38,6 +39,7 @@ const nuovo = () => ({
   registro: {},             // registro[idMicrogioco] = [[punteggio, giorno, livello], ...] (gli ultimi MAX_REGISTRO)
   statistiche: {},          // per personaggio (Fase 4)
   record: {},               // migliori punteggi per microgioco (Fase 4)
+  recordLampo: {},          // ...e nella loro versione Lampo (15 secondi), a parte
   trofei: {},               // trofei sbloccati (Fase 4)
   sblocchi: {},             // costumi, modalità, frasi, temi comprati al Bancone (Fase 4)
   pinte: 0,                 // la valuta del gioco (Fase 4)
@@ -70,7 +72,7 @@ function completa(d) {
   const base = nuovo();
   const out = { ...base, ...(d && typeof d === 'object' ? d : {}) };
   out.impostazioni = { ...IMPOSTAZIONI, ...(d?.impostazioni ?? {}) };
-  for (const k of ['registro', 'statistiche', 'record', 'trofei', 'sblocchi', 'visti']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  for (const k of ['registro', 'statistiche', 'record', 'recordLampo', 'trofei', 'sblocchi', 'visti']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (typeof out.pinte !== 'number' || !isFinite(out.pinte)) out.pinte = 0;
   if (out.giocatori && !Array.isArray(out.giocatori)) out.giocatori = null;
   if (!Array.isArray(out.proverbiRecenti)) out.proverbiRecenti = [];

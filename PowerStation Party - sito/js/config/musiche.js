@@ -361,6 +361,25 @@ export const BRANI = {
                   4 . 6 . 1' . 6 . | b6 . 4 . b6 . 1' . | 5 . 3 . 1 . 3 . | 2 . 4 . 7 . 2' .` },
     ],
   },
+
+  // Capitan Ghiori: la canzone dei marinai, in 6/8 e in minore (la fisarmonica che fa um-pa-pa, il
+  // ponte di legno battuto coi piedi)
+  marinara: {
+    titolo: 'Capitan Ghiori', carattere: 'canzone da marinai, in 6/8',
+    bpm: 108, tonica: 'D5', modo: 'minore', metro: '6/8', swing: 0,
+    lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'terze', onda: 0.25 },
+    basso: 'R . . 5 . .', ritmica: '.xx.xx',
+    batteria: { 1: { k: 'x..x..', h: '..x..x' }, 2: { k: 'x..x..', s: '...x..', h: 'x.xx.x' }, finale: { k: 'x..x..', s: '..x.xx', h: 'xxxxxx' } },
+    atto3: { tempo: 1.07 }, volume: 1,
+    parti: [
+      { accordi: 'i i bVII bVII i i V7 i',
+        melodia: `1 . 1 1 3 5 | 5 . 4 3 . 1 | 7, . 7, 7, 2 4 | 4 . 3 2 . 7, |
+                  1 . 1 1 3 5 | 1' . 7 5 . 3 | 2 . #7, 2 . 5 | 1 - - 1 . .` },
+      { accordi: 'bIII bVII iv V7 i bVII V7 i',
+        melodia: `3 . 5 7 . 5 | 4 . 2 7, . 2 | 6 . 4 1 . 4 | 5 - - . #7, 2 |
+                  1' . 5 3 . 5 | 4 . 2 7, 2 4 | 5 . 4 2 . #7, | 1 - - . . .` },
+    ],
+  },
 };
 
 // ------------------------------------------------------------

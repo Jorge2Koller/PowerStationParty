@@ -115,11 +115,13 @@ export class IntroScene extends Phaser.Scene {
       : S.tipo === 'giorno' ? `SFIDA DEL GIORNO: ${S.indice + 1} DI ${S.lista.length}`
       : S.tipo === 'squadre' ? `SQUADRE, ROUND ${S.indice + 1} DI ${S.lista.length}: ${g.nome} gioca per i ${CONFIG.modalita.squadre.nomi[g.i % 2]}`
       : S.solitario ? `DA SOLO: ${S.indice + 1} DI ${S.lista.length}` + (S.boss ? '  -  IL BOSS!' : '')
+      : S.tipo === 'lampo' && S.modo === 'allenamento' ? 'ALLENAMENTO LAMPO'
+      : S.tipo === 'lampo' && S.lista.length === 1 ? 'PARTITA SINGOLA LAMPO'
       : S.tipo === 'lampo' ? `LAMPO: ${S.indice + 1} DI ${S.lista.length}`
       : S.modo !== 'sfida' ? 'ALLENAMENTO'
       : S.meglioDi ? `AL MEGLIO DI ${S.meglioDi}: ROUND ${S.indice + 1}` + (n === 2 ? `  (${vinti[0]} - ${vinti[1]})` : '')
       : S.lista.length > 1 ? `ROUND ${S.indice + 1} DI ${S.lista.length}` : n === 2 ? 'SFIDA A DUE' : 'PARTITA SINGOLA';
-    txt(this, 240, 14, `${round}  -  ${S.modo === 'sfida' ? `turno ${S.passo + 1} di ${S.turni}` : g.nome}` + (cambio ? `  -  ${m.titolo}` : ''), { size: 7 });
+    txt(this, 240, 14, `${round}  -  ${S.modo === 'sfida' && n > 1 ? `turno ${S.passo + 1} di ${S.turni}` : g.nome}` + (cambio ? `  -  ${m.titolo}` : ''), { size: 7 });
     // da solo: le vite in alto a destra
     if (S.solitario) for (let k = 0; k < CONFIG.modalita.solitario.vite; k++) im(this, 400 + k * 16, 14, 'cuore', 1).setAlpha(k < S.solitario.vite ? 1 : 0.25);
     const titolo = txt(this, 240, cambio ? 37 : 40, cambio ? `TOCCA A ${g.nome.toUpperCase()}!` : m.titolo, { size: cambio ? 21 : 19, color: cambio ? g.colore : '#ffe14a', wrap: 460 });
@@ -206,11 +208,13 @@ export class IntroScene extends Phaser.Scene {
     }
 
     // comandi e obiettivo
-    // (il pannello si adatta all'altezza reale dei testi)
+    // (il pannello si adatta all'altezza reale dei testi; in Lampo, se il microgioco ne ha di suoi
+    // nella sezione "lampo" della configurazione, quelli: Capitan Ghiori, dove in Lampo cambia gioco)
     const cima = Math.max(66, Math.round(sotto + 1));
+    const ml = S.tipo === 'lampo' && m.lampo ? { ...m, ...m.lampo } : m;
     txt(this, 240, cima + 11, 'COMANDI', { size: 9, color: '#ffe14a', depth: 2 });
-    const tc = txt(this, 240, cima + 18, (eTouch() && m.comandiTouch ? m.comandiTouch : m.comandi).join('\n'), { size: 7, oy: 0, spacing: 0, wrap: 246, depth: 2 });
-    const to = txt(this, 240, tc.y + tc.height + 1, m.obiettivo, { size: 8, oy: 0, color: '#7dff9a', wrap: 246, depth: 2 });
+    const tc = txt(this, 240, cima + 18, (eTouch() && ml.comandiTouch ? ml.comandiTouch : ml.comandi).join('\n'), { size: 7, oy: 0, spacing: 0, wrap: 246, depth: 2 });
+    const to = txt(this, 240, tc.y + tc.height + 1, ml.obiettivo, { size: 8, oy: 0, color: '#7dff9a', wrap: 246, depth: 2 });
     const td = txt(this, 240, to.y + to.height - 2, `Durata: ${S.tipo === 'lampo' ? CONFIG.modalita.lampo.durata : m.durata} secondi`, { size: 6.5, oy: 0, color: '#fff3d6', depth: 2 });
     const alt = td.y + td.height + 3 - cima;
     pannello(this, 240, cima + alt / 2, 256, alt, { depth: 1 });
@@ -272,7 +276,7 @@ export class RisultatoScene extends Phaser.Scene {
       Salvataggio.registra(S.idCorrente, r.punteggio, S.livello);   // il registro locale dei punteggi (per ritarare le medaglie)
       // statistiche, record, Pinte e trofei (js/progressi.js)
       this.progressi = Progressi.dopoTurno({ id: S.idCorrente, punteggio: r.punteggio, giocatore: g, controSeStesso: S.controSeStesso });
-    } else this.progressi = null;
+    } else this.progressi = Progressi.dopoTurnoLampo({ id: S.idCorrente, punteggio: r.punteggio, giocatore: g });
     this.input.setDefaultCursor('default');
     raggi(this, r.vittoria ? 0x3fae74 : 0x8a5a9a, r.vittoria ? 0x62cf96 : 0xa878b8);
     // prima il jingle (se il finale del microgioco non l'ha appena suonato; con la medaglia suona il suo,
@@ -314,7 +318,7 @@ export class RisultatoScene extends Phaser.Scene {
     this.tweens.add({
       targets: conta, v: r.punteggio, delay: 300, duration: Math.min(900, 250 + Math.abs(r.punteggio) * 4), ease: 'Quad.out',
       onUpdate: () => { pt.setText(String(Math.round(conta.v))); if (this.time.now - tic > 70) { tic = this.time.now; Audio.sfx('muovi'); } },
-      onComplete: () => { pt.setText(String(r.punteggio)); if (intero) this.medaglia(r.punteggio); },
+      onComplete: () => { pt.setText(String(r.punteggio)); if (intero) this.medaglia(r.punteggio); else this.recordLampo(); },
     });
 
     let prompt, avanti;
@@ -342,9 +346,16 @@ export class RisultatoScene extends Phaser.Scene {
       avanti = () => { if (fine) return this.scene.start('FineGiorno'); S.indice++; S.passo = 0; this.scene.start('Intro'); };
     } else if (S.modo === 'allenamento') {
       prompt = perDito('INVIO: riprova     ESC: menu', 'Tocca: riprova');
-      avanti = () => { S.nuovoAllenamento(S.idCorrente, S.turno); this.scene.start('Intro'); };
+      avanti = () => { S.nuovoAllenamento(S.idCorrente, S.turno, !intero); this.scene.start('Intro'); };
       this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
       if (eTouch()) pulsante(this, 16, 13, 'indietro', () => this.scene.start('Menu'));
+    } else if (S.tipo === 'lampo' && n === 1 && S.lista.length > 1) {
+      // il Lampo da soli: uno dopo l'altro, poi il totale e il record
+      const fine = S.indice >= S.lista.length - 1;
+      pannello(this, 330, 186, 240, 30, { colore: 0x7a5a1a, raggio: 9 });
+      txt(this, 330, 186, `LAMPO: ${S.indice + 1} di ${S.lista.length}`, { size: 9, color: '#ffe14a' });
+      prompt = perDito(fine ? 'INVIO: com\'è andata' : 'INVIO: prossimo microgioco', fine ? 'Tocca: com\'è andata' : 'Tocca: prossimo microgioco');
+      avanti = () => { if (fine) return this.scene.start('FineLampo'); S.indice++; S.passo = 0; this.scene.start('Intro'); };
     } else if (!S.ultimoTurno) {
       // stesso microgioco, ora tocca al prossimo
       const p = S.prossimo, rec = S.record;
@@ -386,6 +397,13 @@ export class RisultatoScene extends Phaser.Scene {
     }
     lampeggia(this, txt(this, 240, 253, prompt, { size: 9, color: '#ffe14a' }));
     attendiInvio(this, () => { Audio.sfx('scegli'); avanti(); });
+  }
+
+  // in Lampo niente medaglie: il record Lampo del microgioco (a parte da quello normale)
+  recordLampo() {
+    const P = this.progressi, rec = Salvataggio.dati.recordLampo[Sessione.idCorrente], Y = this.yPunti;
+    if (P?.record || P?.primo) { scritta(this, 330, Y + this.dySotto, P.record ? 'NUOVO RECORD LAMPO!' : 'PRIMO RECORD LAMPO!', { size: 10, color: '#7dff9a', durata: 1600 }).setAngle(0); Audio.sfx('bonus'); }
+    else if (rec) txt(this, 330, Y + this.dySotto, `Record Lampo: ${rec.punteggio} (${rec.nome})`, { size: 7, color: '#fff3d6', depth: 3 });
   }
 
   // la medaglia presa (col timbro) e, accanto, quanto manca alla prossima

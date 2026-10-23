@@ -19,6 +19,9 @@ export default {
     'Una folata gira una vignetta? Toccala per rigirarla',
   ],
   obiettivo: 'Almeno 5 strofe giuste su 8!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivo: 'Almeno 3 strofe giuste su 4!' },
   // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 5 strofe giuste
   // (l'obiettivo) sono il bronzo: la k-esima strofa giusta vale di più della precedente.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },

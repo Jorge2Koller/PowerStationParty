@@ -57,15 +57,18 @@ export const Sessione = {
       partecipanti: [],   // chi gioca ogni round, se non sono tutti (il torneo)
       // da solo: vite, microgiochi superati, com'è andata col boss
       solitario: tipo === 'solitario' ? { vite: CONFIG.modalita.solitario.vite, superati: 0, boss: null, contati: {} } : null });
-    this.ultima = { tipo, lista: [...lista], solo, meglioDi };
+    this.ultima = { modo, tipo, lista: [...lista], solo, meglioDi };
   },
   nuovaSfida(lista = CONFIG.ordineSfida) { this.avvia('sfida', lista.length === 1 ? 'singola' : 'completa', lista); },
   // alcuni microgiochi pescati a caso
   nuovaSfidaRapida(quanti) { this.avvia('sfida', 'rapida', mescola([...CONFIG.ordineSfida]).slice(0, quanti)); },
   // tutti i microgiochi in ordine casuale: si smette appena qualcuno ha vinto i round che servono
   nuovaSfidaVeloce(meglioDi) { this.avvia('sfida', 'meglioDi', mescola([...CONFIG.ordineSfida]), null, meglioDi); },
-  nuovoAllenamento(id, giocatore = 0) { this.avvia('allenamento', 'allenamento', [id], Math.min(giocatore, this.n - 1)); },
-  // Lampo: microgiochi corti, pescati a caso
+  // (lampo = la sua versione Lampo, 15 secondi: si sceglie nella lista dei microgiochi)
+  nuovoAllenamento(id, giocatore = 0, lampo = false) { this.avvia('allenamento', lampo ? 'lampo' : 'allenamento', [id], Math.min(giocatore, this.n - 1)); },
+  // Partita singola nella versione Lampo: un microgioco solo, da 15 secondi
+  nuovaSingolaLampo(id) { this.avvia('sfida', 'lampo', [id]); },
+  // Lampo: microgiochi corti, pescati a caso (anche da soli: allora alla fine c'è il totale e il record)
   // Squadre: ROSSI (1°, 3°, 5°...) contro BLU (2°, 4°...), microgiochi a caso
   nuoveSquadre() { this.avvia('sfida', 'squadre', mescola([...CONFIG.ordineSfida]).slice(0, CONFIG.modalita.squadre.microgiochi)); },
   // Torneo: tabellone a eliminazione (js/torneo.js); ogni partita è un round a due, si aggiunge alla lista man mano
@@ -123,6 +126,8 @@ export const Sessione = {
     const u = this.ultima;
     if (!u) return this.nuovaSfida();
     if (u.tipo === 'rapida') this.nuovaSfidaRapida(u.lista.length);
+    else if (u.tipo === 'lampo' && u.modo === 'allenamento') this.nuovoAllenamento(u.lista[0], u.solo, true);
+    else if (u.tipo === 'lampo' && u.lista.length === 1) this.nuovaSingolaLampo(u.lista[0]);
     else if (u.tipo === 'lampo') this.nuovoLampo();
     else if (u.tipo === 'beerpong') this.nuovoBeerPong();
     else if (u.tipo === 'squadre') this.nuoveSquadre();

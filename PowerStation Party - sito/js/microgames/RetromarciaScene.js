@@ -213,8 +213,8 @@ export class RetromarciaScene extends MicrogiocoBase {
       Audio.sfx('bonus');
       scritta(this, 240, 96, 'EMILIO SI DISTRAE!', { size: 14, color: '#ffe14a', durata: 1000, depth: 960 });
     }
-    // gli ultimi secondi: passa il gatto
-    if (!this.gattoFatto && this.tempoRimasto <= c.gatto.a) this.passaIlGatto();
+    // gli ultimi secondi: passa il gatto (in Lampo in proporzione)
+    if (!this.gattoFatto && this.tempoRimasto <= (c.gatto.a * this.durata) / c.durata) this.passaIlGatto();
     // ogni tanto Emilio dice la sua dal finestrino
     this.tFrase -= dt;
     if (this.tFrase <= 0 && this.auto.stato !== 'incidente') { this.tFrase = tra(4.5, 7.5); this.parlaEmilio(caso(c.frasi)); }

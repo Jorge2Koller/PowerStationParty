@@ -19,6 +19,9 @@ export default {
     'I punti sono le fiches vinte. Mano vinta giocata da pro (le mosse giuste): paga doppio',
   ],
   obiettivo: 'Vinci almeno 100 fiches!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { obiettivo: 'Vinci almeno 43 fiches!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: le fiches: si parte con 100, quindi sotto le 100 vale zero.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },

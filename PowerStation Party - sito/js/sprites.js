@@ -260,5 +260,5 @@ export const GRUPPI_MICROGIOCHI = {
   mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
   palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
   scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
-  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: [], scontrino: ['pizzeria'],
+  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: [], scontrino: ['pizzeria'], baratti: [],
 };

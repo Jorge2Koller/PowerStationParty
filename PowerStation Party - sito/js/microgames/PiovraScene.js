@@ -5,19 +5,21 @@
 //  e trascina per disegnarle la strada fino al tavolo delle amiche (uscita, a destra): salva.
 //  Un tentacolo che la prende la tiene agganciata a chiacchierare col Petri: tocca il tentacolo
 //  (SCIAF!) per liberarla. Aiuti con ricarica: la birra gratis (il Petri ci si fionda e molla
-//  tutto) e l'amico in mezzo, O'Sfurnacchiat: si piazza tra il Petri e la ragazza più in pericolo,
-//  la segue, e i tentacoli che ci passano contro sbattono (BONK!). Ogni tanto un tentacolo a
-//  sorpresa sbuca da sotto un tavolino o dalla consolle.
+//  tutto) e l'amico, O'Sfurnacchiat: arriva davanti al Petri, lo indica e lo sgrida ("Gnamo Petri,
+//  falla finita"); il Petri molla subito tutte le ragazze e ritira i tentacoli, e per qualche secondo
+//  resta mortificato, fermo: le ragazze liberate scappano da sole al tavolo delle amiche. Ogni tanto
+//  un tentacolo a sorpresa sbuca da sotto un tavolino o dalla consolle.
 //  Multi-touch: un dito disegna la strada, un altro dà gli schiaffi.
 //  Tre atti annunciati: IL PETRI SI MUOVE, poi i TENTACOLI A SORPRESA. Le ragazze arrivano uguali
 //  per tutti i giocatori del round (seme del round). Il punteggio non va sotto zero.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
-import { casuale } from '../grafica/base.js';
+import { RES, casuale } from '../grafica/base.js';
 import { RAGAZZE } from '../grafica/personaggi.js';
 import { DISCO } from '../grafica/sfondi.js';
 import { curvaTentacolo, disegnaTentacolo } from '../grafica/tentacoli.js';
+import { preparaPosa } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, fumetto, scuoti, puntatore, lerp, caso, eTouch, vibra, multiTouch, puntiHud, numero, quanti } from '../fx.js';
 
 const TAGLIA = 0.4;                                   // ragazze: circa 36x54 unità
@@ -25,12 +27,6 @@ const TAGLIA_PETRI = 0.44;
 const PISTA = { x0: 52, x1: 428, y0: 106, y1: 246 }; // dove stanno i piedi di chi balla
 const ZONA_PETRI = { x0: 180, x1: 300, y0: 140, y1: 214 };
 const USCITA = { x: DISCO.uscita, y0: DISCO.uscitaY[0], y1: DISCO.uscitaY[1] };
-// distanza del punto (px, py) dal segmento (ax, ay)-(bx, by)
-function distSegmento(px, py, ax, ay, bx, by) {
-  const vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1;
-  const k = Phaser.Math.Clamp(((px - ax) * vx + (py - ay) * vy) / l2, 0, 1);
-  return Math.hypot(px - (ax + vx * k), py - (ay + vy * k));
-}
 
 const PULSANTI = [{ tipo: 'birra', x: 206, y: 250, ico: 'birraPetri', tasto: '1' }, { tipo: 'amico', x: 274, y: 250, ico: 'icoAmico', tasto: '2' }];
 const ORIGINI_SORPRESA = [{ x: 78, y: 96, nome: 'DAL TAVOLINO!' }, { x: 402, y: 96, nome: 'DAL TAVOLINO!' }, { x: 240, y: 74, nome: 'DALLA CONSOLLE!' }];
@@ -64,7 +60,10 @@ export class PiovraScene extends MicrogiocoBase {
     this.pinta = null;
     this.bevuta = 0;
     this.amico = null;
+    this.sgridato = 0;          // secondi che il Petri resta mortificato, sgridato da O'Sfurnacchiat
     this.aiuti = { birra: 0, amico: 0 };   // secondi di ricarica che mancano
+    // O'Sfurnacchiat che indica il Petri e lo sgrida (una posa piccola, buttata alla fine)
+    preparaPosa(this, 'amicoSgrida', c.amico.id, 'urlo', { posa: 'tiIndico' }, RES * 0.5);
 
     im(this, 0, 0, 'bgDisco').setOrigin(0);
     // luci della pista: ogni mattonella si accende a tempo di musica
@@ -120,6 +119,8 @@ export class PiovraScene extends MicrogiocoBase {
 
   alRientro() { this.disegni = {}; }
 
+  pulisci() { if (this.textures.exists('amicoSgrida')) this.textures.remove('amicoSgrida'); }
+
   get fase() {
     let f = this.cfg.fasi[0];
     for (const x of this.cfg.fasi) if (this.trascorso >= x.da) f = x;
@@ -147,7 +148,7 @@ export class PiovraScene extends MicrogiocoBase {
     for (const t of this.tentacoli) this.muoviTentacolo(t, dt, f);
     // tentacoli a sorpresa
     this.tSorpresa -= dt;
-    if (this.trascorso >= c.sorpresaDa && this.tSorpresa <= 0) {
+    if (this.trascorso >= c.sorpresaDa && this.tSorpresa <= 0 && this.sgridato <= 0) {
       this.tSorpresa = c.sorpresaOgni[0] + this.rnd() * (c.sorpresaOgni[1] - c.sorpresaOgni[0]);
       this.sorpresa();
     }
@@ -155,9 +156,9 @@ export class PiovraScene extends MicrogiocoBase {
     this.sorprese = this.sorprese.filter((t) => t.stato !== 'via');
     this.disegnaTentacoli();
 
-    // aiuti: ricarica, amico in mezzo
+    // aiuti: la ricarica; il Petri sgridato (finché è mortificato O'Sfurnacchiat resta lì)
     for (const k of Object.keys(this.aiuti)) this.aiuti[k] = Math.max(0, this.aiuti[k] - dt);
-    if (this.amico) { this.amico.t -= dt; if (this.amico.t <= 0) this.viaAmico(); else this.muoviAmico(dt); }
+    if (this.sgridato > 0) { this.sgridato -= dt; if (this.sgridato <= 0) { this.sgridato = 0; this.viaAmico(); } }
     this.disegnaPulsanti();
     if (this.mira) {
       const w = puntatore(this);
@@ -224,7 +225,7 @@ export class PiovraScene extends MicrogiocoBase {
     this.ragazze.push(r);
   }
 
-  libera(r) { return ['entra', 'balla', 'segue', 'tastiera', 'stordita'].includes(r.stato); }
+  libera(r) { return ['entra', 'balla', 'segue', 'tastiera', 'stordita', 'scappa'].includes(r.stato); }
 
   verso(o, x, y, vel, dt) {
     const dx = x - o.x, dy = y - o.y, d = Math.hypot(dx, dy), passo = Math.min(d, vel * dt);
@@ -251,6 +252,9 @@ export class PiovraScene extends MicrogiocoBase {
       } else if (!Object.values(this.disegni).includes(r)) {
         r.stato = 'balla'; r.meta = { x: Phaser.Math.Clamp(r.x, PISTA.x0, PISTA.x1), y: Phaser.Math.Clamp(r.y, PISTA.y0, PISTA.y1) }; r.tMeta = 1.5;
       }
+    } else if (r.stato === 'scappa') {
+      // liberata dalla sgridata: corre da sola al tavolo delle amiche (se le si disegna una strada, segue quella)
+      this.verso(r, USCITA.x + 10, Phaser.Math.Clamp(r.y, USCITA.y0 + 6, USCITA.y1 - 6), c.velSegue * 1.1, dt);
     } else if (r.stato === 'stordita') {
       r.tStordita -= dt;
       if (r.tStordita <= 0) { r.stato = 'balla'; r.tMeta = 0.3; r.meta = { x: r.x, y: r.y }; }
@@ -271,7 +275,7 @@ export class PiovraScene extends MicrogiocoBase {
     if (presa) e = Math.sin(this.trascorso * 1.6 + r.fase) > 0 ? 'sufficienza' : 'triste';
     else if (r.stato === 'stordita') e = 'shock';
     else if ([...this.tentacoli, ...this.sorprese].some((t) => t.stato === 'allunga' && t.bersaglio === r)) e = 'shock';
-    else if (r.stato === 'segue' || r.stato === 'tastiera') e = 'normale';
+    else if (r.stato === 'segue' || r.stato === 'tastiera' || r.stato === 'scappa') e = 'normale';
     if (e !== r.espr) { r.espr = e; r.img.setTexture(`ragazza${r.v}_${e}`); }
   }
 
@@ -310,6 +314,8 @@ export class PiovraScene extends MicrogiocoBase {
       }
     } else if (this.bevuta > 0) {
       this.bevuta -= dt;
+    } else if (this.sgridato > 0) {
+      // mortificato: fermo, a testa bassa
     } else if (f.petri > 0) {
       if (!P.meta) {
         P.pausa -= dt;
@@ -317,7 +323,8 @@ export class PiovraScene extends MicrogiocoBase {
       } else if (this.verso(P, P.meta.x, P.meta.y, f.petri, dt) <= 0.5) { P.meta = null; P.pausa = 1 + this.rnd() * 1.5; }
     }
     const tb = this.trascorso * 4.1;
-    P.img.setPosition(P.x, P.y - Math.abs(Math.sin(tb)) * 1.5).setAngle(Math.sin(tb * 0.5) * 3).setDepth(P.y);
+    if (this.sgridato > 0) P.img.setPosition(P.x, P.y + 1.5).setAngle(7).setDepth(P.y);
+    else P.img.setPosition(P.x, P.y - Math.abs(Math.sin(tb)) * 1.5).setAngle(Math.sin(tb * 0.5) * 3).setDepth(P.y);
     this.gT.setDepth(P.y - 0.5);
     // espressione: felice con qualcuna agganciata, se no normale (dopo le reazioni brevi)
     P.tEspr -= dt;
@@ -339,14 +346,14 @@ export class PiovraScene extends MicrogiocoBase {
     return { x: this.petri.x + t.dx, y: this.petri.y + t.dy };
   }
 
-  bloccati() { return !!this.pinta || this.bevuta > 0; }
+  bloccati() { return !!this.pinta || this.bevuta > 0 || this.sgridato > 0; }
 
   // la ragazza libera più vicina, meglio se non è già puntata da un altro tentacolo
   scegliBersaglio(b, portata) {
     const puntate = new Set([...this.tentacoli, ...this.sorprese].filter((t) => t.stato === 'allunga').map((t) => t.bersaglio));
     let meglio = null, dMin = portata;
     for (const r of this.ragazze) {
-      if (!this.libera(r) || r.stato === 'stordita' || this.protetta(r)) continue;
+      if (!this.libera(r) || r.stato === 'stordita') continue;
       const d = Math.hypot(r.x - b.x, r.y - 26 - b.y) + (puntate.has(r) ? 60 : 0);
       if (d < dMin) { dMin = d; meglio = r; }
     }
@@ -362,7 +369,11 @@ export class PiovraScene extends MicrogiocoBase {
     }
     const riposo = t.tipo === 'petri' ? 14 : 0;
     if (this.bloccati() && t.tipo === 'petri' && ['allunga', 'presa'].includes(t.stato)) this.molla(t, false);
-    if (t.stato === 'riposo') {
+    if (t.stato === 'riposo' && this.sgridato > 0) {
+      // il Petri mortificato: i tentacoli fermi, mosci, verso terra
+      t.dir += Phaser.Math.Angle.Wrap(Math.PI / 2 - t.dir) * Math.min(1, dt * 4);
+      t.len = riposo;
+    } else if (t.stato === 'riposo') {
       t.dir = t.ang + Math.sin(this.trascorso * 1.5 + t.fase) * 0.5;
       t.len = riposo + Math.sin(this.trascorso * 3 + t.fase) * 3;
       t.cool -= dt;
@@ -378,15 +389,10 @@ export class PiovraScene extends MicrogiocoBase {
       const voluto = Math.atan2(ty - b.y, tx - b.x);
       t.dir += Phaser.Math.Angle.Wrap(voluto - t.dir) * Math.min(1, dt * 8);
       t.len += (t.tipo === 'sorpresa' ? this.cfg.velSorpresa : f.vel) * (eTouch() ? 1 : this.cfg.velPC ?? 1) * dt;
-      // l'amico in mezzo: se il tentacolo gli passa contro (in qualunque punto) sbatte, e se
-      // puntava la ragazza che lui protegge rinuncia appena ci arriva vicino
-      const A = this.amico, punta = { x: b.x + Math.cos(t.dir) * t.len, y: b.y + Math.sin(t.dir) * t.len };
-      if (A && (distSegmento(A.x, A.y - 18, b.x, b.y, punta.x, punta.y) < this.cfg.amico.raggio || this.protetta(r) && Math.hypot(punta.x - r.x, punta.y - r.y + 26) < 40)) return this.sbatte(t, punta);
       if (t.len >= D - 3) return this.aggancia(t, r);
       if (D > f.portata * 1.2 || t.len > f.portata * 1.3) this.molla(t, false);
     } else if (t.stato === 'presa') {
       const r = t.bersaglio;
-      if (this.protetta(r)) return this.sbatte(t, { x: r.x, y: r.y - 26 });
       t.dir = Math.atan2(r.y - 26 - b.y, r.x - b.x);
       t.len = Math.hypot(r.x - b.x, r.y - 26 - b.y);
     } else if (t.stato === 'ritira') {
@@ -396,22 +402,6 @@ export class PiovraScene extends MicrogiocoBase {
         else { t.stato = 'riposo'; t.cool = f.reazione[0] + this.rnd() * (f.reazione[1] - f.reazione[0]) + (t.dopoSchiaffo ? 0.6 : 0); t.dopoSchiaffo = false; }
       }
     }
-  }
-
-  // il tentacolo sbatte contro l'amico e torna indietro
-  sbatte(t, punto) {
-    const A = this.amico;
-    Audio.sfx('bonk');
-    scritta(this, punto.x, punto.y - 10, 'BONK!', { size: 9, color: '#ffe14a', durata: 400 });
-    if (A && this.time.now - (A.ultimaFrase ?? 0) > 1500 && Math.random() < 0.5) { A.ultimaFrase = this.time.now; fumetto(this, A.x, A.y - 64, caso(this.cfg.frasiAmico), 800, 950); }
-    this.molla(t, false);
-    t.tRosso = 0.25;
-  }
-
-  // la protegge l'amico? (quella che segue, e chi gli sta proprio accanto)
-  protetta(r) {
-    const A = this.amico;
-    return !!A && !!r && (r === A.r || Math.hypot(r.x - A.x, r.y - A.y) < this.cfg.amico.scudo);
   }
 
   aggancia(t, r) {
@@ -431,10 +421,11 @@ export class PiovraScene extends MicrogiocoBase {
     this.tChat = 2.4;
   }
 
-  // il tentacolo lascia (e la ragazza, se l'aveva presa, resta un attimo frastornata)
-  molla(t, schiaffo) {
+  // il tentacolo lascia (e la ragazza, se l'aveva presa, resta un attimo frastornata; se il Petri è
+  // stato sgridato, scappa subito verso il tavolo delle amiche)
+  molla(t, schiaffo, scappa = false) {
     const r = t.bersaglio;
-    if (t.stato === 'presa' && r && r.stato === 'presa') { r.stato = 'stordita'; r.tStordita = 0.5; r.T = null; }
+    if (t.stato === 'presa' && r && r.stato === 'presa') { r.T = null; if (scappa) { r.stato = 'scappa'; r.perc = []; } else { r.stato = 'stordita'; r.tStordita = 0.5; } }
     t.stato = 'ritira';
     t.bersaglio = null;
     if (schiaffo) { t.tRosso = 0.35; t.dopoSchiaffo = true; }
@@ -537,57 +528,42 @@ export class PiovraScene extends MicrogiocoBase {
     this.espressione('shock', 0.5);
   }
 
+  // L'amico: O'Sfurnacchiat arriva davanti al Petri, lo indica e lo sgrida. Il Petri molla subito tutte
+  // le ragazze che tiene o trascina (scappano verso il tavolo delle amiche), ritira tutti i tentacoli,
+  // anche quelli a sorpresa, e per amico.durata secondi resta mortificato, fermo, senza allungarne di
+  // nuovi; poi ricomincia, e O'Sfurnacchiat se ne va
   chiamaAmico() {
     const c = this.cfg, P = this.petri;
     this.aiuti.amico = c.amico.ricarica;
     if (this.amico) this.viaAmico();
-    const r = this.inPericolo();
-    const { x: tx, y: ty } = r ? this.postoAmico(r) : { x: P.x + 40, y: P.y + 20 };
-    const img = im(this, tx, ty - 80, `${c.amico.id}_sufficienza`, TAGLIA).setOrigin(0.5, 1).setDepth(ty);
+    // (dalla parte della pista dove c'è più posto; girato verso di lui)
+    const lato = P.x > 240 ? -1 : 1, tx = Phaser.Math.Clamp(P.x + lato * 44, PISTA.x0 + 10, PISTA.x1 - 10), ty = Math.min(PISTA.y1, P.y + 8);
+    const img = im(this, tx, ty - 80, 'amicoSgrida', TAGLIA).setOrigin(0.5, 1).setDepth(ty).setFlipX(lato > 0);
     this.tweens.add({ targets: img, y: ty, duration: 260, ease: 'Bounce.out' });
-    this.amico = { x: tx, y: ty, img, t: c.amico.durata, r, arrivo: 0.26 };
+    this.tweens.add({ targets: img, angle: { from: -3 * lato, to: 3 * lato }, duration: 140, yoyo: true, repeat: 5, delay: 260 });
+    this.amico = { x: tx, y: ty, img };
     Audio.sfx('fischietto');
     // "Gnamo Petri, falla finita": il Petri risponde con un verso, poi il lamento
     fumetto(this, tx, ty - 64, c.fraseAmico, 1300, 950);
-    this.time.delayedCall(1150, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.versoPetri, 700, 951); Audio.sfx('verso'); this.espressione('shock', 0.7); } });
-    this.time.delayedCall(1900, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.lamentoPetri, 1400, 951); Audio.sfx('lamento'); this.espressione('triste', 1.4); } });
-    // i tentacoli che la tenevano o stavano arrivando sbattono contro di lui
-    for (const t of [...this.tentacoli, ...this.sorprese]) if ((t.stato === 'allunga' || t.stato === 'presa') && t.bersaglio && this.protetta(t.bersaglio)) this.sbatte(t, { x: tx, y: ty - 40 });
-  }
-
-  // la ragazza più in pericolo: quella col tentacolo più vicino (o già presa), se no la più vicina al Petri
-  inPericolo() {
-    const P = this.petri;
-    let r = null, dMin = Infinity;
-    for (const t of [...this.tentacoli, ...this.sorprese]) if ((t.stato === 'allunga' || t.stato === 'presa') && t.bersaglio && t.bersaglio.stato !== 'salva') {
-      const b = this.base(t), d = t.stato === 'presa' ? -1 : Math.hypot(t.bersaglio.x - b.x, t.bersaglio.y - b.y) - t.len;
-      if (d < dMin) { dMin = d; r = t.bersaglio; }
+    this.time.delayedCall(1150, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.versoPetri, 700, 951); Audio.sfx('verso'); } });
+    this.time.delayedCall(1900, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.lamentoPetri, 1400, 951); Audio.sfx('lamento'); } });
+    // il Petri sgridato: molla tutto, a testa bassa
+    this.sgridato = c.amico.durata;
+    P.meta = null;
+    let liberate = 0;
+    for (const t of [...this.tentacoli, ...this.sorprese]) {
+      if (t.stato === 'presa') liberate++;
+      if (t.stato === 'allunga' || t.stato === 'presa') this.molla(t, false, true);
     }
-    if (!r) for (const x of this.ragazze) if (this.libera(x)) { const d = Math.hypot(x.x - P.x, x.y - P.y); if (d < dMin) { dMin = d; r = x; } }
-    return r;
-  }
-
-  // dove si mette l'amico: davanti alla ragazza, dalla parte del Petri
-  postoAmico(r) {
-    const P = this.petri, dx = P.x - r.x, dy = P.y - r.y, d = Math.hypot(dx, dy) || 1;
-    return { x: Phaser.Math.Clamp(r.x + (dx / d) * 24, PISTA.x0, PISTA.x1), y: Phaser.Math.Clamp(r.y + (dy / d) * 12 + 4, PISTA.y0, PISTA.y1) };
-  }
-
-  // l'amico segue la ragazza che protegge (se è salva o sparita, passa alla prossima in pericolo)
-  muoviAmico(dt) {
-    const A = this.amico;
-    A.arrivo -= dt;
-    if (!A.r || A.r.stato === 'salva' || !this.ragazze.includes(A.r)) A.r = this.inPericolo();
-    if (A.r && A.arrivo <= 0) {
-      const p = this.postoAmico(A.r);
-      this.verso(A, p.x, p.y, this.cfg.amico.vel, dt);
-      A.img.setPosition(A.x, A.y).setDepth(A.y);
-    }
+    this.espressione('triste', c.amico.durata);
+    scritta(this, P.x, P.y - 74, liberate ? `MOLLA TUTTO! ${quanti(liberate, 'LIBERATA', 'LIBERATE')}` : 'MOLLA TUTTO!', { size: 9, color: '#7dff9a', durata: 700 });
   }
 
   viaAmico() {
     const A = this.amico;
+    if (!A) return;
     this.amico = null;
+    this.tweens.killTweensOf(A.img);
     this.tweens.add({ targets: A.img, alpha: 0, y: A.img.y - 20, duration: 300, onComplete: () => A.img.destroy() });
   }
 

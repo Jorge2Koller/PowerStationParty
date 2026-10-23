@@ -2,7 +2,7 @@
 // "Prima la rete": se c'è connessione si scarica sempre la versione aggiornata (così una
 // modifica si vede subito) e se ne tiene una copia; senza rete si usa la copia salvata.
 // Funziona solo su https (GitHub Pages) o su localhost, non sull'indirizzo di casa 192.168...
-const CACHE = 'powerstation-party-10';   // versione 10: Le Perle di Denny al tavolo del Pallaio (prima: X-Factor con tre canzoni dei Corso Italia)
+const CACHE = 'powerstation-party-11';   // versione 11: Capitan Ghiori (il ventiduesimo microgioco), il Lampo da soli e nella lista, il Petri sgridato, TorRONDAcelli più facile (prima: Le Perle di Denny al tavolo del Pallaio)
 // le canzoni di "Provini a X-Factor" (come "canzoni" in js/config/microgiochi/xfactor.js: per ognuna i
 // due ritagli e la mappa delle note) e i riquadri della lista dei microgiochi: si scaricano subito,
 // all'installazione (in tutto 3,3 MB), così il gioco installato li ha anche senza rete (le foto grandi
@@ -10,7 +10,7 @@ const CACHE = 'powerstation-party-10';   // versione 10: Le Perle di Denny al ta
 // manca uno, non si salva niente
 const CANZONI = ['fuori-dagli-schemi', 'stare-up', 'stare-bene'];
 const MICROGIOCHI = ['spina', 'regrorio', 'barba', 'panino', 'mani', 'sego', 'ronda', 'blackjack', 'palleggi', 'passaseo', 'bota', 'guida',
-  'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino'];
+  'piovra', 'scapoli', 'retromarcia', 'beerpong', 'xfactor', 'pizza', 'ballata', 'proverbi', 'scontrino', 'baratti'];
 const SUBITO = [...CANZONI.flatMap((id) => [`audio/${id}.mp3`, `audio/${id}-lampo.mp3`, `js/config/microgiochi/xfactor-${id}.json`]),
   ...MICROGIOCHI.map((id) => `icone/anteprime/${id}.webp`)];
 const FONT = ['fonts.googleapis.com', 'fonts.gstatic.com'];

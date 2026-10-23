@@ -238,6 +238,7 @@ export class ModalitaScene extends Phaser.Scene {
       { label: 'ALLENAMENTO: un microgioco a scelta', azione: () => this.scene.start('Allenamento') },
       { label: `DA SOLO: ${MO.solitario.vite} vite, ${MO.solitario.microgiochi} microgiochi e il boss`, azione: via(() => S.nuovoSolitario(0)) },
       { label: `SFIDA DEL GIORNO: ${MO.giorno.microgiochi} microgiochi, uguali per tutti oggi`, azione: via(() => S.nuovaSfidaDelGiorno(0)) },
+      { label: `LAMPO: ${MO.lampo.microgiochi} microgiochi da ${MO.lampo.durata} secondi, a caso`, azione: via(() => S.nuovoLampo()) },
       { label: `LIVELLO: ${livelliInBreve(G).replace('tutti ', '')}`, azione: () => this.scene.start('Livelli') },
       { label: 'Cambia personaggio', azione: () => this.scene.start('Personaggi', { n }) },
     ];

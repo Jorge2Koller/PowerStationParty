@@ -34,7 +34,8 @@ GIOCATORI = ['riccardo', 'giorgio', 'marco', 'greg', 'guerra', 'sego', 'generale
 OSPITI = {'spina': 'beppe', 'regrorio': 'greg', 'barba': 'marco', 'panino': 'marsupino', 'mani': 'guerra', 'sego': 'sego',
           'ronda': 'generale', 'blackjack': 'ingiocabile', 'palleggi': 'zio', 'passaseo': 'passaseo', 'bota': 'bota',
           'guida': 'giorgio', 'piovra': 'petri', 'scapoli': 'manna', 'retromarcia': 'pastaffi', 'beerpong': 'marsupino',
-          'xfactor': 'tini', 'pizza': 'boni', 'ballata': 'lori', 'proverbi': 'pastaffi', 'scontrino': 'michele'}
+          'xfactor': 'tini', 'pizza': 'boni', 'ballata': 'lori', 'proverbi': 'pastaffi', 'scontrino': 'michele',
+          'baratti': 'giorgio'}
 # i momenti delle foto (frazioni della durata) e come si gioca: 'misto' = tasti e clic a caso,
 # 'spazio' = SPAZIO tenuto e lasciato, 'tasti' = solo tasti (frecce, SPAZIO, numeri)
 MOMENTI = (0.18, 0.5, 0.8)

@@ -19,6 +19,9 @@ export default {
     'Prendi le monete. La CORONA davanti alla Golf vale tanto',
   ],
   obiettivo: 'Sopravvivi alla Golf del Re!',
+  // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
+  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
+  lampo: { stringi: ['fasi'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
   // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida).
   // Punti: secondi vivi + monete + corone + schivate all'ultimo, e arrivare in fondo vale bonusSalvo.

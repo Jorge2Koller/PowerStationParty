@@ -130,9 +130,14 @@ export class MenuScene extends Phaser.Scene {
 // e, sopra, l'anteprima in grande (tre foto che si alternano) con titolo, comando, obiettivo, record e
 // medaglia. Da soli è l'allenamento, in più giocatori una partita singola. Mouse: passandoci sopra si
 // vede l'anteprima, col clic si gioca; dito: un tocco sceglie, un altro (o GIOCA!) gioca; tastiera:
-// frecce, INVIO, R = a caso, L = livello (da soli). Le foto sono in icone/anteprime/ (le fa
-// strumenti/anteprime.py): se mancano, il riquadro ha il colore del microgioco e il titolo.
+// frecce, INVIO, R = a caso, L = livello (da soli), V = la versione: NORMALE (35 secondi) o LAMPO (15
+// secondi, più semplice; anche toccando la pillola sopra GIOCA!). La versione scelta si ricorda nel
+// salvataggio (impostazioni.listaLampo); in LAMPO la scheda mostra durata, obiettivo e record del Lampo,
+// e i riquadri hanno il fulmine. Le foto sono in icone/anteprime/ (le fa strumenti/anteprime.py): se
+// mancano, il riquadro ha il colore del microgioco e il titolo.
 const GRIGLIA = { col: 7, w: 60, h: 34, gx: 5.5, gy: 5, y0: 146 };
+// il fulmine del Lampo (attorno a 0, 0)
+const FULMINE = [[1.5, -5], [-3, 0.8], [-0.2, 0.8], [-1.5, 5], [3, -0.8], [0.2, -0.8]];
 const ANTEPRIMA = { x: 92, y: 75, w: 156, h: 88 };
 let ultimoScelto = 0;   // (si riparte dall'ultimo microgioco scelto)
 
@@ -150,13 +155,18 @@ export class AllenamentoScene extends Phaser.Scene {
     raggi(this, 0x4a9fe8, 0x7cc0f8);
     const G = Sessione.giocatori, n = G.length, ids = Object.keys(MICROGIOCHI);
     this.ids = ids;
+    // (sempre tre righe: se i microgiochi non ci stanno in 7 colonne se ne aggiunge una, e i riquadri
+    // si stringono un po', con le stesse proporzioni)
+    const col = Math.max(7, Math.ceil(ids.length / 3)), w = Math.min(60, (459 - (col - 1) * GRIGLIA.gx) / col);
+    Object.assign(GRIGLIA, { col, w, h: (w * 34) / 60 });
     const indietro = () => this.scene.start('Modalita');
     // le foto grandi (e i riquadri) si buttano uscendo: si ricaricano la volta dopo (sono in cache)
     this.events.once('shutdown', () => { for (const k of this.textures.getTextureKeys()) if (k.startsWith('ant')) this.textures.remove(k); });
 
     // in alto: A CASO, il titolo, il livello (da soli) o quanti siete
     pannello(this, 240, 14, 468, 22, { alfa: 0.7, raggio: 9 });
-    txt(this, 240, 14, n === 1 ? 'ALLENAMENTO' : 'PARTITA SINGOLA', { size: 12, color: '#ffe14a' });
+    this.lampo = !!Salvataggio.impostazioni.listaLampo;
+    this.testoTitolo = txt(this, 240, 14, '', { size: 12, color: '#ffe14a' });
     // (sul telefono a sinistra c'è la freccia per tornare indietro e a destra audio e schermo intero)
     const tocco = eTouch(), aCaso = this.pillola(tocco ? 78 : 48, 14, 70, perDito('A CASO (R)', 'A CASO'), () => this.aCaso());
     if (n === 1) {
@@ -185,6 +195,11 @@ export class AllenamentoScene extends Phaser.Scene {
     this.dati = txt(this, X0, 0, '', { size: 6.5, ox: 0, oy: 0, color: '#fff3d6', wrap: 392 - X0, align: 'left', spacing: -1 });
     this.medagliaInfo = im(this, 0, 0, 'medaglia_vuota', 0.42).setVisible(false);
     this.gioca = this.pillola(432, 110, 64, 'GIOCA!', () => this.gioca1(this.sel), true);
+    // la versione: NORMALE o LAMPO (V, o toccandola)
+    this.versione = this.add.container(432, 90).setDepth(20);
+    this.gVersione = this.add.graphics();
+    this.tVersione = txt(this, 3, -0.5, '', { size: 7, thick: 3 });
+    this.versione.add([this.gVersione, this.tVersione, this.add.zone(0, 0, 78, 20).setInteractive({ useHandCursor: true }).on('pointerdown', () => { Audio.sblocca(); this.cambiaVersione(); })]);
 
     // la griglia dei riquadri
     const R = GRIGLIA, larghezza = R.col * R.w + (R.col - 1) * R.gx, x0 = (480 - larghezza) / 2 + R.w / 2;
@@ -198,6 +213,11 @@ export class AllenamentoScene extends Phaser.Scene {
       else c.add(txt(this, 0, 0, m.titolo, { size: 6.5, wrap: R.w - 4 }));
       const bordo = this.add.graphics();
       c.add(bordo);
+      // il fulmine del Lampo, nell'angolo in basso a destra (si vede quando la versione è LAMPO)
+      const fulmine = this.add.graphics().setVisible(this.lampo);
+      fulmine.fillStyle(0x1f1430, 0.85).fillCircle(R.w / 2 - 6, R.h / 2 - 6, 5.5);
+      fulmine.fillStyle(0xffe14a, 1).fillPoints(FULMINE.map(([fx, fy]) => ({ x: R.w / 2 - 6 + fx * 0.85, y: R.h / 2 - 6 + fy * 0.85 })), true);
+      c.add(fulmine);
       // la medaglia migliore (di chi gioca da solo, o di chiunque) e "NUOVO!" per quelli mai giocati qui
       const med = Progressi.medagliaMigliore(id, n === 1 ? G[0].id : null);
       if (med) c.add(im(this, -R.w / 2 + 5, -R.h / 2 + 6, 'medaglia_' + MEDAGLIE[med - 1], 0.3));
@@ -217,7 +237,7 @@ export class AllenamentoScene extends Phaser.Scene {
         else { this.scegli(i); this.toccato = i; }
       });
       c.add(z);
-      return { c, bordo, x, y };
+      return { c, bordo, fulmine, x, y };
     });
     // l'etichetta col nome, sotto (o sopra, per l'ultima fila) il riquadro scelto
     this.etichetta = this.add.container(0, 0).setDepth(30);
@@ -237,9 +257,11 @@ export class AllenamentoScene extends Phaser.Scene {
     const ok = (e) => { if (!e.repeat) this.gioca1(this.sel); };
     kb.on('keydown-ENTER', ok); kb.on('keydown-SPACE', ok);
     kb.on('keydown-R', () => this.aCaso());
+    kb.on('keydown-V', () => this.cambiaVersione());
     kb.on('keydown-ESC', indietro);
     if (eTouch()) pulsante(this, 16, 13, 'indietro', indietro);
-    else txt(this, 240, 263, 'Frecce: scegli   INVIO o clic: gioca   R: a caso   ESC: indietro', { size: 6.5, color: '#fff3d6' });
+    else txt(this, 240, 263, 'Frecce: scegli   INVIO o clic: gioca   R: a caso   V: normale o lampo   ESC: indietro', { size: 6.5, color: '#fff3d6' });
+    this.disegnaVersione();
     pulsantiAngolo(this);
 
     // l'anteprima: le foto che si alternano, con un leggero avvicinamento
@@ -261,6 +283,33 @@ export class AllenamentoScene extends Phaser.Scene {
     c.add([g, t, z]);
     c.testo = t;
     return c;
+  }
+
+  // NORMALE o LAMPO: il titolo, la pillola, i fulmini sui riquadri
+  disegnaVersione() {
+    const n = Sessione.giocatori.length, L = this.lampo, g = this.gVersione, w = 74;
+    // (con LAMPO il titolo è più lungo: più piccolo e un po' a sinistra, se no tocca il livello)
+    this.testoTitolo.setText((n === 1 ? 'ALLENAMENTO' : 'PARTITA SINGOLA') + (L ? ' LAMPO' : '')).setFontSize((L ? 9.5 : 12) * 1.3).setX(L ? 236 : 240);
+    g.clear();
+    g.fillStyle(0x000000, 0.3).fillRoundedRect(-w / 2 + 1, -7, w, 15, 7.5);
+    g.fillStyle(L ? 0xff9a2a : 0x1f1430, 1).fillRoundedRect(-w / 2, -8, w, 15, 7.5);
+    g.lineStyle(1.3, L ? 0xffffff : 0x9a8cc8, 1).strokeRoundedRect(-w / 2, -8, w, 15, 7.5);
+    if (L) g.fillStyle(0xffe14a, 1).fillPoints(FULMINE.map(([x, y]) => ({ x: -w / 2 + 9 + x, y: -0.5 + y })), true);
+    this.tVersione.setText(L ? `LAMPO ${CONFIG.modalita.lampo.durata} s` : 'NORMALE 35 s').setColor(L ? '#1f1430' : '#fff3d6').setStroke('#1f1430', L ? 0 : 3).setX(L ? 4 : 0);
+    for (const q of this.riquadri ?? []) q.fulmine.setVisible(L);
+  }
+
+  cambiaVersione() {
+    if (this.parte) return;
+    this.lampo = !this.lampo;
+    Salvataggio.impostazioni.listaLampo = this.lampo;
+    Salvataggio.segna();
+    Audio.sfx(this.lampo ? 'bonus' : 'muovi');
+    this.tweens.add({ targets: this.versione, scale: { from: 1.25, to: 1 }, duration: 200, ease: 'Back.out' });
+    this.disegnaVersione();
+    const i = this.sel;
+    this.sel = -1;
+    this.scegli(i, true);
   }
 
   scegli(i, subito = false) {
@@ -285,13 +334,14 @@ export class AllenamentoScene extends Phaser.Scene {
     this.etichettaFondo.clear().fillStyle(0x000000, 0.3).fillRoundedRect(-w / 2 + 1, -6, w, 13, 6.5).fillStyle(0xffffff, 1).fillRoundedRect(-w / 2, -7, w, 13, 6.5);
     this.etichetta.setPosition(Phaser.Math.Clamp(q.x, w / 2 + 4, 476 - w / 2), ey);
     // le informazioni
-    const G = Sessione.giocatori, rec = Salvataggio.dati.record[id], med = Progressi.medagliaMigliore(id, G.length === 1 ? G[0].id : null);
+    // (in LAMPO: la durata, l'obiettivo e il record del Lampo; le medaglie lì non contano)
+    const L = this.lampo, G = Sessione.giocatori, rec = (L ? Salvataggio.dati.recordLampo : Salvataggio.dati.record)[id], med = L ? 0 : Progressi.medagliaMigliore(id, G.length === 1 ? G[0].id : null);
     this.titolo.setText(m.titolo);
     this.fondoFoto.setFillStyle(m.colore);
     this.titoloFoto.setText(m.titolo);
     this.verbo.setY(this.titolo.y + this.titolo.height - 3).setText(m.verbo ?? '');
-    this.obiettivo.setY(this.verbo.y + this.verbo.height - 3).setText(m.obiettivo);
-    this.dati.setY(this.obiettivo.y + this.obiettivo.height - 2).setText(`Durata: ${m.durata} s   ` + (rec ? `Record: ${rec.punteggio} (${rec.nome})` : 'Record: ancora nessuno') + (Salvataggio.dati.visti[id] ? '' : '\nMai giocato qui: prima c\'è la PROVA'));
+    this.obiettivo.setY(this.verbo.y + this.verbo.height - 3).setText((L && m.lampo?.obiettivo) || m.obiettivo);
+    this.dati.setY(this.obiettivo.y + this.obiettivo.height - 2).setText(`Durata: ${L ? CONFIG.modalita.lampo.durata : m.durata} s   ` + (rec ? `Record${L ? ' Lampo' : ''}: ${rec.punteggio} (${rec.nome})` : `Record${L ? ' Lampo' : ''}: ancora nessuno`) + (Salvataggio.dati.visti[id] ? '' : '\nMai giocato qui: prima c\'è la PROVA'));
     this.medagliaInfo.setVisible(!!med).setPosition(458, 40);
     if (med) this.medagliaInfo.setTexture('medaglia_' + MEDAGLIE[med - 1]);
     // l'anteprima: subito il riquadro ingrandito, poi le tre foto (si caricano adesso, se non ci sono)
@@ -349,7 +399,9 @@ export class AllenamentoScene extends Phaser.Scene {
     const q = this.riquadri[i];
     this.tweens.add({ targets: q.c, scale: 1.3, duration: 160, yoyo: true });
     this.time.delayedCall(260, () => {
-      if (n === 1) Sessione.nuovoAllenamento(id, 0); else Sessione.nuovaSfida([id]);
+      if (n === 1) Sessione.nuovoAllenamento(id, 0, this.lampo);
+      else if (this.lampo) Sessione.nuovaSingolaLampo(id);
+      else Sessione.nuovaSfida([id]);
       this.scene.start('Intro');
     });
   }
