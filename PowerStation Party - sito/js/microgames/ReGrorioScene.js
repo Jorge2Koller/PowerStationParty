@@ -5,7 +5,10 @@
 //  corsia della Golf) e la CORONA che il Re perde davanti alla macchina: per prenderla bisogna
 //  restare davanti alla Golf fino all'ultimo (il rischio, che vale tanto).
 //  Le fasi si annunciano: ARRIVA DA DIETRO!, FA LE FINTE!, IL RE SI ARRABBIA!
-//  Monete, corone e Golf arrivano nello stesso ordine per tutti i giocatori del round (seme).
+//  Più monete prendi, più Greg si arrabbia (scheda 2): ogni rabbia.ogniMonete monete la Golf va più
+//  forte e dal finestrino Greg lancia lattine e ciabatte nella tua corsia (si saltano o si schivano).
+//  Monete, corone e Golf arrivano nello stesso ordine per tutti i giocatori del round (seme); i lanci
+//  dipendono dalle monete prese, e hanno un seme loro per non cambiare l'ordine delle Golf.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
@@ -41,6 +44,9 @@ export class ReGrorioScene extends MicrogiocoBase {
     this.ultimoCambio = { da: -1, t: -9 };
     this.avvisi = [];          // corsie dove sta per passare una Golf (le legge anche il giocatore automatico)
     this.nFase = 0;
+    this.rabbia = 0;           // quanto è arrabbiato Greg (sale con le monete prese)
+    this.rndLanci = casuale((Sessione.seme ^ 0x9e3779b9) >>> 0);
+    this.lanciati = [];        // lattine e ciabatte in volo
 
     im(this, 0, 0, 'bgStrada').setOrigin(0);
     this.ombra = this.add.ellipse(CORSIE[1], PY - 2, 38, 10, 0x000000, 0.3).setDepth(4);
@@ -162,6 +168,9 @@ export class ReGrorioScene extends MicrogiocoBase {
         this.tweens.add({ targets: a.img, angle: a.img.x < CORSIE[a.corsia] ? -14 : 14, duration: 85, yoyo: true });
       }
 
+      // Greg lancia dal finestrino (solo le Golf che scendono, appena entrate)
+      if (a.lancia && a.dir > 0 && a.img.y > 30) { a.lancia = false; this.lancia(a); }
+
       const vicina = Math.abs(a.img.y - (PY - 22)) < 46;
       const stessaX = Math.abs(a.img.x - this.io.x) < 30;
       if (vicina && !a.passata) {
@@ -183,6 +192,21 @@ export class ReGrorioScene extends MicrogiocoBase {
       const fuori = a.img.y > 340 || a.img.y < -70;
       if (fuori) a.img.destroy();
       return !fuori;
+    });
+
+    // --- lattine e ciabatte: scendono girando; se ti prendono è un botto (saltando passano sotto) ---
+    for (const o of this.lanciati) {
+      o.img.y += o.vel * dt;
+      o.img.angle += o.giro * dt;
+      if (!o.via && !this.colpito && !inAria && !this.invulnerabile && Math.abs(o.img.y - Y_PRESA) < 14 && Math.abs(o.img.x - this.io.x) < 20) {
+        o.via = true;
+        o.img.destroy();
+        this.botto();
+      }
+    }
+    this.lanciati = this.lanciati.filter((o) => {
+      if (!o.via && o.img.y > 290) { o.via = true; o.img.destroy(); }
+      return !o.via;
     });
 
     // --- monete e corone: rotolano e si prendono passandoci sopra (anche saltando) ---
@@ -212,15 +236,38 @@ export class ReGrorioScene extends MicrogiocoBase {
   prendi(t) {
     const c = this.cfg, corona = t.tipo === 'corona', v = corona ? c.puntiCorona : c.puntiMoneta;
     t.presa = true;
-    if (corona) this.corone++; else this.monete++;
+    if (corona) this.corone++; else { this.monete++; this.arrabbia(); }
     this.bonus += v;
     Audio.sfx(corona ? 'bonus' : 'ding');
     if (corona) {
       scritta(this, this.io.x, PY - 96, `LA CORONA! +${v}`, { size: 10, color: '#ffe14a' });
       stelle(this, this.io.x, PY - 50, 8);
     }
-    colpetto(this, this.testoPunti, 1.15, 1.15);
+    // (niente più numero dei punti che si ingrandisce a ogni moneta: scheda 2)
     this.tweens.add({ targets: t.img, y: t.img.y - 26, alpha: 0, scale: t.s0 * 1.6, duration: 220, onComplete: () => t.img.destroy() });
+  }
+
+  // ogni rabbia.ogniMonete monete Greg si arrabbia un po' di più: Golf più veloci e più lanci
+  arrabbia() {
+    const R = this.cfg.rabbia, liv = Math.min(R.max, Math.floor(this.monete / R.ogniMonete));
+    if (liv <= this.rabbia) return;
+    this.rabbia = liv;
+    Audio.sfx('clacson');
+    scuoti(this, 200, 0.006);
+    scritta(this, 240, 96, liv === 1 ? 'GREG RIVUOLE LE MONETE!' : liv === R.max ? 'GREG È FURIOSO!' : 'GREG SI ARRABBIA!', { size: 12, color: '#ff9a5a', durata: 900 });
+  }
+
+  // dal finestrino della Golf, una lattina o una ciabatta nella tua corsia (o accanto, se la Golf è già
+  // nella tua)
+  lancia(a) {
+    const r = this.rndLanci, R = this.cfg.rabbia;
+    const altre = [0, 1, 2].filter((k) => k !== a.corsia);
+    const corsia = this.corsia !== a.corsia ? this.corsia : altre[Math.floor(r() * altre.length)];
+    const img = im(this, a.img.x, a.img.y + 10, r() < 0.5 ? 'lattinaRe' : 'ciabattaRe', 1.5).setDepth(22);
+    this.tweens.add({ targets: img, x: CORSIE[corsia], duration: 260, ease: 'Quad.out' });
+    this.lanciati.push({ img, vel: a.vel * R.velOggetto, giro: (r() < 0.5 ? -1 : 1) * 540, via: false });
+    Audio.sfx('muovi');
+    scritta(this, a.img.x, a.img.y + 6, caso(R.frasi), { size: 9, color: '#ff9a5a', durata: 600 });
   }
 
   // la zona toccata si illumina un attimo
@@ -257,7 +304,9 @@ export class ReGrorioScene extends MicrogiocoBase {
       this.avvisi = this.avvisi.filter((v) => v !== avviso);
       if (!this.inCorso) return;
       const img = im(this, x, dalBasso ? 332 : -54, dalBasso ? 'golfSu0' : 'golfGiu0').setDepth(dalBasso ? 45 : 20);
-      const a = { img, corsia, dir: dalBasso ? -1 : 1, vel: f.vel, tFumo: 0, finta };
+      // (più Greg è arrabbiato, più va forte e più spesso lancia qualcosa)
+      const R = this.cfg.rabbia, lancia = this.rabbia > 0 && !dalBasso && this.rndLanci() < Math.min(R.maxLancio, R.lancio * this.rabbia);
+      const a = { img, corsia, dir: dalBasso ? -1 : 1, vel: f.vel * (1 + R.velPiu * this.rabbia), tFumo: 0, finta, lancia };
       // la corona rotola davanti al muso della Golf, alla sua stessa velocità
       if (corona) a.corona = this.tesoro('corona', x, img.y + this.cfg.anticipoCorona, f.vel);
       this.auto.push(a);
