@@ -5,7 +5,7 @@
 export default {
   titolo: 'Beer Pong al Pallaio',
   verbo: 'TIRA!',           // il comando in una parola (schermata prima del microgioco)
-  durata: 35,
+  durata: 50,               // (scheda 2: "troppo corto": era 35)
   colore: 0x2f8f6a,
   musica: 'pallaio',           // js/config/musiche.js
   // i veterani del Pallaio: lo Zio e Marsupino, mossi dal computer
@@ -31,7 +31,7 @@ export default {
   // Revisione 4, la stessa scala per tutti (erano 70 / 110 / 170, con lo "zero" a 15). In 35 s si
   // fanno una decina di tiri: un bicchiere più di loro è il bronzo, otto tolti e tre persi
   // l'argento, il triangolo finito l'oro.
-  medaglie: { bronzo: 100, argento: 200, oro: 300 },
+  medaglie: { bronzo: 130, argento: 260, oro: 390 },   // (con 50 secondi invece di 35: erano 100, 200, 300)
   // punti: si parte da puntiPari (la partita pari); ogni bicchiere tolto aggiunge, ogni bicchiere
   // perso toglie puntiPerso (prima erano 10 a bicchiere e 5 per ogni tuo bicchiere ancora in piedi)
   puntiPari: 80,
@@ -48,8 +48,8 @@ export default {
   // centrano (0..1); nell'ultimo Marsupino disturba
   atti: [
     { da: 0, nome: 'RISCALDAMENTO!', ogni: 5, precisione: 0.25 },
-    { da: 12, nome: 'SI BEVE!', ogni: 4, precisione: 0.36 },
-    { da: 24, nome: 'ULTIMO GIRO!', ogni: 2.9, precisione: 0.44, disturbo: true },
+    { da: 17, nome: 'SI BEVE!', ogni: 4, precisione: 0.36 },
+    { da: 34, nome: 'ULTIMO GIRO!', ogni: 2.9, precisione: 0.44, disturbo: true },
   ],
   primoTiro: 2.6,           // secondi prima del primo tiro dei veterani
   bordoVeterani: 0.3,       // quanti dei loro tiri sbagliati prendono almeno il bordo (e poi escono)

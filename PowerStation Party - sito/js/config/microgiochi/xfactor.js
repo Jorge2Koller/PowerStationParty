@@ -117,8 +117,10 @@ export default {
   // tutti i livelli; erano 0,055 e 0,12, anticipo 1,35. Coi giocatori simulati, a NORMALE chi sbaglia di
   // 75 ms passa il provino una volta su due invece di due su tre, e chi sbaglia di 48 ms prende
   // l'argento poco più di una volta su due invece di due su tre)
-  finestre: { perfetto: 0.052, buono: 0.113, vuoto: 0.25 },
-  anticipo: 1.28,
+  // (scheda 2: "la difficoltà normale è tendente al facile": a NORMALE finestre più strette del 10% e
+  // note un po' più svelte; erano 0,052 e 0,113, anticipo 1,28. Facile e Difficile restano com'erano)
+  finestre: { perfetto: 0.047, buono: 0.102, vuoto: 0.25 },
+  anticipo: 1.2,
   // l'errore si sente sulla canzone: a ogni nota mancata si ovatta (passa-basso a "taglio" Hz) per
   // "ovatta" secondi, col graffio del disco; con "fila" errori di fila resta ovattata e rallenta a
   // "lento" (un po' più bassa di tono) finché non si torna a prendere le note
