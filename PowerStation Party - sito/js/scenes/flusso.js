@@ -654,21 +654,27 @@ export class FinaleScene extends Phaser.Scene {
     txt(this, 240, 18, 'CLASSIFICA FINALE', { size: 18, color: '#ffe14a' });
 
     // tabellone dei round (da 4 round in su, una riga per round: titolo a sinistra, punti a destra)
-    // (con più di 10 round le righe si stringono un po': il tabellone resta alto uguale)
-    const compatto = n > 3, fitto = n > 6, passo = fitto ? Math.min(10, 100 / n) : compatto ? 14 : 22, y0 = fitto ? 46 : 48;
-    const alt = fitto ? 28 + n * passo : compatto ? 34 + n * passo : 36 + n * 22;
-    pannello(this, 240, 36 + alt / 2, 250, alt);
-    S.lista.slice(0, n).forEach((id, i) => {
-      const [a, b] = S.risultati[i], vr = S.vincitoreRound(i), col = vr < 0 ? '#ffffff' : G[vr].colore;
+    // (da 11 round in su, la sfida completa, su due colonne: in una sola le righe si sovrapponevano.
+    // Scheda 2: "la classifica finale in due giocatori con tutti i minigiochi è sovrapposta")
+    const colonne = n > 10 ? 2 : 1, righe = Math.ceil(n / colonne);
+    const compatto = n > 3, fitto = righe > 6, passo = fitto ? Math.min(10, 104 / righe) : compatto ? 14 : 22, y0 = fitto ? 46 : 48;
+    const alt = fitto ? 28 + righe * passo : compatto ? 34 + righe * passo : 36 + n * 22;
+    const largo = colonne > 1 ? 296 : 250, xCol = colonne > 1 ? [96, 244] : [126], larCol = colonne > 1 ? 140 : 228;
+    pannello(this, 240, 36 + alt / 2, largo, alt);
+    S.lista.slice(0, n).forEach((id, j) => {
+      const [a, b] = S.risultati[j], vr = S.vincitoreRound(j), col = vr < 0 ? '#ffffff' : G[vr].colore;
+      const i = j % righe, x = xCol[Math.floor(j / righe)];
       if (compatto) {
-        txt(this, 126, y0 + i * passo, CONFIG.microgiochi[id].titolo, { size: fitto ? 6 : 7, color: '#ffe14a', ox: 0 });
-        txt(this, 354, y0 + i * passo, `${a.punteggio}  -  ${b.punteggio}`, { size: fitto ? 6.5 : 8, color: col, ox: 1 });
+        const t = txt(this, x, y0 + i * passo, CONFIG.microgiochi[id].titolo, { size: colonne > 1 ? 5.5 : fitto ? 6 : 7, color: '#ffe14a', ox: 0 });
+        // (su due colonne i titoli lunghi si accorciano: non devono finire sotto i punti)
+        for (let k = t.text.length - 1; colonne > 1 && t.displayWidth > larCol - 36 && k > 4; k--) t.setText(CONFIG.microgiochi[id].titolo.slice(0, k).trimEnd() + '…');
+        txt(this, x + larCol, y0 + i * passo, `${a.punteggio} - ${b.punteggio}`, { size: colonne > 1 ? 6 : fitto ? 6.5 : 8, color: col, ox: 1 });
       } else {
         txt(this, 240, 46 + i * 22, CONFIG.microgiochi[id].titolo, { size: 7, color: '#ffe14a' });
         txt(this, 240, 56 + i * 22, `${a.punteggio}  -  ${b.punteggio}`, { size: 8, color: col });
       }
     });
-    const yRiep = fitto ? y0 + n * passo + 2 : compatto ? 40 + n * passo + 6 : 40 + n * 22 + 8;
+    const yRiep = fitto ? y0 + righe * passo + 2 : compatto ? 40 + righe * passo + 6 : 40 + n * 22 + 8;
     // quello che decide la sfida va per primo: i minigiochi vinti nella veloce, i punti nella completa
     const riep = S.meglioDi
       ? `MINIGIOCHI VINTI: ${cl.round[0]} - ${cl.round[1]}      punti: ${cl.punti[0]} - ${cl.punti[1]}`
@@ -677,10 +683,11 @@ export class FinaleScene extends Phaser.Scene {
     txt(this, 240, yRiep + (fitto ? 9 : 11), `${G[0].nome}  -  ${G[1].nome}` + (S.meglioDi ? '' : '   (ogni microgioco vale da 0 a 100 punti sfida)'), { size: 6.5, color: '#fff3d6' });
 
     // (col tabellone lungo la scritta PAREGGIO! scende sotto il riquadro, e la frase con lei)
-    const XV = 62, XP = 418, Y = 232, yPari = Math.max(172, 36 + alt + 14);
+    // (col tabellone su due colonne, più largo, i due si spostano ai lati e si rimpiccioliscono)
+    const XV = colonne > 1 ? 42 : 62, XP = 480 - XV, Y = 232, yPari = Math.max(172, 36 + alt + 14);
     const mostra = (i, x, espr) => {
-      ombra(this, x, Y, 62);
-      return im(this, x, Y, `${G[i].id}_${espr}`).setOrigin(0.5, 1).setScale(3.2 * SP);
+      ombra(this, x, Y, colonne > 1 ? 50 : 62);
+      return im(this, x, Y, `${G[i].id}_${espr}`).setOrigin(0.5, 1).setScale((colonne > 1 ? 2.5 : 3.2) * SP);
     };
     const nome = (i, x, s) => txt(this, x, Y + 11, s, { size: G[i].nome.length > 10 ? 8 : 10, color: G[i].colore });
 

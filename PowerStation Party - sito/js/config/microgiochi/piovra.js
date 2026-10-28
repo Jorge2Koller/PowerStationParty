@@ -11,12 +11,12 @@ export default {
   comandi: [
     'Clicca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'CLIC sui tentacoli del Petri: SCIAF! (tastiera: TAB ragazza, FRECCE, SPAZIO schiaffo)',
-    'Aiuti (in basso o 1 e 2): BIRRA GRATIS (poi clicca dove lanciarla) e L\'AMICO, che sgrida il Petri: molla tutte!',
+    'Aiuti (in basso o 1 e 2): BIRRA GRATIS (poi clicca dove lanciarla) e L\'AMICO, che blocca il Petri per 3 secondi',
   ],
   comandiTouch: [
     'Tocca una ragazza e TRASCINA: disegni la strada fino al tavolo delle amiche',
     'Tocca i tentacoli del Petri: SCIAF! Mollano la presa (anche con un altro dito)',
-    'Aiuti in basso: BIRRA GRATIS (poi tocca dove lanciarla) e L\'AMICO, che sgrida il Petri: molla tutte!',
+    'Aiuti in basso: BIRRA GRATIS (poi tocca dove lanciarla) e L\'AMICO, che blocca il Petri per 3 secondi',
   ],
   obiettivo: 'Fai scappare almeno 8 ragazze!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
@@ -48,12 +48,12 @@ export default {
   raggioDito: 4,           // col dito un po' di più
   // aiuti
   birra: { ricarica: 9, durata: 3, velPetri: 170 },   // (era lo shottino: stesso effetto, il Petri ci si fionda)
-  // l'amico: sempre O'Sfurnacchiat. Arriva davanti al Petri e lo sgrida: il Petri molla subito tutte le
-  // ragazze (scappano da sole verso il tavolo delle amiche) e ritira i tentacoli, anche quelli a
-  // sorpresa, e per "durata" secondi resta mortificato e fermo. (Prima si metteva davanti a una
-  // ragazza sola e la proteggeva per 4,5 secondi, con la ricarica a 11: serviva poco. Ora che libera
-  // tutte insieme la ricarica è un po' più lunga)
-  amico: { id: 'marco', ricarica: 13, durata: 2.5 },
+  // l'amico: sempre O'Sfurnacchiat. Arriva davanti al Petri e lo sgrida: per "durata" secondi il Petri
+  // resta mortificato e fermo, senza tentacoli nuovi, ma le ragazze già prese restano prese (vanno
+  // liberate a schiaffi). (Scheda 2: "il Delu è troppo utile, deve immobilizzarlo solo per 3 secondi
+  // ma non garantire il passaggio sicuro delle ragazze": prima le mollava tutte, con la ricarica a 13.
+  // Ora che aiuta meno la ricarica è più corta)
+  amico: { id: 'marco', ricarica: 10, durata: 3 },
   fraseAmico: 'Gnamo Petri, falla finita',
   versoPetri: 'Grrhhh...',          // il verso gutturale del Petri, prima del lamento
   lamentoPetri: 'Gnamooo DeLu',
@@ -62,11 +62,12 @@ export default {
   //  vel = velocità dei tentacoli (unità/s), portata = fin dove arrivano, petri = velocità con cui si sposta
   //  (0 = fermo), reazione = [min,max] secondi prima che un tentacolo libero punti qualcuno
   //  nome = l'annuncio (i tre atti)
+  // (scheda 2: "troppo difficile": i tentacoli un po' più lenti, erano 70, 85, 100, 115)
   fasi: [
-    { da: 0,  ogni: 2.6, max: 3, tentacoli: 2, vel: 70,  portata: 120, petri: 0,  reazione: [0.9, 1.6] },
-    { da: 12, nome: 'IL PETRI SI MUOVE!', ogni: 2.2, max: 4, tentacoli: 3, vel: 85, portata: 140, petri: 14, reazione: [0.7, 1.3] },
-    { da: 18, ogni: 2.0, max: 5, tentacoli: 4, vel: 100, portata: 160, petri: 20, reazione: [0.5, 1.1] },
-    { da: 24, nome: 'TENTACOLI A SORPRESA!', ogni: 1.7, max: 6, tentacoli: 5, vel: 115, portata: 175, petri: 28, reazione: [0.4, 0.9] },
+    { da: 0,  ogni: 2.6, max: 3, tentacoli: 2, vel: 63,  portata: 120, petri: 0,  reazione: [0.9, 1.6] },
+    { da: 12, nome: 'IL PETRI SI MUOVE!', ogni: 2.2, max: 4, tentacoli: 3, vel: 77, portata: 140, petri: 14, reazione: [0.7, 1.3] },
+    { da: 18, ogni: 2.0, max: 5, tentacoli: 4, vel: 90, portata: 160, petri: 20, reazione: [0.5, 1.1] },
+    { da: 24, nome: 'TENTACOLI A SORPRESA!', ogni: 1.7, max: 6, tentacoli: 5, vel: 104, portata: 175, petri: 28, reazione: [0.4, 0.9] },
   ],
   // tentacolo a sorpresa (da sotto un tavolino o dalla consolle)
   sorpresaDa: 24,
@@ -80,7 +81,7 @@ export default {
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.
   livelli: {
-    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 }, amico: { ricarica: 11, durata: 3 } },
-    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 }, amico: { ricarica: 15, durata: 2 } },
+    facile: { velSegue: 110, fasi: { vel: 0.85, ogni: 1.15 }, amico: { ricarica: 8, durata: 3.5 } },
+    difficile: { velSegue: 85, fasi: { vel: 1.15, ogni: 0.88 }, amico: { ricarica: 12, durata: 2.5 } },
   },
 };

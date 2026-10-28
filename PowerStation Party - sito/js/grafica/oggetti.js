@@ -1390,6 +1390,21 @@ function coronaRe(c) {
   poli(c, [[4, 11], [4, 7.5], [6, 9.6]]); c.fillStyle = 'rgba(255,255,255,0.55)'; c.fill();
 }
 
+// quello che Greg lancia dal finestrino quando ti vede con troppe monete: la lattina (12x18) e la
+// ciabatta (18x10)
+function lattinaRe(c) {
+  rrect(c, 1.5, 2, 9, 14.5, 2); c.fillStyle = gradL(c, 1.5, 0, 10.5, 0, [[0, '#a8121c'], [0.35, '#ff4a4a'], [1, '#8c0e18']]); c.fill(); tratto(c, CONT, 1);
+  rrect(c, 2, 1, 8, 2.6, 1.2); c.fillStyle = '#d7dde6'; c.fill(); tratto(c, CONT, 0.8);
+  rrect(c, 2, 14.4, 8, 2.4, 1.2); c.fillStyle = '#b8c0cc'; c.fill(); tratto(c, CONT, 0.8);
+  rrect(c, 3, 7, 6, 3.6, 1); c.fillStyle = '#ffffff'; c.fill();
+  c.beginPath(); c.moveTo(3.4, 5); c.lineTo(3.4, 13); tratto(c, 'rgba(255,255,255,0.45)', 1);
+}
+function ciabattaRe(c) {
+  ellisse(c, 9, 5.5, 8, 4); c.fillStyle = '#3a7bd5'; c.fill(); tratto(c, CONT, 1);
+  ellisse(c, 9, 5.5, 6.4, 2.8); c.fillStyle = '#5fa2ff'; c.fill();
+  c.beginPath(); c.moveTo(5, 2.4); c.quadraticCurveTo(9, 7.5, 13, 2.4); tratto(c, '#ffffff', 2.2);
+}
+
 // ------------------------------------------------------------
 //  ARRIVA REGRORIO!: gli avvisi della Golf in arrivo e i tasti a schermo
 // ------------------------------------------------------------
@@ -1450,6 +1465,8 @@ export function creaOggetti(scene) {
   });
   tela(scene, 'monetaRe', 14, 14, monetaRe, 8);
   tela(scene, 'coronaRe', 22, 18, coronaRe, 8);
+  tela(scene, 'lattinaRe', 12, 18, lattinaRe, 8);
+  tela(scene, 'ciabattaRe', 18, 10, ciabattaRe, 8);
   pinta(scene);
   tela(scene, 'spina', 36, 64, spina, 6);
   for (const t of ['aperta', 'presa', 'colpita', 'guanto']) tela(scene, `manoGuerra_${t}`, 40, 56, (c) => manoGuerra(c, t), 6);

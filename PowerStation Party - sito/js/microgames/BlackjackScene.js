@@ -4,9 +4,9 @@
 //  Il banco tira fino a 17, il blackjack paga 3 a 2. Il sabot ha due mazzi
 //  mescolati con il seme del round: nella sfida tutti e due trovano le stesse carte.
 //  Si decide in fretta: TEMPO DI DECISIONE secondi per puntare e per ogni scelta (se scade, il
-//  banco punta il minimo per te, o si sta). Il punteggio sono le fiches vinte (sopra le 100 di
-//  partenza): la mano vinta paga la puntata, quella persa se la porta via, quindi quanto punti
-//  conta. E conta saper giocare: ogni scelta uguale a quella della strategia di base (la tabella
+//  banco punta il minimo per te, o si sta). Il punteggio sono le fiches vinte nelle mani vinte
+//  (ogni mano vinta: +la vincita, subito sul punteggio): le mani perse costano fiches ma non
+//  tolgono punti, quindi quanto punti conta. E conta saper giocare: ogni scelta uguale a quella della strategia di base (la tabella
 //  dei giocatori bravi) è una MOSSA DA PRO, e una mano VINTA giocata tutta da pro il banco la paga
 //  di più (premioPro). Mosse giuste e mani perse: niente punti.
 //  Quando vince il banco, l'Ingiocabile allunga il braccio piegato a 90 gradi e
@@ -44,6 +44,7 @@ export class BlackjackScene extends MicrogiocoBase {
     this.puntata = 0;
     this.mani = 0;
     this.vinte = 0;
+    this.guadagno = 0;         // il punteggio: le fiches vinte nelle mani vinte
     this.blackjack = 0;
     this.mosseGiuste = 0; this.mosseSbagliate = 0;
     this.manoPro = true;       // la mano in corso, finora giocata tutta da pro (con almeno una scelta)
@@ -199,11 +200,10 @@ export class BlackjackScene extends MicrogiocoBase {
     this.testoPuntata.setText(this.puntata ? 'PUNTATA ' + this.puntata : '');
   }
 
-  // il punteggio: le fiches vinte, sopra quelle di partenza (a mano finita o no: la puntata in gioco
-  // conta come tua). Ci sono dentro anche i premi delle mani vinte da pro
-  get punteggio() {
-    return Math.max(0, this.fiches + this.puntata - this.cfg.fiches);
-  }
+  // il punteggio: le fiches vinte nelle mani vinte, premi da pro compresi. (Prima erano le fiches
+  // sopra le 100 di partenza: dopo una mano persa, vincerne una non dava punti. Scheda 2: "non si
+  // capisce come fare punti, ho vinto una mano e non ho ricevuto punti")
+  get punteggio() { return this.guadagno; }
   aggiornaPunti() { this.testoPunti.setText(puntiHud(this.punteggio)); }
 
   // --- fiches ---
@@ -390,6 +390,12 @@ export class BlackjackScene extends MicrogiocoBase {
         for (let i = 0; i < Math.max(1, Math.round(paga / 25)); i++) this.pila.push(this.fiche(paga >= 50 ? 50 : paga >= 25 ? 25 : 10, { x: 240, y: Y_TAVOLO + 4 }, CERCHIO.x + 20 + (i % 3) * 3, CERCHIO.y - Math.floor(i / 3) * 2));
       }
       this.fiches += vincita + vincitaPro;
+      if (buono) {
+        const punti = vincita - this.puntata + vincitaPro;
+        this.guadagno += punti;
+        this.aggiornaPunti();
+        scritta(this, 240, 186, `+${punti} PUNTI`, { size: 12, color: '#ffe14a', durata: 1000, depth: 961 });
+      }
       this.puntata = 0;
       this.dopo(700, () => {
         Audio.sfx('fiches');

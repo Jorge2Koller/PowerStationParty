@@ -7,13 +7,17 @@
 //  Schiaffo a vuoto: la tua mano resta dolorante per un attimo (niente clic a caso).
 //  La tua mano è di chi gioca: giovane, con la sua pelle, il polsino del suo colore e la sua manica.
 //  Con la tastiera: i tasti da 1 a 5 danno lo schiaffo alla mano che punta quel piatto.
+//  Il CAMERIERE (scheda 2): ogni tanto arriva da destra dietro la tavola col vassoio alzato e porta un
+//  piatto nuovo al posto di uno che Guerra ha già mangiato (se non ne manca nessuno, porta il dolce:
+//  punti in più). Mentre cammina Guerra allunga le mani anche sul suo vassoio: difendilo a schiaffi.
 //  Le mani arrivano uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale, tela } from '../grafica/base.js';
 import { manoGiocatore } from '../grafica/oggetti.js';
-import { aspettoDi } from '../sprites.js';
+import { aspettoDi, preparaFigura } from '../sprites.js';
+import { PERSONAGGI } from '../grafica/personaggi.js';
 import { txt, im, scalaDi, scritta, stelle, scuoti, caso, quanti, colpetto, fumetto, vibra, multiTouch, eTouch, puntiHud, numero } from '../fx.js';
 
 const PIATTI = [
@@ -38,6 +42,13 @@ const Y_GUERRA = 127;
 // la mia mano (manoGiocatore in grafica/oggetti.js, 40x80 unità col centro del dorso a 34): un po' più
 // grande di quelle di Guerra, perché è più vicina (era la mano a cartone di 40x56 a 0,62)
 const TAGLIA_MIA = 0.7;
+// il cameriere: capelli grigi tirati indietro, gilet nero e camicia bianca (una comparsa)
+const CAMERIERE = { ...PERSONAGGI.boni, capelli: '#5a5a60', capelliLuce: '#9a9aa2', sopra: '#3a3a40',
+  vestito: { tipo: 'giacca', colore: '#17171d', sotto: '#f4f5f8' }, pantaloni: '#17171d', scarpe: '#0e0e12' };
+const Y_CAMERIERE = 136;   // i piedi (dietro la tavola: si vede dalla vita in su)
+const X_CAMERIERE = 372;   // dove si ferma: a destra di Guerra; da lì il piatto scivola al suo posto
+const TAGLIA_CAMERIERE = 0.8;
+const VASSOIO = { dx: 30, dy: -72 };   // il piatto sul vassoio, rispetto ai piedi
 
 export class ManiScene extends MicrogiocoBase {
   constructor() { super('mani'); }
@@ -56,8 +67,13 @@ export class ManiScene extends MicrogiocoBase {
     this.tTasto = 0;
     this.hud = null;   // (la scena viene riusata: il testo dell'HUD va riscritto da capo)
     this.dopo = null;
+    this.cameriere = null;
+    this.passaggi = [...this.cfg.cameriere.quando];   // i secondi in cui arriva (in Lampo in proporzione)
+    this.consegne = 0;
 
     im(this, 0, 0, 'bgSala').setOrigin(0);
+    preparaFigura(this, 'cameriereMani', CAMERIERE, 'felice', { posa: 'alza' });
+    preparaFigura(this, 'cameriereMani_rabbia', CAMERIERE, 'rabbia', { posa: 'alza' });
     this.guerra = im(this, 240, Y_GUERRA, 'guerra_normale', 0.8).setOrigin(0.5, 1).setDepth(5);
     im(this, 0, 80, 'tavola').setOrigin(0).setDepth(10);
     this.piatti = PIATTI.map((p) => ({
@@ -86,7 +102,10 @@ export class ManiScene extends MicrogiocoBase {
     if (!eTouch()) this.piatti.forEach((P, i) => txt(this, P.x, P.y + 17, String(i + 1), { size: 7, color: '#ffe14a', depth: 31 }));
   }
 
-  pulisci() { this.input.setDefaultCursor('default'); }
+  pulisci() {
+    this.input.setDefaultCursor('default');
+    for (const k of ['cameriereMani', 'cameriereMani_rabbia']) if (this.textures.exists(k)) this.textures.remove(k);
+  }
 
   // la fase di adesso. In Lampo (15 secondi) i tre atti arrivano prima, in proporzione: se no
   // restava solo il primo, con una mano alla volta, e si salvavano 3 piatti anche senza fare niente
@@ -110,6 +129,10 @@ export class ManiScene extends MicrogiocoBase {
       this.tMano = f.intervallo[0] + this.rnd() * (f.intervallo[1] - f.intervallo[0]);
       this.nuovaMano(f);
     }
+    // --- il cameriere ---
+    const k = Math.min(1, this.durata / c.durata);
+    if (this.passaggi.length && this.trascorso >= this.passaggi[0] * k && !this.cameriere) { this.passaggi.shift(); this.arrivaCameriere(); }
+    if (this.cameriere) this.muoviCameriere(dt);
     // --- mani in movimento ---
     for (const m of this.mani) this.muovi(m, dt, f);
     this.mani = this.mani.filter((m) => {
@@ -139,6 +162,9 @@ export class ManiScene extends MicrogiocoBase {
 
   // una mano nuova verso un piatto che è ancora in tavola (meglio se nessuno lo sta già puntando)
   nuovaMano(f) {
+    // col cameriere in giro, una mano su due va verso il suo vassoio (se nessun'altra ci sta già andando)
+    const C = this.cameriere;
+    if (C && C.stato === 'cammina' && !this.mani.some((m) => m.vassoio && m.stato === 'arriva') && this.rnd() < this.cfg.cameriere.mani) return this.manoVassoio(f);
     const liberi = this.piatti.filter((p) => p.stato === 'tavola');
     if (!liberi.length) return;
     const r = this.rnd, pesca = (a) => a[Math.floor(r() * a.length)];
@@ -167,7 +193,18 @@ export class ManiScene extends MicrogiocoBase {
       return d - passo;
     };
     if (m.attesa > 0) { m.attesa -= dt; return this.disegna(m); }   // stordita o indecisa
-    if (m.stato === 'arriva') {
+    if (m.stato === 'arriva' && m.vassoio) {
+      // verso il piatto sul vassoio, che si muove: la mano lo insegue
+      const C = this.cameriere;
+      if (!C || C.stato !== 'cammina') m.stato = 'ritira';
+      else {
+        const T = this.puntoVassoio(), resto = verso(T.x, T.y, m.vel);
+        const L = Math.hypot(T.x - m.x, T.y - m.y) || 1;
+        m.dir = { x: (T.x - m.x) / L || m.dir.x, y: (T.y - m.y) / L || m.dir.y };
+        m.img.rotation = Math.atan2(m.dir.x, -m.dir.y);
+        if (resto <= 2) this.rubaVassoio(m);
+      }
+    } else if (m.stato === 'arriva') {
       const P = m.piatto, resto = verso(P.x, P.y - 2, m.vel);
       const fatta = 1 - resto / Math.hypot(P.x - m.o.x, P.y - 2 - m.o.y);
       if (m.finta != null && fatta >= m.finta) { m.stato = 'ritira'; m.attesa = 0.3; }    // finta: si ferma e torna
@@ -252,7 +289,7 @@ export class ManiScene extends MicrogiocoBase {
     this.tweens.killTweensOf(this.manoMia);
     this.tweens.add({ targets: this.manoMia, angle: 0, scale: { from: this.manoMia.scala * 1.25, to: this.manoMia.scala }, duration: 140, ease: 'Quad.out' });
     if (this.bloccata > 0) return;
-    const sue = this.mani.filter((m) => m.piatto === P && (m.stato === 'arriva' || m.stato === 'tira'));
+    const sue = this.mani.filter((m) => !m.vassoio && m.piatto === P && (m.stato === 'arriva' || m.stato === 'tira'));
     sue.sort((a, b) => (b.stato === 'tira') - (a.stato === 'tira') || Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
     if (sue.length) { this.manoMia.setPosition(sue[0].x, sue[0].y); this.colpisci(sue[0]); }
     else this.aVuoto({ x: P.x, y: P.y - 20 });
@@ -275,7 +312,8 @@ export class ManiScene extends MicrogiocoBase {
       return;
     }
     const salvato = m.stato === 'tira';
-    const ultimo = !salvato && m.stato === 'arriva' && Math.hypot(m.piatto.x - m.x, m.piatto.y - m.y) < c.vicino;
+    const bersaglio = m.vassoio ? this.puntoVassoio() : m.piatto;
+    const ultimo = !salvato && m.stato === 'arriva' && Math.hypot(bersaglio.x - m.x, bersaglio.y - m.y) < c.vicino;
     const pt = salvato ? c.puntiSalvato : ultimo ? c.puntiUltimo : c.puntiSchiaffo;
     this.punti += pt;
     this.schiaffi++;
@@ -294,6 +332,94 @@ export class ManiScene extends MicrogiocoBase {
     }
     this.espressione('shock', 0.35, 'sufficienza', 0.8);
     if (Math.random() < 0.3) fumetto(this, 296, 30, caso(c.frasiSchiaffo), 800, 50);
+  }
+
+  // --- il cameriere ---
+  arrivaCameriere() {
+    const persi = this.piatti.filter((p) => p.stato === 'perso');
+    // porta un piatto al posto di uno mangiato (il primo che manca, da destra); se non manca niente, il dolce
+    const posto = persi.length ? persi[persi.length - 1] : null;
+    const cibo = posto ? posto.cibo : 'tiramisu';
+    const img = im(this, 520, Y_CAMERIERE, 'cameriereMani', TAGLIA_CAMERIERE).setOrigin(0.5, 1).setDepth(6);
+    const piatto = im(this, 520 + VASSOIO.dx, Y_CAMERIERE + VASSOIO.dy, 'piatto_' + cibo, 0.7).setOrigin(0.5, 23 / 40).setDepth(9);
+    const vassoio = this.add.ellipse(0, 0, 34, 7, 0xc9ccd4).setStrokeStyle(1, 0x2b1b17).setDepth(8);
+    this.cameriere = { img, piatto, vassoio, posto, cibo, stato: 'cammina', x: 520, meta: X_CAMERIERE };
+    Audio.sfx('squillo');
+    scritta(this, 400, 70, posto ? 'ARRIVA IL CAMERIERE!' : 'ARRIVA IL DOLCE!', { size: 11, color: '#ffe14a', durata: 900, depth: 950 });
+    fumetto(this, 430, 40, caso(this.cfg.cameriere.frasi), 1000, 50);
+  }
+
+  puntoVassoio() { const C = this.cameriere; return { x: C.x + (C.stato === 'va' ? -VASSOIO.dx : VASSOIO.dx), y: Y_CAMERIERE + VASSOIO.dy }; }
+
+  muoviCameriere(dt) {
+    const C = this.cameriere, c = this.cfg.cameriere;
+    if (C.stato === 'cammina') {
+      C.x = Math.max(C.meta, C.x - c.vel * dt);
+      if (C.x <= C.meta) this.consegna();
+    } else if (C.stato === 'va') {
+      C.x += c.vel * 1.4 * dt;
+      if (C.x > 530) { C.img.destroy(); C.vassoio.destroy(); C.piatto?.destroy(); this.cameriere = null; return; }
+    }
+    const passo = C.stato === 'posa' ? 0 : Math.abs(Math.sin(this.trascorso * 10)) * 1.6;
+    C.img.setPosition(C.x, Y_CAMERIERE - passo).setFlipX(C.stato === 'va');
+    const T = this.puntoVassoio();
+    C.vassoio.setPosition(T.x, T.y + 5 - passo);
+    if (C.piatto && C.stato !== 'posa') C.piatto.setPosition(T.x, T.y - passo);
+  }
+
+  // il piatto va sulla tavola: al posto di quello mangiato (torna in gioco), o il dolce (punti)
+  consegna() {
+    const C = this.cameriere, c = this.cfg.cameriere, P = C.posto, piatto = C.piatto;
+    C.stato = 'posa';
+    C.piatto = null;
+    this.consegne++;
+    Audio.sfx('ok');
+    if (P && P.stato === 'perso') {
+      piatto.destroy();
+      P.stato = 'tavola';
+      P.img.setTexture('piatto_' + P.cibo).setPosition(C.x + VASSOIO.dx, Y_CAMERIERE + VASSOIO.dy).setScale(scalaDi('piatto_' + P.cibo, 0.85)).setAlpha(1).setVisible(true).setDepth(30 + P.y / 100);
+      P.stato = 'torna';
+      this.tweens.add({ targets: P.img, x: P.x, y: P.y, duration: 380, ease: 'Quad.inOut', onComplete: () => { if (P.stato === 'torna') P.stato = 'tavola'; } });
+      scritta(this, P.x, P.y - 28, 'PIATTO NUOVO!', { size: 9, color: '#7dff9a', durata: 700 });
+    } else {
+      this.punti += c.puntiDolce;
+      stelle(this, piatto.x, piatto.y, 8, 901);
+      scritta(this, piatto.x - 30, piatto.y + 40, `IL DOLCE! +${c.puntiDolce}`, { size: 9, color: '#7dff9a', durata: 700 });
+      this.tweens.add({ targets: piatto, alpha: 0, scale: piatto.scale * 1.4, duration: 400, onComplete: () => piatto.destroy() });
+    }
+    fumetto(this, Phaser.Math.Clamp(C.x + 30, 60, 420), 40, caso(c.frasiConsegna), 900, 50);
+    this.time.delayedCall(450, () => { if (this.cameriere === C) C.stato = 'va'; });
+  }
+
+  // una mano di Guerra arriva al vassoio: se lo mangia lui
+  rubaVassoio(m) {
+    const C = this.cameriere, c = this.cfg.cameriere;
+    m.stato = 'ritira';
+    if (!C || !C.piatto) return;
+    const piatto = C.piatto;
+    C.piatto = null;
+    C.stato = 'va';
+    C.img.setTexture('cameriereMani_rabbia');
+    Audio.sfx('gnam');
+    scritta(this, 240, 70, 'GNAM! IL VASSOIO!', { size: 12, color: '#ff9a8a' });
+    fumetto(this, Phaser.Math.Clamp(C.x + 30, 60, 420), 40, caso(c.frasiRubato), 1000, 50);
+    this.espressione('felice', 1);
+    this.tweens.add({ targets: piatto, x: 240, y: 62, scale: piatto.scale * 0.3, alpha: 0, duration: 260, ease: 'Quad.in', onComplete: () => piatto.destroy() });
+  }
+
+  manoVassoio(f) {
+    const r = this.rnd, T = this.puntoVassoio();
+    const o = ORIGINI[r() < 0.5 ? 0 : 1];
+    const L = Math.hypot(T.x - o.x, T.y - o.y) || 1, dir = { x: (T.x - o.x) / L, y: (T.y - o.y) / L };
+    const m = {
+      o, piatto: null, vassoio: true, dir, x: o.x, y: o.y, stato: 'arriva', vel: f.vel * this.cfg.cameriere.velMani,
+      finta: null, guanto: false, attesa: 0,
+      braccio: this.add.tileSprite(o.x, o.y, PX_MANICA, 1, 'manicaGuerra').setOrigin(0.5, 0).setScale(MANICA / PX_MANICA).setDepth(40),
+      img: im(this, o.x, o.y, 'manoGuerra_aperta', TAGLIA_MANO).setOrigin(0.5, 1).setDepth(45),
+    };
+    m.img.rotation = Math.atan2(dir.x, -dir.y);
+    this.mani.push(m);
+    this.disegna(m);
   }
 
   aVuoto(w) {
@@ -339,6 +465,7 @@ export class ManiScene extends MicrogiocoBase {
   finale(ris, fatto) {
     for (const m of this.mani) { m.img.destroy(); m.braccio.destroy(); }
     this.mani = [];
+    if (this.cameriere) { const C = this.cameriere; [C.img, C.vassoio, C.piatto].forEach((o) => o?.destroy()); this.cameriere = null; }
     this.manoMia.setVisible(false);
     for (const o of [this.testoPunti, this.testoPiatti]) o.setVisible(false);   // il conto finale è nella schermata dopo
     this.input.setDefaultCursor('default');
