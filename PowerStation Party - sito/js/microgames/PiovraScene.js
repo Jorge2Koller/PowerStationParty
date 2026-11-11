@@ -6,8 +6,8 @@
 //  Un tentacolo che la prende la tiene agganciata a chiacchierare col Petri: tocca il tentacolo
 //  (SCIAF!) per liberarla. Aiuti con ricarica: la birra gratis (il Petri ci si fionda e molla
 //  tutto) e l'amico, O'Sfurnacchiat: arriva davanti al Petri, lo indica e lo sgrida ("Gnamo Petri,
-//  falla finita"); il Petri molla subito tutte le ragazze e ritira i tentacoli, e per qualche secondo
-//  resta mortificato, fermo: le ragazze liberate scappano da sole al tavolo delle amiche. Ogni tanto
+//  falla finita"); per 3 secondi il Petri resta mortificato, fermo, e non allunga tentacoli nuovi:
+//  quelle che ha già preso però non le molla, vanno liberate a schiaffi. Ogni tanto
 //  un tentacolo a sorpresa sbuca da sotto un tavolino o dalla consolle.
 //  Multi-touch: un dito disegna la strada, un altro dà gli schiaffi.
 //  Tre atti annunciati: IL PETRI SI MUOVE, poi i TENTACOLI A SORPRESA. Le ragazze arrivano uguali
@@ -368,7 +368,9 @@ export class PiovraScene extends MicrogiocoBase {
       if (t.stato === 'nascosto') { t.stato = 'ritira'; t.len = 0; }
     }
     const riposo = t.tipo === 'petri' ? 14 : 0;
-    if (this.bloccati() && t.tipo === 'petri' && ['allunga', 'presa'].includes(t.stato)) this.molla(t, false);
+    // (sgridato dall'amico non molla le ragazze già prese: ritira solo i tentacoli che stavano partendo)
+    const mollaPrese = !!this.pinta || this.bevuta > 0;
+    if (this.bloccati() && t.tipo === 'petri' && (t.stato === 'allunga' || (t.stato === 'presa' && mollaPrese))) this.molla(t, false);
     if (t.stato === 'riposo' && this.sgridato > 0) {
       // il Petri mortificato: i tentacoli fermi, mosci, verso terra
       t.dir += Phaser.Math.Angle.Wrap(Math.PI / 2 - t.dir) * Math.min(1, dt * 4);
@@ -528,10 +530,11 @@ export class PiovraScene extends MicrogiocoBase {
     this.espressione('shock', 0.5);
   }
 
-  // L'amico: O'Sfurnacchiat arriva davanti al Petri, lo indica e lo sgrida. Il Petri molla subito tutte
-  // le ragazze che tiene o trascina (scappano verso il tavolo delle amiche), ritira tutti i tentacoli,
-  // anche quelli a sorpresa, e per amico.durata secondi resta mortificato, fermo, senza allungarne di
-  // nuovi; poi ricomincia, e O'Sfurnacchiat se ne va
+  // L'amico: O'Sfurnacchiat arriva davanti al Petri, lo indica e lo sgrida. Per amico.durata secondi il
+  // Petri resta mortificato, fermo, senza allungare tentacoli nuovi (quelli che partivano li ritira);
+  // poi ricomincia, e O'Sfurnacchiat se ne va. Le ragazze già prese restano prese: vanno liberate a
+  // schiaffi. (Scheda 2: "il Delu è troppo utile, deve immobilizzarlo solo per 3 secondi ma non
+  // garantire il passaggio sicuro delle ragazze". Prima le mollava tutte e scappavano da sole)
   chiamaAmico() {
     const c = this.cfg, P = this.petri;
     this.aiuti.amico = c.amico.ricarica;
@@ -547,16 +550,12 @@ export class PiovraScene extends MicrogiocoBase {
     fumetto(this, tx, ty - 64, c.fraseAmico, 1300, 950);
     this.time.delayedCall(1150, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.versoPetri, 700, 951); Audio.sfx('verso'); } });
     this.time.delayedCall(1900, () => { if (!this.finito) { fumetto(this, this.petri.x, this.petri.y - 66, c.lamentoPetri, 1400, 951); Audio.sfx('lamento'); } });
-    // il Petri sgridato: molla tutto, a testa bassa
+    // il Petri sgridato: fermo, a testa bassa; i tentacoli che partivano tornano indietro
     this.sgridato = c.amico.durata;
     P.meta = null;
-    let liberate = 0;
-    for (const t of [...this.tentacoli, ...this.sorprese]) {
-      if (t.stato === 'presa') liberate++;
-      if (t.stato === 'allunga' || t.stato === 'presa') this.molla(t, false, true);
-    }
+    for (const t of this.tentacoli) if (t.stato === 'allunga') this.molla(t, false);
     this.espressione('triste', c.amico.durata);
-    scritta(this, P.x, P.y - 74, liberate ? `MOLLA TUTTO! ${quanti(liberate, 'LIBERATA', 'LIBERATE')}` : 'MOLLA TUTTO!', { size: 9, color: '#7dff9a', durata: 700 });
+    scritta(this, P.x, P.y - 74, 'FERMO LÌ!', { size: 9, color: '#7dff9a', durata: 700 });
   }
 
   viaAmico() {

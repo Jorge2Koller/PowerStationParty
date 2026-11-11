@@ -12,12 +12,12 @@ export default {
   comandi: [
     'FRECCE (o WASD), oppure clic sul vialetto: muoviti',
     'Cammina contro un cane: lo spingi via dalla ZONA ROSSA (ma se la macchina ti tocca: KO!)',
-    'SPAZIO o tasto destro: lancia biscotti e palline. BIP BIP: la macchina parte!',
+    'SPAZIO o destro: lancia biscotti e palline. C: chiama DENNY, che porta via un cane',
   ],
   comandiTouch: [
     'Trascina il dito sul vialetto: ti muovi',
     'Cammina contro un cane: lo spingi via dalla ZONA ROSSA (ma se la macchina ti tocca: KO!)',
-    'Tocca biscotto o pallina, poi dove lanciarli. BIP BIP: la macchina parte!',
+    'Tocca biscotto o pallina, poi dove lanciarli. DENNY (in basso a destra) porta via un cane',
   ],
   obiettivo: 'Fai uscire Emilio dal cancello: al massimo uno spavento!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
@@ -120,8 +120,10 @@ export default {
   pigroPausa: 4.5,         // dopo una spinta, quanto aspetta prima di tornare a sdraiarsi dietro la ruota, a inizio partita...
   pigroPausaFine: 3,       //   ...e a fine partita (erano 6 e 4)
   // --- Pastaffi: quando passa il gatto esce di casa e porta via un cane ---
+  // Pastaffi (Denny) lo chiama chi gioca (scheda 2), col pulsante in basso a destra o con C
   pastaffi: {
-    ritardo: 0.8,          // secondi dopo il gatto
+    primo: 4,              // secondi prima di poterlo chiamare la prima volta
+    ricarica: 12,          // secondi dopo una chiamata prima della prossima
     velCorsa: 135,         // quanto corre quando esce (unità/s)
     velCarico: 52,         //   ...e quanto va piano col cane in braccio (lo Shar Pei pesa)
     frenata: 1,            // secondi che Emilio resta inchiodato quando sente "PAPÀ, FERMO!"

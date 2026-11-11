@@ -11,12 +11,12 @@ export default {
   comandi: [
     'FRECCE SINISTRA/DESTRA: cambia corsia. SPAZIO: salta',
     'Il "!" dice dove passa la Golf: scansala all\'ultimo!',
-    'Prendi le monete. La CORONA davanti alla Golf vale tanto',
+    'Prendi le monete (ma Greg si arrabbia e ti lancia roba!). La CORONA vale tanto',
   ],
   comandiTouch: [
     'Tocca a SINISTRA o a DESTRA: cambia corsia. In MEZZO: salta',
     'Il "!" dice dove passa la Golf: scansala all\'ultimo!',
-    'Prendi le monete. La CORONA davanti alla Golf vale tanto',
+    'Prendi le monete (ma Greg si arrabbia e ti lancia roba!). La CORONA vale tanto',
   ],
   obiettivo: 'Sopravvivi alla Golf del Re!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
@@ -51,6 +51,13 @@ export default {
     { da: 16, nome: 'FA LE FINTE!', vel: 320, avviso: 0.7,  intervallo: [1.1, 1.4],  dalBasso: 0.25, finta: 0.5,  doppia: 0,   corona: 0.3 },
     { da: 25, nome: 'IL RE SI ARRABBIA!', arrabbiato: true, vel: 380, avviso: 0.55, intervallo: [0.6, 0.9],  dalBasso: 0.25, finta: 0.3,  doppia: 0.3, corona: 0.25 },
   ],
+  // Greg si arrabbia con le monete (scheda 2: "più monete prendi più aumenta la difficoltà, ad esempio
+  // Greg lancia qualcosa dall'auto che può colpirti"): ogni ogniMonete monete un livello in più, fino a
+  // max. A ogni livello le Golf vanno velPiu più forte (0,06 = +6%) e ognuna, se scende dall'alto, ha
+  // lancio (fino a maxLancio) di probabilità di lanciare una lattina o una ciabatta nella tua corsia,
+  // che scende a velOggetto della velocità della Golf. Ti prende = un botto, come la Golf.
+  rabbia: { ogniMonete: 6, max: 4, velPiu: 0.06, lancio: 0.22, maxLancio: 0.8, velOggetto: 0.75,
+    frasi: ['TIÈ!', 'SONO MIE!', 'MOLLA I SOLDI!', 'PRENDI!', 'LADRO!'] },
   frasiBotto: ['BONK!', 'SBAM!', 'PATAPUM!', 'STONK!'],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (fasi, atti) moltiplica quei campi in ogni voce.

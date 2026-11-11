@@ -11,12 +11,12 @@ export default {
   comandi: [
     'CLIC sulle mani di Guerra: schiaffo! (o i tasti 1-5: la mano su quel piatto)',
     'Se una mano prende un piatto, colpiscila per salvarlo. Col guanto: DUE schiaffi',
-    'Schiaffo a vuoto: la mano ti fa male. All\'ultimo istante vale di più!',
+    'Il CAMERIERE porta piatti nuovi: difendi anche il suo vassoio!',
   ],
   comandiTouch: [
     'Tocca le mani di Guerra per dargli uno schiaffo (anche due insieme)',
     'Se una mano prende un piatto, colpiscila per salvarlo. Col guanto: DUE schiaffi',
-    'Schiaffo a vuoto: la mano ti fa male. All\'ultimo istante vale di più!',
+    'Il CAMERIERE porta piatti nuovi: difendi anche il suo vassoio!',
   ],
   obiettivo: 'Salva almeno 3 piatti su 5!',
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
@@ -57,6 +57,20 @@ export default {
     { da: 24, nome: 'GUERRA HA FAME!', maxMani: 4, vel: 138, intervallo: [0.5, 0.74], tira: 54, finta: 0.3, guanto: 0.25 },
     { da: 30, maxMani: 5, vel: 154, intervallo: [0.42, 0.6], tira: 62, finta: 0.3, guanto: 0.3 },
   ],
+  // il cameriere (scheda 2: "aggiungere il cameriere che porta ulteriori piatti, mentre arriva il Guerra
+  // tenta di rubare i piatti anche a lui"): arriva a questi secondi (in Lampo in proporzione) e porta un
+  // piatto nuovo al posto di uno mangiato, o il dolce (puntiDolce) se non ne manca nessuno. Mentre
+  // cammina, "mani" = probabilità che una mano nuova vada sul suo vassoio, a velMani della velocità
+  cameriere: {
+    quando: [9, 20, 28],
+    vel: 70,                 // unità/s
+    mani: 0.6,
+    velMani: 0.8,
+    puntiDolce: 15,
+    frasi: ['Permesso, permesso!', 'Ecco a voi!', 'Attenzione, caldo!'],
+    frasiConsegna: ['Buon appetito!', 'Prego, signori.', 'Offre la casa!'],
+    frasiRubato: ['Ma signore!', 'Era per il tavolo!', 'Ancora lei?!'],
+  },
   frasi: ['Solo un assaggio!', 'Ma questo lo lasci?', 'Una forchettata e basta!', 'Che fame...', 'Dai, dividiamo!', 'Non lo finisci?'],
   frasiSchiaffo: ['Ahia!', 'Che manesco!', 'Ma dai!', 'Ohi!', 'Che cattiveria...'],
   frasiFurto: ['Grazie!', 'Buonissimo!', 'Gnam!', 'Questo è mio!'],

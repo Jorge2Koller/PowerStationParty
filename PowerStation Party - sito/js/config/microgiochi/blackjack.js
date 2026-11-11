@@ -11,23 +11,24 @@ export default {
   comandi: [
     '1, 2, 3 (o le fiches): punta. Poi C carta, S stai, D raddoppia (o i pulsanti)',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'I punti sono le fiches vinte. Mano vinta giocata da pro (le mosse giuste): paga doppio',
+    'Ogni mano vinta: le fiches vinte sono punti. Giocata da pro (le mosse giuste): paga doppio',
   ],
   comandiTouch: [
     'Tocca una fiche per puntare, poi CARTA, STAI o RADDOPPIA',
     'Arriva vicino a 21 senza sballare: il banco sta su 17. Decidi in fretta!',
-    'I punti sono le fiches vinte. Mano vinta giocata da pro (le mosse giuste): paga doppio',
+    'Ogni mano vinta: le fiches vinte sono punti. Giocata da pro (le mosse giuste): paga doppio',
   ],
   obiettivo: 'Vinci almeno 100 fiches!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
   // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
   lampo: { obiettivo: 'Vinci almeno 43 fiches!', stringi: ['atti'] },
   // Medaglie (js/punteggi.js): il punteggio per bronzo, argento e oro. Servono anche a rendere
-  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: le fiches: si parte con 100, quindi sotto le 100 vale zero.
+  // confrontabili i microgiochi nella sfida (ognuno vale da 0 a 100 punti sfida). Stima: le fiches vinte nelle mani vinte.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
-  // Il punteggio sono le fiches VINTE (quelle sopra le 100 di partenza: 1 punto a fiche). La mano
-  // vinta paga la puntata (il blackjack 3 a 2, il raddoppio il doppio), quella persa se la porta
-  // via: quanto punti conta. Se vinci una mano giocandola tutta da pro (almeno una scelta, tutte
+  // Il punteggio sono le fiches VINTE nelle mani vinte (1 punto a fiche, subito a ogni mano vinta).
+  // La mano vinta paga la puntata (il blackjack 3 a 2, il raddoppio il doppio), quella persa se la
+  // porta via ma non toglie punti: quanto punti conta. (Scheda 2: prima contavano le fiches sopra le
+  // 100 di partenza, e dopo una mano persa vincerne una non dava punti.) Se vinci una mano giocandola tutta da pro (almeno una scelta, tutte
   // uguali alla strategia di base) il banco paga premioPro in più (1 = la vincita due volte). Mosse
   // giuste e mani perse: niente punti. Puntare forte rende di più, ma al verde la partita finisce.
   // (Revisione 4: contavano le mosse da pro di fila, e le fiches pochissimo. L'utente: "non è che

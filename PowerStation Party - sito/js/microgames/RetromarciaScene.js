@@ -15,8 +15,10 @@
 //  secondi (le stelline che girano): poi si rialza e per un attimo lampeggia.
 //  Tre atti: all'inizio tranquillo; da 12 secondi EMILIO SI DISTRAE (radio, bandana, telefono:
 //  va più forte); negli ultimi 12 PASSA IL GATTO e tutti i cani gli vanno dietro, nella zona
-//  rossa: Pastaffi esce di casa, ne prende in braccio uno e lo porta nel prato (ed Emilio
-//  inchioda un attimo).
+//  rossa. PASTAFFI (Denny) lo chiama chi gioca, col pulsante in basso a destra (o C): esce di casa,
+//  prende in braccio il cane più vicino alla coda e lo porta nel prato, ed Emilio inchioda un attimo.
+//  Poi va ricaricato (scheda 2: "Denny deve essere chiamato dal giocatore"; prima usciva da solo
+//  quando passava il gatto).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
@@ -33,6 +35,7 @@ const LUNGA = A.coda * SCALA_AUTO;          // dalla coda al muso, a terra
 const CENTRO = K.y - K.prof / 2;            // il centro della corsia
 const R_CANE = 8;                           // mezzo cane
 const ICONE = { biscotto: { x: 30, y: 247 }, pallina: { x: 62, y: 247 } };
+const DENNY = { x: 452, y: 247 };            // il pulsante per chiamare Pastaffi
 const NOMI = { biscotto: 'BISCOTTO', pallina: 'PALLINA' };
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const limita = Phaser.Math.Clamp;
@@ -73,6 +76,7 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.raccolte = [];       // munizioni da andare a prendere
     this.tNuova = 3;
     this.pasta = null;        // Pastaffi, quando è fuori
+    this.ricaricaDenny = c.pastaffi.primo;   // secondi prima di poterlo chiamare (di nuovo)
     this.gatto = null;
     this.gattoFatto = false;
     this.meta = null;         // dove sto andando (clic o dito)
@@ -125,20 +129,25 @@ export class RetromarciaScene extends MicrogiocoBase {
       this.slot[tipo] = { g: this.add.graphics().setDepth(1000), ico: im(this, P.x, P.y - 2, tipo, tipo === 'biscotto' ? 1.15 : 1.5).setDepth(1001), n: txt(this, P.x + 9, P.y + 8, '', { size: 7, depth: 1002 }) };
       this.hudV.push(...Object.values(this.slot[tipo]));
     }
-    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti   SPAZIO: lancia   destro: lancia lì', { ox: 0, size: 7, depth: 1001 });
+    this.testoSotto = txt(this, 96, 263, eTouch() ? '' : 'FRECCE: muoviti   SPAZIO: lancia   destro: lancia lì   C: Denny', { ox: 0, size: 7, depth: 1001 });
     this.hudV.push(this.testoSotto);
+    this.slotDenny = { g: this.add.graphics().setDepth(1000), ico: im(this, DENNY.x, DENNY.y - 1, 'icoPastaffi', 0.85).setDepth(1001),
+      n: txt(this, DENNY.x, DENNY.y + 13, 'DENNY', { size: 6.5, depth: 1002 }) };
+    this.hudV.push(...Object.values(this.slotDenny));
     this.aggiornaHud(true);
     this.piazzaAuto();
 
     // --- comandi ---
     this.tasti = this.input.keyboard.addKeys({ su: 'UP', giu: 'DOWN', sx: 'LEFT', dx: 'RIGHT', w: 'W', a: 'A', s: 'S', d: 'D' });
     this.input.keyboard.on('keydown-SPACE', (e) => { if (!e.repeat) this.lanciaAvanti(); });
+    this.input.keyboard.on('keydown-C', (e) => { if (!e.repeat) this.chiamaDenny(); });
     this.input.mouse?.disableContextMenu();
     multiTouch(this);
     this.input.on('pointerdown', (p) => {
       if (!this.inCorso) return;
       const w = puntatore(this, p);
       for (const tipo of ['biscotto', 'pallina']) if (dist(w, ICONE[tipo]) < 15) return this.toccaIcona(tipo, p.wasTouch);
+      if (dist(w, DENNY) < 16) return this.chiamaDenny();
       if (p.wasTouch && this.armato) { const tipo = this.armato; this.armato = null; this.lancia(w.x, w.y, tipo); return this.aggiornaHud(true); }
       if (!p.wasTouch && (p.rightButtonDown() || p.event?.ctrlKey)) return this.lancia(w.x, w.y);
       this.dito = p.id;
@@ -202,6 +211,7 @@ export class RetromarciaScene extends MicrogiocoBase {
     this.muovi(dt);
     this.aggiornaAuto(dt, p);
     if (!this.inCorso) return;
+    this.ricaricaDenny = Math.max(0, this.ricaricaDenny - dt);
     this.aggiornaPastaffi(dt);
     this.aggiornaGatto(dt);
     this.aggiornaCani(dt, p);
@@ -698,7 +708,13 @@ export class RetromarciaScene extends MicrogiocoBase {
   // ------------------------------------------------------------
   //  PASTAFFI, L'AIUTO DA CASA
   // ------------------------------------------------------------
-  // esce da solo quando passa il gatto
+  // lo chiama chi gioca: se è già fuori o non è ancora pronto, niente
+  chiamaDenny() {
+    if (!this.inCorso || this.pasta || this.ricaricaDenny > 0) return Audio.sfx('vuoto');
+    this.ricaricaDenny = this.cfg.pastaffi.ricarica;
+    this.chiama();
+  }
+
   chiama() {
     const c = this.cfg, cp = c.pastaffi, Au = this.auto;
     if (!this.inCorso || this.pasta) return;
@@ -786,8 +802,8 @@ export class RetromarciaScene extends MicrogiocoBase {
     scritta(this, 240, 124, 'PASSA IL GATTO!', { size: 30, color: '#ffe14a', durata: 1400, depth: 960 });
     // tutti gli Shar Pei gli vanno dietro (piano, goffi): pure il pigro
     for (const k of this.cani) if (['gira', 'sicuro', 'dorme', 'spinto'].includes(k.stato)) Object.assign(k, { stato: 'gatto', meta: null });
-    // e Pastaffi esce di corsa a prenderne uno
-    this.time.delayedCall(c.pastaffi.ritardo * 1000, () => this.chiama());
+    // (Pastaffi non esce più da solo: tocca a chi gioca chiamarlo, e il pulsante lampeggia)
+    if (!this.pasta && this.ricaricaDenny <= 0) scritta(this, DENNY.x - 20, DENNY.y - 26, 'CHIAMA DENNY!', { size: 8, color: '#7dff9a', durata: 1400, depth: 1003 });
   }
 
   aggiornaGatto(dt) {
@@ -895,7 +911,8 @@ export class RetromarciaScene extends MicrogiocoBase {
 
   aggiornaHud(forza = false) {
     const c = this.cfg, metri = Math.floor((this.auto.x - V.partenza) / c.unitaMetro), totale = Math.round((V.cancello - V.partenza) / c.unitaMetro);
-    const hud = `${metri}|${this.vite}|${this.muni.biscotto}|${this.muni.pallina}|${this.armato}`;
+    const pronto = !this.pasta && this.ricaricaDenny <= 0;
+    const hud = `${metri}|${this.vite}|${this.muni.biscotto}|${this.muni.pallina}|${this.armato}|${pronto}|${Math.ceil(this.ricaricaDenny * 4)}|${this.gatto ? Math.floor(this.trascorso * 4) % 2 : 0}`;
     if (!forza && hud === this.hud) return;
     this.hud = hud;
     this.testoMetri.setText(`EMILIO: ${metri} m su ${totale}`);
@@ -909,6 +926,17 @@ export class RetromarciaScene extends MicrogiocoBase {
       s.ico.setAlpha(vuota ? 0.3 : 1);
       s.n.setText('x' + this.muni[tipo]).setColor(vuota ? '#ff9a8a' : '#ffffff');
     }
+    // Denny: pronto (verde, e lampeggia quando passa il gatto) o in ricarica (lo spicchio che si riempie)
+    const D = this.slotDenny, lampeggia = pronto && this.gatto && Math.floor(this.trascorso * 4) % 2;
+    D.g.clear();
+    D.g.fillStyle(0x1f1430, 0.85); D.g.fillCircle(DENNY.x, DENNY.y, 15.5);
+    D.g.fillStyle(pronto ? (lampeggia ? 0x6fbf4a : 0x3d6b2a) : 0x3a2a55, 1); D.g.fillCircle(DENNY.x, DENNY.y, 14);
+    if (!pronto && !this.pasta) {
+      const k = 1 - this.ricaricaDenny / c.pastaffi.ricarica;
+      D.g.fillStyle(0x3d6b2a, 0.8); D.g.slice(DENNY.x, DENNY.y, 14, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); D.g.fillPath();
+    }
+    D.g.lineStyle(pronto ? 2 : 1, pronto ? 0xffe14a : 0x8a7aa8, 1); D.g.strokeCircle(DENNY.x, DENNY.y, 14);
+    D.ico.setAlpha(pronto ? 1 : 0.45);
     if (eTouch()) this.testoSotto.setText(this.armato ? `TOCCA DOVE LANCIARE LA ${NOMI[this.armato]}` : '');
   }
 

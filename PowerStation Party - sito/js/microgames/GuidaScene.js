@@ -964,9 +964,13 @@ export class GuidaScene extends MicrogiocoBase {
 
   risultato() {
     const c = this.cfg;
+    // l'obiettivo raggiunto vale almeno il bronzo: i malus (passaggi scroccati, persona sbagliata)
+    // tolgono punti, e con 4 guidate su 4 si restava sotto (scheda 2: "se fai 4 su 4 non raggiungi
+    // il bronzo")
+    const centrato = this.guidate >= c.obiettivoGuidate;
     return {
-      punteggio: this.punti,
-      vittoria: this.guidate >= c.obiettivoGuidate,
+      punteggio: centrato ? Math.max(this.punti, c.medaglie.bronzo) : this.punti,
+      vittoria: centrato,
       riepilogo: `al volante: ${this.guidate}, tirato fuori: ${this.fuori + this.presiEmilio}, scroccati: ${this.scrocchi + this.saliti}`,
       titoli: ['SI VA IN DISCO!', 'NIENTE DA FARE!'],
     };

@@ -43,13 +43,13 @@ export default {
   // e la serie riparte; un gesto a vuoto (nessuna mossa vicina) fa ripartire la serie
   // (erano perfetto 1, buono 0,5, d'oro il doppio, +0,5 ogni 10 fino a x3, più le ragazze alla fine)
   puntiPerfetto: 5,
-  puntiBuono: 3,
+  puntiBuono: 2,            // (scheda 2: "è diventato troppo semplice": era 3)
   puntiOro: 2,
   ogniSerie: 6,
   maxMoltiplicatore: 2,
   // quanto si può sbagliare il tempo (secondi, prima o dopo): perfetto e buono; oltre è mancata
   // (erano 0,06 e 0,13: col dito, strisciando, non ci si arrivava)
-  finestre: { perfetto: 0.08, buono: 0.16 },
+  finestre: { perfetto: 0.07, buono: 0.13 },   // (scheda 2, più strette: erano 0,08 e 0,16)
   sogliaStriscia: 10,       // col dito o col mouse: quanto strisciare (unità) perché sia una freccia e non un tocco
   durataPosa: 0.38,         // secondi che chi gioca (e il Manna) resta nella posa della mossa
   primoPasso: 8,            // ottavi di attesa prima della prima mossa (una battuta: le schede si vedono arrivare)
@@ -61,7 +61,8 @@ export default {
   attacco: 'batti - batti -',
   mazzi: {
     // primo atto: una mossa ogni due battiti, e in fondo alla frase si respira
-    atto1: ['sx - dx - sx - - -', 'su - su - giu - - -', 'giu - giu - su - - -', 'batti - batti - su - - -', 'sx - dx - batti - - -', 'su - giu - batti - - -', 'dx - dx - sx - - -'],
+    // (scheda 2: quattro mosse anche nel primo atto, erano tre)
+    atto1: ['sx - dx - sx - dx -', 'su - su - giu - su -', 'giu - giu - su - batti -', 'batti - batti - su - giu -', 'sx - dx - batti - su -', 'su - giu - batti - dx -', 'dx - dx - sx - batti -'],
     // secondo atto: una ogni due battiti senza pause, ogni tanto due di fila, e le mosse d'oro
     atto2: ['sx - dx - sx - dx -', 'su - giu - su - giu -', 'batti batti - - sx - dx -', 'sx - sx - dx - dx -', 'su - batti - giu - batti -', 'sx - dx - batti - su* -', 'dx - sx - batti - giu* -', 'su - giu - sx - dx* -'],
     // terzo atto (la musica accelera): due di fila più spesso
@@ -74,7 +75,7 @@ export default {
     { da: 11, nome: "LE MOSSE D'ORO!" },
     { da: 23, nome: 'IL MANNA SI SCATENA!' },
   ],
-  tempoFinale: 1.25,
+  tempoFinale: 1.35,        // (scheda 2: era 1,25)
   frasiManna: ['Guarda e impara.', 'Ovviamente.', 'Questa è roba mia.', 'Troppo lento, bello.', 'Le ragazze mi adorano.'],
   frasiMannaPerde: ['Era bianca! BIANCA!', 'Non vale, la musica è lenta!', 'Chi ti ha insegnato?!', 'DJ, cambia pezzo!'],
   frasiMannaVince: ['Ovviamente.', 'Torna quando sai ballare.', 'La pista è mia, bello.'],
@@ -84,11 +85,11 @@ export default {
   // più strette e due di fila già nel secondo atto. (tempoFinale è quello di prima: la musica è la stessa)
   livelli: {
     facile: {
-      finestre: { perfetto: 0.1, buono: 0.2 }, tempoFinale: 1.15,
+      finestre: { perfetto: 0.09, buono: 0.18 }, tempoFinale: 1.2,
       mazzi: { atto3: ['sx - dx - sx - dx -', 'su - giu - batti - su* -', 'batti batti - - sx - dx -', 'dx - sx - su - giu -', 'su - su - batti - giu* -', 'sx - dx - batti batti - -'] },
     },
     difficile: {
-      finestre: { perfetto: 0.065, buono: 0.13 }, tempoFinale: 1.35,
+      finestre: { perfetto: 0.055, buono: 0.11 }, tempoFinale: 1.45,
       mazzi: { atto2: ['sx dx - - sx - dx -', 'su - giu - su giu - -', 'batti batti - - sx - dx -', 'sx - sx - dx dx - -', 'su - batti - giu - batti -', 'sx dx - - batti - su* -', 'dx - sx - batti batti giu* -', 'su - giu - sx - dx* -'] },
     },
   },
