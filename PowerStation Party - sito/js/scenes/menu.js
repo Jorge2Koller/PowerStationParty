@@ -13,9 +13,28 @@ import { txt, im, inquadra, raggi, pannello, ombra, menuLista, molleggia, stelle
 
 // sul telefono, in alto a destra: audio sì/no e (dove si può) schermo intero
 export function pulsantiAngolo(scene) {
-  if (!eTouch()) return;
+  // l'ingranaggio delle Impostazioni, su tutte le schermate fuori dai microgiochi (anche da PC, col
+  // mouse o col tasto I): si aprono sopra la schermata, che resta ferma lì sotto, e uscendo si
+  // torna dov'eri (scheda di valutazione 2: "modificare le impostazioni anche oltre la schermata iniziale").
+  // Non nel menu (ha la sua voce), nella pausa (idem) e nelle Impostazioni stesse.
+  const conIngranaggio = !['Menu', 'Pausa', 'Impostazioni', 'Ritardo'].includes(scene.scene.key);
+  const touch = eTouch();
+  if (conIngranaggio) {
+    const apri = () => apriImpostazioni(scene);
+    pulsante(scene, touch ? 418 : 464, 13, 'impostazioni', apri);
+    scene.input.keyboard?.on('keydown-I', (e) => { if (!e.repeat) apri(); });
+  }
+  if (!touch) return;
   pulsante(scene, 464, 13, 'audio', () => Audio.silenzia());
   if (schermoInteroPossibile(scene)) pulsante(scene, 441, 13, 'schermo', () => schermoIntero(scene), { suRilascio: true });
+}
+
+// le Impostazioni sopra una schermata qualsiasi: quella si mette in pausa e uscendo riparte da lì
+export function apriImpostazioni(scene) {
+  const chiave = scene.scene.key;
+  if (!scene.scene.isActive(chiave)) return;
+  scene.scene.pause();
+  scene.scene.launch('Impostazioni', { ritorno: 'sopra', chiave, musica: Audio.musicaAttuale });
 }
 
 export class BootScene extends Phaser.Scene {

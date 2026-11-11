@@ -3,7 +3,8 @@
 export default {
   // LAMPO: tanti microgiochi corti, uno dopo l'altro (da 2 giocatori in su)
   lampo: {
-    microgiochi: 6,         // quanti, pescati a caso
+    microgiochi: 6,         // quanti, pescati a caso (da soli, e il valore di partenza)
+    scelte: [3, 6, 10],     // da due giocatori in su si sceglie quanti (la schermata a quadranti)
     durata: 15,             // secondi di ogni microgioco (i primi due atti)
   },
   // DA SOLO: microgiochi a caso con 4 vite; senza medaglia si perde una vita. L'ultimo è il BOSS:

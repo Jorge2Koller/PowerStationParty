@@ -631,6 +631,9 @@ export const Audio = {
     if (ac) { prossimo = ac.currentTime + 0.05; nuovoCanale(); }
   },
 
+  // il nome della musica che suona (per rimetterla uguale dopo le Impostazioni aperte sopra una schermata)
+  get musicaAttuale() { return traccia; },
+
   // la musica che suona è una di quelle nuove, coi tre atti? (se no, MicrogiocoBase la fa accelerare
   // come prima: è il caso del Passaseo)
   get conAtti() { return !!brano; },

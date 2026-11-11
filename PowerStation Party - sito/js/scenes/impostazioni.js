@@ -23,8 +23,10 @@ export class ImpostazioniScene extends Phaser.Scene {
   create(dati) {
     inquadra(this);
     this.input.setDefaultCursor('default');
-    this.ritorno = dati?.ritorno ?? 'Menu';             // 'Menu' oppure 'Pausa' (con dati.chiave del microgioco)
-    this.chiave = dati?.chiave;
+    this.ritorno = dati?.ritorno ?? 'Menu';             // 'Menu', 'Pausa' (con dati.chiave del microgioco) o 'sopra'
+    this.chiave = dati?.chiave;                         // (con 'sopra': la schermata in pausa qui sotto, vedi apriImpostazioni)
+    this.musica = dati?.musica;
+    if (this.ritorno === 'sopra') this.scene.bringToTop();
     raggi(this, 0x4a6ad8, 0x6a8af0);
     txt(this, 240, 18, 'IMPOSTAZIONI', { size: 16, color: '#ffe14a' });
     const I = () => Salvataggio.impostazioni;
@@ -41,7 +43,7 @@ export class ImpostazioniScene extends Phaser.Scene {
       { tipo: 'si', chiave: 'tremolio', eti: 'Schermo che trema', aiuto: 'Il tremolio sui colpi: spegnilo se ti dà fastidio' },
       { tipo: 'ritardo', chiave: 'ritardoAudio', eti: 'Ritardo audio', aiuto: perDito('Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. INVIO: lo misuro io (PROVA). SINISTRA/DESTRA: a mano', 'Con cuffie o casse Bluetooth il suono arriva in ritardo e i giochi a tempo di musica sembrano sbagliati. PROVA: lo misuro io. Le frecce: a mano') },
       { tipo: 'bottoni', eti: 'Salvataggio', bottoni: ['ESPORTA', 'IMPORTA', 'AZZERA'], aiuto: 'Il salvataggio come codice da copiare su un altro telefono, oppure da capo' },
-      { tipo: 'esci', eti: this.ritorno === 'Pausa' ? 'TORNA ALLA PAUSA' : 'TORNA AL MENU', aiuto: '' },
+      { tipo: 'esci', eti: this.ritorno === 'Pausa' ? 'TORNA ALLA PAUSA' : this.ritorno === 'sopra' ? 'TORNA AL GIOCO' : 'TORNA AL MENU', aiuto: '' },
     ];
     const Y0 = 44, PASSO = 17.5;
     pannello(this, 240, Y0 + (PASSO * (this.righe.length - 1)) / 2, 430, PASSO * this.righe.length + 8, { alfa: 0.6, bordo: null, raggio: 10 });
@@ -240,12 +242,13 @@ export class ImpostazioniScene extends Phaser.Scene {
 
   misuraRitardo() {
     Audio.sfx('scegli');
-    this.scene.start('Ritardo', { ritorno: this.ritorno, chiave: this.chiave });
+    this.scene.start('Ritardo', { ritorno: this.ritorno, chiave: this.chiave, musica: this.musica });
   }
 
   esci() {
     Audio.sfx('scegli');
     if (this.ritorno === 'Pausa') this.scene.start('Pausa', { chiave: this.chiave });
+    else if (this.ritorno === 'sopra' && this.scene.get(this.chiave)) { this.scene.resume(this.chiave); this.scene.stop(); }
     else this.scene.start('Menu');
   }
 }
@@ -262,6 +265,7 @@ export class RitardoScene extends Phaser.Scene {
   create(dati) {
     inquadra(this);
     this.dati = dati;
+    if (dati?.ritorno === 'sopra') this.scene.bringToTop();
     raggi(this, 0x4a6ad8, 0x6a8af0);
     txt(this, 240, 22, 'RITARDO AUDIO', { size: 16, color: '#ffe14a' });
     pannello(this, 240, 104, 400, 110, { alfa: 0.65, raggio: 10 });
@@ -325,8 +329,8 @@ export class RitardoScene extends Phaser.Scene {
     Audio.sfx('scegli');
     // la musica di prima: quella del menu, o del microgioco in pausa
     const id = this.dati?.chiave?.replace('mg_', '');
-    Audio.musica(this.dati?.ritorno === 'Pausa' ? CONFIG.microgiochi[id]?.musica ?? 'gioco' : 'menu');
+    Audio.musica(this.dati?.ritorno === 'Pausa' ? CONFIG.microgiochi[id]?.musica ?? 'gioco' : this.dati?.ritorno === 'sopra' ? this.dati.musica ?? 'menu' : 'menu');
     if (this.dati?.ritorno === 'Pausa') Audio.pausaMusica();   // (il microgioco è in pausa: la sua musica resta ferma)
-    this.scene.start('Impostazioni', { ritorno: this.dati?.ritorno, chiave: this.dati?.chiave });
+    this.scene.start('Impostazioni', { ritorno: this.dati?.ritorno, chiave: this.dati?.chiave, musica: this.dati?.musica });
   }
 }
