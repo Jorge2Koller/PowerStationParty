@@ -59,8 +59,8 @@ export const PERSONAGGI = {
   // lo Zere (La Spina del PowerStation): giovane, capelli scuri corti, sfumati a zero ai lati e un
   // po' più lunghi sopra, tirati su e indietro (la fronte resta scoperta); barba scura corta e
   // curata che parte dal basettone e segue la mascella, coi baffi; pelle chiara, palpebre un po'
-  // basse, mezzo sorriso. Spalle larghe, elegante: completo blu notte, camicia bianca, cravatta
-  // grigio-azzurra a puntini, pochette e fiore all'occhiello. Ha sempre in mano la sua vuvuzela BLU
+  // basse, mezzo sorriso. Spalle larghe, vestito sportivo (Giorgio: la foto era a un matrimonio):
+  // felpa blu col cappuccio, jeans e scarpe da ginnastica bianche. Ha sempre in mano la sua vuvuzela BLU
   // (accessorio): all'ultimo atto la suona (la posa 'vuvuzela', creata dalla scena). Non è giocabile.
   zere: {
     pelle: '#f2c9ab', capelli: '#1d1612', capelliLuce: '#4f4038', occhi: '#3e2716',
@@ -68,7 +68,7 @@ export const PERSONAGGI = {
     faccia: { top: 46, larg: 56, mascella: 50, mascellaY: 153, mento: 28, mentoY: 181 },
     stile: 'sfumatoAlto', barba: 'curata', naso: [10, 13], orecchie: 10, sorriso: 2,
     corporatura: 1.1,
-    vestito: { tipo: 'completo', colore: '#1b2440', camicia: '#f5f7fb', cravatta: '#8696ad' }, pantaloni: '#1b2440', scarpe: '#1c1a1e',
+    vestito: { tipo: 'felpa', colore: '#2a4fa8' }, pantaloni: '#3d5278', scarpe: '#f2f2f4',
     accessorio: 'vuvuzela',
   },
   // Marsupino: testa rasata, barba folta e scura, occhiali da sole neri,
