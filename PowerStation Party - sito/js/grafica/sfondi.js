@@ -941,7 +941,7 @@ function sfondoParcheggio(c) {
 
 
 // ------------------------------------------------------------
-//  LA DISCOTECA vista dall'alto (Petri Tentacolari)
+//  LA DISCOTECA vista dall'alto (Petri Tentacolari): il Nirvana
 // ------------------------------------------------------------
 // la pista a mattonelle (le luci colorate le accende la scena), l'ingresso a sinistra
 // e il tavolo delle amiche (l'uscita) a destra
@@ -955,23 +955,41 @@ function neon(c, x, y, s, col, size = 8) {
 
 function sfondoDisco(c) {
   const D = DISCO, r = casuale(808);
-  // parete in fondo, col neon che corre lungo il bordo
-  c.fillStyle = gradL(c, 0, 0, 0, 78, [[0, '#120a22'], [1, '#2a1648']]); c.fillRect(0, 0, 480, 78);
-  for (let x = 6; x < 480; x += 22) { rrect(c, x, 20, 12, 30, 2); c.fillStyle = 'rgba(80,50,140,0.25)'; c.fill(); }   // pannelli fonoassorbenti
+  // la parete in fondo del Nirvana (scheda 2, dalle foto dell'utente): viola, col tondo di luce rosa,
+  // le casse appese, gli schermi, i pali bianchi e la consolle del DJ argentata con le lampadine
+  c.fillStyle = gradL(c, 0, 0, 0, 78, [[0, '#0e0818'], [1, '#2a1640']]); c.fillRect(0, 0, 480, 78);
   c.save(); c.globalCompositeOperation = 'lighter';
-  c.fillStyle = gradL(c, 0, 70, 0, 80, [[0, 'rgba(255,60,200,0)'], [0.5, 'rgba(255,60,200,0.55)'], [1, 'rgba(255,60,200,0)']]); c.fillRect(0, 70, 480, 10);
+  alone(c, 300, 34, 60, '#b04aff', 0.35); alone(c, 120, 40, 50, '#7a3aff', 0.25);
   c.restore();
-  c.fillStyle = '#ff7ae0'; c.fillRect(0, 74.5, 480, 1.2);
+  for (const [x, w] of [[30, 28], [404, 32]]) { rrect(c, x, 2, w, 18, 2); c.fillStyle = '#1a1a22'; c.fill(); tratto(c, '#3a3a48', 0.8); ellisse(c, x + w - 7, 11, 2.5, 2.5); c.fillStyle = '#2a2a36'; c.fill(); }   // le casse appese
+  rrect(c, 378, 28, 24, 32, 1); c.fillStyle = '#2a4a9a'; c.fill(); tratto(c, '#8ab0ff', 0.8);   // lo schermo a destra
+  c.fillStyle = 'rgba(200,220,255,0.6)'; c.fillRect(382, 38, 16, 1.4); c.fillRect(384, 44, 12, 1.4);
+  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 300, 30, 18, '#ff6ad8', 0.9); c.restore();   // il tondo rosa
+  ellisse(c, 300, 30, 7, 7); c.fillStyle = '#ffd0f4'; c.fill();
+  for (const x of [56, 150, 360]) { c.fillStyle = '#e8e8f0'; c.fillRect(x, 0, 3, 78); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x + 2, 0, 1, 78); }
+  // la consolle: il bancone argentato a brillantini con la fila di lampadine
+  rrect(c, 186, 40, 108, 34, 2); c.fillStyle = gradL(c, 186, 0, 294, 0, [[0, '#8a8a96'], [0.5, '#d8d8e2'], [1, '#8a8a96']]); c.fill(); tratto(c, '#3a3a48', 1);
+  for (let i = 0; i < 260; i++) { ellisse(c, 188 + r() * 104, 42 + r() * 30, 0.5, 0.5); c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(60,60,80,0.5)'; c.fill(); }
+  rrect(c, 222, 52, 36, 20, 1); c.fillStyle = '#2a2a34'; c.fill();
+  for (let x = 192; x < 292; x += 9) { c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x, 41, 5, '#ffe8a0', 0.6); c.restore(); ellisse(c, x, 41, 2, 2); c.fillStyle = '#fff6d0'; c.fill(); }
+  rrect(c, 206, 34, 22, 7, 1); c.fillStyle = '#1a1a22'; c.fill(); rrect(c, 252, 34, 22, 7, 1); c.fillStyle = '#1a1a22'; c.fill();   // i piatti
+  // l'insegna: NIRVANA, bianca con le grazie (a sinistra, che in mezzo c'è il DJ)
+  c.save(); c.font = 'bold 14px Georgia, serif'; c.textAlign = 'center'; c.shadowColor = '#ffffff'; c.shadowBlur = 8; c.fillStyle = '#ffffff'; c.fillText('NIRVANA', 103, 50); c.restore();
+  c.save(); c.globalCompositeOperation = 'lighter';
+  c.fillStyle = gradL(c, 0, 70, 0, 80, [[0, 'rgba(180,80,255,0)'], [0.5, 'rgba(180,80,255,0.55)'], [1, 'rgba(180,80,255,0)']]); c.fillRect(0, 70, 480, 10);
+  c.restore();
+  c.fillStyle = '#c87aff'; c.fillRect(0, 74.5, 480, 1.2);
   // la palla stroboscopica
-  c.fillStyle = '#6a6a7a'; c.fillRect(239.5, 0, 1, 8);
-  ellisse(c, 240, 16, 9, 9); c.fillStyle = gradR(c, 237, 13, 1, 10, [[0, '#ffffff'], [1, '#8a8aa0']]); c.fill();
-  c.save(); ellisse(c, 240, 16, 9, 9); c.clip();
-  for (let x = 231; x < 250; x += 3) for (let y = 7; y < 26; y += 3) { c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.7)' : 'rgba(90,90,120,0.6)'; c.fillRect(x, y, 2.4, 2.4); }
+  c.fillStyle = '#6a6a7a'; c.fillRect(119.5, 0, 1, 8);
+  ellisse(c, 120, 16, 8, 8); c.fillStyle = gradR(c, 117, 13, 1, 10, [[0, '#ffffff'], [1, '#8a8aa0']]); c.fill();
+  c.save(); ellisse(c, 120, 16, 8, 8); c.clip();
+  for (let x = 111; x < 130; x += 3) for (let y = 7; y < 26; y += 3) { c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.7)' : 'rgba(90,90,120,0.6)'; c.fillRect(x, y, 2.4, 2.4); }
   c.restore();
-  ellisse(c, 240, 16, 9, 9); tratto(c, '#2a2a3a', 0.8);
-  // pavimento: moquette scura ai lati, pista a mattonelle in mezzo
-  c.fillStyle = '#160e26'; c.fillRect(0, 78, 480, 192);
-  for (let i = 0; i < 400; i++) { ellisse(c, r() * 480, 78 + r() * 192, 0.6, 0.6); c.fillStyle = 'rgba(255,255,255,0.05)'; c.fill(); }
+  ellisse(c, 120, 16, 8, 8); tratto(c, '#2a2a3a', 0.8);
+  // pavimento: il parquet scuro del Nirvana ai lati, pista a mattonelle in mezzo
+  c.fillStyle = '#2a1a14'; c.fillRect(0, 78, 480, 192);
+  for (let y = 78; y < 270; y += 6) { c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(0, y, 480, 0.7); for (let x = (y * 7) % 40; x < 480; x += 40) c.fillRect(x, y, 0.7, 6); }
+  for (let i = 0; i < 300; i++) { ellisse(c, r() * 480, 78 + r() * 192, 0.6, 0.6); c.fillStyle = 'rgba(255,200,150,0.06)'; c.fill(); }
   for (let j = 0; j < D.righe; j++) for (let i = 0; i < D.col; i++) {
     const x = D.x0 + i * D.lato, y = D.y0 + j * D.alto;
     rrect(c, x + 1, y + 1, D.lato - 2, D.alto - 2, 2.5);

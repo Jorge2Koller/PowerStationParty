@@ -10,5 +10,8 @@ export default {
     'Al centro vale di più (PERFETTO!). Storto: la pila si sposta, e alla fine crolla',
     'Calzini e ingredienti sbagliati: non lasciarli, li cambia lui',
     'Il Passaggiorgio si gioca davanti alla gelateria "I Love Gelato"',
+    'MaraZio allo stadio, con la coreografia dei Sangiovannesi',
+    '"Sego, sono sotto casa!" davanti alla vera casa del Sego',
+    'Petri Tentacolari al Nirvana',
   ],
 };
