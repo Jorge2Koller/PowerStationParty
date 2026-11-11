@@ -559,23 +559,24 @@ export function manoGiocatore(c, p, colore) {
 // ------------------------------------------------------------
 //  SEGO, SONO SOTTO CASA: finestre con le persiane (58x44, vano 32x36 al centro), fumogeni
 // ------------------------------------------------------------
-function persiana(c, x, y, w, h) {
-  rrect(c, x, y, w, h, 0.8); c.fillStyle = gradL(c, x, 0, x + w, 0, [[0, '#2f7a4a'], [0.5, '#3f9a5e'], [1, '#2a6a40']]); c.fill(); tratto(c, '#173a24', 0.8);
-  for (let yy = y + 3; yy < y + h - 1; yy += 3) { c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x + 1.5, yy, w - 3, 0.8); c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(x + 1.5, yy + 0.8, w - 3, 0.6); }
+// (scheda 2, dalla foto della casa del Sego: tapparelle marroni invece delle persiane verdi)
+function tapparella(c, x, y, w, h) {
+  rrect(c, x, y, w, h, 0.5); c.fillStyle = gradL(c, x, 0, x + w, 0, [[0, '#6a4428'], [0.5, '#8a5a34'], [1, '#6a4428']]); c.fill(); tratto(c, '#3a2414', 0.8);
+  for (let yy = y + 2; yy < y + h - 0.5; yy += 2.2) { c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x + 0.5, yy, w - 1, 0.6); c.fillStyle = 'rgba(255,230,190,0.12)'; c.fillRect(x + 0.5, yy + 0.6, w - 1, 0.5); }
 }
 
 function finestra(c, aperta) {
+  // il cassonetto della tapparella sopra il vano, e il telaio di legno
+  rrect(c, 12, 2, 34, 5, 0.5); c.fillStyle = '#e8e0cc'; c.fill(); tratto(c, '#a89878', 0.6);
   if (aperta) {
-    // persiane spalancate ai lati, tendina in alto; il vano resta trasparente (dentro si vede la stanza)
-    persiana(c, 1, 4, 11, 36); persiana(c, 46, 4, 11, 36);
-    rrect(c, 12.5, 3.5, 33, 37, 0.5); tratto(c, '#f4f1ea', 2);
-    c.beginPath(); c.moveTo(13, 4); for (let x = 13; x <= 45; x += 4) c.quadraticCurveTo(x + 2, 12, x + 4, 9); c.lineTo(45, 4); c.closePath();
+    // tapparella tirata su (resta una striscia in alto), vetri aperti, tendina bianca; il vano resta trasparente
+    tapparella(c, 13, 6, 32, 4);
+    rrect(c, 12.5, 9.5, 33, 31, 0.5); tratto(c, '#8a5a34', 2);
+    c.beginPath(); c.moveTo(13, 10); for (let x = 13; x <= 45; x += 4) c.quadraticCurveTo(x + 2, 17, x + 4, 14); c.lineTo(45, 10); c.closePath();
     c.fillStyle = 'rgba(255,255,255,0.92)'; c.fill(); tratto(c, 'rgba(180,180,190,0.9)', 0.5);
   } else {
-    persiana(c, 13, 4, 16, 36); persiana(c, 29, 4, 16, 36);
-    c.fillStyle = '#173a24'; c.fillRect(28.5, 4, 1, 36);
-    for (const y of [9, 34]) { c.fillStyle = '#2a2a30'; c.fillRect(12, y, 2, 2); c.fillRect(44, y, 2, 2); }
-    ellisse(c, 31.5, 22, 0.9, 0.9); c.fillStyle = '#c8a040'; c.fill();
+    tapparella(c, 13, 6, 32, 34);
+    c.fillStyle = '#3a2414'; c.fillRect(13, 39, 32, 1.2);
   }
 }
 

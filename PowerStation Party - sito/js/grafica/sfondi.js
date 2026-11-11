@@ -509,8 +509,11 @@ function tavola(c) {
 }
 
 // ------------------------------------------------------------
-//  CORTILE DI FRANCI: la villetta con 12 finestre (3 piani x 4) e il portone.
-//  Le finestre vere (aperte/chiuse) le mette la scena sopra le cornici di pietra.
+//  CASA DEL SEGO (via Trieste), dalla foto dell'utente (scheda 2): la palazzina color crema a tre
+//  piani con le tapparelle marroni, il balcone con la ringhiera, il muretto di mattoni con la
+//  cancellata verde e il telo, l'olivo a sinistra, l'ombrellone bianco dietro la siepe.
+//  12 finestre (3 piani x 4) e il portone: le finestre vere (aperte/chiuse) le mette la scena.
+//  (Prima era una villetta col tetto di coppi in un cortile. La texture si chiama ancora 'bgCortile'.)
 // ------------------------------------------------------------
 export const CASA = {
   colonne: [138, 206, 274, 342],   // centri delle finestre (x)
@@ -521,56 +524,69 @@ export const CASA = {
 
 function sfondoCortile(c) {
   const r = casuale(71);
-  c.fillStyle = gradL(c, 0, 0, 0, 200, [[0, '#7cc4f0'], [1, '#d4eefa']]); c.fillRect(0, 0, 480, 240);
-  for (const [x, y, s] of [[40, 30, 1], [420, 22, 0.8], [250, 6, 0.6]]) for (const [dx, dy, rr] of [[0, 0, 10], [10, -4, 8], [-10, 2, 7], [18, 3, 6]]) { ellisse(c, x + dx * s, y + dy * s, rr * s * 1.4, rr * s); c.fillStyle = 'rgba(255,255,255,0.85)'; c.fill(); }
-  // case dei vicini ai lati
-  c.fillStyle = '#d9c3a0'; c.fillRect(0, 70, 92, 170); c.fillStyle = '#c9b08a'; c.fillRect(0, 62, 96, 10);
-  for (const y of [90, 140]) { rrect(c, 22, y, 22, 28, 1); c.fillStyle = '#4a5a6a'; c.fill(); c.fillStyle = '#3f7a5a'; c.fillRect(14, y, 7, 28); c.fillRect(45, y, 7, 28); }
-  c.fillStyle = '#e8b4a0'; c.fillRect(388, 50, 92, 190); c.fillStyle = '#c88a70'; c.fillRect(384, 44, 96, 8);
-  rrect(c, 410, 96, 48, 6, 1); c.fillStyle = '#8a8f9c'; c.fill();
-  for (let x = 412; x < 458; x += 5) { c.fillStyle = '#3a3f49'; c.fillRect(x, 80, 1.4, 16); }
-  c.fillStyle = '#3a3f49'; c.fillRect(410, 79, 48, 2);
-  rrect(c, 420, 110, 26, 32, 1); c.fillStyle = '#4a5a6a'; c.fill();
-  // albero a sinistra
-  c.fillStyle = '#6a4a2a'; c.fillRect(66, 150, 8, 85);
-  for (const [x, y, rr] of [[70, 140, 26], [52, 156, 18], [90, 156, 18], [70, 118, 18]]) { ellisse(c, x, y, rr, rr * 0.85); c.fillStyle = gradR(c, x - 6, y - 6, 2, rr, [[0, '#8ccf6a'], [1, '#3a8a3c']]); c.fill(); tratto(c, '#2a6a2e', 0.8); }
-
-  // la villetta
-  rrect(c, 100, 28, 280, 206, 1); c.fillStyle = gradL(c, 100, 0, 380, 0, [[0, '#f0c48a'], [0.5, '#f6d29c'], [1, '#e8b47a']]); c.fill(); tratto(c, '#a8784a', 1);
-  c.globalAlpha = 0.08;
-  for (let i = 0; i < 70; i++) { ellisse(c, 104 + r() * 272, 32 + r() * 196, 3 + r() * 6, 2 + r() * 3); c.fillStyle = r() < 0.5 ? '#8a5a2a' : '#ffffff'; c.fill(); }
+  // cielo nuvoloso, come nella foto
+  c.fillStyle = gradL(c, 0, 0, 0, 200, [[0, '#9ab4cc'], [1, '#dfe6ec']]); c.fillRect(0, 0, 480, 240);
+  for (const [x, y, s] of [[40, 24, 1.2], [420, 16, 1], [250, 4, 0.8]]) for (const [dx, dy, rr] of [[0, 0, 10], [10, -4, 8], [-10, 2, 7], [18, 3, 6]]) { ellisse(c, x + dx * s, y + dy * s, rr * s * 1.5, rr * s); c.fillStyle = 'rgba(245,245,250,0.85)'; c.fill(); }
+  // le case dei vicini ai lati
+  c.fillStyle = '#e6dcc8'; c.fillRect(0, 60, 96, 180); c.fillStyle = '#c8bca4'; c.fillRect(0, 54, 100, 8);
+  for (const y of [80, 130]) { rrect(c, 24, y, 22, 28, 1); c.fillStyle = '#7a5434'; c.fill(); for (let yy = y + 2; yy < y + 27; yy += 2.4) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(25, yy, 20, 0.7); } }
+  c.fillStyle = '#efe6d2'; c.fillRect(386, 40, 94, 200); c.fillStyle = '#c8bca4'; c.fillRect(382, 34, 98, 8);
+  rrect(c, 412, 92, 26, 32, 1); c.fillStyle = '#7a5434'; c.fill();
+  // la palazzina: crema, il cornicione sporgente in alto
+  rrect(c, 100, 24, 280, 210, 0.5); c.fillStyle = gradL(c, 100, 0, 380, 0, [[0, '#e8dab0'], [0.5, '#f2e6c0'], [1, '#e0d0a4']]); c.fill(); tratto(c, '#b8a478', 1);
+  c.globalAlpha = 0.07;
+  for (let i = 0; i < 70; i++) { ellisse(c, 104 + r() * 272, 30 + r() * 196, 3 + r() * 6, 2 + r() * 3); c.fillStyle = r() < 0.5 ? '#8a7a4a' : '#ffffff'; c.fill(); }
   c.globalAlpha = 1;
-  // marcapiani e zoccolo
-  for (const y of [82, 132, 180]) { c.fillStyle = '#e2d6c0'; c.fillRect(100, y, 280, 4); c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(100, y + 4, 280, 1.5); }
-  c.fillStyle = gradL(c, 0, 184, 0, 234, [[0, '#d8a874'], [1, '#c08a58']]); c.fillRect(100, 184, 280, 50);
-  // tetto di coppi con comignolo e grondaia
-  poli(c, [[88, 30], [392, 30], [370, 8], [110, 8]]); c.fillStyle = gradL(c, 0, 8, 0, 30, [[0, '#b84a32'], [1, '#d8603e']]); c.fill(); tratto(c, '#6a2a1a', 1);
-  for (let x = 112; x < 372; x += 7) { c.beginPath(); c.moveTo(x, 9); c.lineTo(x - 4, 29); tratto(c, 'rgba(90,30,20,0.35)', 1); }
-  rrect(c, 320, -4, 16, 18, 1); c.fillStyle = '#c87a5a'; c.fill(); tratto(c, '#6a2a1a', 0.8); c.fillStyle = '#5a2a1a'; c.fillRect(318, -4, 20, 4);
-  c.fillStyle = '#8a8f9c'; c.fillRect(86, 30, 308, 3); c.fillRect(372, 33, 3, 200);
-  // cornici di pietra delle finestre (il vano lo copre la finestra della scena)
+  poli(c, [[90, 26], [390, 26], [386, 16], [94, 16]]); c.fillStyle = '#d8ccA8'; c.fill(); tratto(c, '#a8987a', 1);
+  c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(100, 26, 280, 3);
+  c.fillStyle = '#d0d4da'; c.fillRect(372, 29, 3, 204);   // il pluviale
+  // le cornici bianche delle finestre (il vano lo copre la finestra della scena)
   for (const y of CASA.righe) for (const x of CASA.colonne) {
-    rrect(c, x - 21, y - 22, 42, 44, 1.5); c.fillStyle = '#efe6d6'; c.fill(); tratto(c, '#b8a888', 0.8);
-    rrect(c, x - 24, y + 19, 48, 5, 1); c.fillStyle = '#ddd2be'; c.fill(); tratto(c, '#a89878', 0.7);
+    rrect(c, x - 21, y - 22, 42, 44, 1); c.fillStyle = '#f6f2e6'; c.fill(); tratto(c, '#c8bca0', 0.8);
+    rrect(c, x - 24, y + 19, 48, 4, 1); c.fillStyle = '#e8e2d4'; c.fill(); tratto(c, '#b8ac90', 0.7);
   }
-  // piano terra: finestrelle con l'inferriata e il portone
-  for (const x of [162, 318]) {
-    rrect(c, x - 14, 194, 28, 26, 1); c.fillStyle = '#efe6d6'; c.fill();
-    rrect(c, x - 11, 197, 22, 20, 0.5); c.fillStyle = '#3a3a44'; c.fill();
-    for (let k = 0; k < 4; k++) { c.fillStyle = '#1c1c22'; c.fillRect(x - 9 + k * 6, 197, 1.6, 20); }
-    c.fillStyle = '#1c1c22'; c.fillRect(x - 11, 206, 22, 1.6);
-  }
+  // il balcone lungo del primo piano (sotto la riga di mezzo) con la ringhiera e le piante
+  const balcone = (y) => {
+    c.fillStyle = '#e2dccc'; c.fillRect(110, y, 260, 4); c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(110, y + 4, 260, 2);
+    c.fillStyle = '#5a5a60';
+    c.fillRect(110, y - 12, 260, 1.4);
+    for (let x = 112; x < 370; x += 4) c.fillRect(x, y - 12, 0.9, 12);
+    for (let x = 116; x < 370; x += 16) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y - 12); c.lineTo(x + 16, y); tratto(c, '#5a5a60', 0.7); }
+    for (const x of [120, 186, 296, 360]) { rrect(c, x - 4, y - 8, 8, 8, [1, 1, 2, 2]); c.fillStyle = '#b8603a'; c.fill(); ellisse(c, x, y - 10, 6, 4); c.fillStyle = '#4a8a3a'; c.fill(); }
+  };
+  balcone(132);
+  // il portone di legno al piano terra
   const P = CASA.porta;
-  rrect(c, P.x - P.w / 2 - 5, P.y - P.h - 6, P.w + 10, P.h + 6, [P.w / 2 + 5, P.w / 2 + 5, 0, 0]); c.fillStyle = '#efe6d6'; c.fill(); tratto(c, '#b8a888', 0.8);
+  rrect(c, P.x - P.w / 2 - 5, P.y - P.h - 6, P.w + 10, P.h + 6, [4, 4, 0, 0]); c.fillStyle = '#f6f2e6'; c.fill(); tratto(c, '#c8bca0', 0.8);
   portone(c, P.x - P.w / 2, P.y - P.h, false);
-  // gradino e cortile
-  rrect(c, P.x - 30, 230, 60, 6, 1); c.fillStyle = '#c8c0b0'; c.fill(); tratto(c, '#8a8070', 0.6);
-  c.fillStyle = gradL(c, 0, 234, 0, 270, [[0, '#b8ad98'], [1, '#9a8f7a']]); c.fillRect(0, 234, 480, 36);
-  for (let i = 0; i < 160; i++) { ellisse(c, r() * 480, 236 + r() * 34, 1.5 + r() * 2.5, 1 + r() * 1.2); c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.25)' : 'rgba(60,50,40,0.2)'; c.fill(); }
-  // vasi di gerani e bicicletta
-  for (const x of [196, 284]) { rrect(c, x - 7, 222, 14, 12, [1, 1, 3, 3]); c.fillStyle = '#c8603a'; c.fill(); tratto(c, '#6a2a14', 0.6); for (const [dx, dy] of [[-4, -3], [0, -6], [4, -3]]) { ellisse(c, x + dx, 220 + dy, 3.4, 3); c.fillStyle = '#e83a4a'; c.fill(); } }
-  for (const x of [404, 432]) { c.beginPath(); c.arc(x, 244, 10, 0, 6.3); tratto(c, '#2a2a30', 1.6); }
-  c.beginPath(); c.moveTo(404, 244); c.lineTo(416, 230); c.lineTo(432, 244); c.moveTo(416, 230); c.lineTo(414, 224); c.lineTo(420, 224); c.moveTo(404, 244); c.lineTo(418, 244); c.lineTo(426, 232); c.lineTo(430, 228); tratto(c, '#2f6fd8', 1.6);
+  // l'olivo a sinistra, grigioverde
+  c.fillStyle = '#6a5a4a'; c.fillRect(66, 140, 7, 96);
+  c.beginPath(); c.moveTo(69, 170); c.lineTo(52, 140); c.moveTo(70, 160); c.lineTo(92, 136); tratto(c, '#6a5a4a', 3);
+  for (let i = 0; i < 60; i++) { const x = 30 + r() * 90, y = 80 + r() * 90; ellisse(c, x, y, 5 + r() * 6, 4 + r() * 4); c.fillStyle = ['#7a8c6a', '#8ea07a', '#5c6e50', '#a2b28e'][Math.floor(r() * 4)]; c.fill(); }
+  // l'ombrellone bianco a destra, dietro la siepe
+  c.fillStyle = '#b8b8b8'; c.fillRect(429, 178, 2, 30);
+  poli(c, [[392, 184], [430, 168], [468, 184]]); c.fillStyle = '#f4f4f0'; c.fill(); tratto(c, '#c8c8c0', 0.8);
+  // la siepe sopra il muretto
+  for (let i = 0; i < 90; i++) { const x = r() * 480, y = 188 + r() * 14; if (x > 200 && x < 280) continue; ellisse(c, x, y, 5 + r() * 4, 4 + r() * 3); c.fillStyle = ['#2f5a2a', '#3f7034', '#4a823c'][Math.floor(r() * 3)]; c.fill(); }
+  // il muretto di mattoni, la cancellata verde col telo, i pilastri di pietra; il cancello davanti al portone
+  const muro = (x0, x1) => {
+    c.fillStyle = '#9a4a32'; c.fillRect(x0, 216, x1 - x0, 20);
+    for (let y = 216; y < 236; y += 4) for (let x = x0 + ((y / 4) % 2) * 5; x < x1; x += 10) { c.fillStyle = 'rgba(60,20,10,0.35)'; c.fillRect(x, y, 0.8, 4); }
+    for (let y = 220; y < 236; y += 4) { c.fillStyle = 'rgba(230,200,180,0.35)'; c.fillRect(x0, y, x1 - x0, 0.7); }
+    c.fillStyle = '#c8b8a0'; c.fillRect(x0, 214, x1 - x0, 3);
+    c.fillStyle = '#1f4a34'; c.fillRect(x0, 200, x1 - x0, 14);       // il telo verde scuro
+    c.fillStyle = '#2f6a4a';
+    c.fillRect(x0, 199, x1 - x0, 1.6);
+    for (let x = x0 + 2; x < x1; x += 6) c.fillRect(x, 199, 1.2, 15);
+    for (let x = x0 + 4; x < x1; x += 12) { c.beginPath(); c.moveTo(x, 214); c.lineTo(x + 6, 205); c.lineTo(x + 12, 214); tratto(c, '#c8b88a', 0.7); }
+  };
+  muro(0, 206); muro(274, 480);
+  for (const x of [0, 198, 274, 470]) { rrect(c, x, 194, 10, 42, 1); c.fillStyle = '#6a6460'; c.fill(); for (let y = 198; y < 234; y += 6) { c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(x + 1, y, 8, 0.8); } }
+  // il marciapiede
+  c.fillStyle = gradL(c, 0, 234, 0, 270, [[0, '#b8b4ac'], [1, '#9a968e']]); c.fillRect(0, 234, 480, 36);
+  for (let x = 0; x < 480; x += 24) { c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(x, 234, 0.8, 36); }
+  for (let i = 0; i < 160; i++) { ellisse(c, r() * 480, 236 + r() * 34, 1.5 + r() * 2.5, 1 + r() * 1.2); c.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.2)' : 'rgba(60,50,40,0.18)'; c.fill(); }
+  c.fillStyle = '#7a766e'; c.fillRect(0, 234, 480, 2);
 }
 
 // portone di legno ad arco (46x50); aperto = buio dentro e un'anta spalancata
