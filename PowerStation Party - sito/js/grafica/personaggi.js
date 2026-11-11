@@ -2252,6 +2252,10 @@ const POSE = {
   batte: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [62, 200], [88, 196]] },
   gratta: { sx: [[33, 196], [43, 219], [40, 241]], dx: [[33, 196], [68, 168], [46, 92]] },
   inchino: { sx: [[33, 196], [30, 222], [10, 238]], dx: [[33, 196], [58, 212], [84, 226]] },
+  // ...e Lori con la chitarra (accessorio 'chitarra'): la sinistra del disegno pizzica sulla buca (in
+  // alto e, con chitarra2, giù a fine pennata), la destra tiene il manico
+  chitarra: { sx: [[33, 196], [52, 222], [12, 230]], dx: [[33, 196], [58, 222], [70, 202]] },
+  chitarra2: { sx: [[33, 196], [50, 228], [16, 248]], dx: [[33, 196], [58, 222], [70, 202]] },
   // "Scontrino, prego!": Michele che batte alla cassa (il braccio teso verso i tasti), che taglia con
   // la mezzaluna a due mani, che tiene lo scontrino davanti al petto (per strapparlo), che fa il conto
   // a voce (la mano alzata: "lascia stare!"), che si mette i soldi in tasca; il Giso con la cartellina
@@ -2299,6 +2303,27 @@ function accessorio(c, tipo, x, y, p) {
     c.beginPath(); c.moveTo(tx - 6, ty + 6.5); c.lineTo(tx + 6.6, ty - 5.8); tratto(c, '#e23b4e', 2.2);    // la fascetta colorata
     // il pugno torna sopra al manico
     if (p) { ellisse(c, x, y, 9, 9); c.fillStyle = p.pelle; c.fill(); tratto(c, CONT, 3); }
+    return;
+  }
+  if (tipo === 'chitarra') {
+    // la chitarra acustica di Lori, a tracolla e di traverso: la cassa bassa a sinistra del disegno, il
+    // manico che sale verso la mano destra. Poi le due braccia ridisegnate sopra (pizzica e tiene il manico)
+    const a = -0.41, L0x = CX - 30, L0y = 244;
+    c.save(); c.translate(L0x, L0y); c.rotate(a);
+    c.beginPath(); c.moveTo(-2, -27); c.lineTo(-30, -48); tratto(c, '#3a2414', 3);   // la tracolla, dietro
+    ellisse(c, 0, 0, 27, 25); tratto(c, CONT, 5); ellisse(c, 34, 0, 21, 19.5); tratto(c, CONT, 5);
+    c.fillStyle = gradR(c, 14, -4, 6, 40, [[0, '#f2b45a'], [0.55, '#d8862a'], [1, '#7a3410']]); ellisse(c, 0, 0, 27, 25); c.fill(); ellisse(c, 34, 0, 21, 19.5); c.fill();
+    ellisse(c, 6, -8, 12, 6, -0.3); c.fillStyle = 'rgba(255,240,200,0.25)'; c.fill();             // il riflesso
+    ellisse(c, 24, 0, 9.5, 9.5); c.fillStyle = '#f6e2b0'; c.fill(); tratto(c, '#6a3410', 1.2);      // la rosetta
+    ellisse(c, 24, 0, 7.4, 7.4); c.fillStyle = '#1a0e08'; c.fill();                                // la buca
+    rrect(c, -14, -9, 6, 18, 1.5); c.fillStyle = '#3a1e0c'; c.fill();                               // il ponticello
+    rrect(c, 46, -5, 72, 10, 2); c.fillStyle = gradL(c, 0, -5, 0, 5, [[0, '#7a4a22'], [1, '#4a2a12']]); c.fill(); tratto(c, CONT, 2);   // il manico
+    for (let x = 56; x < 116; x += 8 - (x - 56) * 0.04) { c.beginPath(); c.moveTo(x, -4.5); c.lineTo(x, 4.5); tratto(c, '#d8d0c0', 0.8); }
+    poli(c, [[116, -6], [134, -8], [136, 8], [116, 6]]); c.fillStyle = '#3a2414'; c.fill(); tratto(c, CONT, 2);   // la paletta
+    for (const [x, y] of [[122, -9], [130, -10], [122, 9], [130, 10]]) { ellisse(c, x, y, 2.2, 2.2); c.fillStyle = '#e8d8a0'; c.fill(); tratto(c, CONT, 0.8); }
+    for (const y of [-3, -1, 1, 3]) { c.beginPath(); c.moveTo(-11, y * 1.2); c.lineTo(118, y); tratto(c, 'rgba(250,245,230,0.8)', 0.6); }
+    c.restore();
+    for (const b of ultimeBraccia) braccio(c, p, b);
     return;
   }
   if (tipo === 'vuvuzela') {
