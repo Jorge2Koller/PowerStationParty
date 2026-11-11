@@ -678,7 +678,10 @@ function tavoloVerde(c) {
 }
 
 // ------------------------------------------------------------
-//  PARCO di MaraZio: prato, colline toscane coi cipressi
+//  LO STADIO di MaraZio (scheda 2, dalla foto dell'utente): la curva con la coreografia dei
+//  Sangiovannesi (cartoncini verdi, bianchi e rossi, lo striscione tricolore con la scritta blu), i
+//  cartelloni a bordo campo, gli alberi spogli dietro, il prato a strisce con le linee bianche.
+//  (Prima era un parco con le colline. La texture si chiama ancora 'bgParco'.)
 // ------------------------------------------------------------
 export const PARCO = { terra: 240 };
 
@@ -690,33 +693,59 @@ function cipresso(c, x, y, h) {
 
 function sfondoParco(c) {
   const r = casuale(64), T = PARCO.terra;
-  c.fillStyle = gradL(c, 0, 0, 0, 150, [[0, '#7cc4f2'], [1, '#e2f2fa']]); c.fillRect(0, 0, 480, 150);
-  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 404, 40, 50, '#fff2b0', 0.5); c.restore();
-  ellisse(c, 404, 40, 12, 12); c.fillStyle = '#fff6c8'; c.fill();
-  for (const [x, y, k] of [[90, 30, 1], [250, 18, 0.8]]) for (const [dx, dy, rr] of [[0, 0, 9], [10, -3, 7], [-10, 2, 6], [18, 2, 5]]) { ellisse(c, x + dx * k, y + dy * k, rr * k * 1.5, rr * k); c.fillStyle = 'rgba(255,255,255,0.9)'; c.fill(); }
-  // colline una dietro l'altra
-  const colle = (y0, amp, fase, col) => {
-    c.beginPath(); c.moveTo(0, 170);
-    for (let x = 0; x <= 480; x += 8) c.lineTo(x, y0 - Math.sin(x / 90 + fase) * amp - Math.sin(x / 37 + fase * 2) * amp * 0.3);
-    c.lineTo(480, 170); c.closePath(); c.fillStyle = col; c.fill();
+  // cielo d'inverno, le montagne lontane e gli alberi spogli
+  c.fillStyle = gradL(c, 0, 0, 0, 90, [[0, '#9cb8d4'], [1, '#d8e2ea']]); c.fillRect(0, 0, 480, 90);
+  c.beginPath(); c.moveTo(0, 70);
+  for (let x = 0; x <= 480; x += 10) c.lineTo(x, 58 - Math.sin(x / 70) * 8 - Math.sin(x / 23) * 3);
+  c.lineTo(480, 90); c.lineTo(0, 90); c.closePath(); c.fillStyle = '#8a9aaa'; c.fill();
+  const albero = (x, y, h) => {
+    const ramo = (x0, y0, ang, l, sp) => {
+      if (l < 3) return;
+      const x1 = x0 + Math.cos(ang) * l, y1 = y0 + Math.sin(ang) * l;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); tratto(c, 'rgba(90,76,66,0.85)', sp);
+      ramo(x1, y1, ang - 0.4 - r() * 0.3, l * 0.68, sp * 0.65); ramo(x1, y1, ang + 0.4 + r() * 0.3, l * 0.68, sp * 0.65);
+    };
+    ramo(x, y, -Math.PI / 2, h * 0.38, 2.4);
   };
-  colle(118, 14, 0.5, '#a8c48a'); colle(132, 12, 2.1, '#8ab46a');
-  // casale con i cipressi
-  rrect(c, 300, 108, 30, 18, 1); c.fillStyle = '#e8c89a'; c.fill();
-  poli(c, [[297, 109], [315, 100], [333, 109]]); c.fillStyle = '#b8583a'; c.fill();
-  rrect(c, 322, 98, 9, 12, 0); c.fillStyle = '#e8c89a'; c.fill(); poli(c, [[320.5, 99], [326.5, 95], [332.5, 99]]); c.fillStyle = '#b8583a'; c.fill();
-  for (const [x, w] of [[306, 3], [316, 3]]) { c.fillStyle = '#7a4a2a'; c.fillRect(x, 114, w, 4); }
-  for (let i = 0; i < 9; i++) cipresso(c, 150 + i * 13 + r() * 4, 132 + r() * 3, 18 + r() * 8);
-  for (const x of [292, 340, 352]) cipresso(c, x, 127, 24);
-  colle(150, 8, 3.7, '#74a456');
-  // prato
-  c.fillStyle = gradL(c, 0, 150, 0, 270, [[0, '#6aa848'], [1, '#3e7a2a']]); c.fillRect(0, 148, 480, 122);
-  for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; poli(c, [[i * 60 - 40, 150], [i * 60 + 20, 150], [i * 60 + 60 + i * 6, 270], [i * 60 - 10 + i * 6, 270]]); c.fill(); }
-  // porta da calcio lontana
-  c.strokeStyle = '#ffffff'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(40, 172); c.lineTo(40, 150); c.lineTo(96, 150); c.lineTo(96, 172); c.stroke();
-  c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 0.5;
-  for (let x = 44; x < 96; x += 4) { c.beginPath(); c.moveTo(x, 150); c.lineTo(x + 3, 168); c.stroke(); }
-  for (let i = 0; i < 380; i++) { const y = 150 + r() * 120; c.fillStyle = r() < 0.5 ? 'rgba(20,60,10,0.35)' : 'rgba(180,230,120,0.3)'; c.fillRect(r() * 480, y, 0.7, 1.5 + (y - 150) / 40); }
+  for (let x = 6; x < 480; x += 26 + r() * 18) albero(x, 92, 44 + r() * 26);
+  for (const x of [60, 210, 390]) cipresso(c, x, 92, 40);
+  // i cartelloni in cima alla curva
+  const cartello = (x, w, y, h, fondo, testo, col) => {
+    rrect(c, x, y, w, h, 0.6); c.fillStyle = fondo; c.fill(); tratto(c, 'rgba(0,0,0,0.35)', 0.6);
+    c.font = `bold ${Math.round(h * 0.6)}px sans-serif`; c.textAlign = 'center'; c.fillStyle = col; c.fillText(testo, x + w / 2, y + h * 0.72);
+  };
+  c.fillStyle = '#5a5a62'; c.fillRect(0, 88, 480, 12);
+  [['PALLAIO', '#ffffff', '#2a6ab8'], ['POWERSTATION', '#1a1a20', '#ffe14a'], ['GELATERIA', '#ffffff', '#b82a2a'], ['PIZZERIA BONI', '#ffffff', '#2a7a3a'], ['BARBIERE', '#ffffff', '#1a1a20'], ['AUTO EMILIO', '#ffffff', '#2a6ab8']]
+    .forEach(([t, f, col], i) => cartello(4 + i * 80, 74, 89, 10, f, t, col));
+  // la curva piena: il mosaico dei cartoncini verdi, bianchi e rossi (a sinistra verde, al centro bianco, a destra rosso)
+  c.fillStyle = '#2a2a38'; c.fillRect(0, 100, 480, 16);
+  for (let y = 101; y < 116; y += 3.2) for (let x = r() * 3; x < 480; x += 3.6) {
+    const t = x / 480 + (r() - 0.5) * 0.08, col = t < 0.34 ? '#2a9a4a' : t < 0.68 ? '#f6f6f2' : '#d83030';
+    c.fillStyle = r() < 0.12 ? '#3a4a8a' : col; c.fillRect(x, y + (r() - 0.5), 2.6, 2.4);
+  }
+  // lo striscione tricolore con la scritta blu in corsivo
+  c.fillStyle = '#2a9a4a'; c.fillRect(0, 116, 160, 22); c.fillStyle = '#f6f6f2'; c.fillRect(160, 116, 160, 22); c.fillStyle = '#d83030'; c.fillRect(320, 116, 160, 22);
+  for (let x = 0; x < 480; x += 14) { c.fillStyle = 'rgba(0,0,0,0.06)'; c.fillRect(x, 116, 7, 22); }
+  c.save(); c.translate(240, 133); c.rotate(-0.03);
+  c.font = 'italic bold 24px Georgia, serif'; c.textAlign = 'center'; c.lineJoin = 'round';
+  c.lineWidth = 5; c.strokeStyle = '#ffffff'; c.strokeText('Sangiovannesi', 0, 0);
+  c.lineWidth = 2; c.strokeStyle = '#1a3a7a'; c.strokeText('Sangiovannesi', 0, 0);
+  c.fillStyle = '#3a8ae0'; c.fillText('Sangiovannesi', 0, 0);
+  c.restore();
+  // la fascia sotto: STILE, APPARTENENZA, IDENTITÀ
+  c.fillStyle = '#f6f6f2'; c.fillRect(0, 138, 480, 7);
+  c.font = 'bold 6.5px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#1a1a20';
+  for (const [x, t] of [[50, 'STILE'], [240, 'APPARTENENZA'], [430, 'IDENTITÀ']]) c.fillText(t, x, 144);
+  // i cartelloni a bordo campo
+  c.fillStyle = '#e8e8ea'; c.fillRect(0, 145, 480, 9);
+  [['BOTA SOLARI', '#d83030'], ['TAVERNA', '#2a6ab8'], ['MARSUPINO', '#e08a2a'], ['MERCATO', '#2a6ab8'], ['CAMBIARE ARIA', '#d83030'], ['ZIO', '#2a7a3a']]
+    .forEach(([t, col], i) => cartello(2 + i * 80, 76, 145.5, 8, '#ffffff', t, col));
+  // il prato a strisce, la linea di fondo e l'area
+  c.fillStyle = gradL(c, 0, 154, 0, 270, [[0, '#5a9a3a'], [1, '#3e7a2a']]); c.fillRect(0, 154, 480, 116);
+  for (let i = 0; i < 10; i++) { c.fillStyle = i % 2 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'; poli(c, [[i * 52 - 30, 154], [i * 52 + 22, 154], [i * 52 + 50 + i * 4, 270], [i * 52 - 6 + i * 4, 270]]); c.fill(); }
+  c.fillStyle = 'rgba(255,255,255,0.8)'; c.fillRect(0, 160, 480, 1.6);
+  c.beginPath(); c.moveTo(250, 160); c.lineTo(330, 178); c.lineTo(480, 178); tratto(c, 'rgba(255,255,255,0.75)', 1.4);
+  for (let i = 0; i < 380; i++) { const y = 156 + r() * 114; c.fillStyle = r() < 0.5 ? 'rgba(20,60,10,0.35)' : 'rgba(180,230,120,0.3)'; c.fillRect(r() * 480, y, 0.7, 1.5 + (y - 156) / 40); }
   ellisse(c, 240, T + 6, 300, 10); c.fillStyle = 'rgba(0,0,0,0.06)'; c.fill();
 }
 
