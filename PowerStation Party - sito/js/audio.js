@@ -162,6 +162,14 @@ const SFX = {
   telo: (t) => { for (let i = 0; i < 5; i++) rumore(t + i * 0.07, 0.09, 0.08 - i * 0.01, 1200 + i * 300); nota(300, t, 0.4, 'triangle', 0.04, 600); },
   fiuu: (t) => { rumore(t, 0.16, 0.08, 3200, 'highpass'); nota(500, t, 0.14, 'square', 0.04, 1500); },
   foglio: (t) => { rumore(t, 0.05, 0.08, 4200, 'highpass'); rumore(t + 0.04, 0.05, 0.05, 2600, 'highpass'); },
+  // la ballata a ritmo: Lori che stona (l'accordo storto e la voce che casca), i fischi del pubblico, il
+  // battimani del ritornello, l'accendino che si accende, la pennata a vuoto, la vignetta che vola via
+  stona: (t) => { for (const f of [196, 208, 277, 293]) nota(f, t, 0.5, 'sawtooth', 0.03, f * 0.94); nota(330, t + 0.05, 0.4, 'square', 0.035, 250); },
+  fischi: (t) => { for (const [dt, f] of [[0, 2300], [0.12, 1900], [0.3, 2500]]) nota(f, t + dt, 0.22, 'sine', 0.05, f * 0.7); rumore(t, 0.4, 0.03, 900, 'lowpass'); },
+  battimani: (t) => { rumore(t, 0.05, 0.22, 1500); rumore(t + 0.012, 0.04, 0.12, 2400); },
+  accendino: (t) => { rumore(t, 0.02, 0.12, 5000, 'highpass'); rumore(t + 0.03, 0.18, 0.04, 1200, 'lowpass'); },
+  pennata: (t) => { for (const [j, f] of [[0, 196], [1, 247], [2, 294]]) nota(f, t + j * 0.012, 0.12, 'triangle', 0.035); },
+  volaVia: (t) => { rumore(t, 0.12, 0.08, 3600, 'highpass'); nota(700, t, 0.16, 'triangle', 0.04, 300); },
   furto: (t) => { nota(500, t, 0.18, 'square', 0.05, 250); nota(380, t + 0.12, 0.2, 'square', 0.05, 180); },
   // fumogeni a casa di Sego
   lancioGranata: (t) => { rumore(t, 0.3, 0.08, 900); nota(260, t, 0.3, 'triangle', 0.06, 520); },
@@ -284,19 +292,13 @@ const TRACCE = {
            77, 0, 81, 0, 84, 0, 86, 0, 84, 0, 82, 81, 79, 0, 77, 0, 76, 0, 77, 79, 81, 0, 79, 76, 77, 0, 0, 0, 77, 0, 0, 0],
     basso: [53, 53, 50, 48, 53, 46, 48, 53],
   },
-  // la ballata di Lori ("La ballata del Pallaio"), in Sol maggiore: la chitarra strimpellata in
-  // levare, il basso sull'1 e sul 3, il tamburello sul 2 e sul 4, la fisarmonica che risponde a fine
-  // frase (lead). La melodia la canta Lori (voce: la segue BallataScene con Audio.voce)
-  ballata: {
-    bpm: 120,
-    ballata: true,
-    lead: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 79, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 74, 76,
-           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 81, 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 74, 0],
-    voce: [67, 0, 67, 71, 74, 0, 74, 0, 76, 0, 74, 0, 71, 0, 0, 0, 72, 0, 72, 71, 69, 0, 69, 0, 71, 0, 67, 0, 69, 0, 0, 0,
-           67, 0, 67, 71, 74, 0, 79, 0, 78, 0, 76, 0, 74, 0, 0, 0, 72, 0, 76, 0, 74, 0, 71, 0, 69, 0, 71, 0, 67, 0, 0, 0],
-    basso: [43, 40, 48, 50, 43, 50, 48, 43],
-    minori: [40],
-  },
+  // la ballata di Lori ("La ballata del Pallaio"): la scrive BallataScene a ogni partita (Audio.scriviTraccia),
+  // passo per passo, dallo spartito in js/config/microgiochi/ballata.js: intro, strofe, ritornelli e
+  // finale nell'ordine della partita. passi[i] = { acc (la fondamentale, midi), min (minore), b (il passo
+  // nella battuta, 0-7), sez ('intro', 'strofa', 'rit', 'fine'), en (1-3: quanto è piena) }; lead = la
+  // fisarmonica che risponde; voce = la melodia di Lori, coro e coro2 = il pubblico (le cantano le voci
+  // della scena con Audio.voce)
+  ballata: { bpm: 120, ballata: true, lead: [0], voce: [0], coro: [0], coro2: [0], passi: [{ acc: 55, b: 0, sez: 'fine', en: 1 }], basso: [0] },
   // niente musichetta: suona una canzone vera, caricata dal microgioco ("Provini a X-Factor": vedi
   // Audio.carica e Audio.canzone qui sotto)
   silenzio: {
@@ -310,66 +312,324 @@ const TRACCE = {
 function suonaPasso(T, i, t, conta = 0) {
   const d = 60 / (T.bpm * tempo) / 2;
   const n = T.lead[i];
-  if (n) nota(midi(n), t, d * 1.6, 'square', 0.045);
   const fond = T.basso[Math.floor(i / 8) % T.basso.length];
   if (T.silenzio) return;
   if (T.ballata) {
-    if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.6, 'triangle', 0.15);                                     // il basso
-    if (i % 4 === 2) [12, T.minori.includes(fond) ? 15 : 16, 19, 24].forEach((k, j) => nota(midi(fond + k), t + j * 0.018, d * 1.2, 'triangle', 0.03));   // la chitarra
-    if (i % 4 === 3) [12, T.minori.includes(fond) ? 15 : 16, 19].forEach((k, j) => nota(midi(fond + k), t + j * 0.014, d * 0.6, 'triangle', 0.018));
-    if (i % 8 === 2 || i % 8 === 6) rumore(t, 0.05, 0.035, 6000, 'highpass');                            // il tamburello
+    // la chitarra di Lori strimpellata alla "giù, giù-su, su-giù-su" (sugli ottavi 0, 2-3, 5-6-7), il basso
+    // sull'1 e sul 3 (con la nota di passaggio quando è piena), il tamburello sul 2 e sul 4; più si va
+    // avanti più si riempie: lo shaker in levare, la cassa, il basso che cammina. Nel ritornello cassa e
+    // chitarra su ogni battito (il pubblico canta e batte le mani); nel finale un accordo lungo.
+    const P = T.passi[i] ?? T.passi[T.passi.length - 1], r = P.acc, b = P.b, en = P.en ?? 1, rit = P.sez === 'rit';
+    const acc = [r, r + 7, r + 12, r + 12 + (P.min ? 3 : 4), r + 19];
+    const giu = (v, dd) => acc.forEach((k, j) => { nota(midi(k), t + j * 0.011, dd, 'triangle', v); if (j > 1) nota(midi(k), t + j * 0.011, dd * 0.5, 'square', v * 0.12); });
+    const su = (v, dd) => acc.slice(2).reverse().forEach((k, j) => nota(midi(k), t + j * 0.01, dd, 'triangle', v));
+    if (P.sez === 'fine') {
+      if (b === 0) { giu(0.04, d * 6); nota(midi(r - 12), t, d * 6, 'triangle', 0.16); rumore(t, 0.5, 0.05, 5000, 'highpass'); }
+      return;
+    }
+    if (b === 0) nota(midi(r - 12), t, d * 1.7, 'triangle', 0.15);
+    if (b === 4) nota(midi(r - 5), t, d * 1.7, 'triangle', 0.13);
+    if (en >= 2 && b === 6) nota(midi(r - 10), t, d * 0.9, 'triangle', 0.1);
+    if (en >= 3 && (b === 2 || b === 7)) nota(midi(r - 12 + (b === 7 ? 2 : 0)), t, d * 0.8, 'triangle', 0.09);
+    if (rit) { if (b % 2 === 0) giu(0.028, d * 1.2); else if (b === 3 || b === 7) su(0.016, d * 0.5); }
+    else if (b === 0 || b === 2 || b === 6) giu(b === 0 ? 0.03 : 0.024, d * 1.1);
+    else if (b === 3 || b === 5 || b === 7) su(0.015, d * 0.55);
+    if (b === 2 || b === 6) rumore(t, 0.06, 0.04, 6000, 'highpass');                                   // il tamburello
+    if ((en >= 2 || rit) && b % 2) rumore(t, 0.03, 0.018, 8000, 'highpass');                            // lo shaker
+    if ((en >= 3 || rit) && (b === 0 || b === 4)) nota(130, t, 0.12, 'sine', 0.2, 45);                    // la cassa
     return;
   }
+  // le altre suonano con gli strumenti nuovi (vedi sotto), sugli stessi passi di sempre: le frecce
+  // e i colpi dei giochi a ritmo restano a tempo
+  if (n) strumento(M.lead, midi(n), t, d * 1.6, 0.5, VOL.lead * 0.95, { vibrato: true });
+  const bassa = (nn, dd, v = 1) => bassoNota(M.basso, midi(nn), t, dd, VOL.basso * v);
   if (T.corsa) {
     // basso a ottave in ottavi, cassa sull'1 e sul 3, rullante sul 2 e sul 4, charleston sempre
-    nota(midi(fond - (i % 2 ? 0 : 12)), t, d * 0.85, 'triangle', 0.12);
-    if (i % 4 === 0) nota(120, t, 0.1, 'sine', 0.2, 45);
-    if (i % 4 === 2) rumore(t, 0.08, 0.09, 2000);
-    rumore(t, 0.025, 0.025, 8000, 'highpass');
+    bassa(fond - (i % 2 ? 0 : 12), d * 0.85, 0.85);
+    if (i % 4 === 0) COLPI.k(M, t, 1);
+    if (i % 4 === 2) COLPI.s(M, t, 1);
+    COLPI.h(M, t, i % 2 ? 0.6 : 0.9);
     return;
   }
   if (T.festa) {
-    if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.8, 'triangle', 0.14);
-    if (i % 4 === 2) { nota(midi(fond - 5), t, d * 1.5, 'triangle', 0.11); rumore(t, 0.09, 0.08, 1700); }   // battimani
-    if (i % 2 === 1) rumore(t, 0.03, 0.025, 7000, 'highpass');
+    if (i % 4 === 0) { bassa(fond - 12, d * 1.8); COLPI.k(M, t, 0.8); }
+    if (i % 4 === 2) { bassa(fond - 5, d * 1.5, 0.8); COLPI.c(M, t, 1); }   // battimani
+    if (i % 2 === 1) COLPI.h(M, t, 0.7);
     return;
   }
   if (T.dance) {
     // cassa su ogni battito, basso in levare un'ottava sopra, charleston aperto in levare
-    if (i % 2 === 0) { nota(150, t, 0.12, 'sine', 0.22, 42); nota(midi(fond - 12), t, d * 0.9, 'triangle', 0.12); }
-    else { nota(midi(fond), t, d * 0.9, 'triangle', 0.1); rumore(t, 0.06, 0.05, 8000, 'highpass'); }
-    if (i % 8 === 4) rumore(t, 0.09, 0.07, 1800);   // battimani
+    if (i % 2 === 0) { COLPI.k(M, t, 1.05); bassa(fond - 12, d * 0.9, 0.85); }
+    else { bassa(fond, d * 0.9, 0.7); COLPI.o(M, t, 0.9); }
+    if (i % 8 === 4) COLPI.c(M, t, 1);   // battimani
     return;
   }
-  if (i % 4 === 0) nota(midi(fond - 12), t, d * 1.8, 'triangle', 0.14);
-  if (i % 4 === 2) nota(midi(fond - 5), t, d * 1.5, 'triangle', 0.11);
-  if (i % 2 === 1) rumore(t, 0.03, 0.025, 7000, 'highpass');
+  if (i % 4 === 0) bassa(fond - 12, d * 1.8);
+  if (i % 4 === 2) bassa(fond - 5, d * 1.5, 0.8);
+  if (i % 2 === 1) COLPI.h(M, t, 0.7);
 }
+
+// ------------------------------------------------------------
+//  GLI STRUMENTI DELLE MUSICHE
+//  Ogni musica suona in una "catena" sua: uno strumento per canale (melodia, seconda voce, arpeggi,
+//  accordi, tappeto, basso, batteria), ognuno col suo filtro passa-basso (via lo stridio delle onde
+//  quadre), un po' a destra o a sinistra (in cuffia si sente lo spazio) e una sua dose di riverbero
+//  (una stanza piccola) e di eco (le ripetizioni della melodia, a tempo). Tutto finisce in un
+//  compressore leggero, che tiene insieme il mix e non lascia saturare, e in un'uscita che si sfuma
+//  quando la musica cambia o va in pausa.
+//  Perché non suoni più come una fila di "bip": le note sono due oscillatori appena scordati (il
+//  suono si apre come un coro), con un attacco breve ma non secco, una discesa a un livello che
+//  tiene e un rilascio morbido; il basso è un dente di sega in un filtro che si chiude subito dopo
+//  l'attacco (il "pluck" del basso elettrico) col triangolo sotto per il corpo; cassa, rullante e
+//  charleston sono rumore filtrato e toni che scendono, come nelle batterie elettroniche.
+//  Prestazioni (il telefono): 2-5 nodi per nota, il riverbero è uno solo per tutto il gioco.
+// ------------------------------------------------------------
+// per ogni contesto audio (quello del gioco e quelli della registrazione in silenzio): il rumore,
+// le onde a impulso, il riverbero
+const perContesto = new WeakMap();
+const roba = () => { let m = perContesto.get(ac); if (!m) perContesto.set(ac, (m = { onde: {} })); return m; };
+
+// le onde "a impulso" dei vecchi giochi: 50% (quadra), 25% e 12,5% (più sottili e nasali)
+function impulso(duty) {
+  const m = roba().onde;
+  if (!m[duty]) {
+    const N = 40, re = new Float32Array(N), im = new Float32Array(N);
+    for (let k = 1; k < N; k++) re[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * duty);
+    m[duty] = ac.createPeriodicWave(re, im);
+  }
+  return m[duty];
+}
+function forma(o, duty) {
+  if (duty === 'tri') o.type = 'triangle';
+  else if (duty === 'saw') o.type = 'sawtooth';
+  else try { o.setPeriodicWave(impulso(duty)); } catch (e) { o.type = 'square'; }
+}
+function bufferRumore() {
+  const m = roba();
+  if (!m.rumore) {
+    m.rumore = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = m.rumore.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return m.rumore;
+}
+
+// il riverbero: una stanza piccola e calda. La risposta è rumore che si spegne in poco più di un
+// secondo e si scurisce mentre si spegne (come le pareti che assorbono gli acuti), diverso a destra
+// e a sinistra. Uno solo per contesto: ci mandano un po' di suono le catene delle musiche.
+function sala(dest) {
+  const m = roba();
+  if (m.sala !== undefined) return m.sala;
+  try {
+    const sr = ac.sampleRate, n = Math.floor(sr * 1.3), pre = Math.floor(sr * 0.012), buf = ac.createBuffer(2, n, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      let y = 0;
+      for (let i = pre; i < n; i++) {
+        const s = (i - pre) / sr, k = 0.12 + 0.75 * Math.exp(-s * 4);
+        y += k * ((Math.random() * 2 - 1) - y);
+        d[i] = y * Math.exp(-s * 4.6);
+      }
+    }
+    const conv = ac.createConvolver(), ritorno = ac.createGain();
+    conv.buffer = buf;
+    ritorno.gain.value = 0.3;
+    conv.connect(ritorno); ritorno.connect(dest);
+    m.sala = conv;
+  } catch (e) { m.sala = null; }
+  return m.sala;
+}
+
+// la catena di una musica (vedi sopra). dest = dove esce; riv = il riverbero (null = senza)
+function catena(dest, riv) {
+  const G = (v) => { const g = ac.createGain(); g.gain.value = v; return g; };
+  const out = G(1), mix = G(0.7), invio = G(1), nodi = [out, invio];
+  out.connect(dest);
+  try {
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 12; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.2;
+    mix.connect(comp); comp.connect(out);
+  } catch (e) { mix.connect(out); }
+  if (riv) invio.connect(riv);
+  // l'eco: tre passi dopo (una semiminima puntata), sempre più scura e più piano
+  let eco = null, giro = null;
+  try {
+    const dl = ac.createDelay(1.5), fl = ac.createBiquadFilter(), ritorno = G(0.55);
+    giro = G(0.3);
+    fl.type = 'lowpass'; fl.frequency.value = 2400;
+    dl.delayTime.value = 0.4;
+    dl.connect(fl); fl.connect(giro); giro.connect(dl); fl.connect(ritorno); ritorno.connect(mix);
+    eco = dl;
+  } catch (e) { /* (browser senza DelayNode: niente eco) */ }
+  const pan = (x, p) => { if (!p || !ac.createStereoPanner) return x; const s = ac.createStereoPanner(); s.pan.value = p; x.connect(s); return s; };
+  const canaleStrumento = (taglio, p, mandaRiv, mandaEco = 0) => {
+    const g = G(1);
+    let x = g;
+    if (taglio) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = taglio; f.Q.value = 0.5; x.connect(f); x = f; }
+    x = pan(x, p);
+    x.connect(mix);
+    if (riv && mandaRiv) { const s = G(mandaRiv); x.connect(s); s.connect(invio); }
+    if (eco && mandaEco) { const s = G(mandaEco); x.connect(s); s.connect(eco); }
+    return g;
+  };
+  return {
+    out, mix, eco,
+    lead: canaleStrumento(5200, 0, 0.2, 0.17),
+    seconda: canaleStrumento(3600, 0.32, 0.28),
+    arpeggio: canaleStrumento(5600, -0.32, 0.3, 0.1),
+    ritmica: canaleStrumento(2600, -0.18, 0.2),
+    pad: canaleStrumento(1500, 0.14, 0.45),
+    basso: canaleStrumento(0, 0, 0),
+    batteria: canaleStrumento(0, 0, 0.03),
+    rullante: canaleStrumento(0, 0.05, 0.16),
+    // il tempo dell'eco segue la musica (che può accelerare)
+    passo(dur, t) { if (eco && Math.abs(dur - (this.dur ?? 0)) > 1e-4) { this.dur = dur; eco.delayTime.setTargetAtTime(Math.min(1.4, dur * 3), Math.max(t, ac.currentTime), 0.04); } },
+    sfuma(t) { for (const g of nodi) { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.setTargetAtTime(0, t, 0.012); } },
+    stacca() { for (const x of [out, invio, giro]) try { x?.disconnect(); } catch (e) { /* già staccato */ } },
+  };
+}
+
+// il vibrato delle note lunghe (in centesimi): parte dopo un attimo e cresce piano
+const vibrati = {};
+function curvaVibrato(d) {
+  const ch = Math.round(d * 50);
+  if (vibrati[ch]) return vibrati[ch];
+  const dd = ch / 50 - 0.15, cicli = 5.6 * dd, k = Math.max(16, Math.ceil(cicli * 12)), c = new Float32Array(k);
+  for (let i = 0; i < k; i++) c[i] = Math.sin((i / (k - 1)) * cicli * Math.PI * 2) * 13 * Math.min(1, (i / k) * 3);
+  return (vibrati[ch] = c);
+}
+
+// una nota di uno strumento a impulso. o: { doppio (due oscillatori scordati, sì di serie), scordo
+// (centesimi), attacco, tiene (il livello dopo l'attacco, 0..1), cala (quanto ci mette ad arrivarci),
+// rilascio, vibrato }
+function strumento(dest, f, t, d, duty, v, o = {}) {
+  const g = ac.createGain(), doppio = o.doppio ?? true, att = o.attacco ?? 0.006, ril = o.rilascio ?? 0.045;
+  const vv = doppio ? v * 0.62 : v, fine = t + Math.max(d, att + 0.01);
+  g.gain.value = 0;   // (prima del primo evento varrebbe 1: un campione di scatto a tutto volume)
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vv, t + att);
+  g.gain.setTargetAtTime(vv * (o.tiene ?? 0.62), t + att, o.cala ?? 0.12);
+  g.gain.setTargetAtTime(0, fine, ril);
+  g.connect(dest);
+  const curva = o.vibrato && d > 0.32 ? curvaVibrato(d) : null, sc = o.scordo ?? 7;
+  for (let k = 0; k < (doppio ? 2 : 1); k++) {
+    const x = ac.createOscillator();
+    forma(x, duty);
+    x.frequency.setValueAtTime(doppio ? f * 2 ** ((k ? sc : -sc) / 1200) : f, t);
+    if (curva) try { x.detune.setValueCurveAtTime(curva, t + 0.15, Math.round(d * 50) / 50 - 0.15); } catch (e) { /* (niente vibrato) */ }
+    x.connect(g);
+    x.start(t);
+    x.stop(fine + ril * 7);
+  }
+}
+
+// il basso: dente di sega in un passa-basso che si chiude dopo l'attacco, più il triangolo per il corpo
+function bassoNota(dest, f, t, d, v) {
+  const s = ac.createOscillator(), tr = ac.createOscillator(), fl = ac.createBiquadFilter(), g = ac.createGain(), fine = t + Math.max(d, 0.04);
+  s.type = 'sawtooth'; tr.type = 'triangle';
+  s.frequency.setValueAtTime(f, t); tr.frequency.setValueAtTime(f, t);
+  fl.type = 'lowpass'; fl.Q.value = 2.5;
+  fl.frequency.setValueAtTime(Math.min(3200, f * 11), t);
+  fl.frequency.setTargetAtTime(f * 2.4, t + 0.004, 0.06);
+  g.gain.value = 0;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.005);
+  g.gain.setTargetAtTime(v * 0.7, t + 0.01, 0.16);
+  g.gain.setTargetAtTime(0, fine, 0.025);
+  s.connect(fl); fl.connect(g); tr.connect(g); g.connect(dest);
+  for (const o of [s, tr]) { o.start(t); o.stop(fine + 0.2); }
+}
+
+// il tappeto: l'accordo tenuto, denti di sega nel filtro scuro del suo canale (un organo morbido)
+function padAccordo(dest, note, t, d, v) {
+  const g = ac.createGain(), fine = t + d;
+  g.gain.value = 0;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.09);
+  g.gain.setTargetAtTime(v * 0.75, t + 0.09, 0.4);
+  g.gain.setTargetAtTime(0, fine - 0.03, 0.08);
+  g.connect(dest);
+  note.forEach((n, j) => {
+    const o = ac.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(midi(n) * 2 ** ((j % 2 ? 5 : -5) / 1200), t);
+    o.connect(g); o.start(t); o.stop(fine + 0.5);
+  });
+}
+
+// un colpo di rumore filtrato (batteria): tipo di filtro, frequenza, volume, quanto dura (costante di discesa)
+function colpoRumore(dest, t, v, tipo, freq, tau, q = 0.7) {
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = bufferRumore();
+  f.type = tipo; f.frequency.value = freq; f.Q.value = q;
+  g.gain.value = 0;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.002);
+  g.gain.setTargetAtTime(0, t + 0.004, tau);
+  s.connect(f); f.connect(g); g.connect(dest);
+  s.start(t, Math.random() * 0.4, tau * 7 + 0.02);
+  return g;
+}
+function tono(dest, t, v, f1, f2, salita, tau, tipo = 'sine') {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = tipo;
+  o.frequency.setValueAtTime(f1, t);
+  o.frequency.exponentialRampToValueAtTime(f2, t + salita);
+  g.gain.value = 0;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.002);
+  g.gain.setTargetAtTime(0, t + 0.006, tau);
+  o.connect(g); g.connect(dest);
+  o.start(t); o.stop(t + tau * 7 + 0.02);
+}
+
+// la batteria: M = la catena, f = forza (1 normale, 1.45 accento, 0.5 colpo fantasma)
+const COLPI = {
+  // cassa: un tono che scende di colpo (il "tum") e uno scatto corto sopra (si sente anche dal telefono)
+  k: (M, t, f) => { tono(M.batteria, t, 0.17 * f, 160, 55, 0.06, 0.07); colpoRumore(M.batteria, t, 0.035 * f, 'lowpass', 2600, 0.006); },
+  // rullante: rumore aperto in alto e la pelle che suona un attimo
+  s: (M, t, f) => { colpoRumore(M.rullante, t, 0.11 * f, 'highpass', 1100, 0.05); tono(M.rullante, t, 0.09 * f, 240, 175, 0.04, 0.035, 'triangle'); },
+  // charleston chiuso e aperto
+  h: (M, t, f) => colpoRumore(M.batteria, t, 0.06 * f, 'highpass', 7600, 0.014),
+  o: (M, t, f) => colpoRumore(M.batteria, t, 0.055 * f, 'highpass', 7000, 0.075),
+  // battimani: tre schiocchi ravvicinati di rumore in banda e una coda breve
+  c: (M, t, f) => {
+    const g = colpoRumore(M.rullante, t, 0.18 * f, 'bandpass', 1350, 0.05, 1.4).gain, v = 0.18 * f;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(v, t); g.setTargetAtTime(0.02, t + 0.001, 0.003);
+    g.setValueAtTime(v * 0.85, t + 0.011); g.setTargetAtTime(0.02, t + 0.012, 0.003);
+    g.setValueAtTime(v, t + 0.022); g.setTargetAtTime(0, t + 0.023, 0.045);
+  },
+  // tom: un tono più alto della cassa che scende piano
+  t: (M, t, f) => tono(M.rullante, t, 0.22 * f, 230, 120, 0.12, 0.1),
+};
 
 // ------------------------------------------------------------
 //  IL SEQUENCER DELLE MUSICHE (js/config/musiche.js)
 //  Ogni musica si "compila" una volta: dal testo (gradi, accordi in numeri romani, schemi) a una
-//  lista di passi. Poi, passo per passo: melodia (onda quadra o più sottile, con un po' di vibrato
-//  sulle note lunghe), basso (triangolo), accordi ribattuti, batteria (rumore), e dal secondo atto la
-//  seconda voce e gli arpeggi. Nel terzo atto la musica va più svelta o sale di un tono; negli ultimi
-//  5 secondi la batteria fa il riempimento. Atti e finale cambiano a inizio battuta (il finale a
-//  inizio battito).
+//  lista di passi. Poi, passo per passo: melodia (con un po' di vibrato sulle note lunghe), basso,
+//  accordi ribattuti, tappeto, batteria, e dal secondo atto la seconda voce e gli arpeggi. Basso,
+//  accordi e batteria possono cambiare da un atto all'altro. Nel terzo atto la musica va più svelta
+//  o sale di un tono e la melodia si raddoppia all'ottava; negli ultimi 5 secondi la batteria fa il
+//  riempimento. Atti e finale cambiano a inizio battuta (il finale a inizio battito).
 // ------------------------------------------------------------
 const SCALE = { maggiore: [0, 2, 4, 5, 7, 9, 11], minore: [0, 2, 3, 5, 7, 8, 10] };
 const GRADI = { I: 0, II: 2, III: 4, IV: 5, V: 7, VI: 9, VII: 11 };
 const NOMI_NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const INTERVALLI = { M: [0, 4, 7], m: [0, 3, 7], 7: [0, 4, 7, 10], m7: [0, 3, 7, 10], M7: [0, 4, 7, 11], 6: [0, 4, 7, 9], o: [0, 3, 6] };
+const INTERVALLI = { M: [0, 4, 7], m: [0, 3, 7], 7: [0, 4, 7, 10], m7: [0, 3, 7, 10], M7: [0, 4, 7, 11], 6: [0, 4, 7, 9], m6: [0, 3, 7, 9], o: [0, 3, 6] };
 // gli ultimi 5 secondi, se la musica non ne ha uno suo: cassa sui battiti, rullante che si infittisce
 const FINALE = { k: 'x.x.x.x.', s: '..x.xxxX', h: 'xxxxxxxx' };
-const VOL = { lead: 0.05, seconda: 0.026, arpeggio: 0.014, ritmica: 0.011, basso: 0.15 };
+const VOL = { lead: 0.055, ottava: 0.014, seconda: 0.024, arpeggio: 0.014, ritmica: 0.012, pad: 0.014, basso: 0.042 };
 
 const altezza = (s) => { const m = /^([A-G])([b#]?)(-?\d)$/.exec(s); return 12 * (Number(m[3]) + 1) + NOMI_NOTE[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); };
+// basso, ritmica e batteria possono essere uno schema solo o uno per atto ({ 1: ..., 2: ..., 3: ... })
+const perAtto = (x, atto) => (x == null || typeof x === 'string' || !(1 in x) ? x : x[atto] ?? x[2] ?? x[1]);
 
 function accordo(tok, nome) {
   const m = /^([b#]?)(VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)(maj7|7|6|°|o)?$/.exec(tok);
   if (!m) throw new Error(`${nome}: accordo sconosciuto "${tok}"`);
   const grande = m[2] === m[2].toUpperCase();
-  const tipo = m[3] === 'maj7' ? 'M7' : m[3] === '7' ? (grande ? '7' : 'm7') : m[3] === '6' ? '6' : m[3] === '°' || m[3] === 'o' ? 'o' : grande ? 'M' : 'm';
+  const tipo = m[3] === 'maj7' ? 'M7' : m[3] === '7' ? (grande ? '7' : 'm7') : m[3] === '6' ? (grande ? '6' : 'm6') : m[3] === '°' || m[3] === 'o' ? 'o' : grande ? 'M' : 'm';
   return { radice: GRADI[m[2].toUpperCase()] + (m[1] === 'b' ? -1 : m[1] === '#' ? 1 : 0), int: INTERVALLI[tipo] };
 }
 
@@ -379,6 +639,18 @@ function grado(tok, scala, nome) {
   if (!m) throw new Error(`${nome}: nota sconosciuta "${tok}"`);
   const g = m[2] - 1, ott = [...m[3]].reduce((k, ch) => k + (ch === "'" ? 12 : -12), 0), alt = m[1] === 'b' ? -1 : m[1] === '#' ? 1 : 0;
   return { n: scala[g] + alt + ott, terza: scala[(g + 5) % 7] + (g < 2 ? -12 : 0) + ott };
+}
+
+// lo schema del basso: un segno per passo, con la sua durata
+function compilaBasso(s) {
+  const bt = (s ?? '').trim().split(/\s+/).filter(Boolean), basso = [];
+  for (let i = 0; i < bt.length; i++) {
+    if (bt[i] === '.' || bt[i] === '-') { basso.push(null); continue; }
+    let d = 1;
+    while (bt[(i + d) % bt.length] === '-' && d < bt.length) d++;
+    basso.push({ tok: bt[i], d });
+  }
+  return basso;
 }
 
 const compilati = {};
@@ -409,61 +681,16 @@ function compila(B, nome) {
   for (let k = 2 * n - 1; k >= 0; k--) { const i = k % n; vuoto[i] = suona[i] ? 0 : 1 + (vuoto[(i + 1) % n] || 0); if (vuoto[i] > n) vuoto[i] = n; }
   const dentro = new Array(n).fill(0);   // da quanti passi siamo nel silenzio
   for (let k = 0; k < 2 * n; k++) { const i = k % n; dentro[i] = suona[i] ? 0 : 1 + dentro[(i - 1 + n) % n]; }
-  // il basso: un segno per passo (ripetuto a ogni battuta), con la sua durata
-  const bt = (B.basso ?? '').trim().split(/\s+/).filter(Boolean), basso = [];
-  for (let i = 0; i < bt.length; i++) {
-    if (bt[i] === '.' || bt[i] === '-') { basso.push(null); continue; }
-    let d = 1;
-    while (bt[(i + d) % bt.length] === '-' && d < bt.length) d++;
-    basso.push({ tok: bt[i], d });
-  }
+  // per ogni passo: quanti passi dura ancora lo stesso accordo, e qual è l'accordo dopo
+  const resta = new Array(n).fill(1), dopo = new Array(n);
+  for (let k = 2 * n - 2; k >= 0; k--) { const i = k % n, j = (i + 1) % n; resta[i] = acc[j] === acc[i] ? Math.min(n, resta[j] + 1) : 1; dopo[i] = acc[j] === acc[i] ? dopo[j] ?? acc[j] : acc[j]; }
   let fine = 0;   // (per i jingle: dove finisce l'ultima nota)
   mel.forEach((x, i) => { if (x) fine = Math.max(fine, i + x.d); });
-  return (compilati[nome] = { B, pb, pbat, n, mel, acc, vuoto, dentro, basso, fine, tonica: altezza(B.tonica) });
+  return (compilati[nome] = { B, pb, pbat, n, mel, acc, vuoto, dentro, resta, dopo, bassi: {}, fine, tonica: altezza(B.tonica) });
 }
 
-// le onde "a impulso" dei vecchi giochi: 50% (quadra), 25% e 12,5% (più sottili e nasali)
-const onde = new WeakMap();
-function impulso(duty) {
-  let m = onde.get(ac);
-  if (!m) onde.set(ac, (m = {}));
-  if (!m[duty]) {
-    const N = 40, re = new Float32Array(N), im = new Float32Array(N);
-    for (let k = 1; k < N; k++) re[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * duty);
-    m[duty] = ac.createPeriodicWave(re, im);
-  }
-  return m[duty];
-}
-
-// una nota di uno strumento a impulso: attacco secco, poi cala un po' e si spegne alla fine; con
-// vibrato (sulle note lunghe) la voce ondeggia di qualche centesimo dopo un attimo
-function suono(f, t, d, duty, v, vibrato = false) {
-  const o = ac.createOscillator(), g = ac.createGain();
-  try { o.setPeriodicWave(impulso(duty)); } catch (e) { o.type = 'square'; }
-  o.frequency.setValueAtTime(f, t);
-  if (vibrato && d > 0.32) {
-    try {
-      const cicli = 6 * (d - 0.16), k = Math.max(16, Math.ceil(cicli * 12)), curva = new Float32Array(k);
-      for (let i = 0; i < k; i++) curva[i] = Math.sin((i / (k - 1)) * cicli * Math.PI * 2) * 14 * Math.min(1, (i / k) * 4);
-      o.detune.setValueCurveAtTime(curva, t + 0.16, d - 0.16);
-    } catch (e) { /* (i browser vecchi senza detune: niente vibrato) */ }
-  }
-  g.gain.setValueAtTime(v, t);
-  g.gain.setTargetAtTime(v * 0.72, t + 0.02, 0.09);
-  g.gain.setTargetAtTime(0, t + d, 0.018);
-  o.connect(g); g.connect(uscita);
-  o.start(t);
-  o.stop(t + d + 0.12);
-}
-
-const COLPI = {
-  k: (t, f) => nota(135, t, 0.11, 'sine', 0.24 * f, 45),
-  s: (t, f) => { rumore(t, 0.07, 0.1 * f, 2300); nota(230, t, 0.05, 'triangle', 0.05 * f, 160); },
-  h: (t, f) => rumore(t, 0.025, 0.032 * f, 8000, 'highpass'),
-  o: (t, f) => rumore(t, 0.13, 0.036 * f, 7000, 'highpass'),
-  c: (t, f) => { rumore(t, 0.07, 0.085 * f, 1600); rumore(t + 0.012, 0.06, 0.06 * f, 1300); },
-  t: (t, f) => nota(210, t, 0.16, 'triangle', 0.2 * f, 105),
-};
+// la catena dove suona la musica che si sta pianificando (o il jingle, o la registrazione)
+let M = null;
 
 // un passo della musica. S = { atto, tono, finale }
 function suonaPassoBrano(C, i, t, dur, S) {
@@ -472,32 +699,56 @@ function suonaPassoBrano(C, i, t, dur, S) {
   const ts = C.pbat === 2 && pos % 2 ? t + (B.swing ?? 0) * dur : t;
   const L = B.lead ?? {}, onda = L.onda ?? 0.5, stacc = L.staccato ?? 0.7;
   const x = C.mel[i];
+  // le note corte (pizzicato) si spengono più in fretta, quelle lunghe cantano
+  const corta = stacc < 0.5;
   if (x) {
-    const d = (x.d - 1 + stacc) * dur;
-    suono(midi(T0 + x.n), ts, d, onda, VOL.lead * (L.volume ?? 1) * (onda < 0.3 ? 1.12 : 1), true);
+    const d = (x.d - 1 + stacc) * dur, f = midi(T0 + x.n);
+    strumento(M.lead, f, ts, d, onda, VOL.lead * (L.volume ?? 1) * (onda < 0.3 ? 1.12 : 1), { vibrato: true, tiene: corta ? 0.35 : 0.62, cala: corta ? 0.05 : 0.14 });
+    // terzo atto: la melodia si raddoppia un'ottava sopra (sotto, se è già molto alta), sottile
+    if (S.atto === 3 && L.ottava !== false) strumento(M.lead, T0 + x.n < 84 ? f * 2 : f / 2, ts, d, 0.25, VOL.ottava, { doppio: false, tiene: 0.5 });
   }
   // l'accordo: la fondamentale vicino alla tonica (per accordi e seconda voce) e giù per il basso
   const r = ((a.radice % 12) + 12) % 12, giu = T0 - 24 + r - (r > 7 ? 12 : 0);
   if (S.atto >= 2 && B.seconda) {
     const Q = B.seconda, od = Q.onda ?? 0.25;
-    if (Q.tipo === 'terze' && x) suono(midi(T0 + x.terza), ts, (x.d - 1 + stacc) * dur, od, VOL.seconda, false);
+    if (Q.tipo === 'terze' && x) strumento(M.seconda, midi(T0 + x.terza), ts, (x.d - 1 + stacc) * dur, od, VOL.seconda, { tiene: corta ? 0.35 : 0.6 });
     else if (Q.tipo === 'eco' && !x && C.dentro[i] >= 1 && C.dentro[i] + C.vuoto[i] - 1 >= 2) {
       // risponde nei silenzi della melodia: le note dell'accordo in salita (al massimo 4)
       const k = C.dentro[i] - 1;
-      if (k < 4) suono(midi(T0 - 12 + r + a.int[k % a.int.length] + (k >= a.int.length ? 12 : 0)), ts, dur * 0.6, od, VOL.seconda, false);
+      if (k < 4) strumento(M.seconda, midi(T0 - 12 + r + a.int[k % a.int.length] + (k >= a.int.length ? 12 : 0)), ts, dur * 0.7, od, VOL.seconda, { tiene: 0.4, cala: 0.08 });
     }
   }
-  if (S.atto >= 2 && B.arpeggio) for (let k = 0; k < 3; k++) suono(midi(T0 + 12 + r + a.int[k % a.int.length] - (r > 5 ? 12 : 0)), t + (k * dur) / 3, dur / 3, 0.125, VOL.arpeggio, false);
-  if (B.ritmica && B.ritmica[pos % B.ritmica.length] === 'x') {
-    for (const k of a.int) suono(midi(T0 - 12 + r + k - (r > 5 ? 12 : 0)), ts, dur * 0.45, 0.25, VOL.ritmica, false);
+  if (S.atto >= 2 && B.arpeggio) for (let k = 0; k < 3; k++) strumento(M.arpeggio, midi(T0 + 12 + r + a.int[k % a.int.length] - (r > 5 ? 12 : 0)), t + (k * dur) / 3, dur / 3, 0.125, VOL.arpeggio, { doppio: false, tiene: 0.4, cala: 0.04 });
+  const rit = perAtto(B.ritmica, S.atto);
+  if (rit && rit[pos % rit.length] === 'x') {
+    for (const k of a.int) strumento(M.ritmica, midi(T0 - 12 + r + k - (r > 5 ? 12 : 0)), ts, dur * 0.5, 0.25, VOL.ritmica, { doppio: false, tiene: 0.3, cala: 0.05, rilascio: 0.03 });
   }
-  const b = C.basso.length ? C.basso[pos % C.basso.length] : null;
+  // il tappeto: l'accordo tenuto finché non cambia
+  if (B.pad && (pos === 0 || a !== C.acc[(i - 1 + C.n) % C.n])) {
+    const note = a.int.map((k) => T0 - 12 + r + k - (r > 5 ? 12 : 0));
+    padAccordo(M.pad, note, t, Math.min(C.resta[i], C.pb - pos) * dur, VOL.pad * (B.pad === true ? 1 : B.pad));
+  }
+  const bs = perAtto(B.basso, S.atto) ?? '', basso = (C.bassi[bs] ??= compilaBasso(bs));
+  const b = basso.length ? basso[pos % basso.length] : null;
   if (b) {
-    const terza = a.int[1], q = { R: 0, 3: terza, 5: 7, 6: 9, 7: a.int[3] ?? 10, 8: 12 }[b.tok] ?? 0;
-    nota(midi(giu + q), ts, b.d * dur * 0.88, 'triangle', VOL.basso);
+    let nb;
+    if (b.tok === 'a') {
+      // la nota di passaggio: mezzo tono sotto la fondamentale dell'accordo che arriva
+      const a2 = C.dopo[i], r2 = ((a2.radice % 12) + 12) % 12;
+      nb = T0 - 24 + r2 - (r2 > 7 ? 12 : 0) - 1;
+    } else nb = giu + ({ R: 0, 2: 2, 3: a.int[1], 4: 5, 5: 7, 6: 9, 7: a.int[3] ?? 10, 8: 12 }[b.tok] ?? 0);
+    bassoNota(M.basso, midi(nb), ts, b.d * dur * 0.86, VOL.basso * (B.voceBasso ?? 1));
   }
-  const grid = S.finale ? (B.batteria?.finale ?? FINALE) : B.batteria ? (B.batteria[Math.min(S.atto, 2)] ?? B.batteria[1]) : null;
-  if (grid) for (const [k, g] of Object.entries(grid)) { const c = g[pos % g.length]; if (c === 'x' || c === 'X') COLPI[k]?.(k === 'h' || k === 'o' ? ts : t, c === 'X' ? 1.45 : 1); }
+  const grid = S.finale ? (B.batteria?.finale ?? FINALE) : perAtto(B.batteria, S.atto);
+  if (grid) {
+    for (const [k, g] of Object.entries(grid)) {
+      const c = g[pos % g.length];
+      if (c !== 'x' && c !== 'X' && c !== 'g') continue;
+      // i piatti in levare un po' più piano: è quello che fa "camminare" il ritmo
+      const piatto = k === 'h' || k === 'o', f = (c === 'X' ? 1.45 : c === 'g' ? 0.5 : 1) * (piatto && pos % C.pbat ? 0.7 : 1);
+      COLPI[k]?.(M, piatto ? ts : t, f);
+    }
+  }
 }
 
 const durPassoBrano = (C, S) => 60 / (C.B.bpm * tempo * (S.atto === 3 ? C.B.atto3?.tempo ?? 1 : 1)) / C.pbat;
@@ -508,6 +759,7 @@ function pianificaBrano() {
     if (passo % C.pbat === 0) S.finale = S.finaleVoluto;
     if (passo % C.pb === 0) { S.atto = S.attoVoluto; S.tono = S.atto === 3 ? C.B.atto3?.tono ?? 0 : 0; }
     const dur = durPassoBrano(C, S);
+    M.passo(dur, prossimo);
     suonaPassoBrano(C, passo, prossimo, dur, S);
     prossimo += dur;
     passo = (passo + 1) % C.n;
@@ -520,28 +772,30 @@ function pianificaBrano() {
 const durataPasso = () => (brano ? durPassoBrano(brano.C, brano) : 60 / ((TRACCE[traccia]?.bpm ?? 120) * tempo) / 2);
 const lunghezza = () => (brano ? brano.C.n : TRACCE[traccia]?.lead.length ?? 1);
 
-// un canale nuovo per la musica; quello di prima si sfuma in un attimo e si stacca
+// una catena nuova per la musica; quella di prima si sfuma in un attimo e si stacca
 function nuovoCanale() {
   if (!ac) return;
   if (canale) {
-    const vecchio = canale, t = ac.currentTime;
-    vecchio.gain.cancelScheduledValues(t); vecchio.gain.setValueAtTime(vecchio.gain.value, t); vecchio.gain.setTargetAtTime(0, t, 0.012);
-    setTimeout(() => { try { vecchio.disconnect(); } catch (e) { /* già staccato */ } }, 300);
+    const vecchio = canale;
+    vecchio.sfuma(ac.currentTime);
+    setTimeout(() => vecchio.stacca(), 300);
   }
-  canale = ac.createGain();
-  canale.gain.value = brano?.C.B.volume ?? 1;
-  canale.connect(busMusica);
+  canale = catena(busMusica, sala(busMusica));
+  canale.out.gain.value = brano?.C.B.volume ?? 1;
 }
 
 function pianifica() {
   if (!ac || !traccia || fermo) return;
-  uscita = canale ?? busMusica;
+  M = canale;
+  uscita = canale.mix;
   if (brano) pianificaBrano();
   else {
     const T = TRACCE[traccia];
     while (prossimo < ac.currentTime + 0.15) {
+      const dur = 60 / (T.bpm * tempo) / 2;
+      M.passo(dur, prossimo);
       suonaPasso(T, passo, prossimo, contaPassi);
-      prossimo += 60 / (T.bpm * tempo) / 2;
+      prossimo += dur;
       passo = (passo + 1) % T.lead.length;
       contaPassi++;
     }
@@ -608,14 +862,16 @@ export const Audio = {
     const t = ac.currentTime + 0.02;
     if (NON_DUE_VOLTE[nome] && t - (ultimoJingle[nome] ?? -99) < NON_DUE_VOLTE[nome]) return;
     ultimoJingle[nome] = t;
-    const C = compila(J, 'jingle ' + nome), S = { atto: 2, tono: 0, finale: false }, g = ac.createGain(), prima = uscita;
+    const C = compila(J, 'jingle ' + nome), S = { atto: 2, tono: 0, finale: false }, g = ac.createGain(), prima = M;
     g.gain.value = J.volume ?? 1;
     g.connect(J.bus === 'effetti' ? busEffetti : busMusica);
-    uscita = g;
+    // una catena sua (il conto alla rovescia senza riverbero: dev'essere secco e preciso)
+    const J1 = (M = catena(g, J.bus === 'effetti' ? null : sala(busMusica)));
     let q = t;
-    for (let i = 0; i < Math.max(1, C.fine); i++) { const dur = durPassoBrano(C, S); suonaPassoBrano(C, i, q, dur, S); q += dur; }
-    uscita = prima;
-    setTimeout(() => { try { g.disconnect(); } catch (e) { /* già staccato */ } }, (q - t + 1.5) * 1000);
+    try {
+      for (let i = 0; i < Math.max(1, C.fine); i++) { const dur = durPassoBrano(C, S); M.passo(dur, q); suonaPassoBrano(C, i, q, dur, S); q += dur; }
+    } finally { M = prima; }
+    setTimeout(() => { J1.stacca(); try { g.disconnect(); } catch (e) { /* già staccato */ } }, (q - t + 2) * 1000);
   },
 
   // La musica: un nome di js/config/musiche.js (BRANI) o di TRACCE qui sopra; null = silenzio.
@@ -674,7 +930,10 @@ export const Audio = {
   },
 
   // la nota della melodia cantata (la "voce" della traccia) in quel passo, o 0: la segue chi canta
-  notaCanto(passo) { const v = TRACCE[traccia]?.voce; return v ? v[((passo % v.length) + v.length) % v.length] : 0; },
+  notaCanto(passo, campo = 'voce') { const v = TRACCE[traccia]?.[campo]; return v ? v[((passo % v.length) + v.length) % v.length] : 0; },
+
+  // una musica "a passi" scritta da un microgioco (la ballata di Lori: ogni partita ha la sua)
+  scriviTraccia(nome, T) { TRACCE[nome] = T; },
 
   // quanto dura adesso un battito della musica (secondi): serve a chi vuole andare a tempo
   get battito() { return brano ? durataPasso() * brano.C.pbat : 60 / ((TRACCE[traccia]?.bpm ?? 128) * tempo); },
@@ -684,15 +943,16 @@ export const Audio = {
   async registra(nome, secondi = 16, atto = 1, finale = false) {
     const B = BRANI[nome], OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!B || !OAC) return null;
-    const sr = 44100, ctx = new OAC(1, Math.ceil(sr * secondi), sr), salva = [ac, uscita, tempo];
-    const g = ctx.createGain();
-    g.gain.value = B.volume ?? 1;
-    g.connect(ctx.destination);
-    ac = ctx; uscita = g; tempo = 1;
+    const sr = 44100, ctx = new OAC(2, Math.ceil(sr * secondi), sr), salva = [ac, uscita, tempo, M];
+    ac = ctx; tempo = 1;
     try {
+      // la stessa catena del gioco (compressore, riverbero, eco), col volume del brano
+      M = catena(ctx.destination, sala(ctx.destination));
+      M.out.gain.value = B.volume ?? 1;
+      uscita = M.mix;
       const C = compila(B, nome), S = { atto, tono: atto === 3 ? B.atto3?.tono ?? 0 : 0, finale };
-      for (let i = 0, t = 0.02; t < secondi; i = (i + 1) % C.n) { const dur = durPassoBrano(C, S); suonaPassoBrano(C, i, t, dur, S); t += dur; }
-    } finally { [ac, uscita, tempo] = salva; }
+      for (let i = 0, t = 0.02; t < secondi; i = (i + 1) % C.n) { const dur = durPassoBrano(C, S); M.passo(dur, t); suonaPassoBrano(C, i, t, dur, S); t += dur; }
+    } finally { [ac, uscita, tempo, M] = salva; }
     return new Promise((ok) => { ctx.oncomplete = (e) => ok(e.renderedBuffer); const p = ctx.startRendering(); p?.then?.(ok); });
   },
 

@@ -2,14 +2,14 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.11-quadranti',
+  versione: '2026.11-karaoke',
   titolo: 'NOVITÀ',
   voci: [
-    'COME SI GIOCA? ora è a quadranti: AL MEGLIO DI, SFIDA, LAMPO, PARTY',
-    'Toccane uno e scegli: al meglio di 3 o 5, sfida da 3, 5, 8 o TUTTI',
-    'Il Lampo da 3, 6 o 10 microgiochi',
-    'Impostazioni ovunque: l\'ingranaggio in alto a destra (o il tasto I)',
-    'Si apre anche a metà partita, e chiudendolo si riprende da lì',
-    'Nuove ambientazioni: Pallaio, gelateria, stadio, casa del Sego, Nirvana',
+    'La ballata del Pallaio rifatta: serata karaoke al bar, Lori alla chitarra',
+    'Tocca la vignetta giusta quando passa nel riquadro dorato, a tempo',
+    'Spalma il Bota!: il rebus in spiaggia e +30 se aiuti il Bota a risolverlo',
+    'Musiche nuove: suono più pieno, batteria vera; Spina e Barba riscritte',
+    'Scontrino: clienti disegnati come voi. Lo Zere in felpa blu',
+    'Passaseo: montagne nuove e il Sego che scala la parete',
   ],
 };

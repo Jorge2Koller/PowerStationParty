@@ -1,67 +1,88 @@
 // Configurazione del microgioco 'La ballata del Pallaio' (id: ballata).
-// Durata, comandi, obiettivo, punti, difficoltà, le ballate e le loro vignette: si cambiano qui senza
-// toccare la logica. (Il microgioco è in js/microgames/BallataScene.js.)
+// Durata, comandi, obiettivo, punti, difficoltà, la canzone e le storie con le loro vignette: si
+// cambiano qui senza toccare la logica. (Il microgioco è in js/microgames/BallataScene.js.)
 export default {
   titolo: 'La ballata del Pallaio',
-  verbo: 'RIORDINA!',       // il comando in una parola (schermata prima del microgioco)
+  verbo: 'CANTA!',          // il comando in una parola (schermata prima del microgioco)
   durata: 35,
   colore: 0x7a4a9a,
   musica: 'ballata',
   ospite: { id: 'lori', etichetta: 'CANTA PER VOI:\nLORI' },
   comandi: [
-    'Trascina una vignetta su un\'altra casella: si scambiano (o clicca la vignetta, poi la casella)',
-    'Lori canta la strofa e la bacchetta cade sulla casella illuminata: lì ci vuole quella scena',
-    'Tastiera: FRECCE il cursore, SPAZIO prendi e lascia, INVIO rigira una vignetta girata',
+    'Lori canta un verso: quando la vignetta GIUSTA arriva nel faro, premi SPAZIO (o clicca)',
+    'Le altre lasciale passare: la prima che prendi decide il verso, se è sbagliata Lori stona',
+    'Nel ritornello batti le mani: SPAZIO quando ogni manina arriva nel faro',
   ],
   comandiTouch: [
-    'Trascina una vignetta su un\'altra casella: si scambiano',
-    'Lori canta la strofa e la bacchetta cade sulla casella illuminata: lì ci vuole quella scena',
-    'Una folata gira una vignetta? Toccala per rigirarla',
+    'Lori canta un verso: tocca lo schermo quando la vignetta GIUSTA arriva nel faro',
+    'Le altre lasciale passare: la prima che prendi decide il verso, se è sbagliata Lori stona',
+    'Nel ritornello batti le mani: tocca quando ogni manina arriva nel faro',
   ],
-  obiettivo: 'Almeno 5 strofe giuste su 8!',
+  obiettivo: 'Almeno 5 versi giusti su 7!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
-  // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
-  lampo: { obiettivo: 'Almeno 3 strofe giuste su 4!' },
-  // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 5 strofe giuste
-  // (l'obiettivo) sono il bronzo: la k-esima strofa giusta vale di più della precedente.
+  // li mostra l'introduzione
+  lampo: { obiettivo: 'Almeno 2 versi giusti su 3!' },
+  // Medaglie (js/punteggi.js): la scala comune (bronzo 100, argento 200, oro 300). 5 versi giusti
+  // (l'obiettivo) sono il bronzo: il k-esimo verso giusto vale di più del precedente, e la serie, i
+  // colpi perfetti e il battimani da soli non bastano (4 versi giusti, tutti perfetti e di fila, con
+  // tutte le mani: 98 punti; 6 versi così: 205). Tutti e 7 i versi: il BIS, e l'oro.
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
-  obiettivoStrofe: 5,
-  // punti: la k-esima bacchettata giusta vale puntiStrofa + crescitaStrofa x (k - 1), per la serie
-  // (1 + serie x (giuste di fila - 1)); più bonusMorale se a fine canzone sono tutte al posto giusto
-  puntiStrofa: 10,
-  crescitaStrofa: 5,
-  serie: 0.1,
-  bonusMorale: 60,
-  // la canzone (120 battiti al minuto: un ottavo è 1/4 di secondo; nel terzo atto Lori accelera fino a
-  // tempoFinale). Le bacchettate, in ottavi dall'inizio, sempre sul primo o sul terzo battito della
-  // battuta (la battuta forte): ogni strofa su una casella diversa, scelta col seme. Il terzo atto
-  // comincia all'ottavo 96 (24 secondi), e le ultime due bacchettate sono ravvicinate
-  colpi: [16, 32, 44, 64, 80, 104, 120, 128],
-  tempoFinale: 1.15,
-  // in Lampo (15 secondi, i primi due atti) la ballata si accorcia: si gioca solo la riga in alto, con
-  // le prime tre strofe e la morale
-  colpiLampo: [16, 28, 40, 52],
-  strofeLampo: [0, 1, 2, 7],
-  // i tre atti: da quando (secondi), annuncio, quante caselle si giocano (le altre sono sotto il telo),
-  // quanti ottavi prima del colpo la casella si illumina e la bacchetta si alza, ogni quanti secondi
-  // una folata di vento (gira una vignetta o ne scambia due già sistemate), probabilità di una finta
-  atti: [
-    { da: 0, nome: 'LA PRIMA STROFA', caselle: 4, preavviso: 12 },
-    { da: 12, nome: 'IL VENTO', caselle: 6, preavviso: 10, folata: [3.6, 5], finta: 0.5 },
-    { da: 24, nome: 'IL GRAN FINALE', caselle: 8, preavviso: 8, folata: [4, 6], finta: 0.3 },
-  ],
-  finta: 4,                 // ottavi prima del colpo in cui la bacchetta passa dalla casella finta a quella vera
-  frasiGiusta: ['OOOH!', 'BRAVO!', 'CHE STORIA!', 'BIS!'],
-  frasiRisate: ['AH AH AH!', 'MA COSA CANTA?!', 'HAHAHA!', 'BUUU!'],
-  frasiLori: ['Garzone!', 'Ma chi le ha appese?!', 'Te la faccio pagare!', 'Ma dai!'],
+  obiettivoVersi: 5,
+  obiettivoLampo: 2,
+  // punti: il k-esimo verso giusto vale verso + crescita x (k - 1), per la serie (1 + serie x (versi
+  // giusti di fila - 1)); più perfetto se preso nel cuore del tempo; ogni battimani preso vale mano;
+  // bis se a fine canzone i versi sono tutti giusti
+  punti: { verso: 8, crescita: 6, serie: 0.1, perfetto: 3, mano: 0.5, bis: 50 },
+  // quanto si può sbagliare il tempo (secondi, prima o dopo): nel cuore = PERFETTO, se no = BENE
+  finestre: { perfetto: 0.06, bene: 0.12 },
+  // la vignetta del verso nell'angolo dello schermo del karaoke, per aiutare: nelle prime N strofe
+  // (la prima fa capire il gioco senza spiegazioni), a FACILE sempre
+  aiuto: 1,
 
-  // Le ballate: il seme del round ne sceglie una. Ognuna ha 8 strofe, l'ultima è la morale. Ogni
-  // strofa: inizio e fine (due mezze righe), "scena" (come la nomina Lori quando la vignetta finisce
-  // nel posto sbagliato: "...e la Panda finì... a ballare col Manna?!") e la vignetta, disegnata coi
-  // personaggi e gli oggetti del gioco: sfondo (uno sfondo dei microgiochi, e la parte da mostrare,
-  // da 0 a 1), chi [id della texture, x, y, grandezza] e cosa [texture, x, y, grandezza, angolo];
-  // sopra, come cosa, ma disegnati davanti alle figure. (x e y vanno da -1 a 1 dentro la vignetta;
-  // le figure stanno coi piedi in y; gli oggetti hanno il lato lungo largo grandezza / 2 vignette.)
+  // LA CANZONE (120 battiti al minuto: un ottavo è 1/4 di secondo). Le parti in ordine: l'intro (Lori
+  // attacca con la chitarra), le strofe (2 battute: nella prima Lori canta l'inizio del verso, nella
+  // seconda le vignette passano dal faro e chi gioca prende quella giusta: allora Lori canta la fine),
+  // i ritornelli (1 battuta: il pubblico canta e chi gioca batte le mani sulle manine) e il finale.
+  // Ogni strofa appartiene a un atto: il primo racconta una storia, il secondo un'altra, il gran
+  // finale una terza (con la sua morale). In Lampo (15 secondi): l'intro e tre strofe.
+  canzone: ['intro', 's0', 's0', 's0', 'rit', 's1', 's1', 'rit', 's2', 's2', 'fine'],
+  canzoneLampo: ['intro', 's0', 's0', 's1', 'fine'],
+  // i tre atti: il nome (all'inizio della sua prima strofa, o del ritornello che lo apre), quando
+  // passano le vignette (in ottavi dall'inizio della strofa: la seconda battuta comincia all'8),
+  // quante vignette sono della stessa storia (le più difficili da scartare; le altre sono di altre
+  // storie), per quanti ottavi una vignetta si vede scorrere prima del faro, e la velocità della musica
+  atti: [
+    { nome: 'PRIMA STORIA', carte: [8, 10, 12], stesse: 0, anticipo: 9, tempo: 1 },
+    { nome: 'SECONDA STORIA', carte: [8, 10, 12, 14], stesse: 1, anticipo: 7.5, tempo: 1 },
+    { nome: 'IL GRAN FINALE!', carte: [7, 9, 11, 12, 14], stesse: 2, anticipo: 5.6, tempo: 1.2 },
+  ],
+  // i ritornelli: le manine da battere (in ottavi dall'inizio della battuta), il testo
+  manine: [[0, 2, 4, 6], [0, 2, 3, 4, 6]],
+  ritornello: 'OH, PAL-LA-IO! OH, PAL-LA-IO!',
+  frasiGiusta: ['OOOH!', 'BRAVO!', 'CHE STORIA!', 'BIS!', 'GRANDE LORI!'],
+  frasiFischi: ['FIUUU!', 'BUUU!', 'MA COSA CANTA?!', 'STONATO!'],
+  // Lo spartito (Sol maggiore). Gli accordi: [fondamentale midi, minore?] per mezza battuta. La strofa
+  // ha due varianti che si alternano: voce = la melodia di Lori (prima e seconda battuta), lead = la
+  // fisarmonica che risponde a fine frase (0 = zitta). Il ritornello: coro e coro2 (una terza sotto).
+  spartito: {
+    intro: { accordi: [[55], [55]], lead: [79, 0, 0, 78, 76, 0, 74, 0] },
+    strofe: [
+      { accordi: [[55], [55], [48], [50]], voce: [67, 0, 71, 74, 76, 0, 74, 0, 76, 0, 74, 72, 69, 0, 66, 0], lead: [0, 0, 0, 0, 0, 0, 79, 78, 0, 0, 0, 0, 0, 0, 74, 78] },
+      { accordi: [[52, true], [52, true], [48], [50]], voce: [71, 0, 71, 72, 74, 0, 71, 0, 72, 0, 72, 71, 69, 0, 74, 0], lead: [0, 0, 0, 0, 0, 0, 76, 74, 0, 0, 0, 0, 0, 0, 78, 81] },
+    ],
+    rit: { accordi: [[55], [50]], coro: [74, 0, 79, 0, 78, 76, 78, 0], coro2: [71, 0, 74, 0, 74, 72, 74, 0], lead: [0, 0, 0, 0, 0, 0, 0, 0] },
+    fine: { accordi: [[55], [55]], lead: [79, 0, 0, 0, 0, 0, 0, 0] },
+  },
+
+  // Le storie (una per microgioco del PowerStation): il seme del round ne sceglie tre, una per atto, e
+  // da ognuna le strofe da cantare (in ordine; nel gran finale l'ultima è la morale). Ogni storia ha 8
+  // strofe, l'ultima è la morale. Ogni strofa: inizio (lo canta Lori, e da lì si capisce la vignetta
+  // giusta) e fine (la canta quando la vignetta è presa), "scena" (come la nomina Lori quando si prende
+  // la vignetta sbagliata: "...le chiavi nel bicchiere?!") e la vignetta, disegnata coi personaggi e
+  // gli oggetti del gioco: sfondo (uno sfondo dei microgiochi, e la parte da mostrare, da 0 a 1), chi
+  // [id della texture, x, y, grandezza] e cosa [texture, x, y, grandezza, angolo]; sopra, come cosa, ma
+  // disegnati davanti alle figure. (x e y vanno da -1 a 1 dentro la vignetta; le figure stanno coi
+  // piedi in y; gli oggetti hanno il lato lungo largo grandezza / 2 vignette.)
   ballate: [
     {
       titolo: 'La ballata del Passaggiorgio',
@@ -171,8 +192,10 @@ export default {
   ],
   // I livelli (Fase 5): Normale è la configurazione qui sopra; Facile e Difficile cambiano solo
   // questi valori. Un oggetto al posto di un elenco (atti) moltiplica quei campi in ogni voce.
+  // FACILE: più tempo per guardare le vignette, il tempo più largo, la vignetta giusta sempre
+  // nell'angolo dello schermo. DIFFICILE: le vignette corrono, il tempo è stretto, il finale più svelto.
   livelli: {
-    facile: { atti: { preavviso: 1.3, folata: 1.4, finta: 0.5 }, tempoFinale: 1 },
-    difficile: { atti: { preavviso: 0.8, folata: 0.75, finta: 1.5 }, tempoFinale: 1.3 },
+    facile: { finestre: { perfetto: 0.08, bene: 0.16 }, atti: { anticipo: 1.25 }, aiuto: 99 },
+    difficile: { finestre: { perfetto: 0.045, bene: 0.09 }, atti: { anticipo: 0.85, tempo: 1.05 }, aiuto: 0 },
   },
 };

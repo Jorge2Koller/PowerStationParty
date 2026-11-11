@@ -15,7 +15,7 @@ import { creaVialetto } from './grafica/vialetto.js';
 import { creaPallaio, manoPong, MANO_IMG } from './grafica/pallaio.js';
 import { creaProvino } from './grafica/provino.js';
 import { creaTaverna } from './grafica/taverna.js';
-import { creaPiazzetta } from './grafica/piazzetta.js';
+import { creaBallata } from './grafica/ballata.js';
 import { creaMontagna } from './grafica/montagna.js';
 import { creaPizzeria } from './grafica/pizzeria.js';
 
@@ -218,15 +218,14 @@ export function creaTexture(scene) {
   personaggio('boni_beccati', boni, 'sconvolto', { posa: 'tiIndico' });
   personaggio('boni_caccia', boni, 'rabbia', { posa: 'caccia', accessorio: 'palaAlta' });
   personaggio('boni_rabbia', boni, 'rabbia');
-  // "La ballata del Pallaio": Lori che canta a bocca spalancata con la mano sul cuore, che alza
-  // la bacchetta, che batte (TOC), che si blocca confuso, che fulmina il garzone, che si ripara
-  // dai pomodori, l'inchino finale. (La bacchetta la disegna la scena: va dalla mano alla casella.)
+  // "La ballata del Pallaio": Lori con la chitarra a tracolla che canta (la pennata su e giù, a tempo),
+  // contento quando il verso viene bene, sconvolto quando stona; che si ripara dai pomodori, l'inchino
+  // finale
   const lori = PERSONAGGI.lori;
-  personaggio('lori_canta', lori, 'canta', { posa: 'cuore' });
-  personaggio('lori_alza', lori, 'canta', { posa: 'alza' });
-  personaggio('lori_batte', lori, 'felice', { posa: 'batte' });
-  personaggio('lori_confuso', lori, 'sconvolto', { posa: 'gratta', maniSopra: true, accessorio: 'niente' });
-  personaggio('lori_fulmina', lori, 'rabbia', { posa: 'tiIndico' });
+  personaggio('lori_canta', lori, 'canta', { posa: 'chitarra', accessorio: 'chitarra' });
+  personaggio('lori_canta2', lori, 'canta', { posa: 'chitarra2', accessorio: 'chitarra' });
+  personaggio('lori_gode', lori, 'felice', { posa: 'chitarra2', accessorio: 'chitarra' });
+  personaggio('lori_stona', lori, 'sconvolto', { posa: 'chitarra', accessorio: 'chitarra' });
   personaggio('lori_ripara', lori, 'shock', { posa: 'maniInTesta', maniSopra: true, accessorio: 'niente' });
   personaggio('lori_inchino', lori, 'felice', { posa: 'inchino' });
   // gli imbucati che, sotto la tovaglia, si passano la fetta e fanno l'occhiolino
@@ -244,7 +243,7 @@ export function creaTexture(scene) {
   gruppoPigro(scene, 'pallaio', creaPallaio);
   gruppoPigro(scene, 'provino', creaProvino);
   gruppoPigro(scene, 'taverna', creaTaverna);
-  gruppoPigro(scene, 'piazzetta', creaPiazzetta);
+  gruppoPigro(scene, 'ballata', creaBallata);
   gruppoPigro(scene, 'montagna', creaMontagna);
   gruppoPigro(scene, 'pizzeria', creaPizzeria);
 }
@@ -260,5 +259,5 @@ export const GRUPPI_MICROGIOCHI = {
   mani: ['bgSala', 'tavola'], sego: ['bgCortile', 'portoneAperto'], ronda: ['bgSpiaggia'], blackjack: ['bgCasino', 'tavoloVerde'],
   palleggi: ['bgParco'], passaseo: ['montagna'], bota: ['bota'], guida: ['bgParcheggio', 'vialetto'], piovra: ['bgDisco'],
   scapoli: ['palco'], retromarcia: ['vialetto', 'bota'], beerpong: ['pallaio', 'vialetto'], xfactor: ['provino'],
-  pizza: ['taverna'], ballata: ['piazzetta'], proverbi: [], scontrino: ['pizzeria'], baratti: [],
+  pizza: ['taverna'], ballata: ['ballata', 'tavolaPallaio'], proverbi: [], scontrino: ['pizzeria'], baratti: [],
 };
