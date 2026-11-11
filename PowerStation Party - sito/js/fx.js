@@ -197,7 +197,7 @@ export const ombra = (scene, x, y, w = 60) => scene.add.ellipse(x, y, w, w * 0.2
 
 // Pulsantino a schermo (pausa, audio, schermo intero, indietro): icona disegnata, zona di
 // tocco più grande del disegno. Il tocco non arriva al resto della scena (stopPropagation).
-// icona: 'pausa' | 'audio' | 'schermo' | 'indietro'. o.suRilascio: azione al rilascio
+// icona: 'pausa' | 'audio' | 'schermo' | 'indietro' | 'impostazioni'. o.suRilascio: azione al rilascio
 // (lo schermo intero lo vuole); o.depth.
 export function pulsante(scene, x, y, icona, azione, o = {}) {
   const depth = o.depth ?? 1003, w = 19, h = 16;
@@ -209,7 +209,10 @@ export function pulsante(scene, x, y, icona, azione, o = {}) {
     g.lineStyle(1.2, 0xffe14a, 0.9); g.strokeRoundedRect(-w / 2, -h / 2, w, h, 5);
     g.fillStyle(0xffffff, 1); g.lineStyle(1.4, 0xffffff, 1);
     if (icona === 'pausa') { g.fillRect(-3.6, -4.5, 2.6, 9); g.fillRect(1, -4.5, 2.6, 9); }
-    else if (icona === 'indietro') { g.fillTriangle(-5, 0, 0, -5, 0, 5); g.fillRect(-0.5, -1.6, 5.5, 3.2); }
+    else if (icona === 'impostazioni') {   // l'ingranaggio
+      for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; g.fillCircle(Math.cos(a) * 4.6, Math.sin(a) * 4.6, 1.5); }
+      g.fillCircle(0, 0, 4.3); g.fillStyle(0x1f1430, 1); g.fillCircle(0, 0, 1.8);
+    } else if (icona === 'indietro') { g.fillTriangle(-5, 0, 0, -5, 0, 5); g.fillRect(-0.5, -1.6, 5.5, 3.2); }
     else if (icona === 'schermo') {
       for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { g.beginPath(); g.moveTo(sx * 5.5, sy * 1.5); g.lineTo(sx * 5.5, sy * 4.5); g.lineTo(sx * 2.5, sy * 4.5); g.strokePath(); }
     } else if (icona === 'audio') {
