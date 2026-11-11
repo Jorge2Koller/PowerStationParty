@@ -2,14 +2,12 @@
 // che si apre il gioco dopo un aggiornamento (quando "versione" cambia), e dal menu.
 // Per un aggiornamento nuovo: cambia "versione" e riscrivi le voci (una riga ciascuna, corte).
 export default {
-  versione: '2026.11-quadranti',
+  versione: '2026.11-zere-passaseo',
   titolo: 'NOVITÀ',
   voci: [
-    'COME SI GIOCA? ora è a quadranti: AL MEGLIO DI, SFIDA, LAMPO, PARTY',
-    'Toccane uno e scegli: al meglio di 3 o 5, sfida da 3, 5, 8 o TUTTI',
-    'Il Lampo da 3, 6 o 10 microgiochi',
-    'Impostazioni ovunque: l\'ingranaggio in alto a destra (o il tasto I)',
-    'Si apre anche a metà partita, e chiudendolo si riprende da lì',
-    'Nuove ambientazioni: Pallaio, gelateria, stadio, casa del Sego, Nirvana',
+    'Scontrino, prego!: i clienti ora sono disegnati come voi, tutti diversi',
+    'La Spina: lo Zere rifatto, in felpa blu con la sua vuvuzela',
+    'Il Passo del Passaseo: montagne nuove, boschi, baite e mucche',
+    'E il Sego che scala la parete: scivola quando sbagli, esulta se vinci',
   ],
 };
