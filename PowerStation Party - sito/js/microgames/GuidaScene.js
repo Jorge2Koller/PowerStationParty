@@ -1,6 +1,6 @@
 // Microgioco 12: "Il Passaggiorgio" - stasera guida Giorgio. Per forza. ACCHIAPPA!
 //
-//  Sabato sera, parcheggio sotto casa. Giorgio non prende mai la macchina: corre verso le
+//  Sabato sera, davanti alla gelateria "I Love Gelato". Giorgio non prende mai la macchina: corre verso le
 //  macchine degli amici (la Panda di Guerra, la Golf di Greg, il SUV di Sego), apre una
 //  portiera e prova a salire. Clic/tocco su di lui prima che chiuda: vola in mezzo al
 //  parcheggio. Mentre è a terra si trascinano le chiavi fino a lui: va alla sua A3
@@ -17,7 +17,7 @@
 //  La scena si muove (scheda di valutazione: "da aggiungere animazioni, un po' monotono"): le
 //  macchine molleggiano e dondolano, chi guida fa le facce e tiene il tempo con la testa, Giorgio
 //  ha l'ombra e alza la polvere correndo, l'A3 trema e si spolvera, le lucine lampeggiano a onda e
-//  nei palazzi si accendono e si spengono le finestre.
+//  sopra la gelateria si accendono e si spengono le finestre.
 //  I punti non scendono mai sotto zero (un passaggio scroccato toglie solo quello che hai).
 //  Le corse di Giorgio sono uguali per tutti i giocatori del round (seme del round).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
@@ -25,7 +25,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { MODELLI, COLORI_AUTO, porteAuto } from '../grafica/oggetti.js';
-import { PARCHEGGIO } from '../grafica/sfondi.js';
+import { PARCHEGGIO, FINESTRE_GELATERIA, FILI_GELATERIA } from '../grafica/sfondi.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, scuoti, puntatore, lerp, caso, eTouch, perDito, vibra, multiTouch, puntiHud, numero, quanti } from '../fx.js';
 import { ritratto } from '../sprites.js';
 import { VIALETTO } from '../grafica/vialetto.js';
@@ -38,10 +38,9 @@ const AMICI = [
 const A3 = { modello: 'a3', x: 72, y: PARCHEGGIO.davanti };   // la macchina di Giorgio, col muso a sinistra
 const CHIAVI = { x: 448, y: 246 };   // l'angolo delle chiavi (dove stanno all'inizio e quasi sempre)
 const TETTO_A3 = { x: A3.x + 12, y: A3.y - MODELLI.a3.tetto - 9 };   // ...e dove restano se le lancia sul tetto
-// le lucine colorate appese nello sfondo (come in grafica/sfondi.js: inizio, fine, quanto pendono, seme dei colori)
-const FILI = [[0, 70, 240, 60, 22, 3], [240, 60, 480, 76, 20, 4]];
+// le lucine colorate appese alla tenda della gelateria (in grafica/sfondi.js: inizio, fine, quanto pendono, seme dei colori)
+const FILI = FILI_GELATERIA;
 const COLORI_LUCINE = [0xff5a6a, 0xffd84a, 0x5ad0ff, 0x7dff9a, 0xff9af0];
-const PALAZZI = [[-10, 120, 54], [370, 120, 62], [130, 220, 24]];   // i palazzi dello sfondo: x, larghezza, tetto
 const TAGLIA = 0.42;          // Giorgio e il sosia: 40x60 unità
 const ALTO = 144 * TAGLIA;    // altezza a schermo di un personaggio
 const TESTA = 0.3;            // teste nei finestrini
@@ -137,15 +136,9 @@ export class GuidaScene extends MicrogiocoBase {
         this.tweens.add({ targets: l, alpha: 0.85, duration: 380, yoyo: true, repeat: -1, delay: (n++ % 7) * 110, ease: 'Sine.inOut' });
       }
     }
-    // e nei palazzi qualcuno accende e spegne la luce (le finestre sono quelle dello sfondo)
-    const finestre = [];
-    for (const [x, w, top] of PALAZZI) {
-      for (let y = top + 9; y < 128; y += 14) for (let xx = x + 7; xx < x + w - 10; xx += 16) {
-        if (xx > 0 && xx < 470 && !(xx + 9 > 222 && xx < 258 && y + 8 > 104)) finestre.push([xx, y]);   // (non dietro al portone)
-      }
-    }
-    this.time.addEvent({ delay: 700, loop: true, callback: () => {
-      const [x, y] = caso(finestre), luce = this.add.rectangle(x + 4.5, y + 4, 9, 8, Math.random() < 0.3 ? 0xffd9a0 : 0xffe78a).setAlpha(0).setDepth(1);
+    // e sopra la gelateria qualcuno apre la persiana e accende la luce (le finestre sono quelle dello sfondo)
+    this.time.addEvent({ delay: 900, loop: true, callback: () => {
+      const [x, y] = caso(FINESTRE_GELATERIA), luce = this.add.rectangle(x + 7, y + 9, 14, 18, Math.random() < 0.3 ? 0xffd9a0 : 0xffe78a).setAlpha(0).setDepth(1);
       this.tweens.add({ targets: luce, alpha: 0.9, duration: 150, hold: 1500 + Math.random() * 2500, yoyo: true, onComplete: () => luce.destroy() });
     } });
   }

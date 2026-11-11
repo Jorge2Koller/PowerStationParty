@@ -754,38 +754,95 @@ function sfondoStradaToscana(c) {
 
 
 // ------------------------------------------------------------
-//  PARCHEGGIO SOTTO CASA di sabato sera (Il Passaggiorgio)
+//  DAVANTI ALLA GELATERIA di sabato sera (Il Passaggiorgio)
 // ------------------------------------------------------------
+// Il palazzo color crema a tre piani col bar sotto (la tenda bianca, le insegne "Gelateria" e
+// "I ♥ Gelato", le vetrine accese, il muretto con la ringhiera), le persiane, il balcone a destra.
+// Disegnato dalla foto che ha mandato l'utente (scheda 2: "da cambiare ambientazione"; prima era
+// un parcheggio sotto casa con tre palazzi). Davanti, la strada e il parcheggio come prima.
 // strada dietro (dove partono le macchine), fila delle macchine degli amici, fila davanti
 export const PARCHEGGIO = { strada: 150, fila: 198, davanti: 266 };
+// le finestre del palazzo (x, y in alto a sinistra, 14x18): la scena ci accende e spegne la luce
+export const FINESTRE_GELATERIA = [92, 136, 204, 262, 320].flatMap((x) => [[x, 16], [x, 50]]).filter(([x, y]) => !(x === 320 && y === 50));
+// le lucine sotto la tenda (inizio, fine, quanto pendono, seme dei colori): la scena le fa lampeggiare
+export const FILI_GELATERIA = [[84, 92, 238, 92, 6, 3], [238, 92, 392, 92, 6, 4]];
 
 function sfondoParcheggio(c) {
   const r = casuale(2019), P = PARCHEGGIO;
   // cielo di notte, stelle e luna
   c.fillStyle = gradL(c, 0, 0, 0, 140, [[0, '#0f1330'], [0.7, '#2a2452'], [1, '#4a3462']]); c.fillRect(0, 0, 480, 140);
   for (let i = 0; i < 70; i++) { ellisse(c, r() * 480, r() * 100, 0.5 + r() * 0.6, 0.5 + r() * 0.6); c.fillStyle = `rgba(255,255,240,${0.4 + r() * 0.5})`; c.fill(); }
-  alone(c, 430, 30, 30, '#fff6d0', 0.25);
-  ellisse(c, 430, 30, 12, 12); c.fillStyle = '#fff4cc'; c.fill();
-  for (const [x, y, rr] of [[426, 27, 2], [433, 34, 1.5], [424, 35, 1]]) { ellisse(c, x, y, rr, rr); c.fillStyle = 'rgba(200,190,150,0.6)'; c.fill(); }
-  // palazzi: quello di Giorgio in mezzo, più chiaro, con le finestre accese
+  alone(c, 448, 22, 26, '#fff6d0', 0.25);
+  ellisse(c, 448, 22, 10, 10); c.fillStyle = '#fff4cc'; c.fill();
+  // i palazzi ai lati, bassi e scuri, con qualche finestra accesa
   const palazzo = (x, w, top, col, luci) => {
     c.fillStyle = col; c.fillRect(x, top, w, 140 - top);
     c.fillStyle = scuro(col, 0.25); c.fillRect(x, top, w, 3);
-    for (let y = top + 9; y < 128; y += 14) for (let xx = x + 7; xx < x + w - 10; xx += 16) {
+    for (let y = top + 9; y < 126; y += 14) for (let xx = x + 6; xx < x + w - 8; xx += 14) {
       const acc = r() < luci;
-      rrect(c, xx, y, 9, 8, 1); c.fillStyle = acc ? (r() < 0.25 ? '#ffd9a0' : '#ffe78a') : scuro(col, 0.35); c.fill();
-      if (acc) { c.save(); c.globalCompositeOperation = 'lighter'; alone(c, xx + 4.5, y + 4, 9, '#ffd070', 0.12); c.restore(); }
-      c.fillStyle = scuro(col, 0.45); c.fillRect(xx - 1, y + 8, 11, 1.4);
+      rrect(c, xx, y, 7, 8, 1); c.fillStyle = acc ? '#ffe08a' : scuro(col, 0.35); c.fill();
     }
   };
-  palazzo(-10, 120, 54, '#2b2a46', 0.25);
-  palazzo(370, 120, 62, '#2b2a46', 0.3);
-  palazzo(130, 220, 24, '#5a4a62', 0.45);
-  // portone e insegna del civico
-  rrect(c, 226, 110, 28, 30, [6, 6, 0, 0]); c.fillStyle = '#3a2a22'; c.fill(); tratto(c, '#1a1210', 1.2);
-  c.save(); c.globalCompositeOperation = 'lighter'; alone(c, 240, 106, 22, '#ffd070', 0.35); c.restore();
-  rrect(c, 236, 100, 8, 5, 1); c.fillStyle = '#ffe9a0'; c.fill();
-  // lucine colorate appese tra i balconi
+  palazzo(-8, 82, 40, '#2b2a46', 0.25);
+  palazzo(404, 84, 34, '#2b2a46', 0.3);
+  // il palazzo della gelateria: crema, tetto scuro con la grondaia, il tubo sul lato destro
+  const X0 = 78, X1 = 400, TOP = 4;
+  c.fillStyle = gradL(c, X0, 0, X1, 0, [[0, '#cfc29a'], [0.5, '#e2d6ae'], [1, '#c4b78f']]); c.fillRect(X0, TOP, X1 - X0, 136 - TOP);
+  for (let i = 0; i < 260; i++) { c.fillStyle = 'rgba(120,100,60,0.08)'; c.fillRect(X0 + r() * (X1 - X0), TOP + r() * 80, 1.2, 1.2); }
+  poli(c, [[X0 - 6, TOP + 2], [X1 + 6, TOP + 2], [X1 + 2, TOP - 4], [X0 - 2, TOP - 4]]); c.fillStyle = '#3a2a24'; c.fill();
+  c.fillStyle = '#6a6460'; c.fillRect(X0 - 6, TOP + 2, X1 - X0 + 12, 2);
+  c.fillStyle = '#8a8478'; c.fillRect(X1 - 14, TOP + 4, 3, 84);
+  // le finestre con le persiane verde-grigio (chiuse: si accendono quando la scena ci mette la luce)
+  for (const [x, y] of FINESTRE_GELATERIA) {
+    rrect(c, x - 2, y - 2, 18, 22, 1); c.fillStyle = '#b8ac86'; c.fill();
+    rrect(c, x, y, 14, 18, 0.5); c.fillStyle = '#4e5a52'; c.fill(); tratto(c, '#2a302c', 0.8);
+    for (let yy = y + 2; yy < y + 17; yy += 2.2) { c.fillStyle = 'rgba(255,255,255,0.08)'; c.fillRect(x + 1, yy, 12, 0.8); }
+    c.fillStyle = '#2a302c'; c.fillRect(x + 6.6, y, 0.8, 18);
+  }
+  // una finestra con la tenda da sole abbassata a metà, come nella foto
+  poli(c, [[134, 46], [154, 46], [158, 54], [130, 54]]); c.fillStyle = '#5c6a74'; c.fill(); tratto(c, '#2a302c', 0.8);
+  // il balcone a destra, coi panni stesi e una pianta
+  c.fillStyle = '#d8ccA4'; c.fillRect(352, 40, 44, 40);
+  rrect(c, 360, 48, 16, 30, 1); c.fillStyle = '#4e5a52'; c.fill();
+  c.fillStyle = '#7a7468'; c.fillRect(348, 68, 52, 2.4);
+  for (let x = 350; x < 400; x += 4) c.fillRect(x, 56, 1, 12);
+  c.fillRect(348, 55, 52, 1.6);
+  rrect(c, 384, 44, 6, 14, 1); c.fillStyle = '#e8e8f0'; c.fill();
+  ellisse(c, 392, 52, 6, 5); c.fillStyle = '#3f7a3a'; c.fill();
+  // di notte il palazzo è in ombra: un velo blu che sale dal basso è più leggero (la luce del bar)
+  c.fillStyle = gradL(c, 0, TOP, 0, 92, [[0, 'rgba(20,18,60,0.55)'], [1, 'rgba(20,18,60,0.25)']]); c.fillRect(X0, TOP, X1 - X0, 88);
+  // le insegne: "Gelateria" (rossa e bianca, col cono) e "I ♥ Gelato" (nera), illuminate
+  const insegna = (x, y, w, sfondo, fn) => {
+    c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x + w / 2, y + 5, w * 0.7, '#fff0c0', 0.18); c.restore();
+    rrect(c, x, y, w, 11, 1.5); c.fillStyle = sfondo; c.fill(); tratto(c, '#1a1414', 0.9);
+    fn();
+  };
+  insegna(110, 72, 60, '#b82a2a', () => {
+    ellisse(c, 117, 77.5, 4, 3.4); c.fillStyle = '#ffffff'; c.fill(); ellisse(c, 117, 77, 2.4, 1.8); c.fillStyle = '#e8402a'; c.fill();
+    c.font = 'bold 8px sans-serif'; c.textAlign = 'left'; c.fillStyle = '#ffffff'; c.fillText('Gelateria', 124, 80.5);
+  });
+  insegna(242, 70, 70, '#16161a', () => {
+    c.font = 'bold 8.5px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff';
+    c.fillText('I', 252, 79.5); c.fillText('Gelato', 286, 79.5);
+    c.fillStyle = '#e8283a'; c.beginPath(); c.moveTo(262, 74.5); c.bezierCurveTo(258, 70.5, 254, 76, 262, 80.5); c.bezierCurveTo(270, 76, 266, 70.5, 262, 74.5); c.fill();
+  });
+  // il piano terra: le vetrine accese, il bancone e i tavolini dentro
+  c.fillStyle = '#3a3026'; c.fillRect(X0, 88, X1 - X0 - 16, 48);
+  for (const [x, w] of [[112, 46], [196, 86], [296, 70]]) {
+    c.fillStyle = gradL(c, 0, 96, 0, 128, [[0, '#ffe4a8'], [1, '#e0a860']]); c.fillRect(x, 96, w, 32);
+    c.fillStyle = 'rgba(90,60,30,0.45)'; c.fillRect(x, 116, w, 12);
+    for (let xx = x + 8; xx < x + w - 4; xx += 14) { ellisse(c, xx, 110, 2.5, 3.2); c.fillStyle = 'rgba(60,40,30,0.5)'; c.fill(); }
+    c.fillStyle = '#5a4a3a'; c.fillRect(x - 1, 95, w + 2, 1.5); c.fillRect(x + w / 2 - 0.6, 96, 1.2, 32);
+    c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x + w / 2, 112, w * 0.8, '#ffc870', 0.18); c.restore();
+  }
+  // la porta del bar, aperta e piena di luce
+  rrect(c, 166, 98, 18, 30, 1); c.fillStyle = '#fff0c8'; c.fill(); tratto(c, '#5a4a3a', 1);
+  // la tenda bianca sopra le vetrine, coi pali
+  poli(c, [[X0 - 4, 84], [X1 - 14, 84], [X1 - 8, 94], [X0 - 10, 94]]); c.fillStyle = '#f2f0e8'; c.fill(); tratto(c, '#8a8478', 0.8);
+  for (let x = X0; x < X1 - 14; x += 12) { c.fillStyle = 'rgba(0,0,0,0.06)'; c.fillRect(x, 84, 6, 10); }
+  c.fillStyle = '#d8d4c8'; c.fillRect(X0 - 10, 93, X1 - X0 + 2, 2.4);
+  for (const x of [X0 - 6, 182, 266, X1 - 12]) { c.fillStyle = '#e8e6de'; c.fillRect(x, 95, 2.2, 32); }
+  // lucine colorate appese al bordo della tenda (la scena le fa lampeggiare)
   const lucine = (x0, y0, x1, y1, abbasso, seme) => {
     const rr = casuale(seme);
     c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2, Math.max(y0, y1) + abbasso, x1, y1); tratto(c, '#1a1424', 0.8);
@@ -797,7 +854,17 @@ function sfondoParcheggio(c) {
       ellisse(c, x, y + 2, 1.5, 1.9); c.fillStyle = col; c.fill();
     }
   };
-  lucine(0, 70, 240, 60, 22, 3); lucine(240, 60, 480, 76, 20, 4);
+  for (const f of FILI_GELATERIA) lucine(...f);
+  // il muretto basso con la ringhiera e i pilastrini, il cancelletto verde a destra
+  c.fillStyle = '#b8b0a0'; c.fillRect(X0 - 12, 126, X1 - X0 + 6, 10); c.fillStyle = '#8a8478'; c.fillRect(X0 - 12, 126, X1 - X0 + 6, 1.4);
+  c.fillStyle = '#4a4a50';
+  for (let x = X0 - 10; x < X1 - 8; x += 3.2) c.fillRect(x, 113, 0.9, 13);
+  c.fillRect(X0 - 12, 113, X1 - X0 + 6, 1.2);
+  for (const x of [X0 - 14, 150, 226, 330, X1 - 10]) { rrect(c, x, 108, 7, 28, 1); c.fillStyle = '#d6d0c2'; c.fill(); tratto(c, '#7a7468', 0.8); }
+  ellisse(c, 384, 120, 5, 5); tratto(c, '#2f7a3a', 2.2);
+  // un tavolino fuori con due sedie, sotto la tenda
+  c.fillStyle = '#2a2a30'; c.fillRect(250, 112, 1.4, 12); c.fillRect(243, 111, 16, 1.6);
+  for (const x of [238, 260]) { rrect(c, x, 108, 5, 14, 1); c.fillStyle = '#2a2a30'; c.fill(); }
   // marciapiede, strada dietro, cordolo
   c.fillStyle = '#4a4656'; c.fillRect(0, 136, 480, 6);
   c.fillStyle = '#6a6676'; c.fillRect(0, 136, 480, 1.4);
@@ -824,10 +891,6 @@ function sfondoParcheggio(c) {
     c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x + 11, 77, 14, '#ffd88a', 0.6); c.restore();
     ellisse(c, x + 11, 76.5, 4.5, 1.6); c.fillStyle = '#fff2c0'; c.fill();
   }
-  // cartello del parcheggio
-  c.fillStyle = '#8a8a96'; c.fillRect(110, 112, 2, 56);
-  rrect(c, 102, 98, 18, 18, 2.5); c.fillStyle = '#2f6fd8'; c.fill(); tratto(c, '#f2f2f2', 1.2);
-  c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.fillText('P', 111, 112);
   c.fillStyle = gradR(c, 240, 150, 170, 330, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(5,0,20,0.4)']]); c.fillRect(0, 0, 480, 270);
 }
 
