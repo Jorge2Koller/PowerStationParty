@@ -371,11 +371,6 @@ function crocione(c) {
   for (const [a, b, d, e] of [[2, 2, 12, 12], [12, 2, 2, 12]]) { c.beginPath(); c.moveTo(a, b); c.lineTo(d, e); tratto(c, '#ffffff', 4.4); tratto(c, '#e0242c', 2.6); }
 }
 // gli occhiali scuri del furbetto (un pezzo in più del cliente, sopra la faccia)
-function occhialiFurbetto(c) {
-  for (const s of [-1, 1]) { rrect(c, 20 + s * 6 - 4.5, 17.5, 9, 5.5, 2); c.fillStyle = '#16161c'; c.fill(); tratto(c, CONT, 0.9); }
-  c.beginPath(); c.moveTo(18, 19.5); c.lineTo(22, 19.5); tratto(c, CONT, 1);
-  ellisse(c, 15.5, 19, 1.2, 0.8); c.fillStyle = 'rgba(255,255,255,0.6)'; c.fill();
-}
 // la luce blu del lampeggiante, che entra dalla porta (i finanzieri sono arrivati)
 function lampeggio(c) {
   c.fillStyle = gradR(c, 30, 60, 2, 60, [[0, 'rgba(90,150,255,0.85)'], [0.5, 'rgba(60,110,255,0.35)'], [1, 'rgba(60,110,255,0)']]);
@@ -390,66 +385,11 @@ function multa(c) {
 }
 
 // ------------------------------------------------------------
-//  I CLIENTI: pochi tipi generici a pezzi, bianchi e grigi, che la scena ricolora col tint
-//  (gambe = i pantaloni, maglia = la maglietta, capelli = i capelli); la pelle (testa, collo e mani,
-//  con la faccia) ha già il suo colore. Ogni pezzo è 40x84, coi piedi in basso al centro.
-//  tipo 0 = snello, 1 = robusto
+//  I CLIENTI: dalla seconda scheda di valutazione sono figure intere fatte col disegnatore dei
+//  personaggi (ScontrinoScene: figuraCliente). Qui restano i toni della pelle e la misura di prima.
 // ------------------------------------------------------------
 export const CLIENTE = { w: 40, h: 84, mano: [15, -27] };   // (la mano destra rispetto ai piedi: lì tiene le cose)
 export const TONI = ['#f2caa6', '#d9a07a', '#9a6440'];
-const largo = (t) => (t ? 15.5 : 12.5);
-
-function gambeCliente(c, t) {
-  const w = t ? 9.5 : 8;
-  for (const s of [-1, 1]) {
-    const x = 20 + s * (t ? 6 : 5) - w / 2;
-    rrect(c, x, 57, w, 23, 2.5); c.fillStyle = gradL(c, 0, 57, 0, 80, [[0, '#ffffff'], [1, '#c8c8c8']]); c.fill(); tratto(c, CONT, 1.1);
-    rrect(c, x - (s < 0 ? 2 : 0), 78, w + 2, 5.5, [2.5, 2.5, 1.2, 1.2]); c.fillStyle = '#3a3a40'; c.fill(); tratto(c, CONT, 1.1);
-  }
-}
-function magliaCliente(c, t) {
-  const L = largo(t);
-  for (const s of [-1, 1]) { c.beginPath(); c.moveTo(20 + s * (L - 3), 37); c.lineTo(20 + s * (L + 2.5), 53); tratto(c, CONT, 7.6); tratto(c, '#f4f4f4', 5.3); }
-  c.beginPath(); c.moveTo(20 - L, 45); c.quadraticCurveTo(20 - L, 34, 20 - L + 7, 33); c.lineTo(20 + L - 7, 33); c.quadraticCurveTo(20 + L, 34, 20 + L, 45);
-  if (t) { c.quadraticCurveTo(20 + L + 3, 53, 20 + L - 1, 61); c.lineTo(20 - L + 1, 61); c.quadraticCurveTo(20 - L - 3, 53, 20 - L, 45); }
-  else { c.lineTo(20 + L - 1, 61); c.lineTo(20 - L + 1, 61); }
-  c.closePath();
-  c.fillStyle = gradL(c, 0, 33, 0, 61, [[0, '#ffffff'], [1, '#cfcfcf']]); c.fill(); tratto(c, CONT, 1.2);
-  c.beginPath(); c.moveTo(20 - L + 4, 52); c.quadraticCurveTo(20, 55, 20 + L - 4, 52); tratto(c, 'rgba(0,0,0,0.1)', 1.2);
-}
-function pelleCliente(c, t, tono) {
-  const S = TONI[tono], L = largo(t);
-  rrect(c, 16.5, 27, 7, 9, 2); c.fillStyle = scuro(S, 0.12); c.fill(); tratto(c, CONT, 1);
-  for (const s of [-1, 1]) { ellisse(c, 20 + s * (L + 2.5), 56.5, 3.3, 3.3); c.fillStyle = S; c.fill(); tratto(c, CONT, 1); }
-  for (const s of [-1, 1]) { ellisse(c, 20 + s * 14.4, 20.5, 2.6, 3.4); c.fillStyle = scuro(S, 0.05); c.fill(); tratto(c, CONT, 1); }
-  ellisse(c, 20, 19, 14.5, 14); c.fillStyle = gradR(c, 16, 14, 2, 18, [[0, chiaro(S, 0.12)], [1, S]]); c.fill(); tratto(c, CONT, 1.3);
-  for (const s of [-1, 1]) {
-    ellisse(c, 20 + s * 5.6, 20.5, 1.9, 2.3); c.fillStyle = '#1f1430'; c.fill();
-    ellisse(c, 20 + s * 5.6 - 0.6, 19.6, 0.6, 0.6); c.fillStyle = '#ffffff'; c.fill();
-    c.beginPath(); c.moveTo(20 + s * 3.6, 15.6); c.lineTo(20 + s * 7.8, 15); tratto(c, scuro(S, 0.55), 1.1);
-    ellisse(c, 20 + s * 8.6, 24.6, 2.4, 1.4); c.fillStyle = 'rgba(238,105,95,0.3)'; c.fill();
-  }
-  c.beginPath(); c.moveTo(19.2, 22); c.quadraticCurveTo(18.2, 24.4, 20.4, 24.4); tratto(c, scuro(S, 0.4), 0.8);
-  c.beginPath(); c.moveTo(17, 27.4); c.quadraticCurveTo(20, 29.4, 23, 27.4); tratto(c, CONT, 1);
-}
-function capelliCliente(c, s) {
-  const fill = () => { c.fillStyle = gradL(c, 0, 3, 0, 30, [[0, '#ffffff'], [1, '#bdbdbd']]); c.fill(); tratto(c, CONT, 1.1); };
-  if (s === 0) {   // corti
-    c.beginPath(); c.moveTo(5.4, 20); c.bezierCurveTo(4, 7, 12, 3.4, 20, 3.4); c.bezierCurveTo(28, 3.4, 36, 7, 34.6, 20);
-    c.lineTo(32, 13); [[28, 11.5], [24, 13.5], [20, 11.5], [16, 13.5], [12, 11.5], [8.5, 13.5]].forEach(([x, y]) => c.lineTo(x, y)); c.closePath(); fill();
-  } else if (s === 1) {   // lunghi, che scendono ai lati del viso
-    c.beginPath(); c.moveTo(4, 42); c.bezierCurveTo(1.5, 26, 3, 6, 20, 3.2); c.bezierCurveTo(37, 6, 38.5, 26, 36, 42); c.lineTo(31, 42);
-    c.bezierCurveTo(33.5, 30, 33, 18, 29, 13); c.quadraticCurveTo(20, 16.5, 10.5, 12.5); c.bezierCurveTo(7, 18, 6.5, 30, 9, 42); c.closePath(); fill();
-  } else if (s === 2) {   // ricci
-    for (let k = 0; k < 11; k++) { const a = Math.PI * (0.92 + k * 0.116); ellisse(c, 20 + Math.cos(a) * 14, 18 + Math.sin(a) * 13.5, 4.4, 4.4); fill(); }
-    ellisse(c, 20, 9, 11, 6); c.fillStyle = '#e8e8e8'; c.fill();
-  } else {   // la coda
-    c.beginPath(); c.moveTo(34, 12); c.bezierCurveTo(42, 14, 41, 28, 37, 36); c.bezierCurveTo(36, 28, 35, 20, 31, 16); c.closePath(); fill();
-    c.beginPath(); c.moveTo(5.4, 19); c.bezierCurveTo(4, 7, 12, 3.4, 20, 3.4); c.bezierCurveTo(28, 3.4, 36, 7, 34.6, 19);
-    c.quadraticCurveTo(26, 9, 20, 10); c.quadraticCurveTo(12, 10, 5.4, 19); c.closePath(); fill();
-    rrect(c, 31, 10.5, 4.5, 4, 1.5); c.fillStyle = '#9a9a9a'; c.fill(); tratto(c, CONT, 0.8);
-  }
-}
 
 export function creaPizzeria(scene) {
   tela(scene, 'bgPizzeria', 480, 270, sfondo);
@@ -475,12 +415,5 @@ export function creaPizzeria(scene) {
   tela(scene, 'volantino', 14, 16, volantino, 6);
   tela(scene, 'crocione', 14, 14, crocione, 6);
   tela(scene, 'lampeggio', 60, 120, lampeggio, 2);
-  tela(scene, 'clOcchiali', 40, 84, occhialiFurbetto, 3);
   tela(scene, 'multa', 14, 18, multa, 6);
-  for (const t of [0, 1]) {
-    tela(scene, `clGambe${t}`, 40, 84, (c) => gambeCliente(c, t), 3);
-    tela(scene, `clMaglia${t}`, 40, 84, (c) => magliaCliente(c, t), 3);
-    for (const k of [0, 1, 2]) tela(scene, `clPelle${t}_${k}`, 40, 84, (c) => pelleCliente(c, t, k), 3);
-  }
-  for (const s of [0, 1, 2, 3]) tela(scene, `clCapelli${s}`, 40, 84, (c) => capelliCliente(c, s), 3);
 }
