@@ -56,16 +56,19 @@ export const PERSONAGGI = {
     stile: 'grigio', barba: 'nessuna', naso: [11, 13], orecchie: 11, sorriso: -1,
     vestito: { tipo: 'tshirt', colore: '#6dc0ee', collo: 'giro' }, pantaloni: '#2d313c', scarpe: '#3a3a40',
   },
-  // lo Zere (La Spina del PowerStation): giovane, capelli scuri corti sfumati ai lati, barba scura
-  // corta e piena che segue la mascella, pelle chiara, palpebre un po' basse; giacca blu scuro su
-  // una maglietta bianca. Ha sempre in mano la sua vuvuzela BLU (accessorio): all'ultimo atto la
-  // suona (la posa 'vuvuzela', creata dalla scena). Non è giocabile.
+  // lo Zere (La Spina del PowerStation): giovane, capelli scuri corti, sfumati a zero ai lati e un
+  // po' più lunghi sopra, tirati su e indietro (la fronte resta scoperta); barba scura corta e
+  // curata che parte dal basettone e segue la mascella, coi baffi; pelle chiara, palpebre un po'
+  // basse, mezzo sorriso. Spalle larghe, vestito sportivo (Giorgio: la foto era a un matrimonio):
+  // felpa blu col cappuccio, jeans e scarpe da ginnastica bianche. Ha sempre in mano la sua vuvuzela BLU
+  // (accessorio): all'ultimo atto la suona (la posa 'vuvuzela', creata dalla scena). Non è giocabile.
   zere: {
-    pelle: '#f2cbb0', capelli: '#1f1813', capelliLuce: '#55463c', occhi: '#4a2e1a',
-    sopra: '#1a120d', sopraSpess: 8.5, palpebra: [0.24, 0.24],
-    faccia: { top: 46, larg: 57, mascella: 51, mascellaY: 152, mento: 30, mentoY: 180 },
-    stile: 'sfumato', barba: 'curata', naso: [10, 13], orecchie: 10, sorriso: 3,
-    vestito: { tipo: 'giacca', colore: '#1e2a4a', sotto: '#f6f6f2' }, pantaloni: '#2b3142', scarpe: '#f2f2f2',
+    pelle: '#f2c9ab', capelli: '#1d1612', capelliLuce: '#4f4038', occhi: '#3e2716',
+    sopra: '#1a120d', sopraSpess: 8.5, palpebra: [0.3, 0.3],
+    faccia: { top: 46, larg: 56, mascella: 50, mascellaY: 153, mento: 28, mentoY: 181 },
+    stile: 'sfumatoAlto', barba: 'curata', naso: [10, 13], orecchie: 10, sorriso: 2,
+    corporatura: 1.1,
+    vestito: { tipo: 'felpa', colore: '#2a4fa8' }, pantaloni: '#3d5278', scarpe: '#f2f2f4',
     accessorio: 'vuvuzela',
   },
   // Marsupino: testa rasata, barba folta e scura, occhiali da sole neri,
@@ -785,38 +788,46 @@ function barba(c, p) {
     return;
   }
   if (p.barba === 'curata') {
-    // barba corta ma piena e ben definita (lo Zere): scura e fitta su guance basse, mascella e mento,
-    // coi baffi uniti; segue il contorno del viso sporgendo appena, senza scendere sotto il mento.
-    // Sulle guance parte più in basso delle barbe lunghe (dalla punta del naso, non dagli occhi).
-    // Le labbra restano scoperte (il buco col pari e dispari), così la bocca si vede
+    // barba corta e curata (lo Zere): dal basettone scende lungo la mascella fino al mento, dove è
+    // più fitta e sporge appena; i baffi si uniscono alla barba ai lati della bocca. Le guance
+    // restano scoperte: il bordo (fatto dal barbiere) scende di traverso dall'orecchio all'angolo
+    // della bocca, e sopra c'è solo l'ombra della barba rasata. Le labbra restano scoperte (il buco
+    // col pari e dispari), così la bocca si vede
     const L = f.larg;
     const guance = () => {
-      c.moveTo(CX - L + 5, 110);
-      c.bezierCurveTo(CX - L + 10, 126, CX - 40, 137, CX - 27, 141);
-      c.quadraticCurveTo(CX - 13, 139, CX, 143); c.quadraticCurveTo(CX + 13, 139, CX + 27, 141);
-      c.bezierCurveTo(CX + 40, 137, CX + L - 10, 126, CX + L - 5, 110);
+      c.moveTo(CX - L + 2, 119);
+      c.bezierCurveTo(CX - L + 7, 139, CX - 36, 153, CX - 21, 153);
+      c.quadraticCurveTo(CX - 20, 142, CX - 11, 142); c.quadraticCurveTo(CX - 4, 141.5, CX, 143.5);
+      c.quadraticCurveTo(CX + 4, 141.5, CX + 11, 142); c.quadraticCurveTo(CX + 20, 142, CX + 21, 153);
+      c.bezierCurveTo(CX + 36, 153, CX + L - 7, 139, CX + L - 2, 119);
     };
+    const labbra = () => { c.moveTo(CX - 14, 155); c.quadraticCurveTo(CX, 151, CX + 14, 155); c.quadraticCurveTo(CX + 11, 165, CX, 166); c.quadraticCurveTo(CX - 11, 165, CX - 14, 155); c.closePath(); };
     const zona = () => {
-      c.beginPath(); c.moveTo(CX - L - 6, 108); guance(); c.lineTo(CX + L + 6, 108); c.lineTo(CX + L + 8, 215); c.lineTo(CX - L - 8, 215); c.closePath();
-      c.moveTo(CX - 13, 155); c.quadraticCurveTo(CX, 151, CX + 13, 155); c.quadraticCurveTo(CX + 11, 164, CX, 165); c.quadraticCurveTo(CX - 11, 164, CX - 13, 155); c.closePath();
+      c.beginPath(); c.moveTo(CX - L - 6, 117); guance(); c.lineTo(CX + L + 6, 117); c.lineTo(CX + L + 8, 215); c.lineTo(CX - L - 8, 215); c.closePath();
+      labbra();
     };
-    const sagoma = () => sagomaTesta(c, { ...f, larg: L + 1.5, mascella: f.mascella + 2.5, mento: f.mento + 3, mentoY: f.mentoY + 4 });
+    const sagoma = () => sagomaTesta(c, { ...f, larg: L + 0.5, mascella: f.mascella + 1, mento: f.mento + 2.5, mentoY: f.mentoY + 4 });
+    // l'ombra della barba rasata sopra il bordo, sulle guance (appena, si schiarisce salendo)
+    c.save(); sagomaTesta(c, f); c.clip();
+    c.beginPath(); c.moveTo(CX - L - 2, 100); c.lineTo(CX + L + 2, 100); c.lineTo(CX + L + 2, 150); c.lineTo(CX - L - 2, 150); c.closePath();
+    c.fillStyle = gradL(c, 0, 112, 0, 152, [[0, alfa(H, 0)], [1, alfa(H, 0.12)]]); c.fill();
+    c.restore();
     c.save(); zona(); c.clip('evenodd');
-    sagoma(); c.fillStyle = gradL(c, 0, 110, 0, f.mentoY + 4, [[0, H], [0.55, chiaro(H, 0.06)], [1, scuro(H, 0.22)]]); c.fill();
+    sagoma(); c.fillStyle = gradL(c, 0, 112, 0, f.mentoY + 5, [[0, chiaro(H, 0.05)], [0.5, H], [1, scuro(H, 0.25)]]); c.fill();
     c.save(); sagoma(); c.clip();
     c.globalAlpha = 0.6;
-    for (let i = 0; i < 190; i++) {
-      const x = CX - L + r() * L * 2, y = 110 + r() * (f.mentoY - 104), d = (x - CX) * 0.05;
-      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + d, y + 2, x + d * 1.4, y + 4 + r() * 2); tratto(c, i % 4 ? p.capelliLuce : scuro(H, 0.5), 1.2);
+    for (let i = 0; i < 170; i++) {
+      const x = CX - L + r() * L * 2, y = 112 + r() * (f.mentoY - 106), d = (x - CX) * 0.05;
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + d, y + 2, x + d * 1.4, y + 3.5 + r() * 2); tratto(c, i % 4 ? p.capelliLuce : scuro(H, 0.5), 1.1);
     }
     c.globalAlpha = 1;
     c.restore();
     sagoma(); tratto(c, CONT, 3);
     c.restore();
-    // il bordo netto sulle guance (fatto dal barbiere) e intorno alle labbra
+    // il bordo netto sulle guance e intorno alle labbra
     c.save(); sagoma(); c.clip();
-    c.beginPath(); guance(); tratto(c, scuro(H, 0.25), 2.2);
-    c.beginPath(); c.moveTo(CX - 13, 155); c.quadraticCurveTo(CX, 151, CX + 13, 155); c.quadraticCurveTo(CX + 11, 164, CX, 165); c.quadraticCurveTo(CX - 11, 164, CX - 13, 155); tratto(c, scuro(H, 0.3), 1.6);
+    c.beginPath(); guance(); tratto(c, scuro(H, 0.2), 1.8);
+    c.beginPath(); labbra(); tratto(c, scuro(H, 0.3), 1.5);
     c.restore();
     return;
   }
@@ -1664,6 +1675,52 @@ function capelli(c, p, fase, o) {
     return;
   }
 
+  if (p.stile === 'sfumatoAlto') {
+    // lo Zere: lati e nuca sfumati (scuri in alto, quasi pelle sopra le orecchie), sopra corti ma un
+    // po' più lunghi, spazzolati su e indietro: l'attaccatura è netta e tonda, con le tempie un po'
+    // rientrate, e la fronte resta tutta scoperta (niente frangia)
+    if (fase === 'dietro') return;
+    const f = p.faccia, LG = f.larg;
+    c.save();
+    sagomaTesta(c, f); c.clip();
+    c.beginPath(); c.moveTo(CX - LG - 4, 114);
+    c.bezierCurveTo(CX - LG - 6, 30, CX + LG + 6, 30, CX + LG + 4, 114);
+    c.lineTo(CX + LG - 6, 108);
+    c.bezierCurveTo(CX + LG - 8, 90, CX + 42, 80, CX + 38, 70);
+    c.lineTo(CX - 38, 70);
+    c.bezierCurveTo(CX - 42, 80, CX - LG + 8, 90, CX - LG + 6, 108);
+    c.closePath();
+    c.fillStyle = gradL(c, 0, 60, 0, 114, [[0, alfa(H, 0.95)], [0.45, alfa(H, 0.7)], [1, alfa(H, 0.1)]]); c.fill();
+    c.clip();
+    const r0 = casuale(14);
+    c.fillStyle = alfa(H, 0.4);
+    for (let i = 0; i < 240; i++) { ellisse(c, CX - LG + r0() * LG * 2, 62 + r0() * 50, 0.7, 0.7); c.fill(); }
+    c.restore();
+    // il ciuffo sopra: si alza un po' sulla fronte (a sinistra un filo di più, spazzolato di lato)
+    const forma = () => {
+      c.beginPath(); c.moveTo(CX - LG + 9, 86);
+      c.bezierCurveTo(CX - LG + 2, 54, CX - 32, 29, CX - 2, 28);
+      c.bezierCurveTo(CX + 30, 28, CX + LG - 1, 50, CX + LG - 9, 86);
+      c.bezierCurveTo(CX + LG - 12, 76, CX + 44, 70, CX + 38, 67);
+      c.bezierCurveTo(CX + 26, 61, CX + 10, 63, CX, 64);
+      c.bezierCurveTo(CX - 12, 62, CX - 28, 60, CX - 38, 67);
+      c.bezierCurveTo(CX - 44, 70, CX - LG + 12, 76, CX - LG + 9, 86);
+      c.closePath();
+    };
+    forma(); c.fillStyle = sfum(28, 80); c.fill();
+    const r = casuale(15);
+    c.globalAlpha = 0.65;
+    ciocche(c, forma, 90, () => {
+      // ciuffetti corti che dall'attaccatura vanno su e indietro, e si piegano un po' verso destra
+      const x = CX - LG + 4 + r() * (LG * 2 - 8), y = 30 + r() * 40, d = (x - CX) * 0.08;
+      c.beginPath(); c.moveTo(x, y + 6); c.quadraticCurveTo(x + d - 1, y + 1, x + d + 3, y - 4); tratto(c, r() < 0.3 ? scuro(H, 0.45) : L, 1.5);
+    });
+    c.globalAlpha = 1;
+    c.beginPath(); c.moveTo(CX - 30, 39); c.quadraticCurveTo(CX - 6, 30, CX + 22, 35); tratto(c, 'rgba(255,255,255,0.12)', 3.5);   // un filo di luce
+    forma(); tratto(c, CONT, 3);
+    return;
+  }
+
   if (p.stile === 'sfumato') {
     // il Boni: lati e nuca sfumati quasi a zero (l'ombra dei capelli cortissimi, che si schiarisce
     // scendendo verso le orecchie), sopra corti e un po' mossi, con la frangia a ciuffetti
@@ -2417,7 +2474,7 @@ export function fiori(c, p, x0, y0, w, h, seme, k = 1) {
 }
 
 function braccio(c, p, punti, pollice) {
-  const v = p.vestito, lunga = ['giacca', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione', 'divisa', 'marinaio'].includes(v.tipo) || v.maniche === 'lunghe';
+  const v = p.vestito, lunga = ['giacca', 'completo', 'piumino', 'mimetica', 'cardigan', 'camicia', 'felpa', 'chiodo', 'maglione', 'divisa', 'marinaio'].includes(v.tipo) || v.maniche === 'lunghe';
   const manica = v.manica ?? v.colore;
   const linea = (a, b, m) => { c.beginPath(); c.moveTo(...a); c.lineTo(...b); if (m) c.lineTo(...m); };
   // palestrato: braccio più grosso, e il bicipite gonfio tra spalla e gomito
@@ -2761,6 +2818,31 @@ function corpo(c, p, espr, o = {}) {
     }
     poli(c, [[CX - 13, 180], [CX + 13, 180], [CX, 198]]); c.fillStyle = scuro(S, 0.1); c.fill();
     c.fillStyle = '#6a4426'; c.fillRect(CX - 40, 242, 80, 6);
+  } else if (v.tipo === 'completo') {
+    // il completo da cerimonia (lo Zere): giacca chiusa a un bottone coi revers a lancia, camicia
+    // bianca col colletto e la cravatta a puntini; il taschino con la pochette e il fiore
+    // all'occhiello li disegna dopo, sopra il contorno
+    poli(c, [[CX - 16, 180], [CX + 16, 180], [CX + 1, 228]]); c.fillStyle = v.camicia; c.fill();
+    const nodo = () => poli(c, [[CX - 4.5, 184], [CX + 4.5, 184], [CX + 3.5, 192], [CX - 3.5, 192]]);
+    const lama = () => poli(c, [[CX - 3.5, 192], [CX + 3.5, 192], [CX + 6.5, 216], [CX + 0.5, 224], [CX - 5.5, 216]]);
+    for (const forma of [nodo, lama]) {
+      forma(); c.fillStyle = gradL(c, 0, 184, 0, 224, [[0, chiaro(v.cravatta, 0.08)], [1, scuro(v.cravatta, 0.12)]]); c.fill();
+      c.save(); forma(); c.clip(); c.fillStyle = alfa(scuro(v.cravatta, 0.45), 0.7);
+      for (let y = 185; y < 224; y += 3.4) for (let x = CX - 7 + (y % 6.8 > 3.4 ? 1.7 : 0); x < CX + 8; x += 3.4) { c.fillRect(x, y, 1.1, 1.1); }
+      c.restore(); forma(); tratto(c, CONT, 1.3);
+    }
+    for (const s of [-1, 1]) { poli(c, [[CX + s * 14, 178], [CX + s * 3.5, 184], [CX + s * 10, 196]]); c.fillStyle = v.camicia; c.fill(); tratto(c, CONT, 1.4); }
+    for (const s of [-1, 1]) {
+      // il revers a lancia: dal collo scende fino al bottone, con la punta rivolta in su
+      poli(c, [[CX + s * 15, 179], [CX + s * 27, 183], [CX + s * 25, 193], [CX + s * 33, 190], [CX + s * 27, 203], [CX + s * 1.5, 230]]);
+      c.fillStyle = gradL(c, 0, 180, 0, 230, [[0, chiaro(v.colore, 0.1)], [1, scuro(v.colore, 0.1)]]); c.fill(); tratto(c, CONT, 1.8);
+      c.beginPath(); c.moveTo(CX + s * 27, 183); c.lineTo(CX + s * 15, 230); tratto(c, 'rgba(255,255,255,0.07)', 1.4);   // la seta lucida del revers
+      rrect(c, CX + s * 23 - 9, 238, 18, 3.6, 1); c.fillStyle = scuro(v.colore, 0.35); c.fill();                            // le tasche con la pattina
+    }
+    // l'abbottonatura: la giacca si chiude sul bottone e sotto si apre un po'
+    c.beginPath(); c.moveTo(CX + 1.5, 230); c.lineTo(CX + 1.5, 236); c.lineTo(CX - 7, 262); c.moveTo(CX + 1.5, 236); c.lineTo(CX + 9, 262); tratto(c, 'rgba(0,0,0,0.45)', 1.4);
+    poli(c, [[CX + 1.5, 237], [CX - 7, 262], [CX + 9, 262]]); c.fillStyle = scuro(v.colore, 0.2); c.fill();
+    ellisse(c, CX + 1.5, 233, 2.4, 2.4); c.fillStyle = scuro(v.colore, 0.4); c.fill(); tratto(c, CONT, 1);
   } else if (v.tipo === 'giacca') {
     // camicia a quadretti bianchi e blu sotto la giacca
     poli(c, [[CX - 15, 180], [CX + 15, 180], [CX + 9, 258], [CX - 9, 258]]);
@@ -2924,6 +3006,16 @@ function corpo(c, p, espr, o = {}) {
       c.strokeStyle = CONT; c.lineWidth = 0.8; c.strokeRect(x, 213, 6, 6);
     });
     for (const x of [CX - 27, CX - 17]) { ellisse(c, x, 225, 4, 4); c.fillStyle = '#e8c048'; c.fill(); tratto(c, '#8a6a10', 1.2); ellisse(c, x - 1, 224, 1.2, 1); c.fillStyle = '#fff6c0'; c.fill(); }
+  }
+  if (v.tipo === 'completo') {
+    // la pochette grigio-azzurra nel taschino (le due punte) e il fiore bianco all'occhiello, coi
+    // rametti di nontiscordardimé azzurri e il gambo verde, appuntato sul revers
+    c.beginPath(); c.moveTo(CX + 19, 213); c.lineTo(CX + 34, 215); tratto(c, scuro(v.colore, 0.45), 2);
+    poli(c, [[CX + 20, 213.5], [CX + 23.5, 206.5], [CX + 26.5, 213], [CX + 30, 207.5], [CX + 33, 215]]); c.fillStyle = chiaro(v.cravatta, 0.18); c.fill(); tratto(c, CONT, 1.2);
+    c.beginPath(); c.moveTo(CX + 23, 197); c.lineTo(CX + 18, 207); tratto(c, '#3f7a3a', 2);
+    for (const [dx, dy] of [[-5, 3], [5, 3], [-3, -5], [4, -4]]) { ellisse(c, CX + 24 + dx, 192 + dy, 1.8, 1.8); c.fillStyle = '#9cc4ef'; c.fill(); tratto(c, 'rgba(30,50,90,0.6)', 0.6); }
+    ellisse(c, CX + 24, 192, 5.4, 4.8); c.fillStyle = gradR(c, CX + 22.5, 190.5, 0.5, 6, [[0, '#ffffff'], [1, '#e2e2d4']]); c.fill(); tratto(c, CONT, 1.3);
+    c.beginPath(); c.arc(CX + 24, 192, 2.4, 0.4, 4.2); tratto(c, 'rgba(150,150,130,0.7)', 0.9);
   }
   if (v.tipo === 'divisa') {
     // le fiamme gialle sul bavero (con la fiammella d'argento), le spalline coi gradi, i bottoni dorati

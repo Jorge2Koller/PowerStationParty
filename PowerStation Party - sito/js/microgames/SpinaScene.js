@@ -40,8 +40,9 @@ const X_ZERE = 410, K_ZERE = 0.7, K_AVVENTORE = 0.56;
 const AVVENTORI = [{ x: 20, giro: false }, { x: 463, giro: true }];
 // la campana della vuvuzela mentre la suona, nella texture dello Zere girata (unità della texture,
 // 96x144): viene dalla posa 'vuvuzela' di js/grafica/personaggi.js (il bocchino sulle labbra, la
-// tromba lunga 92 verso la mano). Da lì partono le onde del suono
-const CAMPANA = [9.8, 50.6];
+// tromba lunga 92 verso la mano, che con le spalle larghe dello Zere sta un po' più in fuori). Da lì
+// partono le onde del suono
+const CAMPANA = [8.1, 53];
 // le foto del gruppo alle pareti (sulla boiserie): centro, misure fuori tutto, quante persone
 const FOTO = [
   { x: 21, y: 141, w: 30, h: 36, n: 1 },

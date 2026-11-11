@@ -11,12 +11,16 @@
 //  STRAPPO E SPRINT! (lo strappo più duro, poi lo sprint fino al traguardo).
 //  Il Passaseo va del suo passo, costante, uguale per tutti i giocatori del round (seme), e
 //  arriva in cima tra arrivoPassaseo secondi: per batterlo bisogna pedalare quasi perfetti.
+//  Intanto, sulla parete di roccia in fondo, il Sego si arrampica verso la croce di vetta: sale
+//  quanto sale chi gioca, scivola giù un pezzo a ogni pedalata a vuoto (e di più se si va largo),
+//  e se si arriva primi esulta in cima. È solo scena: non tocca la corsa.
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
-import { Sessione } from '../sessione.js';
+import { Sessione, DOPPIONE } from '../sessione.js';
 import { CONFIG } from '../config.js';
 import { casuale } from '../grafica/base.js';
-import { ritratto, aspettoDi } from '../sprites.js';
+import { PARETE } from '../grafica/montagna.js';
+import { ritratto, aspettoDi, preparaGiocatore } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, pannello, lerp, caso, quanti, fumetto, vibra, eTouch, perDito, multiTouch, puntatore, puntiHud, numero } from '../fx.js';
 
 const XP = 150, YP = 196;      // dove sta chi gioca sullo schermo (il punto della strada sotto le ruote)
@@ -45,11 +49,18 @@ export class PassaseoScene extends MicrogiocoBase {
     this.davanti = null;           // chi era davanti all'ultimo controllo (per le frasi del sorpasso)
     this.tFrase = 4;
 
-    // lo sfondo: il cielo e le montagne fermi, le colline che scorrono piano, la strada disegnata
-    im(this, 0, 0, 'bgMontagna').setOrigin(0).setDepth(0);
-    this.colline = [0, 1].map(() => im(this, 0, 128, 'collineMontagna').setOrigin(0, 0).setDepth(1));
+    // lo sfondo, a piani (js/grafica/montagna.js): il cielo e le catene lontane fermi, le nuvole col
+    // vento, la parete del Sego, i boschi che scorrono piano e i pascoli un po' meno; la strada e il
+    // prato sotto disegnati, con gli abeti, i massi e i fiori a bordo strada
+    this.cielo = im(this, 0, 0, 'bgMontagna').setOrigin(0).setDepth(0);
+    this.nuvole = [[40, 46, 0.9, 4], [230, 84, 0.65, 2.6], [380, 30, 1.1, 5.5]].map(([x, y, k, v], i) => ({ img: im(this, x, y, 'nuvolaMontagna', k).setOrigin(0).setDepth(0.2).setFlipX(i === 1), y, v }));
+    this.parete = im(this, PARETE.x, PARETE.y, 'pareteMontagna').setOrigin(0).setDepth(0.4);
+    this.boschi = [0, 1].map(() => im(this, 0, 0, 'boschiMontagna').setOrigin(0).setDepth(0.8));
+    this.colline = [0, 1].map(() => im(this, 0, 0, 'collineMontagna').setOrigin(0).setDepth(1));
     this.gStrada = this.add.graphics().setDepth(10);
     this.cartelli = this.segni.map((s) => im(this, -100, 0, s.key, s.k ?? 1).setOrigin(0.5, 1).setDepth(s.davanti ? 30 : 9));
+    this.creaContorno(casuale((seme ^ 0xab37e) >>> 0));
+    this.creaSego();
     // le due bici: il Passaseo un filo più in là (l'altra corsia), poi chi gioca
     const io = aspettoDi(this.giocatore.id), lui = aspettoDi('passaseo');
     this.ciclisti = [
@@ -92,7 +103,128 @@ export class PassaseoScene extends MicrogiocoBase {
 
   // Una testa da spostare e ruotare intorno al suo centro. (ritratto() mette l'immagine col suo
   // angolo in alto a sinistra: spostata con setPosition, la testa finiva di lato e sembrava staccata)
-  testaDi(id, lato) { return this.add.container(0, 0, [ritratto(this, 0, 0, id, lato)]); }
+  testaDi(id, lato, espr) { return this.add.container(0, 0, [ritratto(this, 0, 0, id, lato, espr)]); }
+
+  // A bordo strada: abeti, massi, cespugli e fiori a metri fissi della salita (scorrono con lei).
+  // Sopra la strada stanno dietro (spunta solo la cima), sotto stanno sul prato, lontani abbastanza
+  // da non coprire l'asfalto; vicino ai cartelli niente, che si leggano bene.
+  creaContorno(r) {
+    this.contorno = [];
+    for (let m = -90; m < this.lunghezza + 260; m += 5 + r() * 9) {
+      const sotto = r() < 0.6, u = r();
+      const key = sotto ? (u < 0.4 ? 'fioriMontagna' : u < 0.66 ? 'cespuglioMontagna' : u < 0.8 ? 'massoMontagna' : 'abeteMontagna') : u < 0.65 ? 'abeteMontagna' : u < 0.8 ? 'massoMontagna' : 'cespuglioMontagna';
+      const k = key === 'abeteMontagna' ? 0.5 + r() * (sotto ? 0.3 : 0.4) : key === 'massoMontagna' ? 0.6 + r() * 0.4 : 0.8 + r() * 0.5;
+      if (!sotto && this.segni.some((s) => Math.abs(s.x - m) < 14)) continue;
+      const dy = !sotto ? 1 + r() * 2 : key === 'abeteMontagna' ? 16 + 54 * k + r() * 12 : 16 + r() * 44;
+      const img = im(this, -100, 0, key, k).setOrigin(0.5, 1).setDepth(sotto ? 11 : 8).setFlipX(r() < 0.5);
+      this.contorno.push({ m, dy, img });
+    }
+  }
+
+  // ------------------------------------------------------------
+  //  IL SEGO SULLA PARETE
+  // ------------------------------------------------------------
+  // Il corpo si disegna (come i ciclisti), la testa è il suo ritratto: una per espressione, se ne
+  // mostra una. Se gioca il Sego, sulla parete c'è il suo doppione travestito.
+  creaSego() {
+    const id = this.giocatore.id.replace(DOPPIONE, '') === 'sego' ? 'sego' + DOPPIONE : 'sego';
+    if (id !== 'sego') preparaGiocatore(this, 'sego', true);
+    const facce = {};
+    for (const e of ['normale', 'shock', 'felice', 'triste']) facce[e] = this.testaDi(id, 14, e).setDepth(0.55).setVisible(false);
+    this.sego = { ...this.colori(aspettoDi('sego'), '#000000'), g: this.add.graphics().setDepth(0.5), facce, h: 0, giu: 0, tGiu: 0, fase: 0, vetta: 0, festa: false, triste: false, sassi: [], tFrase: 0 };
+    // la via: le lunghezze dei pezzi, per andare su in proporzione
+    let L = 0;
+    this.via = PARETE.via.map(([x, y], i, V) => ({ x, y, s: i ? (L += Math.hypot(x - V[i - 1][0], y - V[i - 1][1])) : 0 }));
+    this.viaL = L;
+  }
+
+  puntoVia(h) {
+    const V = this.via, s = h * this.viaL;
+    let i = 1;
+    while (i < V.length - 1 && V[i].s < s) i++;
+    const a = V[i - 1], b = V[i], t = Phaser.Math.Clamp((s - a.s) / (b.s - a.s), 0, 1);
+    return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), i };
+  }
+
+  // una pedalata sbagliata: il Sego perde la presa e scivola giù un pezzo (poi risale)
+  scivolaSego(px, t, frase) {
+    const S = this.sego;
+    if (S.vetta) return;
+    S.giu = Math.min(S.giu + px, 26);
+    S.tGiu = Math.max(S.tGiu, t);
+    for (let i = 0; i < (frase ? 5 : 2); i++) S.sassi.push({ x: (Math.random() - 0.5) * 8, y: 12, vx: (Math.random() - 0.5) * 20, vy: -10 - Math.random() * 20, t: 0.9 });
+    if (S.tFrase <= 0 && S.y > 90 && (frase || Math.random() < 0.2)) {
+      S.tFrase = 4;
+      fumetto(this, S.x + 16, S.y - 24, caso(this.cfg.frasiSego), 1000, 900);
+    }
+  }
+
+  // il Sego: dove sta sulla via, la posa (si arrampica, scivola, esulta), la corda e i sassi
+  disegnaSego(dt) {
+    const S = this.sego, g = S.g, K = 0.95, ox = PARETE.x, oy = this.parete.y, ora = this.time.now / 1000;
+    S.tGiu -= dt; S.tFrase -= dt;
+    if (!S.vetta) {
+      const prima = S.h;
+      S.h += (Phaser.Math.Clamp(this.x / this.lunghezza, 0, 1) - S.h) * Math.min(1, dt * 2.5);
+      S.fase += Math.abs(S.h - prima) * this.viaL * 0.45;
+      if (S.tGiu <= 0) S.giu = Math.max(0, S.giu - dt * 14);
+    }
+    const shock = S.tGiu > 0 && !S.vetta;
+    if (shock) S.fase += dt * 18;
+    // la posizione: sulla via (più quanto è scivolato), o verso la vetta quando si arriva
+    const p = this.puntoVia(S.h), fine = this.via[this.via.length - 1];
+    let x = ox + p.x, y = oy + p.y + S.giu;
+    if (S.vetta) { x = ox + lerp(fine.x, PARETE.vetta[0], S.vetta); y = oy + lerp(fine.y, PARETE.vetta[1] - 15, S.vetta); }
+    const salto = S.festa && S.vetta >= 1 ? Math.abs(Math.sin(ora * 7)) * 4 : 0;
+    y -= salto;
+    S.x = x; S.y = y;
+    g.clear();
+    // la corda: dall'imbrago giù per i rinvii della via, fino in fondo
+    const corda = [{ x, y: y + 5 * K }];
+    for (let i = (S.vetta ? this.via.length : p.i) - 1; i >= 0; i--) corda.push({ x: ox + this.via[i].x, y: oy + this.via[i].y });
+    if (S.g.depth < 700) corda.push({ x: ox + this.via[0].x - 4, y: oy + this.via[0].y + 90 });   // (nel finale, davanti al velo, si ferma al primo rinvio)
+    g.lineStyle(1, 0xf0a020, 1).strokePoints(corda, false);
+    for (const q of corda.slice(1, -1)) g.fillStyle(0x9aa0aa, 1).fillRect(q.x - 0.8, q.y - 1.5, 1.6, 3);
+    // la posa: mani e piedi (si arrampica in diagonale: mano sinistra su, piede destro su)
+    const a = Math.sin(S.fase), b = Math.cos(S.fase), P = (dx, dy) => ({ x: x + dx * K, y: y + dy * K });
+    let mani, piedi;
+    if (S.festa && S.vetta >= 1) { mani = [P(-9, -19), P(9, -19)]; piedi = [P(-4, 15), P(4, 15)]; }
+    else if (shock) { mani = [P(-3 + b, -20), P(3 - b, -21)]; piedi = [P(-6 + a * 4, 14 + b * 2), P(6 - a * 4, 14 - b * 2)]; }
+    else if (S.vetta) { mani = [P(-7, -2), P(7, -2)]; piedi = [P(-4, 15), P(4, 15)]; }
+    else { mani = [P(-7, -13 - 3 * a), P(7, -13 + 3 * a)]; piedi = [P(-6, 15 + 3 * a), P(6, 15 - 3 * a)]; }
+    const linea = (u, v, w, colore) => g.lineStyle(w, colore, 1).lineBetween(u.x, u.y, v.x, v.y);
+    const piega = (u, v, s, dx, dy) => ({ x: (u.x + v.x) / 2 + s * dx * K, y: (u.y + v.y) / 2 + dy * K });
+    for (const s of [-1, 1]) {
+      const anca = P(s * 2.5, 5), piede = piedi[s < 0 ? 0 : 1], gin = piega(anca, piede, s, 3.5, -1);
+      linea(anca, gin, 4.6 * K, 0x2b1b17); linea(gin, piede, 4.2 * K, 0x2b1b17);
+      linea(anca, gin, 3.2 * K, S.gambe); linea(gin, piede, 2.8 * K, S.corti ? S.pelle : S.gambe);
+      g.fillStyle(0x2b1b17, 1).fillEllipse(piede.x + s * 0.8, piede.y + 0.6, 5.2 * K, 3.2 * K);
+      g.fillStyle(S.scarpe, 1).fillEllipse(piede.x + s * 0.8, piede.y + 0.6, 4 * K, 2.2 * K);
+    }
+    // il busto con la maglietta, l'imbrago rosso e gli occhiali da sole appesi al collo
+    g.fillStyle(0x2b1b17, 1).fillRoundedRect(x - 5 * K, y - 7 * K, 10 * K, 13.4 * K, 3 * K);
+    g.fillStyle(S.maglia, 1).fillRoundedRect(x - 4.2 * K, y - 6.2 * K, 8.4 * K, 11.8 * K, 2.4 * K);
+    g.fillStyle(0xd83a3a, 1).fillRect(x - 4.2 * K, y + 3 * K, 8.4 * K, 2 * K);
+    g.fillStyle(0x2a1d16, 1).fillRoundedRect(x - 2.8 * K, y - 4.2 * K, 2.5 * K, 1.6 * K, 0.6).fillRoundedRect(x + 0.3 * K, y - 4.2 * K, 2.5 * K, 1.6 * K, 0.6);
+    for (const s of [-1, 1]) {
+      const spalla = P(s * 3.6, -4.5), mano = mani[s < 0 ? 0 : 1], gomito = piega(spalla, mano, s, 3, 1);
+      linea(spalla, gomito, 4.2 * K, 0x2b1b17); linea(gomito, mano, 3.6 * K, 0x2b1b17);
+      linea(spalla, gomito, 2.8 * K, S.maglia); linea(gomito, mano, 2.2 * K, S.pelle);
+      g.fillStyle(S.pelle, 1).fillCircle(mano.x, mano.y, 1.5 * K);
+    }
+    // arranca: se chi gioca va piano, gli scende una goccia di sudore
+    if (!S.vetta && !shock && this.tArrivo == null && this.v < 12 && ora % 1.2 < 0.8) {
+      const t = (ora % 1.2) / 0.8;
+      g.fillStyle(0x8ad0ff, 1 - t).fillCircle(x + 7 * K, y - 15 * K + t * 6, 1.2);
+    }
+    // i sassolini che cadono quando scivola
+    for (const q of S.sassi) { q.t -= dt; q.vy += 260 * dt; q.x += q.vx * dt; q.y += q.vy * dt; g.fillStyle(0x7a7064, 1).fillCircle(x + q.x, y + q.y, 1.1); }
+    S.sassi = S.sassi.filter((q) => q.t > 0);
+    // la faccia giusta, sulle spalle (un po' storta mentre fatica)
+    const espr = S.festa && S.vetta >= 1 ? 'felice' : shock ? 'shock' : S.triste ? 'triste' : 'normale';
+    for (const [e, f] of Object.entries(S.facce)) f.setVisible(e === espr);
+    S.facce[espr].setPosition(x, y - 11.5 * K).setRotation(S.vetta ? 0 : Math.sin(S.fase * 0.5) * 0.08);
+  }
 
   // i colori di una bici: maglia, pantaloni, pelle, scarpe e telaio
   colori(p, telaio) {
@@ -199,6 +331,7 @@ export class PassaseoScene extends MicrogiocoBase {
       this.vuoto++; this.serie = 0;
       Audio.sfx('vuoto');
       this.mostraVoto('A VUOTO', '#ff9a8a');
+      this.scivolaSego(5, 0.35);
       return;
     }
     this.usata = n;
@@ -263,6 +396,7 @@ export class PassaseoScene extends MicrogiocoBase {
     Audio.sfx('errore');
     vibra(60);
     scritta(this, XP + 20, YP - 70, 'LARGO! TROPPO VELOCE', { size: 10, color: '#ff6b5a', durata: 700 });
+    this.scivolaSego(16, 0.9, true);
   }
 
   annuncia(s) {
@@ -279,7 +413,17 @@ export class PassaseoScene extends MicrogiocoBase {
     Audio.sfx(primo ? 'vittoria' : 'ok');
     stelle(this, XP, YP - 40, 10, 900);
     scritta(this, 240, 110, primo ? 'IN CIMA PER PRIMO!' : 'IN CIMA!', { size: 16, color: primo ? '#7dff9a' : '#ffe14a', durata: 1000 });
+    this.segoInVetta(primo);
     this.time.delayedCall(900, () => { if (this.inCorso) this.termina(); });
+  }
+
+  // il Sego sale gli ultimi metri fino alla croce (e se si è primi, esulta)
+  segoInVetta(festa) {
+    const S = this.sego;
+    S.festa = festa;
+    if (S.vetta) return;
+    S.giu = 0; S.tGiu = 0; S.h = 1;
+    this.tweens.add({ targets: S, vetta: 1, duration: 600, ease: 'Quad.out', onComplete: () => { if (festa) stelle(this, S.x, S.y - 10, 6, S.g.depth + 1); } });
   }
 
   // ------------------------------------------------------------
@@ -290,18 +434,33 @@ export class PassaseoScene extends MicrogiocoBase {
 
   disegna(dt) {
     const c = this.cfg, g = this.gStrada;
-    // le colline scorrono più piano della strada
-    const off = (this.x * SCALA * 0.3) % 960;
-    this.colline[0].x = -off; this.colline[1].x = 960 - off;
-    this.colline.forEach((img) => { img.y = 128 + (this.quota(this.x) * SCALA * RIPIDO * 0.08) % 20; });
-    // la montagna e la strada: il terreno sotto, l'asfalto, le strisce, il guardrail
+    // i piani dello sfondo: più sono vicini, più scorrono svelti; e mentre si sale scendono (la
+    // valle resta sotto), i vicini più dei lontani
+    const su = Phaser.Math.Clamp(this.x / this.lunghezza, 0, 1), giu = 16 * (1 - su);
+    this.cielo.y = -giu; this.parete.y = PARETE.y - giu;
+    for (const n of this.nuvole) {
+      n.img.x -= n.v * dt;
+      if (n.img.x < -110) n.img.x = 490 + Math.random() * 60;
+      n.img.y = n.y - giu;
+    }
+    const piano = (imgs, vel, y) => { const off = (this.x * SCALA * vel) % 960; imgs[0].setPosition(-off, y); imgs[1].setPosition(960 - off, y); };
+    piano(this.boschi, 0.12, 130 + 36 * su);
+    piano(this.colline, 0.3, 138 + 50 * su);
+    this.disegnaSego(dt);
+    // la montagna e la strada: il prato sotto (a fasce, con le ondine che scorrono con la strada),
+    // l'asfalto, le strisce, il guardrail
     g.clear();
     const punti = [];
     for (let sx = -8; sx <= 488; sx += 6) { const x = this.x + (sx - XP) / SCALA; punti.push({ x: sx, y: this.aSchermo(x).y, m: x }); }
-    g.fillStyle(0x5a8a46, 1);
-    g.fillPoints([...punti.map((p) => ({ x: p.x, y: p.y + 4 })), { x: 488, y: 280 }, { x: -8, y: 280 }], true);
-    g.fillStyle(0x3f6a34, 1);
-    g.fillPoints([...punti.map((p) => ({ x: p.x, y: p.y + 22 })), { x: 488, y: 280 }, { x: -8, y: 280 }], true);
+    for (const [d, colore] of [[4, 0x8a6c4c], [8, 0x78b455], [20, 0x6aa64a], [38, 0x5d9842], [62, 0x518a3a], [96, 0x467d32]]) {
+      g.fillStyle(colore, 1);
+      g.fillPoints([...punti.map((p) => ({ x: p.x, y: Math.min(280, p.y + d + (d > 8 ? Math.sin(p.m * 0.09 + d) * d * 0.09 : 0)) })), { x: 488, y: 280 }, { x: -8, y: 280 }], true);
+    }
+    for (const o of this.contorno) {
+      const q = this.aSchermo(o.m), vis = q.x > -30 && q.x < 510;
+      o.img.setVisible(vis);
+      if (vis) o.img.setPosition(q.x, q.y + o.dy);
+    }
     for (let i = 1; i < punti.length; i++) {
       const a = punti[i - 1], b = punti[i], tipo = this.trattoIn(b.m).t.tipo, fuori = b.m < 0 || b.m > this.lunghezza;
       g.lineStyle(9, fuori ? 0x6a6a72 : tipo === 'strappo' ? 0x4a4a54 : 0x55565f, 1).lineBetween(a.x, a.y + 3.5, b.x, b.y + 3.5);
@@ -461,6 +620,17 @@ export class PassaseoScene extends MicrogiocoBase {
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });
     const vince = ris.vittoria ? this.giocatore.id : 'passaseo', perde = ris.vittoria ? 'passaseo' : this.giocatore.id;
+    // il Sego: se hai vinto esulta in vetta, davanti al velo; se no resta lì appeso, mogio
+    const S = this.sego;
+    if (ris.vittoria) {
+      S.g.setDepth(706);
+      for (const f of Object.values(S.facce)) f.setDepth(707);
+      this.segoInVetta(true);
+    } else S.triste = true;
+    // (la partita è finita e aggiorna non gira più: il Sego si ridisegna da sé, fino all'uscita)
+    const muovi = (t, d) => this.disegnaSego(d / 1000);
+    this.events.on('update', muovi);
+    this.events.once('shutdown', () => this.events.off('update', muovi));
     this.time.delayedCall(450, () => {
       // (il titolo dice chi è arrivato su per primo solo se va d'accordo con la medaglia)
       const titolo = ris.vittoria ? (ris.condizione ? 'IN CIMA PER PRIMO!' : 'BELLA SALITA!') : ris.condizione ? 'PRIMO, MA CHE FATICA!' : 'IL PASSASEO TI HA STACCATO!';
