@@ -57,7 +57,9 @@ export default {
   tornanteMax: 21,                // chi entra in un tornante più veloce di così va LARGO...
   largo: 0.45,                    // ...e resta con tanto della sua velocità
 
-  frasiPassaseo: ['In salita sono un fulmine!', 'Respira col naso!', 'Che bel panorama, eh?', 'Su, su, su!', 'Questa la faccio ogni domenica.'],
+  frasiPassaseo: ['In salita sono un fulmine!', 'Respira col naso!', 'Che bel panorama, eh?', 'Su, su, su!', 'Questa la faccio ogni domenica.', 'Pure il Sego è uscito di casa!'],
+  // il Sego sulla parete, quando scivola (a ogni tornante largo, e ogni tanto a una pedalata a vuoto)
+  frasiSego: ['Ops!', 'Tenete la corda!', 'Chi ha unto la roccia?', 'Era meglio il divano...', 'Tutto calcolato!'],
   frasiSorpasso: ['Ciao ciao!', 'Ti aspetto in cima!', 'Passo io!'],
   frasiSorpassato: ['Ehi! Da dove sbuchi?', 'Ma che gambe hai?', 'Non vale, hai la bici nuova!'],
   frasiVince: ['Torna quando hai le gambe!', 'Tutta questione di fiato.', 'Ci vediamo al prossimo passo!'],
