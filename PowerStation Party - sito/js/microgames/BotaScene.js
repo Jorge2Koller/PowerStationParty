@@ -22,6 +22,12 @@
 //    Obiettivo (è il bronzo): 15 spente. Finché non ci sei il totale si ferma a 90, quando ci sei
 //    sale almeno a 100 (come le Perle di Denny). In Lampo (15 s, i tre atti in 5 secondi l'uno)
 //    bastano 5 spente e i punti sono quelli.
+//  - IL REBUS (scheda di Giorgio: "troppo facile, e mettiamoci la settimana enigmistica"): il Bota
+//    si è portato la rivista dei rebus, aperta sulla sabbia in basso a destra. Ogni tot scottature
+//    spente il rebus si compone di un pezzo (le figure sono gli oggetti della spiaggia, con le
+//    lettere sopra); all'obiettivo è completo. Se ci arrivi, finito il tempo il Bota ti chiede
+//    aiuto: scegli la soluzione giusta tra tre (tocco, clic o tasti 1-3) e prendi i punti del
+//    rebus. Non in Lampo (15 s) e non nella prova. Il seme del round sceglie il rebus.
 //  Il seme del round decide dove nascono le scottature (e le mosse del Bota); la logica che conta
 //  (scottature, mosse, giro) va avanti tutta in aggiorna(), senza tween: così le prove automatiche
 //  possono giocare la partita a passi, sostituendo leggiMano().
@@ -30,6 +36,7 @@ import { Audio } from '../audio.js';
 import { Sessione } from '../sessione.js';
 import { casuale } from '../grafica/base.js';
 import { CORPO, GW, GH, PELLE } from '../sprites.js';
+import { FIGURA } from '../grafica/bota.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, fumetto, pannello, scuoti, puntatore, colpetto, lerp, caso, quanti, eTouch, perDito, vibra, puntiHud, numero } from '../fx.js';
 
 const CELLA = CORPO.cella, BW = CORPO.w, BH = CORPO.h;
@@ -147,7 +154,141 @@ export class BotaScene extends MicrogiocoBase {
     this.testoSerie = txt(this, 240, 37, '', { depth: 1001, size: 7, color: '#ffe14a' });
     this.aiuto = txt(this, 6, 262, '', { ox: 0, size: 7, depth: 1001 });
     this.hudBota = [pannello(this, 240, 22, 220, 18, { depth: 1000 }), this.testoPunti, this.testoSpente, this.testoSerie, this.aiuto, this.sole];
+    this.preparaRebus();
   }
+
+  // --- IL REBUS DEL BOTA ---
+  // una vignetta del rebus: la figura (un oggetto della spiaggia), le lettere sopra come nei rebus
+  // veri; con la cornice è la vignetta in grande della fase bonus
+  vignetta(x, y, k, [lettere, figura], depth, cornice = true) {
+    const W = FIGURA.w * k, H = FIGURA.h * k, g = this.add.graphics().setDepth(depth);
+    if (cornice) { g.fillStyle(0xffffff, 1).fillRect(x - W / 2, y - H / 2, W, H); g.lineStyle(1, 0x1f1430, 0.6).strokeRect(x - W / 2, y - H / 2, W, H); }
+    const img = im(this, x, y, 'rebus_' + figura, k).setDepth(depth + 1);
+    const scritte = lettere ? txt(this, x + W * 0.04, y - H * 0.02, lettere, { size: 7 * k, color: '#1f1430', stroke: '#ffffff', thick: k > 1.5 ? 5 : 3, depth: depth + 2 }) : null;
+    return { g, img, lettere: scritte };
+  }
+
+  // la rivista sulla sabbia, col rebus scelto dal seme: i pezzi si scoprono man mano che spegni
+  preparaRebus() {
+    const R = this.cfg.rebus;
+    this.rebus = null; this.pezziRebus = []; this.bonus = null; this.rebusEsito = null;
+    if (this.lampo || !R?.elenco?.length) return;
+    // (un generatore suo: così scegliere il rebus non cambia dove nascono le scottature)
+    const rnd = casuale((Sessione.seme ^ 0x5eb0) >>> 0);
+    this.rebus = R.elenco[Math.floor(rnd() * R.elenco.length)];
+    this.rndRebus = rnd;
+    const x0 = 322, y0 = 214;
+    im(this, x0, y0, 'rivista').setOrigin(0).setDepth(12);
+    txt(this, x0 + 64.5, y0 + 6.6, 'LA SETTIMANA DEI REBUS', { size: 7, color: '#ffffff', thick: 2, depth: 14 });
+    txt(this, x0 + 64.5, y0 + 44, `REBUS (${this.rebus.schema})`, { size: 7, color: '#1f4fa8', thick: 0, depth: 14 });
+    this.rebus.pezzi.forEach((p, i) => {
+      const x = x0 + 33 + i * 63, y = y0 + 27, v = this.vignetta(x, y, 0.8, p, 13, false);
+      v.punto = txt(this, x, y, '?', { size: 12, color: '#c9bfa6', thick: 0, depth: 13 });
+      v.img.setVisible(false); v.lettere?.setVisible(false);
+      // prima la figura, poi le lettere (se ci sono)
+      this.pezziRebus.push({ o: v.img, v });
+      if (v.lettere) this.pezziRebus.push({ o: v.lettere, v });
+    });
+    this.scoperti = 0;
+  }
+
+  // dopo una scottatura spenta: si scopre il pezzo che tocca (l'ultimo proprio all'obiettivo)
+  scopriRebus() {
+    const n = this.pezziRebus.length;
+    while (this.scoperti < n && this.spente >= Math.ceil((this.obiettivo * (this.scoperti + 1)) / n)) {
+      const { o, v } = this.pezziRebus[this.scoperti++];
+      v.punto.setVisible(false);
+      const sc = o.scale;
+      o.setVisible(true).setScale(sc * 1.8);
+      this.tweens.add({ targets: o, scale: sc, duration: 260, ease: 'Back.out' });
+      stelle(this, o.x, o.y, 3, 20);
+      Audio.sfx('foglio');
+      if (this.scoperti === n) {
+        Audio.sfx('ding');
+        scritta(this, 386, 204, 'REBUS COMPLETO!', { size: 8, color: '#ffe14a', durata: 900, depth: 970 });
+        this.parla('Il rebus è pronto! Dopo mi aiuti?', 1600);
+      }
+    }
+  }
+
+  // il rebus alla fine: solo se l'hai completato (cioè sei all'obiettivo, il bronzo), non in Lampo né in prova
+  termina() {
+    if (!this.finito && this.rebus && !this.bonus && !this.prova && this.condizione) { this.faseRebus(); return; }
+    super.termina();
+  }
+
+  faseRebus() {
+    const c = this.cfg, R = c.rebus, rb = this.rebus;
+    this.inCorso = false;
+    this.pulsanti?.forEach((b) => b.setVisible(false));
+    Audio.versaFine(); Audio.musica(null);
+    for (const o of [...this.hudBota, this.mano, this.zoneG, this.raggiG, ...this.zone.map((z) => z.etichetta)]) o?.setVisible(false);
+    this.mossa?.oggetto?.destroy(); this.fum?.destroy();
+    this.input.setDefaultCursor('default');
+    Audio.sfx('tempo');
+    // le tre soluzioni, in un ordine deciso dal seme
+    const opz = [rb.soluzione, ...rb.sbagliate];
+    for (let i = opz.length - 1; i > 0; i--) { const j = Math.floor(this.rndRebus() * (i + 1)); [opz[i], opz[j]] = [opz[j], opz[i]]; }
+    const B = (this.bonus = { opzioni: opz, giusta: opz.indexOf(rb.soluzione), fatto: false, oggetti: [] });
+    const D = 800, tieni = (o) => (B.oggetti.push(o), o);
+    tieni(this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0.78).setOrigin(0).setDepth(D));
+    // la pagina della rivista, in grande
+    const g = tieni(this.add.graphics().setDepth(D + 1));
+    g.fillStyle(0x000000, 0.3).fillRoundedRect(23, 47, 440, 200, 6);
+    g.fillStyle(0xfbf6e8, 1).fillRoundedRect(20, 44, 440, 200, 6);
+    g.lineStyle(1.5, 0x2b1b17, 1).strokeRoundedRect(20, 44, 440, 200, 6);
+    g.fillStyle(0x1f4fa8, 1).fillRoundedRect(24, 48, 432, 20, 4);
+    g.fillStyle(0xe0453a, 1).fillRect(24, 66, 432, 3);
+    tieni(txt(this, 240, 58, 'LA SETTIMANA DEI REBUS', { size: 10, color: '#ffffff', depth: D + 2 }));
+    tieni(txt(this, 270, 82, `AIUTA IL BOTA!   REBUS (${rb.schema})`, { size: 8, color: '#1f4fa8', thick: 0, depth: D + 2 }));
+    rb.pezzi.forEach((p, i) => { const v = this.vignetta(224 + i * 100, 130, 2, p, D + 2); B.oggetti.push(v.g, v.img, v.lettere); });
+    // il Bota (la testa, dritta) che chiede aiuto
+    const testa = (B.testa = tieni(im(this, 74, 132, 'botaTesta_parla', 2.2).setAngle(90).setDepth(D + 2)));
+    this.tweens.add({ targets: testa, angle: { from: 84, to: 96 }, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    tieni(fumetto(this, 100, 86, caso(c.frasiRebus), (R.secondi + 3) * 1000, D + 5));
+    // i tre pulsanti (tocco, clic, o tasti 1-3)
+    B.tasti = opz.map((o, i) => {
+      const x = 96 + i * 144, y = 196, w = 134, h = 26;
+      const bg = tieni(this.add.graphics().setDepth(D + 2));
+      const disegna = (col) => {
+        bg.clear(); bg.fillStyle(0x000000, 0.25).fillRoundedRect(x - w / 2 + 1.5, y - h / 2 + 2, w, h, 7);
+        bg.fillStyle(col, 1).fillRoundedRect(x - w / 2, y - h / 2, w, h, 7); bg.lineStyle(1.5, 0xffffff, 1).strokeRoundedRect(x - w / 2, y - h / 2, w, h, 7);
+      };
+      disegna(0x2f7fd8);
+      tieni(txt(this, x, y, perDito(`${i + 1}  ${o}`, o), { size: 8, depth: D + 3 }));
+      tieni(this.add.zone(x, y, w + 6, h + 8).setDepth(D + 4).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.rispondi(i)));
+      return { disegna };
+    });
+    opz.forEach((_, i) => { for (const n of ['', 'NUMPAD_']) this.input.keyboard.on(`keydown-${n}${['ONE', 'TWO', 'THREE', 'FOUR'][i]}`, () => this.rispondi(i)); });
+    // il tempo per scegliere: la barra si accorcia
+    const barra = tieni(this.add.rectangle(30, 228, 420, 6, 0x4ade80).setOrigin(0, 0.5).setDepth(D + 2));
+    tieni(this.add.rectangle(30, 228, 420, 6).setOrigin(0, 0.5).setStrokeStyle(1, 0x2b1b17).setDepth(D + 3));
+    B.tempo = this.tweens.add({ targets: barra, scaleX: 0, duration: R.secondi * 1000, onUpdate: () => { if (barra.scaleX < 0.3) barra.setFillStyle(0xf87171); }, onComplete: () => this.rispondi(-1) });
+  }
+
+  // la risposta al rebus: i = il pulsante scelto (-1: tempo scaduto)
+  rispondi(i) {
+    const B = this.bonus, R = this.cfg.rebus;
+    if (!B || B.fatto) return;
+    B.fatto = true;
+    B.tempo?.stop();
+    const giusta = i === B.giusta;
+    this.rebusEsito = i < 0 ? 'tempo' : giusta ? 'giusto' : 'sbagliato';
+    B.tasti[B.giusta].disegna(0x22a35a);
+    if (i >= 0 && !giusta) B.tasti[i].disegna(0xc0392b);
+    B.testa.setTexture(giusta ? 'botaTesta_normale' : 'botaTesta_triste');
+    if (giusta) {
+      this.grezzo += R.punti;
+      Audio.sfx('conquista');
+      stelle(this, 96 + i * 144, 196, 10, 900);
+      scritta(this, 240, 172, `GIUSTO! +${R.punti}`, { size: 16, color: '#7dff9a', durata: 1100, depth: 950 });
+    } else {
+      Audio.sfx('errore');
+      scritta(this, 240, 172, i < 0 ? 'TEMPO SCADUTO!' : 'SBAGLIATO!', { size: 14, color: '#ff6b5a', durata: 1100, depth: 950 });
+    }
+    this.time.delayedCall(1500, () => { for (const o of B.oggetti) o?.destroy(); super.termina(); });
+  }
+
 
   pulisci() { this.input.setDefaultCursor('default'); }
 
@@ -369,6 +510,7 @@ export class BotaScene extends MicrogiocoBase {
     if (this.spente === this.obiettivo) { scritta(this, 240, 96, `${this.obiettivo} SPENTE!`, { size: 13, color: '#7dff9a', durata: 900, depth: 970 }); Audio.sfx('bonus'); }
     else if (c.serie.some(([n]) => n === this.serie)) { scritta(this, 240, 52, `SERIE x${numero(this.molt(), 1)}!`, { size: 11, color: '#ffe14a', durata: 600, depth: 970 }); colpetto(this, this.testoSerie, 1.5, 1.5); }
     if (this.spente % 5 === 0 && this.tFrase < 4) this.parla(caso(c.frasiBravo));
+    if (this.rebus) this.scopriRebus();
   }
 
   // finito il tempo del cerchio: la pelle rimasta scoperta si brucia (e resta rossa)
@@ -552,7 +694,8 @@ export class BotaScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, Math.round(this.punti)),
       vittoria: vinto,
-      riepilogo: `${quanti(this.spente, 'scottatura spenta', 'scottature spente')}, ${quanti(this.scottate, 'scottato', 'scottati')}, serie migliore ${this.serieMax}`,
+      riepilogo: `${quanti(this.spente, 'scottatura spenta', 'scottature spente')}, ${quanti(this.scottate, 'scottato', 'scottati')}, serie migliore ${this.serieMax}`
+        + (this.rebusEsito === 'giusto' ? `, rebus risolto (+${this.cfg.rebus.punti})` : this.rebusEsito ? ', rebus non risolto' : ''),
     };
   }
 
@@ -561,7 +704,7 @@ export class BotaScene extends MicrogiocoBase {
     for (const o of [...this.hudBota, this.mano, this.zoneG, this.raggiG, ...this.zone.map((z) => z.etichetta)]) o?.setVisible(false);
     this.mossa?.oggetto?.destroy();
     this.fum?.destroy();
-    Audio.sfx('tempo');
+    if (!this.bonus) Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.82, duration: 300 });
     this.tweens.add({ targets: this.corpo, alpha: 0, duration: 250 });

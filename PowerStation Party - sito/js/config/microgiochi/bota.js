@@ -21,7 +21,7 @@ export default {
     'Strofina il dito sul cerchio: coperto di crema, si spegne',
     "Prima che finisca l'anello, se no si scotta!",
   ],
-  obiettivo: 'Spegni 15 scottature!',
+  obiettivo: 'Spegni 15 scottature, poi aiuta il Bota col rebus!',
   // In Lampo (15 secondi): vale questa sezione sopra le altre (vedi MicrogiocoBase); comandi e obiettivo
   // li mostra l'introduzione. stringi = gli elenchi a tempo i cui atti si stringono nei 15 secondi
   lampo: { obiettivo: 'Spegni 5 scottature!' },
@@ -33,6 +33,9 @@ export default {
   // va piano ma strofina sui cerchi ne spegne 16-20 (bronzo, 130-155 punti), chi è svelto 23-24
   // (argento, circa 230), chi è velocissimo e non ne perde una 33-34 (oro, circa 385); chi strofina a
   // caso, o passa la mano su tutto il Bota senza guardare i cerchi, ne spegne da 0 a 9.
+  // (Ritarato dopo la scheda "troppo facile", coi bot di prova a NORMALE: chi è lento ne spegne
+  // 11-17, a volte non arriva al bronzo; chi va a velocità media 18-27, bronzo o argento; per l'oro
+  // serve essere svelti e non scottarlo. Il rebus giusto vale 30 punti in più.)
   medaglie: { bronzo: 100, argento: 200, oro: 300 },
   obiettivoSpente: 15,
   obiettivoLampo: 5,        // in Lampo (15 secondi): lì le medaglie non contano e i punti sono quelli e basta
@@ -73,11 +76,11 @@ export default {
   // secondi prima che si scotti; grandi = quante su 1 nascono grandi; mosse = il Bota si muove;
   // gira = all'inizio si gira a pancia in giù
   atti: [
-    { da: 0, daLampo: 0, nome: '', attivi: 1, vita: 4.5, pausa: 0.5, grandi: 0,
+    { da: 0, daLampo: 0, nome: '', attivi: 1, vita: 3.9, pausa: 0.45, grandi: 0,
       aiuto: 'TIENI PREMUTO e strofina la mano sul cerchio rosso!', aiutoDito: 'Strofina il dito sul cerchio rosso!' },
-    { da: 12, daLampo: 5, nome: 'PIÙ SOLE!', attivi: 2, vita: 4.2, pausa: 0.4, grandi: 0, mosse: true,
+    { da: 11, daLampo: 5, nome: 'PIÙ SOLE!', attivi: 2, vita: 3.6, pausa: 0.35, grandi: 0.15, mosse: true,
       aiuto: 'Due insieme, e il Bota si muove: seguilo!', aiutoDito: 'Due insieme, e il Bota si muove: seguilo!' },
-    { da: 24, daLampo: 10, nome: 'SI GIRA!', attivi: 3, vita: 3.8, pausa: 0.3, grandi: 0.3, mosse: true, gira: true,
+    { da: 22, daLampo: 10, nome: 'SI GIRA!', attivi: 3, vita: 3.25, pausa: 0.25, grandi: 0.3, mosse: true, gira: true,
       aiuto: "Tre insieme: prima quella con l'anello più corto!", aiutoDito: "Tre insieme: prima quella con l'anello più corto!" },
   ],
 
@@ -85,11 +88,36 @@ export default {
   // si allunga a prendere il telefono o la birra, o si stiracchia: il primo scatto dopo primaMossa
   // secondi dall'inizio dell'atto, poi ogni ogniMossa; scatto = quanto si sposta (unità di gioco),
   // scattoIn = secondi per andare (e tornare), tieneMossa = secondi che resta spostato
-  primaMossa: 1.2,
-  ogniMossa: [2.6, 3.6],
-  scatto: 26,
+  primaMossa: 1.0,
+  ogniMossa: [2.2, 3.1],
+  scatto: 30,
   scattoIn: 0.22,
   tieneMossa: 1.3,
+
+  // --- IL REBUS DEL BOTA (la nota di Giorgio: "inserire la settimana enigmistica") ---
+  // Il Bota si è portato la rivista dei rebus (in basso a destra, sulla sabbia). Ogni scottatura
+  // spenta lo aiuta a pensare: verso l'obiettivo il rebus si compone un pezzo alla volta (le figure
+  // sono gli oggetti della spiaggia, con le lettere sopra come nei rebus veri). Se arrivi
+  // all'obiettivo (cioè al bronzo: il Bota non si è scottato troppo), finito il tempo il Bota ti
+  // chiede aiuto: scegli la soluzione giusta tra tre entro "secondi" e prendi "punti" in più.
+  // In Lampo (15 secondi) il rebus non c'è: la partita è corta e lì contano solo i punti.
+  // Un rebus: pezzi = le vignette, ciascuna [lettere, figura] (le figure in js/grafica/bota.js:
+  // palma, palla, sole, mare, onda, faro, ancora, occhiali, birra); schema = le lunghezze delle
+  // parole; poi la soluzione e due soluzioni sbagliate (plausibili, per chi legge male le figure).
+  // Il seme del round sceglie quale.
+  rebus: {
+    secondi: 8,             // tempo per scegliere
+    punti: 30,              // se giusta (un terzo del salto tra due medaglie: aiuta, non regala l'oro)
+    elenco: [
+      { pezzi: [['A', 'mare'], ['IL', 'sole']], schema: '5 2 4', soluzione: 'AMARE IL SOLE', sbagliate: ['AMARE AL SOLE', 'ONDA E IL SOLE'] },
+      { pezzi: [['', 'birra'], ['BI', 'onda']], schema: '5 6', soluzione: 'BIRRA BIONDA', sbagliate: ['BIRRA BIANCA', 'BIBITA E ONDA'] },
+      { pezzi: [['S', 'palma'], ['LAS', 'palla']], schema: '6 2 6', soluzione: 'SPALMA LA SPALLA', sbagliate: ['SPALMA LA PALLA', 'PALME E PALLE'] },
+      { pezzi: [['', 'ancora'], ['AL', 'sole']], schema: '6 2 4', soluzione: 'ANCORA AL SOLE', sbagliate: ['ANCORA AL MARE', 'ANCORE DI SOLE'] },
+      { pezzi: [['RE', 'mare'], ['AL', 'faro']], schema: '6 2 4', soluzione: 'REMARE AL FARO', sbagliate: ['REMARE AL MARE', 'IL RE DEL FARO'] },
+      { pezzi: [['', 'occhiali'], ['DA', 'sole']], schema: '8 2 4', soluzione: 'OCCHIALI DA SOLE', sbagliate: ['OCCHIALI AL SOLE', 'OCCHI DA SOLE'] },
+    ],
+  },
+  frasiRebus: ['Mi aiuti col rebus?', 'Questo non lo risolvo!', 'Dai, tu che sei bravo!'],
 
   // --- frasi del Bota ---
   frasiInizio: ['Crema! Mi scotto!', 'Spalmami, dai!'],
@@ -105,7 +133,10 @@ export default {
   // sposta meno. Difficile: durano meno e ne nascono prima, il Bota si sposta di più e più spesso,
   // e per spegnerle va coperto un po' di più.)
   livelli: {
-    facile: { atti: { vita: 1.35 }, scatto: 16, raggioMano: 10 },
-    difficile: { atti: { vita: 0.8, pausa: 0.7 }, scatto: 34, ogniMossa: [2, 2.8], coperta: 0.93 },
+    // (Dopo la scheda "troppo facile" Normale è più stretto: vita più corta, atti un po' prima, il
+    // Bota si muove di più. Facile e Difficile moltiplicano la vita nuova: Facile resta com'era, sui
+    // 5-6 secondi, Difficile si stringe un poco anche lui)
+    facile: { atti: { vita: 1.5 }, scatto: 18, ogniMossa: [2.6, 3.6], raggioMano: 10, rebus: { secondi: 10 } },
+    difficile: { atti: { vita: 0.85, pausa: 0.7 }, scatto: 36, ogniMossa: [1.9, 2.7], coperta: 0.93, rebus: { secondi: 6 } },
   },
 };

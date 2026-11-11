@@ -300,6 +300,101 @@ function sfondoLido(c) {
   c.fillStyle = gradR(c, 240, 135, 170, 340, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(60,30,0,0.2)']]); c.fillRect(0, 0, 480, 270);
 }
 
+// ------------------------------------------------------------
+//  IL REBUS DEL BOTA (la sua rivista di enigmistica): le figure sono gli oggetti della spiaggia.
+//  Ogni figura sta in un riquadro di 44x32 unità (nella rivista in basso è a grandezza naturale,
+//  nella fase bonus il doppio: per questo hanno densità alta)
+// ------------------------------------------------------------
+export const FIGURA = { w: 44, h: 32 };
+const FIGURE = {
+  palma(c) {
+    ellisse(c, 23, 29.5, 10, 1.6); c.fillStyle = 'rgba(160,120,70,0.35)'; c.fill();
+    c.beginPath(); c.moveTo(20, 30); c.quadraticCurveTo(19, 18, 25, 9); c.lineTo(28, 10); c.quadraticCurveTo(23, 19, 24.5, 30); c.closePath();
+    c.fillStyle = gradL(c, 19, 0, 28, 0, [[0, '#9a6a3a'], [1, '#c99358']]); c.fill(); tratto(c, CONT, 0.8);
+    for (let y = 13; y < 29; y += 3) { c.beginPath(); c.moveTo(20.5 + (29 - y) * 0.2, y); c.lineTo(24.5 + (29 - y) * 0.15, y - 0.8); tratto(c, 'rgba(60,30,10,0.45)', 0.5); }
+    for (const [a, l] of [[-2.7, 13], [-2.1, 12], [-1.2, 11], [-0.45, 12.5], [0.15, 12]]) {
+      const x0 = 26.5, y0 = 9, x1 = x0 + Math.cos(a) * l, y1 = y0 + Math.sin(a) * l + 3;
+      c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2, Math.min(y0, y1) - 4, x1, y1); c.quadraticCurveTo((x0 + x1) / 2, Math.min(y0, y1) - 0.5, x0, y0 + 1.2);
+      c.fillStyle = '#3fae4a'; c.fill(); tratto(c, '#1f6a2a', 0.7);
+    }
+    for (const [x, y] of [[25, 10.5], [28, 11]]) { ellisse(c, x, y, 1.7, 1.7); c.fillStyle = '#7a4a22'; c.fill(); tratto(c, CONT, 0.5); }
+  },
+  palla(c) {
+    ellisse(c, 23, 29, 9, 1.8); c.fillStyle = 'rgba(0,0,0,0.15)'; c.fill();
+    const x = 22, y = 16.5, r = 11.5;
+    c.save(); ellisse(c, x, y, r, r); c.clip();
+    ['#ffffff', '#e0453a', '#ffffff', '#2f8fd8', '#ffffff', '#ffd84a'].forEach((col, i) => {
+      c.beginPath(); c.moveTo(x, y); c.arc(x, y, r + 1, (i / 6) * Math.PI * 2 - 0.4, ((i + 1) / 6) * Math.PI * 2 - 0.4); c.closePath(); c.fillStyle = col; c.fill();
+    });
+    ellisse(c, x - 4, y - 5, 4, 2.4, -0.6); c.fillStyle = 'rgba(255,255,255,0.6)'; c.fill();
+    c.restore();
+    ellisse(c, x, y, 3, 3); c.fillStyle = '#f6f3ea'; c.fill(); tratto(c, CONT, 0.6);
+    ellisse(c, x, y, r, r); tratto(c, CONT, 1);
+  },
+  sole(c) { c.save(); c.translate(22 - 13.5, 16 - 13.5); c.scale(0.45, 0.45); sole(c, 0); c.restore(); },
+  mare(c) {
+    // il mare all'orizzonte: cielo, acqua e le creste delle onde
+    rrect(c, 4, 4, 36, 24, 2); c.save(); c.clip();
+    c.fillStyle = gradL(c, 0, 4, 0, 14, [[0, '#bfe9ff'], [1, '#e8f7ff']]); c.fillRect(4, 4, 36, 10);
+    c.fillStyle = gradL(c, 0, 13, 0, 28, [[0, '#2f98d0'], [1, '#1f6fb0']]); c.fillRect(4, 13, 36, 15);
+    for (const [y, dx] of [[16.5, 0], [20.5, 4], [24.5, -2]]) for (let x = 2 + dx; x < 42; x += 9) { c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 2.2, y - 2, x + 4.4, y); tratto(c, 'rgba(255,255,255,0.85)', 0.8); }
+    c.restore(); rrect(c, 4, 4, 36, 24, 2); tratto(c, CONT, 0.9);
+  },
+  onda(c) {
+    // un'onda sola, che si arriccia
+    c.beginPath(); c.moveTo(4, 28); c.bezierCurveTo(8, 26, 12, 8, 26, 6); c.bezierCurveTo(36, 5, 40, 13, 34, 17);
+    c.bezierCurveTo(31, 19, 27, 16, 29, 13); c.bezierCurveTo(24, 14, 24, 24, 40, 28); c.closePath();
+    c.fillStyle = gradL(c, 0, 6, 0, 28, [[0, '#4ab6e6'], [1, '#1f6fb0']]); c.fill(); tratto(c, CONT, 0.9);
+    c.beginPath(); c.moveTo(12, 18); c.bezierCurveTo(15, 11, 21, 7.5, 27, 7.4); c.bezierCurveTo(34, 7.2, 37, 12, 34.5, 15); tratto(c, '#ffffff', 1.6);
+    for (const [x, y] of [[35, 19], [38, 21], [32, 20.5]]) { ellisse(c, x, y, 1, 1); c.fillStyle = '#ffffff'; c.fill(); }
+  },
+  faro(c) {
+    poli(c, [[16, 30], [18.5, 9], [25.5, 9], [28, 30]]); c.fillStyle = '#ffffff'; c.fill();
+    c.save(); c.clip(); c.fillStyle = '#e0453a'; for (const y of [12, 20]) c.fillRect(10, y, 24, 4.5); c.restore();
+    poli(c, [[16, 30], [18.5, 9], [25.5, 9], [28, 30]]); tratto(c, CONT, 0.9);
+    rrect(c, 18, 4.5, 8, 4.8, 1); c.fillStyle = '#ffe14a'; c.fill(); tratto(c, CONT, 0.8);
+    poli(c, [[17, 4.8], [22, 1.2], [27, 4.8]]); c.fillStyle = '#e0453a'; c.fill(); tratto(c, CONT, 0.8);
+    for (const s of [-1, 1]) { poli(c, [[22 + s * 4, 6], [22 + s * 18, 2], [22 + s * 18, 11]]); c.fillStyle = 'rgba(255,225,74,0.45)'; c.fill(); }
+    rrect(c, 20.2, 24, 3.6, 6, [1.8, 1.8, 0, 0]); c.fillStyle = '#7a4a22'; c.fill();
+  },
+  ancora(c) {
+    const D = '#4a5568';
+    ellisse(c, 22, 5.5, 2.6, 2.6); tratto(c, D, 1.8);
+    c.beginPath(); c.moveTo(22, 8); c.lineTo(22, 27); tratto(c, D, 2.6);
+    c.beginPath(); c.moveTo(15.5, 11.5); c.lineTo(28.5, 11.5); tratto(c, D, 2.2);
+    c.beginPath(); c.moveTo(10, 18); c.quadraticCurveTo(12, 28, 22, 28); c.quadraticCurveTo(32, 28, 34, 18); tratto(c, D, 2.4);
+    for (const s of [-1, 1]) { poli(c, [[22 + s * 12, 15], [22 + s * 14.6, 20], [22 + s * 9.6, 19]]); c.fillStyle = D; c.fill(); }
+    c.beginPath(); c.moveTo(21, 9); c.lineTo(21, 26); tratto(c, 'rgba(255,255,255,0.35)', 0.6);
+  },
+  occhiali(c) {
+    c.beginPath(); c.moveTo(19, 13); c.quadraticCurveTo(22, 10.5, 25, 13); tratto(c, '#22242c', 1.6);
+    for (const s of [-1, 1]) {
+      c.beginPath(); c.moveTo(22 + s * 3, 12); c.lineTo(22 + s * 16, 11); tratto(c, '#22242c', 1.4);
+      rrect(c, 22 + (s < 0 ? -15 : 3), 10.5, 12, 9.5, [2, 2, 5, 5]); c.fillStyle = gradL(c, 0, 10, 0, 20, [[0, '#3a4a6a'], [1, '#101420']]); c.fill(); tratto(c, '#22242c', 1.2);
+      ellisse(c, 22 + s * 9 - 2, 13.4, 2.2, 1, -0.4); c.fillStyle = 'rgba(255,255,255,0.55)'; c.fill();
+    }
+  },
+  birra(c) {
+    // un bicchiere di birra bionda con la schiuma
+    poli(c, [[15, 8], [29, 8], [27.4, 29], [16.6, 29]]); c.fillStyle = gradL(c, 15, 0, 29, 0, [[0, '#e8a412'], [0.45, '#ffd84a'], [1, '#d08a0c']]); c.fill();
+    for (const [x, y] of [[19, 22], [24, 17], [21, 13], [25, 25]]) { ellisse(c, x, y, 0.7, 0.7); c.fillStyle = 'rgba(255,255,255,0.7)'; c.fill(); }
+    for (const [x, y, r] of [[16.5, 7.5, 3], [20.5, 5.6, 3.6], [25, 6.2, 3.3], [28, 8, 2.4]]) { ellisse(c, x, y, r, r); c.fillStyle = '#fffaf0'; c.fill(); }
+    poli(c, [[15, 8], [29, 8], [27.4, 29], [16.6, 29]]); tratto(c, CONT, 0.9);
+    c.beginPath(); c.moveTo(17.4, 11); c.lineTo(18.4, 27); tratto(c, 'rgba(255,255,255,0.55)', 1);
+  },
+};
+export const FIGURE_REBUS = Object.keys(FIGURE);
+
+// la rivista aperta sulla sabbia (130x44): la testata e la pagina dei rebus
+function rivista(c) {
+  rrect(c, 2.5, 3, 128, 41, 2); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fill();
+  rrect(c, 0.5, 0.5, 128, 41, 2); c.fillStyle = '#fbf6e8'; c.fill(); tratto(c, CONT, 1);
+  c.beginPath(); c.moveTo(64.5, 12); c.lineTo(64.5, 41); tratto(c, 'rgba(0,0,0,0.12)', 0.8);   // la piega in mezzo
+  rrect(c, 2.5, 2.5, 124, 9.5, 1.5); c.fillStyle = '#1f4fa8'; c.fill();
+  c.fillStyle = '#e0453a'; c.fillRect(2.5, 10.5, 124, 1.5);
+  for (const y of [36, 38.5]) for (const x0 of [6, 70]) { c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(x0, y, 52, 0.8); }
+}
+
 export function creaBota(scene) {
   const { w, h, dens } = CORPO, R = RIQUADRO_TESTA;
   tela(scene, 'bgLido', 480, 270, sfondoLido);
@@ -313,4 +408,6 @@ export function creaBota(scene) {
   for (let i = 0; i < 4; i++) tela(scene, 'sole_' + i, 60, 60, (c) => sole(c, i), 6);
   tela(scene, 'telefono', 11, 17, telefono, 10);
   tela(scene, 'lattina', 10, 15, lattina, 10);
+  for (const f of FIGURE_REBUS) tela(scene, 'rebus_' + f, FIGURA.w, FIGURA.h, FIGURE[f], 8);
+  tela(scene, 'rivista', 132, 46, rivista, 6);
 }
