@@ -23,11 +23,17 @@
 //      melodia con gli accordi (domanda e risposta), 'terze' = una terza sotto la melodia
 //    arpeggio: true = nel secondo atto gli accordi arpeggiati veloci, in alto (come sui vecchi giochi)
 //    basso: un segno per passo, ripetuto a ogni battuta. R = la fondamentale dell'accordo, 3 5 6 7 = le
-//      altre note dell'accordo (7 = la sua settima), 8 = la fondamentale un'ottava sopra, - tiene, . pausa
+//      altre note dell'accordo (7 = la sua settima), 8 = la fondamentale un'ottava sopra, 2 e 4 = la
+//      seconda e la quarta sopra la fondamentale, a = nota di passaggio (mezzo tono sotto l'accordo che
+//      arriva: il basso che "cammina"), - tiene, . pausa
 //    ritmica: gli accordi ribattuti corti (x = un colpo), una battuta, ripetuta
-//    batteria: per atto (1 = leggera, 2 = piena, finale = gli ultimi 5 secondi; il terzo atto usa la 2):
-//      k cassa, s rullante, h charleston, o charleston aperto, c battimani, t tom. Una battuta per strumento
-//      (x = colpo, X = colpo forte). Se manca finale, ce n'è uno di serie
+//    basso e ritmica possono cambiare con l'atto: { 1: '...', 2: '...' } (il terzo usa il 2 se manca;
+//      '' = niente in quell'atto)
+//    pad: true (o un volume, es. 0.6) = il tappeto: l'accordo tenuto, morbido, sotto a tutto
+//    batteria: per atto (1 = leggera, 2 = piena, 3 = il terzo atto, se no usa la 2; finale = gli ultimi
+//      5 secondi): k cassa, s rullante, h charleston, o charleston aperto, c battimani, t tom. Una battuta
+//      per strumento (x = colpo, X = colpo forte, g = colpo fantasma, piano). Se manca finale, ce n'è uno di serie
+//    nel terzo atto la melodia si raddoppia da sola all'ottava (lead: { ottava: false } per toglierlo)
 //    atto3: { tempo: 1.06 } = nel terzo atto il 6% più svelta, oppure { tono: 2 } = un tono sopra
 //    volume: per pareggiare le musiche tra loro (misurate: vedi prova-musiche.html)
 //    auto: true = senza atti da fuori (nei menu) dopo il primo giro passa da sola al secondo atto
@@ -36,6 +42,7 @@
 const BATTERIA_POP = {
   1: { k: 'x...x...', h: '..x...x.' },
   2: { k: 'x...x.x.', s: '..x...x.', h: 'x.x.x.x.' },
+  3: { k: 'x...x.x.', s: '..x...x.', h: 'xxxxxxxx', o: '.......x' },
 };
 
 export const BRANI = {
@@ -44,8 +51,8 @@ export const BRANI = {
     titolo: 'Tema di PowerStation Party', carattere: 'il tema del gioco, da fischiettare',
     bpm: 112, tonica: 'C5', modo: 'maggiore', metro: 4, swing: 0.12, auto: true,
     lead: { onda: 0.5, staccato: 0.75 }, seconda: { tipo: 'eco', onda: 0.25 },
-    basso: 'R . 5 . R . 5 .', ritmica: '..x...x.',
-    batteria: BATTERIA_POP, atto3: { tempo: 1.06 }, volume: 0.92,
+    basso: { 1: 'R . 5 . R . 5 .', 2: 'R . 5 . 8 . 5 a' }, ritmica: '..x...x.', pad: 0.6,
+    batteria: BATTERIA_POP, atto3: { tempo: 1.06 }, volume: 1.03,
     parti: [
       { accordi: 'I vi IV V I vi II7 V7',
         melodia: `1 . 3 5 6 5 3 . | 6 . 6 5 3 . 1 . | 4 . 6 1' 2' 1' 6 . | 5 - - . 7, . 2 . |
@@ -59,18 +66,27 @@ export const BRANI = {
   // La Spina del PowerStation: il bar allegro, swing morbido
   bar: {
     titolo: 'Al bancone', carattere: 'bar allegro, swing morbido',
-    bpm: 116, tonica: 'F4', modo: 'maggiore', metro: 4, swing: 0.3,
-    lead: { onda: 0.5, staccato: 0.7 }, seconda: { tipo: 'eco', onda: 0.25 },
-    basso: 'R . 3 . 5 . 6 .', ritmica: '..x...x.',
-    batteria: { 1: { k: 'x...x...', h: 'x.x.x.x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'xxxxxxxx' } },
-    atto3: { tempo: 1.06 }, volume: 1.01,
+    bpm: 120, tonica: 'F4', modo: 'maggiore', metro: 4, swing: 0.33,
+    // il ritornello che resta in testa: "la-do... re, do-la" in levare, poi la stessa frase un tono
+    // sotto; la seconda parte sale in alto e torna giù col giro di accordi da bar (iii VI ii V)
+    lead: { onda: 0.5, staccato: 0.75 }, seconda: { tipo: 'eco', onda: 0.25 }, pad: true,
+    // primo atto: il contrabbasso in due (fondamentale e quinta), poi cammina (con la nota di passaggio)
+    basso: { 1: 'R - - . 5 - - .', 2: 'R . 3 . 5 . a .' },
+    ritmica: { 1: '', 2: '..x...x.' },
+    // il piatto "ding, din-ga-ding" dello swing, la cassa piano e il colpo sul cerchio del rullante
+    batteria: {
+      1: { k: 'x...x...', h: 'x.xxx.xx', s: '..g...g.' },
+      2: { k: 'x...x..x', s: '..x...x.', h: 'x.xxx.xx' },
+      3: { k: 'x..xx..x', s: '..x..gx.', h: 'xxxxxxxx', o: '.......x' },
+    },
+    atto3: { tempo: 1.06 }, volume: 0.99,
     parti: [
-      { accordi: 'I I IV I V IV I V7',
-        melodia: `1 . 3 . 5 . 6 5 | . 3 . 1 2 . 3 . | 4 . 6 . 1' . 6 4 | 5 - - . . . 3 4 |
-                  5 . 7 . 2' . 7 5 | 6 . 4 . 6 . 1' . | 5 . 3 . 1 . 3 5 | 2 - - . 7, . 2 .` },
-      { accordi: 'IV IV I vi II7 V7 I V7',
-        melodia: `6 . 6 . 1' . 6 . | 4 . 6 . 1' 2' 1' . | 5 . 3 . 5 . 1' . | 6 - - . 5 . 3 . |
-                  2 . #4 . 6 . 1' . | 5 . 7 . 2' . 4' . | 3' . 1' . 5 . 3 . | 1 - - . 5, . 7, .` },
+      { accordi: 'I6 vi7 ii7 V7 I6 I7 IV iv',
+        melodia: `3 5 . 6 - - 5 3 | 6 - - 5 . 3 . 1 | 2 4 . 6 - - 4 2 | 5 - 4 2 . 1 2 #2 |
+                  3 5 . 6 - - 5 3 | b7 - - 6 . 5 . 3 | 4 6 . 1' - - 6 4 | b6 - - 5 4 - - .` },
+      { accordi: 'I6 VI7 ii7 V7 iii7 VI7 ii7/V7 I6',
+        melodia: `. 5 1' 3' - - 1' . | 3' - - 2' #1' - 6 . | 4' - - 2' . 6 4 . | 5 - 7 - 2' - 4' - |
+                  3' - - 2' . 7 5 . | 6 - #1' - 3' - 5' . | 4' - - 2' 7 - 5 . | 1 - - 5, . 1 2 #2` },
     ],
   },
 
@@ -79,9 +95,9 @@ export const BRANI = {
     titolo: 'Largo, passa il re!', carattere: 'corsa in strada, energica',
     bpm: 150, tonica: 'A4', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'eco', onda: 0.25 }, arpeggio: true,
-    basso: 'R 8 R 8 R 8 R 8',
-    batteria: { 1: { k: 'x...x...', h: 'x.x.x.x.' }, 2: { k: 'x.x.x.x.', s: '..x...x.', h: 'xxxxxxxx' } },
-    atto3: { tono: 2 }, volume: 0.78,
+    basso: { 1: 'R . R . R . R 8', 2: 'R 8 R 8 R 8 R 8' },
+    batteria: { 1: { k: 'x...x...', h: 'x.x.x.x.' }, 2: { k: 'x.x.x.x.', s: '..x...x.', h: 'xxxxxxxx' }, 3: { k: 'x.x.x.xx', s: '..x...x.', h: 'xxxxxxxx', o: '...x...x' } },
+    atto3: { tono: 2 }, volume: 0.88,
     parti: [
       { accordi: 'I V vi IV I V IV V',
         melodia: `5 5 . 5 1' . 7 6 | 5 . 2' . 7 . 5 . | 6 6 . 6 1' . 3' 2' | 1' . 6 . 4 . 6 . |
@@ -95,18 +111,24 @@ export const BRANI = {
   // La Barba di O'Sfurnacchiat: la bottega del barbiere, pizzicato scherzoso
   barbiere: {
     titolo: 'Barba e capelli', carattere: 'bottega del barbiere, pizzicato scherzoso',
-    bpm: 104, tonica: 'G4', modo: 'maggiore', metro: 4, swing: 0.15,
-    lead: { onda: 0.25, staccato: 0.35 }, seconda: { tipo: 'eco', onda: 0.125 },
-    basso: 'R . 5 . R . 5 .', ritmica: '..x...x.',
-    batteria: { 1: { k: 'x...x...', h: '..x...x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.06 }, volume: 1.33,
+    bpm: 108, tonica: 'G4', modo: 'maggiore', metro: 4, swing: 0.12,
+    // le forbici: la melodia gira attorno a una nota (re-do-si-do-re) e salta, come chi taglia di fino
+    // e poi dà il colpo di pettine; la seconda parte risponde più in alto e chiude con la scala in giù
+    lead: { onda: 0.25, staccato: 0.38, volume: 1.5 }, seconda: { tipo: 'eco', onda: 0.125 },
+    basso: { 1: 'R . 5 . R . 5 .', 2: 'R . 5 . R 3 5 .' }, ritmica: '..x...x.',
+    batteria: {
+      1: { k: 'x...x...', h: '..x...x.' },
+      2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' },
+      3: { k: 'x...x.x.', s: '..x...xg', h: 'x.xxx.xx' },
+    },
+    atto3: { tempo: 1.06 }, volume: 1.22,
     parti: [
-      { accordi: 'I V7 V7 I I IV V7 I',
-        melodia: `1 . 3 . 5 . 3 . | 4 . 2 . 7, . 2 . | 4 . 7 . 6 . 5 . | 3 . 1 . 5, . . . |
-                  1 . 3 . 5 . 1' . | 6 . 4 . 6 . 1' . | 7 . 5 . 2' . 7 . | 1' . 5 . 1' . . .` },
-      { accordi: 'IV IV I I II7 II7 V7 V7',
-        melodia: `6 . 1' . 6 . 4 . | 6 . 5 . 4 . 3 . | 5 . 1' . 5 . 3 . | 5 . 4 . 3 . 2 . |
-                  #4 . 6 . 1' . 6 . | #4 . 2 . #4 . 6 . | 5 . 7 . 2' . 4' . | 2' . 7 . 5 . 4 .` },
+      { accordi: 'I IV V7 I I IV V7 I',
+        melodia: `5 4 3 4 5 . 1' . | 6 5 4 5 6 . 1' . | 7 . 2' . 4' 2' 7 5 | 1' . 5 . 1 . . . |
+                  3 . 5 . 1' . 3' . | 1' 7 6 5 6 . 4' . | 2' 1' 7 6 7 . 4 . | 1' 5 3 5 1 . . .` },
+      { accordi: 'IV I V7 I IV I II7 V7',
+        melodia: `4' . 1' . 6 . 1' . | 3' 2' 1' 2' 3' . 1' . | 2' 1' 7 1' 2' . 4' . | 3' . 1' . 5 . . . |
+                  6 . 1' . 4' . 1' . | 5 . 1' . 3' . 1' . | 2 . #4 . 6 . 1' . | 2' 1' 7 6 5 4 3 2` },
     ],
   },
 
@@ -115,9 +137,9 @@ export const BRANI = {
     titolo: 'Panino espresso', carattere: 'cucina che rimbalza',
     bpm: 128, tonica: 'C5', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.5, staccato: 0.55 }, seconda: { tipo: 'eco', onda: 0.25 },
-    basso: 'R . 5 . 8 . 5 .', ritmica: '.x.x.x.x',
-    batteria: { 1: { k: 'x...x...', h: '..x...x.' }, 2: { k: 'x..xx...', s: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tono: 2 }, volume: 0.99,
+    basso: { 1: 'R . 5 . 8 . 5 .', 2: 'R . 5 8 . 5 8 .' }, ritmica: '.x.x.x.x',
+    batteria: { 1: { k: 'x...x...', h: '..x...x.' }, 2: { k: 'x..xx...', s: '..x...x.', h: 'x.x.x.x.' }, 3: { k: 'x..xx..x', s: '..x...x.', h: 'xxxxxxxx', c: '......x.' } },
+    atto3: { tono: 2 }, volume: 1.05,
     parti: [
       { accordi: 'I IV V I vi IV II7 V7',
         melodia: `1 1 . 5, 1 . 3 . | 4 4 . 1 4 . 6 . | 5 5 . 2 5 . 7 . | 1' . 5 . 3 . 1 . |
@@ -132,10 +154,10 @@ export const BRANI = {
   comica: {
     titolo: 'Giù le mani', carattere: 'comica, staccata, a scatti',
     bpm: 140, tonica: 'D5', modo: 'maggiore', metro: 4, swing: 0,
-    lead: { onda: 0.25, staccato: 0.3 }, seconda: { tipo: 'eco', onda: 0.125 },
+    lead: { onda: 0.25, staccato: 0.3, volume: 1.4 }, seconda: { tipo: 'eco', onda: 0.125 },
     basso: 'R . 5 . R . 5 .', ritmica: '..x...x.',
-    batteria: { 1: { k: 'x...x...', t: '......x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.07 }, volume: 1.23,
+    batteria: { 1: { k: 'x...x...', t: '......x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' }, 3: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.', t: '.......x' } },
+    atto3: { tempo: 1.07 }, volume: 1.13,
     parti: [
       { accordi: 'I IV V7 I I IV V7 I',
         melodia: `1 . . 3 . . 5 . | 6 . . 4 . . 1' . | 7 . 6 . 5 . 4 . | 3 . 1 . 1 . . . |
@@ -150,10 +172,10 @@ export const BRANI = {
   nascosto: {
     titolo: 'Passi felpati', carattere: 'di nascosto ma divertente (Re minore, ritornello in Fa maggiore)',
     bpm: 110, tonica: 'D5', modo: 'minore', metro: 4, swing: 0.2,
-    lead: { onda: 0.25, staccato: 0.4 }, seconda: { tipo: 'eco', onda: 0.125 },
-    basso: 'R . . 5 R . 5 .',
-    batteria: { 1: { k: 'x.......', h: '..x...x.' }, 2: { k: 'x...x...', s: '......x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.05 }, volume: 1.31,
+    lead: { onda: 0.25, staccato: 0.4, volume: 1.3 }, seconda: { tipo: 'eco', onda: 0.125 },
+    basso: 'R . . 5 R . 5 .', pad: 0.5,
+    batteria: { 1: { k: 'x.......', h: '..x...x.' }, 2: { k: 'x...x...', s: '......x.', h: 'x.x.x.x.' }, 3: { k: 'x..xx...', s: '..g...x.', h: 'x.xxx.xx' } },
+    atto3: { tempo: 1.05 }, volume: 1.37,
     parti: [
       { accordi: 'i iv i V7 i iv bVI V7',
         melodia: `1 . . 3 . . 5 . | 4 . . 6 . . 1' . | 5 . 3 . 1 . 3 . | #7, . 2 . 5, . #7, . |
@@ -171,7 +193,7 @@ export const BRANI = {
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'terze', onda: 0.25 },
     basso: 'R . 5 . R . 5 .', ritmica: '..x...x.',
     batteria: { 1: { k: 'x...x...', s: 'x.x.x.xx' }, 2: { k: 'x...x...', s: 'xxx.x.xx', h: 'x.x.x.x.' } },
-    atto3: { tono: 2 }, volume: 1.03,
+    atto3: { tono: 2 }, volume: 1.11,
     parti: [
       { accordi: 'I V7 V7 I I IV V7 I',
         melodia: `1 . 1 . 3 . 5 . | 4 . 2 . 7, . 5, . | 7, . 2 . 4 . 7 . | 1' . 5 . 3 . 1 . |
@@ -187,9 +209,9 @@ export const BRANI = {
     titolo: 'Il banco vince sempre', carattere: 'casinò, lounge jazz swing',
     bpm: 96, tonica: 'Eb5', modo: 'maggiore', metro: 4, swing: 0.33,
     lead: { onda: 0.5, staccato: 0.85 }, seconda: { tipo: 'eco', onda: 0.25 },
-    basso: 'R . 3 . 5 . 6 .', ritmica: '...x..x.',
-    batteria: { 1: { h: 'x..xx..x' }, 2: { k: 'x.......', s: '......x.', h: 'x..xx..x' } },
-    atto3: { tempo: 1.05 }, volume: 1.06,
+    basso: { 1: 'R - - . 5 - - .', 2: 'R . 3 . 5 . a .' }, ritmica: { 1: '', 2: '...x..x.' }, pad: true,
+    batteria: { 1: { h: 'x.xxx.xx', s: '......g.' }, 2: { k: 'x.......', s: '......x.', h: 'x.xxx.xx' }, 3: { k: 'x...x...', s: '..g...x.', h: 'x.xxx.xx' } },
+    atto3: { tempo: 1.05 }, volume: 1.21,
     parti: [
       { accordi: 'Imaj7 vi7 ii7 V7 Imaj7 vi7 ii7 V7',
         melodia: `3 - - 5 . 3 2 . | 1 - - 6, . 1 . 3 | 2 - - 4 . 6 . 4 | 5 - - . 7, - 2 . |
@@ -206,8 +228,8 @@ export const BRANI = {
     bpm: 132, tonica: 'E4', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'terze', onda: 0.25 },
     basso: 'R 8 R 8 R 8 R 8',
-    batteria: { 1: { k: 'x...x...', c: '..x...x.' }, 2: { k: 'x.x.x.x.', s: '..x...x.', c: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tono: 2 }, volume: 0.79,
+    batteria: { 1: { k: 'x...x...', c: '..x...x.' }, 2: { k: 'x.x.x.x.', s: '..x...x.', c: '..x...x.', h: 'x.x.x.x.' }, 3: { k: 'x.x.x.x.', s: '..x...x.', c: '..x.x.x.', h: 'xxxxxxxx' } },
+    atto3: { tono: 2 }, volume: 0.88,
     parti: [
       { accordi: 'I IV V I I IV V V',
         melodia: `1' . 1' . 1' 3' 5' . | 6' . 6' . 6' 5' 4' . | 5' . 5' . 7' . 2'' . | 1'' - - . 5' . . . |
@@ -224,8 +246,8 @@ export const BRANI = {
     bpm: 108, tonica: 'D5', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.5, staccato: 0.5 }, seconda: { tipo: 'terze', onda: 0.25 },
     basso: 'R . . 5 . . R .', ritmica: '..x..x.x',
-    batteria: { 1: { k: 'x..x..x.', h: '.x.x.x.x' }, 2: { k: 'x..x..x.', s: '....x...', c: '..x...x.', h: '.x.x.x.x' } },
-    atto3: { tempo: 1.06 }, volume: 1.14,
+    batteria: { 1: { k: 'x..x..x.', h: '.x.x.x.x' }, 2: { k: 'x..x..x.', s: '....x...', c: '..x...x.', h: '.x.x.x.x' }, 3: { k: 'x..x..x.', s: '....x..g', c: '..x...x.', h: 'xxxxxxxx', t: '.......x' } },
+    atto3: { tempo: 1.06 }, volume: 1.19,
     parti: [
       { accordi: 'I IV V7 I I IV V7 I',
         melodia: `5 . . 3 . . 1 . | 4 . . 6 . . 1' . | 7 . . 5 . . 2 . | 3 . 5 . 1' . . . |
@@ -242,7 +264,7 @@ export const BRANI = {
     bpm: 118, tonica: 'G4', modo: 'maggiore', metro: 4, swing: 0.1,
     lead: { onda: 0.25, staccato: 0.55 }, seconda: { tipo: 'eco', onda: 0.125 },
     basso: 'R . R 8 . 5 7 .', ritmica: '.x...x.x',
-    batteria: { 1: { k: 'x..x..x.', h: 'x.x.x.x.' }, 2: { k: 'x..x..x.', s: '..x...x.', h: 'xxxxxxx.', o: '.......x' } },
+    batteria: { 1: { k: 'x..x..x.', h: 'x.x.x.x.' }, 2: { k: 'x..x..x.', s: '..x...x.', h: 'xxxxxxx.', o: '.......x' }, 3: { k: 'x..x..x.', s: '..x.g.xg', h: 'xxxxxxx.', o: '.......x' } },
     atto3: { tempo: 1.06 }, volume: 1.1,
     parti: [
       { accordi: 'I7 I7 IV7 I7 V7 IV7 I7 V7',
@@ -260,8 +282,9 @@ export const BRANI = {
     bpm: 124, tonica: 'A4', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'eco', onda: 0.25 }, arpeggio: true,
     basso: 'R 8 R 8 R 8 R 8',
-    batteria: { 1: { k: 'x.x.x.x.', h: '.x.x.x.x' }, 2: { k: 'x.x.x.x.', c: '..x...x.', o: '.x.x.x.x' } },
-    atto3: { tono: 2 }, volume: 0.84,
+    pad: 0.5,
+    batteria: { 1: { k: 'x.x.x.x.', h: '.x.x.x.x' }, 2: { k: 'x.x.x.x.', c: '..x...x.', o: '.x.x.x.x' }, 3: { k: 'x.x.x.x.', s: '..x...x.', c: '..x...x.', o: '.x.x.x.x', h: 'x.x.x.x.' } },
+    atto3: { tono: 2 }, volume: 0.87,
     parti: [
       { accordi: 'vi IV I V vi IV I V',
         melodia: `1' . 1' 7 1' . 3' . | 1' . 6 . 4 . 6 . | 5 . 5 3 5 . 1' . | 7 - 5 - 2 - . . |
@@ -278,8 +301,8 @@ export const BRANI = {
     bpm: 150, tonica: 'E4', modo: 'maggiore', metro: 4, swing: 0,
     lead: { onda: 0.25, staccato: 0.7 }, seconda: { tipo: 'terze', onda: 0.125 },
     basso: 'R R R R R R R R', ritmica: 'x.x.x.x.',
-    batteria: { 1: { k: 'x...x...', s: '..x...x.' }, 2: { k: 'x..xx...', s: '..x...x.', h: 'xxxxxxxx' } },
-    atto3: { tono: 2 }, volume: 0.9,
+    batteria: { 1: { k: 'x...x...', s: '..x...x.' }, 2: { k: 'x..xx...', s: '..x...x.', h: 'xxxxxxxx' }, 3: { k: 'x..xx.x.', s: '..x...x.', h: 'xxxxxxxx', o: 'x.......' } },
+    atto3: { tono: 2 }, volume: 0.92,
     parti: [
       { accordi: 'I I bVII IV I I bVII V',
         melodia: `1' . 1' . 7 1' . 5 | . 5 6 . 5 3 . 1 | b7 . b7 . 6 b7 . 4 | 6 - 4 - 6 - 1' - |
@@ -295,9 +318,9 @@ export const BRANI = {
     titolo: 'Festa al Pallaio', carattere: 'festa al bar',
     bpm: 118, tonica: 'C5', modo: 'maggiore', metro: 4, swing: 0.15,
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'eco', onda: 0.25 },
-    basso: 'R 8 R 8 R 8 R 8', ritmica: '..x...x.',
-    batteria: { 1: { k: 'x...x...', c: '..x...x.' }, 2: { k: 'x...x.x.', s: '..x...x.', c: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.06 }, volume: 0.9,
+    basso: { 1: 'R . 5 . R . 5 .', 2: 'R 8 R 8 R 8 R 8' }, ritmica: '..x...x.',
+    batteria: { 1: { k: 'x...x...', c: '..x...x.' }, 2: { k: 'x...x.x.', s: '..x...x.', c: '..x...x.', h: 'x.x.x.x.' }, 3: { k: 'x...x.x.', s: '..x...x.', c: '..x...x.', h: 'xxxxxxxx' } },
+    atto3: { tempo: 1.06 }, volume: 1,
     parti: [
       { accordi: 'I iii IV V I iii IV/V I',
         melodia: `3 . 5 . 1' . 5 . | 3 . 5 . 7 . 5 . | 4 . 6 . 1' . 2' . | 1' - 7 - 5 . . . |
@@ -315,7 +338,7 @@ export const BRANI = {
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'terze', onda: 0.25 },
     basso: 'R . . 5 . .', ritmica: '.xx.xx',
     batteria: { 1: { h: '..x..x' }, 2: { k: 'x..x..', h: 'x.xx.x' }, finale: { k: 'x..x..', s: '..x.xx', h: 'xxxxxx' } },
-    atto3: { tempo: 1.07 }, volume: 0.91,
+    atto3: { tempo: 1.07 }, volume: 1.13,
     parti: [
       { accordi: 'I IV V7 I I IV V7 I',
         melodia: `5 . 5 1' . 5 | 6 . 6 1' . 6 | 7 . 2' 5 . 7 | 1' . 5 3 . 1 |
@@ -331,9 +354,9 @@ export const BRANI = {
     titolo: 'Il grande saggio', carattere: 'quiz, rilassata e sorniona',
     bpm: 100, tonica: 'F4', modo: 'maggiore', metro: 4, swing: 0.25,
     lead: { onda: 0.25, staccato: 0.6 }, seconda: { tipo: 'eco', onda: 0.125 },
-    basso: 'R . 3 . 5 . 6 .', ritmica: '...x...x',
-    batteria: { 1: { h: '..x...x.' }, 2: { k: 'x...x...', s: '......x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.05 }, volume: 1.26,
+    basso: { 1: 'R - - . 5 - - .', 2: 'R . 3 . 5 . a .' }, ritmica: '...x...x', pad: 0.8,
+    batteria: { 1: { h: 'x.xxx.xx' }, 2: { k: 'x...x...', s: '......x.', h: 'x.xxx.xx' }, 3: { k: 'x...x...', s: '..g...x.', h: 'x.xxx.xx' } },
+    atto3: { tempo: 1.05 }, volume: 1.37,
     parti: [
       { accordi: 'Imaj7 vi7 ii7 V7 iii7 VI7 ii7 V7',
         melodia: `5 . 3 . . 5 3 . | 6 . 1' . 6 . 5 . | 4 . 6 . . 4 6 . | 5 - - . 4 . 2 . |
@@ -348,10 +371,10 @@ export const BRANI = {
   guardie: {
     titolo: 'Guardie e ladri', carattere: 'guardie e ladri, comica e staccata',
     bpm: 126, tonica: 'Bb4', modo: 'maggiore', metro: 4, swing: 0,
-    lead: { onda: 0.25, staccato: 0.4 }, seconda: { tipo: 'eco', onda: 0.125 },
+    lead: { onda: 0.25, staccato: 0.4, volume: 1.3 }, seconda: { tipo: 'eco', onda: 0.125 },
     basso: 'R . 5 . R . 5 .', ritmica: '..x...x.',
-    batteria: { 1: { k: 'x...x...', h: '..x...x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' } },
-    atto3: { tempo: 1.07 }, volume: 1.14,
+    batteria: { 1: { k: 'x...x...', h: '..x...x.' }, 2: { k: 'x...x...', s: '..x...x.', h: 'x.x.x.x.' }, 3: { k: 'x...x.x.', s: '..x...x.', h: 'xxxxxxxx', t: '.......x' } },
+    atto3: { tempo: 1.07 }, volume: 1.22,
     parti: [
       { accordi: 'I I IV I II7 V7 I V7',
         melodia: `1 . 3 . 5 . 5 . | 6 5 #4 5 1' . . . | 6 . 4 . 6 . 1' . | 5 4 3 2 1 . . . |
@@ -368,8 +391,8 @@ export const BRANI = {
     titolo: 'Capitan Ghiori', carattere: 'canzone da marinai, in 6/8',
     bpm: 108, tonica: 'D5', modo: 'minore', metro: '6/8', swing: 0,
     lead: { onda: 0.5, staccato: 0.6 }, seconda: { tipo: 'terze', onda: 0.25 },
-    basso: 'R . . 5 . .', ritmica: '.xx.xx',
-    batteria: { 1: { k: 'x..x..', h: '..x..x' }, 2: { k: 'x..x..', s: '...x..', h: 'x.xx.x' }, finale: { k: 'x..x..', s: '..x.xx', h: 'xxxxxx' } },
+    basso: 'R . . 5 . .', ritmica: '.xx.xx', pad: 0.6,
+    batteria: { 1: { k: 'x..x..', h: '..x..x' }, 2: { k: 'x..x..', s: '...x..', h: 'x.xx.x' }, 3: { k: 'x..x..', s: '...x.g', h: 'xxxxxx' }, finale: { k: 'x..x..', s: '..x.xx', h: 'xxxxxx' } },
     atto3: { tempo: 1.07 }, volume: 1,
     parti: [
       { accordi: 'i i bVII bVII i i V7 i',
