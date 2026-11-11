@@ -951,6 +951,87 @@ function sfondoDisco(c) {
   c.fillStyle = gradR(c, 240, 160, 150, 330, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(5,0,20,0.45)']]); c.fillRect(0, 0, 480, 270);
 }
 
+// ------------------------------------------------------------
+//  IL BAR DEL PALLAIO (Il Panino di Marsupino), disegnato dalla foto dell'utente (scheda 2): il
+//  bancone col banco frigo e le bottiglie in fondo a sinistra, la vetrata coi telai di legno e la siepe
+//  fuori, il tetto di lamiera bianca coi neon, il pilastro bianco, i tavolini col panno verde e le
+//  sedie di plastica, il pavimento a mattonelle. Davanti: il tavolone con la tovaglia bianca e la
+//  panca arancione (texture a parte, 'tavolaPallaio': Marsupino ci sta dietro).
+// ------------------------------------------------------------
+function sfondoPallaioBar(c) {
+  const r = casuale(77);
+  // il tetto di lamiera, in prospettiva, coi neon
+  c.fillStyle = gradL(c, 0, 0, 0, 52, [[0, '#e8eaee'], [1, '#c8ccd4']]); c.fillRect(0, 0, 480, 52);
+  for (let x = -200; x < 700; x += 22) { c.beginPath(); c.moveTo(x, 0); c.lineTo(240 + (x - 240) * 0.55, 52); tratto(c, 'rgba(120,124,136,0.35)', 0.8); }
+  for (const [x, y, w] of [[40, 14, 50], [190, 22, 44], [330, 16, 50]]) {
+    c.save(); c.globalCompositeOperation = 'lighter'; alone(c, x + w / 2, y + 3, w * 0.7, '#ffffff', 0.35); c.restore();
+    rrect(c, x, y, w, 4, 2); c.fillStyle = '#ffffff'; c.fill(); tratto(c, '#9a9ea8', 0.6);
+  }
+  c.fillStyle = '#f4f4f0'; c.fillRect(0, 50, 480, 4);
+  // la vetrata a destra: telai di legno, la siepe verde fuori e il cielo sopra
+  c.fillStyle = gradL(c, 0, 54, 0, 82, [[0, '#cfe4f2'], [1, '#e8f0f4']]); c.fillRect(150, 54, 330, 30);
+  for (let i = 0; i < 420; i++) {
+    const x = 150 + r() * 330, y = 74 + r() * 50;
+    ellisse(c, x, y, 3 + r() * 4, 2.5 + r() * 3); c.fillStyle = ['#3f7a34', '#5a9a40', '#2f6228', '#78b04e'][Math.floor(r() * 4)]; c.fill();
+  }
+  c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(150, 54, 330, 76);
+  c.fillStyle = '#c07a2a';
+  for (let x = 150; x <= 480; x += 30) c.fillRect(x, 54, 3, 78);
+  c.fillRect(150, 54, 330, 3); c.fillRect(150, 92, 330, 2);
+  c.fillStyle = '#8a5418'; c.fillRect(150, 128, 330, 4);
+  c.fillStyle = '#6a3a1a'; c.fillRect(150, 132, 330, 10);
+  // il bar in fondo a sinistra: la parete di legno, gli scaffali con le bottiglie, l'orologio
+  c.fillStyle = gradL(c, 0, 54, 0, 142, [[0, '#c98a42'], [1, '#a86a2a']]); c.fillRect(0, 54, 152, 88);
+  c.fillStyle = '#f4f0e6'; c.fillRect(6, 64, 140, 46);
+  for (const y of [78, 94, 108]) { c.fillStyle = '#d8d0c0'; c.fillRect(6, y, 140, 2); }
+  for (const y of [64, 80, 96]) for (let x = 10; x < 142; x += 5 + r() * 3) {
+    const h = 8 + r() * 5, col = ['#3a6a2a', '#8a2a1a', '#d8a030', '#2a3a6a', '#e8e0c0', '#6a3a1a'][Math.floor(r() * 6)];
+    rrect(c, x, y + 14 - h, 3.2, h, 1); c.fillStyle = col; c.fill();
+  }
+  ellisse(c, 42, 60, 6, 6); c.fillStyle = '#ffffff'; c.fill(); tratto(c, '#5a5a60', 1);
+  c.beginPath(); c.moveTo(42, 60); c.lineTo(42, 56.5); c.moveTo(42, 60); c.lineTo(44.5, 61); tratto(c, '#2a2a30', 0.8);
+  rrect(c, 116, 96, 14, 10, 1); c.fillStyle = '#2a2a30'; c.fill(); c.fillStyle = '#5ab4ff'; c.fillRect(118, 98, 10, 6);
+  // il banco: piano di legno e il fronte a piastrelle con la greca
+  c.fillStyle = '#7a4418'; c.fillRect(0, 110, 156, 5);
+  c.fillStyle = '#f0e6d0'; c.fillRect(0, 115, 156, 27);
+  for (let x = 0; x < 156; x += 8) { poli(c, [[x, 124], [x + 4, 120], [x + 8, 124], [x + 4, 128]]); c.fillStyle = '#c8962a'; c.fill(); }
+  c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(0, 115, 156, 2);
+  // il pavimento a mattonelle beige, in prospettiva
+  c.fillStyle = gradL(c, 0, 142, 0, 270, [[0, '#d8ccb4'], [1, '#e8dcc4']]); c.fillRect(0, 142, 480, 128);
+  for (let i = 0; i < 9; i++) { const y = 142 + Math.pow(i / 8, 1.6) * 128; c.fillStyle = 'rgba(120,100,70,0.35)'; c.fillRect(0, y, 480, 0.8); }
+  for (let x = -600; x < 1100; x += 34) { c.beginPath(); c.moveTo(240 + (x - 240) * 0.35, 142); c.lineTo(x, 270); tratto(c, 'rgba(120,100,70,0.3)', 0.7); }
+  // il pilastro bianco
+  c.fillStyle = '#f6f6f2'; c.fillRect(326, 50, 12, 130); c.fillStyle = '#d8d8d2'; c.fillRect(335, 50, 3, 130);
+  // i tavolini col panno verde e le sedie di plastica bianche e nere
+  const sedia = (x, y, col) => {
+    rrect(c, x - 6, y - 16, 12, 10, 3); c.fillStyle = col; c.fill(); tratto(c, 'rgba(0,0,0,0.35)', 0.6);
+    c.fillStyle = col; c.fillRect(x - 6, y - 7, 12, 3); c.fillRect(x - 5.5, y - 4, 1.6, 8); c.fillRect(x + 4, y - 4, 1.6, 8);
+  };
+  const tavolino = (x, y, w, panno) => {
+    c.fillStyle = '#2a2a30'; c.fillRect(x - w / 2 + 2, y, 1.6, 14); c.fillRect(x + w / 2 - 4, y, 1.6, 14);
+    rrect(c, x - w / 2, y - 3, w, 4, 1); c.fillStyle = '#2a2a30'; c.fill();
+    c.fillStyle = panno; c.fillRect(x - w / 2 + 2, y - 3, w - 4, 2.4);
+  };
+  for (const [x, y, w, cols] of [[64, 152, 34, ['#f4f4f0', '#f4f4f0']], [200, 150, 30, ['#2a2a30', '#f4f4f0']], [272, 154, 34, ['#f4f4f0', '#2a2a30']], [400, 156, 36, ['#2a2a30', '#2a2a30']], [452, 162, 26, ['#f4f4f0', '#f4f4f0']]]) {
+    sedia(x - w / 2 - 4, y + 10, cols[0]); tavolino(x, y, w, x > 420 ? '#f4f4f0' : '#2f8a4a'); sedia(x + w / 2 + 4, y + 10, cols[1]);
+  }
+  // un tavolo lungo con la tovaglia bianca, più indietro a sinistra, e la sua panca
+  rrect(c, 4, 168, 120, 14, 2); c.fillStyle = '#fafaf6'; c.fill(); tratto(c, '#c8c8c0', 0.8);
+  c.fillStyle = '#2f6a3a'; c.fillRect(14, 182, 2, 14); c.fillRect(110, 182, 2, 14);
+  rrect(c, 0, 190, 130, 6, 1.5); c.fillStyle = '#e8a030'; c.fill(); tratto(c, '#a86a1a', 0.8);
+}
+
+// il tavolone davanti: tovaglia bianca (col bordo che pende) e la panca arancione con le gambe verdi
+function tavolaPallaio(c) {
+  c.fillStyle = '#2f6a3a'; c.fillRect(30, 30, 4, 40); c.fillRect(446, 30, 4, 40);
+  rrect(c, 0, 0, 480, 34, 3); c.fillStyle = gradL(c, 0, 0, 0, 34, [[0, '#ffffff'], [1, '#e8e8e2']]); c.fill(); tratto(c, '#b8b8b0', 1);
+  for (let x = 6; x < 480; x += 7) { c.fillStyle = 'rgba(160,160,150,0.18)'; c.fillRect(x, 2, 0.8, 30); }
+  for (let x = 0; x < 480; x += 3.4) { ellisse(c, x, 4 + (x * 7) % 24, 0.5, 0.5); c.fillStyle = 'rgba(160,160,150,0.25)'; c.fill(); }
+  c.fillStyle = 'rgba(0,0,0,0.08)'; c.fillRect(0, 30, 480, 4);
+  rrect(c, -6, 38, 492, 12, 2); c.fillStyle = gradL(c, 0, 38, 0, 50, [[0, '#f2b040'], [1, '#d88a20']]); c.fill(); tratto(c, '#9a5a12', 1);
+  for (const [x, w] of [[40, 30], [120, 20], [260, 40], [380, 26]]) { c.fillStyle = 'rgba(150,80,10,0.35)'; c.fillRect(x, 42, w, 0.8); }
+}
+
 // ogni sfondo (e il suo bancone o tavolo) è un gruppo a sé: si crea quando serve (vedi gruppoPigro)
 const SFONDI = [
   ['bgPub', 480, 270, sfondoPub], ['bancone', 480, 112, bancone], ['bgStrada', 480, 270, sfondoStrada],
@@ -959,6 +1040,7 @@ const SFONDI = [
   ['portoneAperto', 60, 54, (c) => portone(c, 12, 2, true)], ['bgSpiaggia', 480, 270, sfondoSpiaggia],
   ['bgCasino', 480, 270, sfondoCasino], ['tavoloVerde', 480, 170, tavoloVerde], ['bgParco', 480, 270, sfondoParco],
   ['bgStradaToscana', 480, 270, sfondoStradaToscana], ['bgParcheggio', 480, 270, sfondoParcheggio], ['bgDisco', 480, 270, sfondoDisco],
+  ['bgPallaioBar', 480, 270, sfondoPallaioBar], ['tavolaPallaio', 480, 50, tavolaPallaio],
 ];
 
 export function creaSfondi(scene) {

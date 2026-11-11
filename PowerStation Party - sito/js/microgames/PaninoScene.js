@@ -1,17 +1,18 @@
-// Microgioco 4: "Il Panino di Marsupino" - prendi al volo quello che lancia Marsupino. IMPILA!
+// Microgioco 4: "Il Panino di Marsupino" - al bar del Pallaio, Marsupino fa i panini. IMPILA!
 //
-//  Il pane scorre a destra e sinistra sul bancone. Quello che prendi si impila
-//  davvero: si prende in cima alla pila, e più la pila è alta più ondeggia.
-//  Ogni panino è l'ORDINE di un cliente (un personaggio, in alto): gli ingredienti vanno presi
-//  NELL'ORDINE scritto sul biglietto (prosciutto, würstel, sottiletta, ketchup, maionese: le salse
-//  arrivano come schizzi dai tubetti). Quello fuori ordine non entra (e costa un po'). Se corri
-//  troppo con la pila alta, la pila CROLLA: si perdono gli strati di sopra. Calzini, lische,
-//  ghiaccio e ciabatte rovinano il panino.
-//  Marsupino lancia la roba buona LONTANO dal pane (bisogna correre: chi sta fermo non prende
-//  niente). Tre atti: si comincia piano; poi il DOPPIO LANCIO (due cose insieme); alla fine
-//  MARSUPINO SI ARRABBIA e le schifezze te le tira addosso.
-//  Cosa lancia e dove (rispetto al pane), gli ordini e i clienti sono uguali per tutti i
-//  giocatori del round (seme).
+//  Ispirato a Papa's Burgeria e a Stack (scheda 2: "la grafica è da rivedere, da migliorare la
+//  fluidità: ispirati a giochi esistenti; il Pallaio come ambientazione"). Al bar del Pallaio un
+//  cliente ordina un panino (il biglietto in alto: gli ingredienti dal basso in alto). Marsupino,
+//  dietro il tavolone, va avanti e indietro con l'ingrediente sopra la testa: quando è sopra al
+//  panino, clic / tocco / SPAZIO e lo lascia cadere. Più cade al centro, più vale (PERFETTO, BUONO,
+//  STORTO); storto, la pila si sposta e il prossimo va centrato sulla nuova cima, come in Stack.
+//  Fuori dal panino: cade sulla tovaglia e va ripreso. Se la pila pende troppo, CROLLA e si
+//  ricomincia l'ordine. Ogni tanto Marsupino ha in mano una schifezza (calzino, lisca, ghiaccio,
+//  ciabatta) o l'ingrediente sbagliato: NON va lasciata, dopo un attimo la cambia. Finito l'ordine,
+//  il pane di sopra, e il panino va al cliente.
+//  Tre atti: si comincia piano; ORDINI DA QUATTRO! (più veloce, e le schifezze); MARSUPINO SI
+//  ARRABBIA! (ordini da cinque, e va avanti e indietro a scatti).
+//  Ordini, clienti e cosa ha in mano sono uguali per tutti i giocatori del round (seme).
 import { MicrogiocoBase } from './MicrogiocoBase.js';
 import { Audio } from '../audio.js';
 import { Sessione, DOPPIONE } from '../sessione.js';
@@ -20,16 +21,16 @@ import { casuale } from '../grafica/base.js';
 import { ritratto } from '../sprites.js';
 import { txt, im, scalaDi, scritta, stelle, fumo, pannello, scuoti, lerp, caso, quanti, colpetto, fumetto, vibra, puntiHud, numero } from '../fx.js';
 
-const Y_PANE = 250;                     // dove appoggia il pane sul bancone
-const X_MIN = 36, X_MAX = 444;          // corsa del pane
-const H_PANE = 8;                       // altezza della mollica sopra il bancone
-const Y_MARS = 212, TAGLIA_MARS = 1.1;  // Marsupino, dietro al bancone (il pancione ci si appoggia sopra)
+const Y_TAVOLA = 222;                   // dove inizia il tavolone (la texture 'tavolaPallaio')
+const Y_PANE = 236;                     // dove appoggia il pane sulla tovaglia
+const X_PANE = 240;
+const H_PANE = 8;                       // altezza della mollica sopra la tovaglia
+const Y_MARS = 236, TAGLIA_MARS = 1.05; // Marsupino, dietro al tavolone
+const Y_MANO = 74;                      // l'ingrediente sopra la sua testa
 const INGREDIENTI = ['prosciutto', 'wurstel', 'sottiletta', 'ketchup', 'maionese'];
 const BIGLIETTO = { x: 254, y: 30, passo: 36 };   // il biglietto dell'ordine, in alto: centro e passo tra le icone
-const LANCIABILI = ['prosciutto', 'wurstel', 'sottiletta'];
-const SALSE = ['ketchup', 'maionese'];
 const SBAGLIATI = ['calzino', 'lisca', 'ghiaccio', 'ciabatta'];
-const SPESSORE = { prosciutto: 4, wurstel: 5.5, sottiletta: 3, ketchup: 3, maionese: 3 };
+const SPESSORE = { prosciutto: 4, wurstel: 5.5, sottiletta: 3, ketchup: 3, maionese: 3, sopra: 12 };
 
 export class PaninoScene extends MicrogiocoBase {
   constructor() { super('panino'); }
@@ -41,44 +42,32 @@ export class PaninoScene extends MicrogiocoBase {
     this.rnd = casuale(seme);
     this.semeOrdini = seme;
     this.nOrdine = 0;
-    this.crolli = 0;
-    this.fuoriOrdine = 0;
     this.nAtto = 0;
     this.punti = 0;
     this.panini = 0;
     this.presi = 0;
+    this.perfetti = 0;
+    this.mancati = 0;
+    this.crolli = 0;
     this.schifezze = 0;
-    this.oggetti = [];        // cose lanciate: { tipo, img, stato: 'lancio'|'caduta'|'fatto', vel, giro, yPrec }
-    this.tLancio = 1;
-    this.tTubetto = 2.2;
+    this.fase = 0;            // l'andirivieni di Marsupino (radianti)
+    this.stato = 'attesa';    // 'pronto' (ha in mano qualcosa) | 'cade' | 'attesa' (tra un pezzo e l'altro) | 'aspetta' (panino nuovo)
+    this.tAttesa = 0.6;
+    this.tCambio = 0;         // con la schifezza in mano: tra quanto la cambia
     this.tFrase = 5;
     this.tEspr = 0;
-    // pane: posizione, velocità e "obiettivo" per mouse e dito
-    this.x = 240;
-    this.vel = 0;
-    this.velPrec = 0;
-    this.obiettivoX = 240;
-    this.modo = 'tastiera';
-    this.piega = 0;           // inclinazione della pila (spostamento per unità di altezza)
-    this.vPiega = 0;
-    // (la scena viene riusata da una partita all'altra: si azzera anche quello che resta in memoria)
-    this.hud = null;
-    this.ditoX = null;
-    this.tPosa = 0;
     this.dopo = null;
+    this.hud = null;          // (la scena viene riusata: l'HUD va riscritto da capo)
+    this.inMano = null;
 
-    im(this, 0, 0, 'bgBar').setOrigin(0);
-    txt(this, 171, 60, 'PANINI', { size: 7, color: '#f6f1e0', thick: 0 });
-    txt(this, 171, 85, 'Crudo 4\nWürstel 4\nMarsupino 6', { size: 7, color: '#e8efe6', thick: 0, spacing: 0 });
-    txt(this, 423, 70, 'APERTO', { size: 7, color: '#c0392b', thick: 0 });
-
+    im(this, 0, 0, 'bgPallaioBar').setOrigin(0);
     this.mars = im(this, 240, Y_MARS, 'marsupino_normale', TAGLIA_MARS).setOrigin(0.5, 1).setDepth(5);
-    im(this, 0, 196, 'banconeBar').setOrigin(0).setDepth(10);
+    im(this, 0, Y_TAVOLA, 'tavolaPallaio').setOrigin(0).setDepth(10);
+    // la guida: una riga tratteggiata dal pezzo in mano alla cima della pila (aiuta a mirare)
+    this.guida = this.add.graphics().setDepth(25);
 
     // l'ordine del cliente, in alto: la sua faccia e il biglietto con gli ingredienti in fila
-    // (da sinistra a destra = dal basso in alto). Il prossimo da prendere è il più grande, sul
-    // tondo giallo che pulsa; quelli già messi hanno la spunta, gli altri sono sbiaditi.
-    // (Grandi per il telefono: erano a 0,75 e tutti uguali.)
+    // (da sinistra a destra = dal basso in alto); il prossimo sul tondo giallo, i fatti con la spunta
     this.hudPanino = [pannello(this, BIGLIETTO.x, BIGLIETTO.y, 214, 34, { depth: 1000 })];
     this.fondoProssimo = this.add.graphics().setDepth(1001);
     this.hudPanino.push(this.fondoProssimo);
@@ -96,65 +85,45 @@ export class PaninoScene extends MicrogiocoBase {
     this.hudPanino.push(this.anello);
     this.tweens.add({ targets: this.anello, alpha: 0.35, duration: 260, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: this.fondoProssimo, alpha: 0.55, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-    this.avvisoPila = txt(this, 0, 0, 'OCCHIO!', { size: 8, color: '#ff6b5a', depth: 1005 }).setVisible(false);
-    this.nuovoOrdine();
-    this.nuovoPane();
     this.testoPunti = txt(this, 474, 36, '', { ox: 1, depth: 1001, size: 9 });
     this.testoPanini = txt(this, 474, 49, '', { ox: 1, depth: 1001, size: 8, color: '#ffe14a' });
     this.hudPanino.push(this.testoPunti, this.testoPanini);
-    this.tubi = new Set();    // tubetti in volo (per nasconderli nel finale)
+    this.nuovoOrdine();
+    this.nuovoPane();
 
-    // comandi: frecce o A/D; il mouse muove il pane dove punta; il dito lo trascina
-    this.tasti = this.input.keyboard.addKeys({ sx: 'LEFT', dx: 'RIGHT', a: 'A', d: 'D' });
-    const xMondo = (p) => this.cameras.main.getWorldPoint(p.x, p.y).x;
-    this.input.on('pointerdown', (p) => {
-      if (!p.wasTouch) return;
-      this.modo = 'dito';
-      this.ditoX = xMondo(p);
-      this.obiettivoX = this.x;
-    });
-    this.input.on('pointerup', (p) => { if (p.wasTouch) this.ditoX = null; });
-    this.input.on('pointermove', (p) => {
-      const x = xMondo(p);
-      if (p.wasTouch) {
-        if (!p.isDown || this.ditoX == null) return;
-        this.obiettivoX = Phaser.Math.Clamp(this.obiettivoX + (x - this.ditoX) * this.cfg.guadagnoDito, X_MIN, X_MAX);
-        this.ditoX = x;
-      } else {
-        this.modo = 'mouse';
-        this.obiettivoX = Phaser.Math.Clamp(x, X_MIN, X_MAX);
-      }
-    });
+    // comandi: clic, tocco o SPAZIO (anche INVIO / freccia giù) per lasciarlo cadere
+    this.input.on('pointerdown', () => this.lascia());
+    for (const t of ['SPACE', 'ENTER', 'DOWN']) this.input.keyboard.on('keydown-' + t, (e) => { if (!e.repeat) this.lascia(); });
   }
 
-  // dopo una pausa il dito che trascinava non c'è più
-  alRientro() { this.ditoX = null; }
-
-  // L'ordine nuovo: il cliente (un personaggio a caso, non chi gioca) e la ricetta, lunga quanto
-  // dice l'atto, con gli ingredienti in un ordine preciso. Dipende solo dal seme e da quale ordine
-  // è (il primo, il secondo...): tutti trovano gli stessi.
+  // L'ordine nuovo: il cliente (un personaggio a caso, non chi gioca) e la ricetta, lunga quanto dice
+  // l'atto. Dipende solo dal seme e da quale ordine è: tutti trovano gli stessi.
   nuovoOrdine() {
-    const c = this.cfg, r = casuale((this.semeOrdini ^ (0x9e3779b1 * (this.nOrdine + 1))) >>> 0);
+    const r = casuale((this.semeOrdini ^ (0x9e3779b1 * (this.nOrdine + 1))) >>> 0);
     const lunga = this.atto.ricetta ?? 5, lista = INGREDIENTI.map((k) => [r(), k]).sort((a, b) => a[0] - b[0]).map((x) => x[1]).slice(0, lunga);
-    const io = this.giocatore.id.replace(DOPPIONE, ''), tutti = CONFIG.personaggiGiocabili.map((g) => g.id).filter((id) => id !== io);
+    const io = this.giocatore.id.replace(DOPPIONE, ''), tutti = CONFIG.personaggiGiocabili.map((g) => g.id).filter((id) => id !== io && id !== 'marsupino');
     this.nOrdine++;
     this.ordine = { lista, cliente: tutti[Math.floor(r() * tutti.length)], inizio: this.trascorso };
     this.faccia?.destroy();
     this.faccia = ritratto(this, BIGLIETTO.x - 126, BIGLIETTO.y, this.ordine.cliente, 30).setDepth(1001);
     colpetto(this, this.faccia, 1.3, 1.3);
+    // il cliente che aspetta, seduto al tavolino verde in fondo
+    this.cliente?.destroy();
+    this.cliente = im(this, 404, 168, `${this.ordine.cliente}_normale`, 0.42).setOrigin(0.5, 1).setDepth(3);
     if (this.strati) this.aggiornaRicetta();
   }
 
-  // quanti ingredienti dell'ordine sono già nel panino (nella pila entrano solo quelli giusti, in fila)
   get fatti() { return this.strati.length; }
-  get prossimo() { return this.ordine.lista[this.fatti] ?? null; }
+  // quello che serve adesso: un ingrediente dell'ordine, o il pane di sopra alla fine
+  get prossimo() { return this.ordine.lista[this.fatti] ?? 'sopra'; }
 
   // pane nuovo (fondo): l'ordine resta, si ricomincia dal primo ingrediente
   nuovoPane() {
     this.strati = [];
-    this.piega = this.vPiega = 0;
+    this.cimaX = 0;           // la cima della pila, rispetto al centro del pane (si sposta coi pezzi storti)
     this.inizioPanino = this.trascorso;
-    this.pila = this.add.container(this.x, Y_PANE).setDepth(30);
+    this.pila?.destroy();
+    this.pila = this.add.container(X_PANE, Y_PANE).setDepth(30);
     this.pila.add(this.add.ellipse(0, 1, 50, 6, 0x000000, 0.2));
     const pane = im(this, 0, 1, 'paneSotto').setOrigin(0.5, 1);
     this.pila.add(pane);
@@ -185,304 +154,209 @@ export class PaninoScene extends MicrogiocoBase {
     }
   }
 
-  aggiorna(dt, p) {
-    const A = this.atto, n = this.cfg.atti.indexOf(A);
+  aggiorna(dt) {
+    const c = this.cfg, A = this.atto, n = c.atti.indexOf(A);
     if (n !== this.nAtto) {
       this.nAtto = n;
       if (A.nome) {
         Audio.sfx('bonus');
         scritta(this, 240, 110, A.nome, { size: 14, color: '#ffe14a', durata: 1000, depth: 1005 });
-        if (A.mira) this.espressione('rabbia', 1);
+        if (A.scatti) this.espressione('rabbia', 1);
       }
     }
-    this.muoviPane(dt);
-    this.ondeggia(dt);
-    this.lanci(dt, p);
-    this.cadute(dt);
-    this.tubetti(dt, p);
+    // Marsupino va avanti e indietro (nell'ultimo atto a scatti: ora svelto, ora piano)
+    const vel = A.vel * (A.scatti ? 1 + A.scatti * Math.sin(this.trascorso * 2.3) : 1);
+    this.fase += vel * dt;
+    this.mars.x = X_PANE + Math.sin(this.fase) * c.corsa;
+    this.mars.y = Y_MARS - Math.abs(Math.sin(this.fase * 4)) * 1.5;
+
+    if (this.stato === 'attesa') {
+      this.tAttesa -= dt;
+      if (this.tAttesa <= 0) this.prendiInMano();
+    } else if (this.stato === 'pronto' && this.inMano) {
+      this.inMano.setPosition(this.mars.x, Y_MANO + Math.sin(this.trascorso * 6) * 1.2);
+      if (this.inMano.sbagliato) {
+        this.tCambio -= dt;
+        if (this.tCambio <= 0) this.cambia();
+      }
+    }
+    this.disegnaGuida();
     this.umore(dt);
-    // (le scritte si ridisegnano solo quando cambiano: rifarle a ogni fotogramma costa)
     const hud = `${this.punti}|${this.panini}`;
     if (hud !== this.hud) {
       this.hud = hud;
       this.testoPunti.setText(puntiHud(this.punti));
-      this.testoPanini.setText(`PANINI: ${this.panini}/${this.cfg.obiettivoPanini}`);
-      this.testoPanini.setColor(this.panini >= this.cfg.obiettivoPanini ? '#7dff9a' : '#ffe14a');
+      this.testoPanini.setText(`PANINI: ${this.panini}/${c.obiettivoPanini}`).setColor(this.panini >= c.obiettivoPanini ? '#7dff9a' : '#ffe14a');
     }
   }
 
-  muoviPane(dt) {
-    const c = this.cfg, T = this.tasti;
-    const dir = (T.dx.isDown || T.d.isDown ? 1 : 0) - (T.sx.isDown || T.a.isDown ? 1 : 0);
-    if (dir) {
-      this.modo = 'tastiera';
-      this.vel += (dir * c.velPane - this.vel) * Math.min(1, dt * 12);
-    } else if (this.modo === 'tastiera') this.vel -= this.vel * Math.min(1, dt * 14);
-    else this.vel = Phaser.Math.Clamp((this.obiettivoX - this.x) * 14, -c.velPane, c.velPane);
-    this.x = Phaser.Math.Clamp(this.x + this.vel * dt, X_MIN, X_MAX);
-    if (this.x === X_MIN || this.x === X_MAX) this.vel = 0;
-    if (this.modo === 'tastiera') this.obiettivoX = this.x;
-    this.pila.x = this.x;
+  // il pezzo nuovo in mano a Marsupino: quello che serve, oppure (dal secondo atto) una schifezza o un
+  // altro ingrediente, da NON lasciare. Pescato col seme: uguale per tutti
+  prendiInMano() {
+    const A = this.atto, r = this.rnd, serve = this.prossimo;
+    let tipo = serve, sbagliato = false;
+    const giusto = this.forzaGiusto;
+    this.forzaGiusto = false;
+    if (!giusto && serve !== 'sopra' && this.fatti > 0 && r() < A.sbagliati) {
+      sbagliato = true;
+      tipo = r() < 0.6 ? SBAGLIATI[Math.floor(r() * SBAGLIATI.length)] : caso(INGREDIENTI.filter((k) => k !== serve));
+    }
+    const key = tipo === 'sopra' ? 'paneSopra' : 'pan_' + tipo;
+    this.inMano = im(this, this.mars.x, Y_MANO, key, 1.25).setDepth(26);
+    this.inMano.tipo = tipo;
+    this.inMano.sbagliato = sbagliato;
+    this.tCambio = this.cfg.tempoSbagliato;
+    this.stato = 'pronto';
+    this.inMano.setScale(this.inMano.scaleX);
+    this.tweens.add({ targets: this.inMano, scale: { from: this.inMano.scaleX * 0.5, to: this.inMano.scaleX }, duration: 160, ease: 'Back.out' });
+    if (sbagliato) this.mars.setTexture('marsupino_felice');
   }
 
-  // la pila è una molla spinta dalle accelerazioni del pane: più è alta, più è morbida.
-  // Se pende troppo (con almeno due strati) crolla; un po' prima lampeggia OCCHIO!
-  ondeggia(dt) {
-    const c = this.cfg, acc = (this.vel - this.velPrec) / Math.max(dt, 0.001);
-    this.velPrec = this.vel;
-    const k = c.rigidita / (1 + this.strati.length * 0.15);
-    this.vPiega += (-k * this.piega - c.smorzamento * this.vPiega - acc * c.ondeggio) * dt;
-    this.piega = Phaser.Math.Clamp(this.piega + this.vPiega * dt, -0.45, 0.45);
-    for (const s of this.strati) { s.img.x = this.piega * s.h; s.img.rotation = this.piega * 0.4; }
-    const limite = c.crollo / (1 + Math.max(0, this.strati.length - 2) * c.crolloPerStrato);
-    const pericolo = this.strati.length >= 2 && Math.abs(this.piega) > limite * 0.7;
-    this.avvisoPila.setVisible(pericolo && Math.floor(this.trascorso * 8) % 2 === 0).setPosition(this.x + this.piega * this.altezza, Y_PANE - this.altezza - 22);
-    if (this.strati.length >= 2 && Math.abs(this.piega) > limite) this.crolla();
+  // Marsupino si accorge della schifezza e la butta: al suo posto quello che serve
+  cambia() {
+    const vecchio = this.inMano;
+    this.tweens.add({ targets: vecchio, x: vecchio.x + 80, y: vecchio.y - 30, angle: 300, alpha: 0, duration: 380, onComplete: () => vecchio.destroy() });
+    fumo(this, vecchio.x, vecchio.y, 3, 27);
+    Audio.sfx('pof');
+    this.inMano = null;
+    this.stato = 'attesa';
+    this.tAttesa = 0.15;
+    this.forzaGiusto = true;   // (la prossima pesca dà quello che serve)
   }
 
-  // la pila crolla: cadono gli strati di sopra (e vanno ripresi)
+  // la riga tratteggiata dal pezzo alla cima della pila: verde quando è centrato
+  disegnaGuida() {
+    const g = this.guida;
+    g.clear();
+    if (this.stato !== 'pronto' || !this.inMano) return;
+    const x = this.inMano.x, cima = X_PANE + this.cimaX, d = Math.abs(x - cima), f = this.cfg.finestre;
+    const col = d <= f.perfetto ? 0x7dff9a : d <= f.buono ? 0xffe14a : 0xffffff;
+    g.lineStyle(1.2, col, d <= f.buono ? 0.9 : 0.35);
+    for (let y = Y_MANO + 12; y < Y_PANE - this.altezza - 4; y += 8) g.lineBetween(x, y, x, y + 4);
+  }
+
+  // clic / tocco / SPAZIO: Marsupino lascia cadere quello che ha in mano
+  lascia() {
+    if (!this.inCorso || this.stato !== 'pronto' || !this.inMano) return;
+    const o = this.inMano, c = this.cfg;
+    this.inMano = null;
+    this.stato = 'cade';
+    Audio.sfx('lancio');
+    const cimaY = Y_PANE - this.altezza, tempo = ((cimaY - o.y) / c.velCaduta) * 1000;
+    this.tweens.add({ targets: o, y: cimaY - 3, angle: Phaser.Math.Between(-20, 20), duration: tempo, ease: 'Quad.in', onComplete: () => this.atterra(o) });
+  }
+
+  atterra(o) {
+    const c = this.cfg, f = c.finestre, d = o.x - (X_PANE + this.cimaX), ad = Math.abs(d);
+    if (o.sbagliato) return this.schifezza(o);
+    if (ad > f.storto) return this.mancato(o, d);
+    // dentro: la qualità del colpo
+    const voto = ad <= f.perfetto ? 'perfetto' : ad <= f.buono ? 'buono' : 'storto';
+    const pt = c.punti[voto];
+    this.punti += pt;
+    this.presi++;
+    if (voto === 'perfetto') this.perfetti++;
+    // come in Stack: il pezzo resta dove è caduto (la cima si sposta); il perfetto si centra da solo
+    const dx = voto === 'perfetto' ? this.cimaX : this.cimaX + d * c.spostamento;
+    const sp = SPESSORE[o.tipo], h = this.altezza;
+    o.destroy();
+    const img = im(this, dx, -h - (o.tipo === 'sopra' ? 0 : sp / 2) + 1, o.tipo === 'sopra' ? 'paneSopra' : 'strato_' + o.tipo);
+    if (o.tipo === 'sopra') img.setOrigin(0.5, 20.5 / 22);
+    img.setAngle(voto === 'storto' ? Math.sign(d) * 6 : 0);
+    this.pila.add(img);
+    this.tweens.add({ targets: img, scaleY: { from: img.scaleY * 0.6, to: img.scaleY }, duration: 140, ease: 'Back.out' });
+    this.strati.push({ tipo: o.tipo, img, sp, x: dx });
+    this.cimaX = dx;
+    Audio.sfx(voto === 'perfetto' ? 'bonus' : 'ding');
+    const colore = { perfetto: '#7dff9a', buono: '#ffe14a', storto: '#ffb36b' }[voto];
+    scritta(this, X_PANE + dx, Y_PANE - this.altezza - 16, `${voto.toUpperCase()}! +${pt}`, { size: voto === 'perfetto' ? 11 : 9, color: colore, durata: 550 });
+    if (voto === 'perfetto') stelle(this, X_PANE + dx, Y_PANE - this.altezza, 5, 40);
+    if (voto === 'storto') this.espressione('shock', 0.4);
+    // troppo storto in tutto: crolla
+    if (Math.abs(this.cimaX) > c.crollo) return this.crolla();
+    if (o.tipo === 'sopra') return this.servi();
+    this.aggiornaRicetta();
+    this.prossimoPezzo();
+  }
+
+  prossimoPezzo() {
+    this.stato = 'attesa';
+    this.tAttesa = this.cfg.attesa;
+  }
+
+  // fuori dal panino: cade sulla tovaglia, e Marsupino ne prende un altro uguale
+  mancato(o, d) {
+    const c = this.cfg;
+    this.mancati++;
+    this.punti = Math.max(0, this.punti - c.malusMancato);
+    Audio.sfx('splat');
+    scritta(this, o.x, Y_PANE - 30, `FUORI! -${c.malusMancato}`, { size: 9, color: '#ff6b5a', durata: 550 });
+    this.tweens.add({ targets: o, x: o.x + Math.sign(d) * 30, y: Y_PANE, angle: Math.sign(d) * 160, duration: 260, ease: 'Quad.in', onComplete: () => this.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.destroy() }) });
+    this.espressione('rabbia', 0.6);
+    if (Math.random() < 0.5) fumetto(this, this.mars.x + 50, 62, caso(c.urla), 800, 40);
+    this.prossimoPezzo();
+  }
+
+  // ha lasciato cadere la schifezza: panino da buttare (l'ordine resta)
+  schifezza(o) {
+    const c = this.cfg;
+    this.schifezze++;
+    this.punti = Math.max(0, this.punti - c.malusSbagliato);
+    o.destroy();
+    Audio.sfx('bleah');
+    vibra(50);
+    scritta(this, X_PANE, Y_PANE - this.altezza - 26, `BLEAH! -${c.malusSbagliato}`, { size: 12, color: '#ff6b5a', durata: 700 });
+    fumetto(this, this.mars.x + 50, 62, caso(c.frasiSbaglio), 1000, 40);
+    this.espressione('rabbia', 0.8);
+    this.buttaPanino();
+  }
+
+  // la pila pende troppo e crolla: si ricomincia l'ordine
   crolla() {
-    const c = this.cfg, giu = Math.min(c.stratiCrollo, this.strati.length), verso = Math.sign(this.piega) || 1;
+    const c = this.cfg, verso = Math.sign(this.cimaX) || 1;
     this.crolli++;
-    this.punti -= c.malusCrollo;
-    for (let i = 0; i < giu; i++) {
-      const s = this.strati.pop();
-      const x = this.pila.x + s.img.x, y = Y_PANE + s.img.y;
-      this.pila.remove(s.img, true);
-      const img = im(this, x, y, 'strato_' + s.tipo).setDepth(31);
-      this.tweens.add({ targets: img, x: x + verso * (50 + i * 25), y: Y_PANE + 4, angle: verso * (140 + i * 60), duration: 420 + i * 60, ease: 'Quad.in', onComplete: () => this.tweens.add({ targets: img, alpha: 0, duration: 250, onComplete: () => img.destroy() }) });
-    }
-    this.piega *= 0.2; this.vPiega = 0;
+    this.punti = Math.max(0, this.punti - c.malusCrollo);
     Audio.sfx('splat');
     vibra(50);
-    scritta(this, this.x, Y_PANE - this.altezza - 30, 'CROLLA!', { size: 12, color: '#ff6b5a', durata: 600 });
-    scritta(this, this.x, Y_PANE - this.altezza - 16, `-${c.malusCrollo}`, { size: 9, color: '#ff6b5a', durata: 500 });
+    scritta(this, X_PANE, Y_PANE - this.altezza - 26, `CROLLA! -${c.malusCrollo}`, { size: 12, color: '#ff6b5a', durata: 700 });
     this.espressione('shock', 0.6);
-    this.aggiornaRicetta();
+    this.buttaPanino(verso);
   }
 
-  // --- Marsupino lancia ---
-  lanci(dt, p) {
-    const c = this.cfg, A = this.atto, r = this.rnd;
-    this.tLancio -= dt;
-    if (this.tLancio > 0) return;
-    this.tLancio = A.lancio * (0.85 + r() * 0.3);
-    const t1 = this.scegli(), x1 = this.dove(t1);
-    this.lancia(t1, x1);
-    if (r() < A.doppio) {
-      const t2 = this.scegli();
-      let x2 = this.dove(t2);
-      for (let prove = 0; prove < 6 && Math.abs(x2 - x1) < 100; prove++) x2 = this.dove(t2);
-      this.lancia(t2, x2);
-    }
+  buttaPanino(verso = 1) {
+    const pila = this.pila;
+    this.pila = null;
+    this.tweens.add({ targets: pila, x: pila.x + verso * 60, angle: verso * 70, alpha: 0, duration: 420, ease: 'Quad.in', onComplete: () => pila.destroy() });
+    this.time.delayedCall(250, () => { if (this.inCorso) { this.nuovoPane(); this.prossimoPezzo(); } });
+    this.stato = 'aspetta';
   }
 
-  // la roba buona cade lontano dal pane (bisogna correre); le schifezze a caso, o addosso
-  // al pane quando Marsupino è arrabbiato
-  dove(tipo) {
-    const c = this.cfg, r = this.rnd, A = this.atto;
-    if (SBAGLIATI.includes(tipo) && r() < (A.mira ?? 0)) return Phaser.Math.Clamp(Math.round(this.x + (r() - 0.5) * 16), 48, 432);
-    if (SBAGLIATI.includes(tipo)) return 48 + Math.round(r() * 384);
-    // a una distanza tra lontanoMin e lontanoMax dal pane, dalla parte dove c'è posto
-    const d = c.lontanoMin + r() * (c.lontanoMax - c.lontanoMin);
-    let verso = r() < 0.5 ? -1 : 1;
-    if (this.x + verso * d < 48 || this.x + verso * d > 432) verso = -verso;
-    return Phaser.Math.Clamp(Math.round(this.x + verso * d), 48, 432);
-  }
-
-  // spesso lancia proprio quello che serve adesso (così l'ordine si può sempre finire), ma anche
-  // gli altri ingredienti: quelli, fuori ordine, vanno lasciati cadere
-  scegli() {
-    const r = this.rnd, serve = this.prossimo;
-    if (r() < this.atto.sbagliati) return SBAGLIATI[Math.floor(r() * SBAGLIATI.length)];
-    if (LANCIABILI.includes(serve) && r() < this.cfg.lanciaGiusto) return serve;
-    return LANCIABILI[Math.floor(r() * LANCIABILI.length)];
-  }
-
-  // dalle mani di Marsupino in su, fuori dallo schermo; poi ricade dritto su x
-  lancia(tipo, x) {
-    const mano = x < this.mars.x ? -1 : 1;
-    const img = im(this, this.mars.x + mano * 44, 145, 'pan_' + tipo).setDepth(20);
-    const o = { tipo, img, stato: 'lancio', vel: 0, giro: Phaser.Math.Between(-120, 120), yPrec: 145 };
-    this.oggetti.push(o);
-    if (this.tEspr <= 0) { this.mars.setTexture('marsupino_felice'); this.tPosa = 0.22; } // braccia in alto: lancia
-    Audio.sfx('lancio');
-    this.tweens.add({
-      targets: img, x, y: -24, angle: Phaser.Math.Between(-220, 220), duration: 420, ease: 'Sine.out',
-      onComplete: () => { o.stato = 'caduta'; o.yPrec = img.y; o.vel = this.velCaduta; },
-    });
-  }
-
-  get velCaduta() { return lerp(this.cfg.cadutaInizio, this.cfg.cadutaFine, this.progresso); }
-
-  // --- cose in caduta: si prendono quando attraversano la cima della pila ---
-  cadute(dt) {
-    const c = this.cfg, H = this.altezza, cimaY = Y_PANE - H, cimaX = this.x + this.piega * H;
-    const presa = c.presa + this.strati.length * 0.6;
-    for (const o of this.oggetti) {
-      if (o.stato !== 'caduta') continue;
-      o.yPrec = o.img.y;
-      o.img.y += o.vel * dt;
-      o.img.angle += o.giro * dt;
-      if (o.yPrec < cimaY && o.img.y >= cimaY && Math.abs(o.img.x - cimaX) < presa) this.prendi(o, cimaX, cimaY);
-      else if (o.img.y >= Y_PANE) this.aTerra(o);
-    }
-    this.oggetti = this.oggetti.filter((o) => o.stato !== 'fatto');
-  }
-
-  prendi(o, x, y) {
-    const c = this.cfg;
-    o.stato = 'fatto';
-    o.img.destroy();
-    if (SBAGLIATI.includes(o.tipo)) return this.rovina(o.tipo);
-    if (o.tipo !== this.prossimo) {
-      // fuori ordine: non entra, rimbalza via (e il cliente storce il naso)
-      this.fuoriOrdine++;
-      this.punti -= c.malusFuoriOrdine;
-      Audio.sfx('vuoto');
-      scritta(this, x, y - 16, `NON ORA! -${c.malusFuoriOrdine}`, { size: 8, color: '#ff9a8a', durata: 400 });
-      const img = im(this, x, y - 4, 'pan_' + o.tipo).setDepth(31), verso = x < 240 ? 1 : -1;
-      this.tweens.add({ targets: img, x: x + verso * 60, y: Y_PANE + 4, angle: verso * 200, duration: 450, ease: 'Quad.in', onComplete: () => img.destroy() });
-      colpetto(this, this.faccia, 0.8, 1.2);
-      return;
-    }
-    const i = this.fatti;
-    this.presi++;
-    this.aggiungiStrato(o.tipo);
-    this.tweens.add({ targets: this.pila, scaleX: { from: 1.08, to: 1 }, scaleY: { from: 0.9, to: 1 }, duration: 140, ease: 'Quad.out' });
-    this.punti += c.puntiIngrediente;
-    this.aggiornaRicetta();
-    colpetto(this, this.icone[i].icona, 1.5, 1.5);
-    Audio.sfx('preso');
-    scritta(this, x, y - 16, `+${c.puntiIngrediente}`, { size: 10, color: '#7dff9a', durata: 350 });
-    if (this.fatti >= this.ordine.lista.length) this.completa();
-    else this.espressione('felice', 0.4);
-  }
-
-  aggiungiStrato(k) {
-    const sp = SPESSORE[k], h = this.altezza + sp / 2;
-    const img = im(this, this.piega * h, -h - 6, 'strato_' + k);
-    this.pila.add(img);
-    this.strati.push({ tipo: k, img, h, sp });
-    this.tweens.add({ targets: img, y: -h, duration: 90, ease: 'Quad.in' });
-  }
-
-  // ordine completo: cala il pane di sopra, il panino vola al cliente e arriva il prossimo ordine.
-  // Ogni ordine vale più del precedente (puntiPanino + crescitaPanino x (ordini già serviti)²), di
-  // più se la ricetta è lunga (per ogni ingrediente oltre i tre) e se è stato veloce
-  completa() {
-    const c = this.cfg, rapido = this.trascorso - this.ordine.inizio <= c.secondiRapido;
-    const guadagno = c.puntiPanino + c.crescitaPanino * this.panini ** 2 + c.puntiLungo * Math.max(0, this.ordine.lista.length - 3) + (rapido ? c.bonusRapido : 0), H = this.altezza;
-    this.punti += guadagno;
+  // ordine finito: il panino vola al cliente, punti e un ordine nuovo
+  servi() {
+    const c = this.cfg, n = this.panini, rapido = this.trascorso - this.ordine.inizio < c.secondiRapido;
+    const pt = c.puntiPanino + c.crescitaPanino * n * n + (rapido ? c.bonusRapido : 0);
     this.panini++;
-    const fatto = this.pila.setDepth(1003);
-    const cappello = im(this, this.piega * H, -H - 50, 'paneSopra').setOrigin(0.5, 20.5 / 22);
-    fatto.add(cappello);
-    Audio.sfx('bonus');
-    scritta(this, this.x, Y_PANE - H - 34, rapido ? `PANINO! +${guadagno} VELOCE!` : `PANINO! +${guadagno}`, { size: 11, color: '#7dff9a' });
-    this.espressione('felice', 1);
-    fumetto(this, this.mars.x + 50, 62, caso(c.frasiPanino), 1100, 40);
-    this.tweens.add({
-      targets: cappello, y: -H + 1, duration: 200, ease: 'Quad.in',
-      onComplete: () => {
-        stelle(this, fatto.x, Y_PANE - H, 7, 1004);
-        colpetto(this, fatto, 1.15, 0.85);
-        this.tweens.add({
-          targets: fatto, x: 138, y: 34, scale: 0.3, delay: 220, duration: 420, ease: 'Cubic.in',
-          onComplete: () => { fatto.destroy(); colpetto(this, this.testoPanini, 1.3, 1.3); },
-        });
-      },
-    });
-    // il prossimo cliente arriva subito (il panino gli vola incontro)
-    this.nuovoOrdine();
-    this.nuovoPane();
-  }
-
-  // presa una schifezza: panino nel cestino
-  rovina(tipo) {
-    const c = this.cfg, H = this.altezza, vecchio = this.pila;
-    this.schifezze++;
-    this.punti -= c.malusSbagliato;
-    vibra(60);
-    vecchio.add(im(this, this.piega * H, -H - 8, 'pan_' + tipo));
-    Audio.sfx('errore');
-    scuoti(this, 160, 0.008);
-    this.cameras.main.flash(100, 255, 90, 90);
-    scritta(this, this.x, Y_PANE - H - 40, caso(['PANINO ROVINATO!', 'CHE SCHIFO!', 'BLEAH!']), { size: 12, color: '#ff6b5a' });
-    scritta(this, this.x, Y_PANE - H - 26, `-${c.malusSbagliato}`, { size: 10, color: '#ff6b5a' });
-    // un attimo di incredulità (gli scivolano gli occhiali) e poi esplode
-    this.espressione('shock', 0.4);
-    this.time.delayedCall(170, () => { if (this.inCorso) this.furia(); });
-    const verso = this.x < 240 ? -1 : 1;
-    this.tweens.add({ targets: vecchio, x: vecchio.x + verso * 140, y: 330, angle: verso * 220, duration: 650, ease: 'Quad.in', onComplete: () => vecchio.destroy() });
-    this.nuovoPane();
-  }
-
-  // Marsupino va su tutte le furie: paonazzo, salta sul posto facendo tremare il bancone,
-  // gli esce il fumo dalle orecchie e urla a caratteri cubitali; poi brontola ancora un po'
-  furia() {
-    const c = this.cfg, m = this.mars;
-    this.espressione('rabbia', 1.6);
-    Audio.sfx('ruggito');
-    this.tweens.killTweensOf(m);      // una sfuriata sopra l'altra riparte da capo
-    m.setAngle(0).setY(Y_MARS);
-    const tonfo = () => {
+    this.punti += pt;
+    Audio.sfx('conquista');
+    stelle(this, X_PANE, Y_PANE - 30, 10, 40);
+    scritta(this, X_PANE, 120, `SERVITO! +${pt}` + (rapido ? ' VELOCE!' : ''), { size: 13, color: '#7dff9a', durata: 900, depth: 1005 });
+    fumetto(this, this.mars.x + 50, 62, caso(c.frasiPanino), 900, 40);
+    this.espressione('felice', 0.8);
+    const pila = this.pila, cl = this.cliente;
+    this.pila = null;
+    this.tweens.add({ targets: pila, x: cl.x, y: cl.y - 10, scale: 0.4, duration: 450, ease: 'Quad.inOut', onComplete: () => {
+      pila.destroy();
+      if (cl.active) { cl.setTexture(`${this.ordine.cliente}_felice`); Audio.sfx('gnam'); }
+    } });
+    this.stato = 'aspetta';
+    this.time.delayedCall(600, () => {
       if (!this.inCorso) return;
-      Audio.sfx('tonfo');
-      scuoti(this, 110, 0.007);
-      for (const s of [-1, 1]) fumo(this, m.x + s * 46, 197, 2, 12, 0xe6d8bc);
-    };
-    this.tweens.add({ targets: m, y: Y_MARS - 16, duration: 95, ease: 'Quad.out', yoyo: true, repeat: 2, onRepeat: tonfo, onComplete: tonfo });
-    this.tweens.add({ targets: m, angle: { from: -4, to: 4 }, duration: 50, yoyo: true, repeat: 13, onComplete: () => m.setAngle(0) });
-    this.time.addEvent({ delay: 110, repeat: 9, callback: () => { if (this.inCorso) for (const s of [-1, 1]) fumo(this, m.x + s * 40, m.y - 96, 1, 6); } });
-    const urlo = scritta(this, m.x, 64, caso(c.urla), { size: 15, color: '#ff3b2f', durata: 900, depth: 41 });
-    this.tweens.add({ targets: urlo, x: { from: m.x - 3, to: m.x + 3 }, duration: 45, yoyo: true, repeat: 12 });
-    this.time.delayedCall(800, () => { if (this.inCorso) fumetto(this, this.mars.x + 56, 70, caso(c.frasiSbaglio), 1200, 40); });
-    this.tFrase = Math.max(this.tFrase, 3);   // niente battute allegre mentre è furioso
-  }
-
-  // non presa: finisce sul bancone
-  aTerra(o) {
-    o.stato = 'fatto';
-    const img = o.img;
-    img.y = Y_PANE;
-    Audio.sfx('splat');
-    if (!SBAGLIATI.includes(o.tipo) && this.tEspr <= 0) this.espressione('triste', 0.5);
-    this.tweens.add({ targets: img, scaleY: img.scaleY * 0.5, scaleX: img.scaleX * 1.3, y: Y_PANE + 3, duration: 90 });
-    this.tweens.add({ targets: img, alpha: 0, delay: 350, duration: 250, onComplete: () => img.destroy() });
-  }
-
-  // --- tubetti di ketchup e maionese che passano in alto e spruzzano ---
-  tubetti(dt, p) {
-    const c = this.cfg;
-    this.tTubetto -= dt;
-    if (this.tTubetto > 0) return;
-    const r = this.rnd;
-    this.tTubetto = lerp(c.tubettoInizio, c.tubettoFine, p) * (0.85 + r() * 0.3);
-    // (di solito la salsa che serve adesso, se ne serve una; se no una a caso, da lasciar cadere)
-    const serve = SALSE.includes(this.prossimo) && r() < 0.8 ? this.prossimo : null, salsa = serve ?? SALSE[Math.floor(r() * SALSE.length)];
-    // spruzza lontano dal pane anche lui (ma si vede arrivare)
-    const da = r() < 0.5 ? -1 : 1, xSpruzzo = Phaser.Math.Clamp(this.dove(salsa), 70, 410), y = 66;
-    const img = im(this, da < 0 ? -20 : 500, y, 'tubetto_' + salsa).setDepth(25);
-    this.tubi.add(img);
-    this.tweens.add({
-      targets: img, x: xSpruzzo, duration: (Math.abs(xSpruzzo - img.x) / lerp(170, 260, p)) * 1000, ease: 'Sine.inOut',
-      onComplete: () => this.tweens.add({
-        targets: img, angle: { from: -9, to: 9 }, duration: 60, yoyo: true, repeat: 3,  // trema: sta per spruzzare
-        onComplete: () => {
-          if (!this.inCorso) return;    // partita finita mentre il tubetto tremava
-          img.angle = 0;
-          colpetto(this, img, 0.8, 1.25);
-          Audio.sfx('spruzzo');
-          const goccia = im(this, xSpruzzo, y + 24, 'pan_' + salsa).setDepth(20);
-          this.oggetti.push({ tipo: salsa, img: goccia, stato: 'caduta', vel: this.velCaduta * c.velSchizzo, giro: 0, yPrec: y + 24 });
-          this.tweens.add({ targets: img, x: da < 0 ? 500 : -20, delay: 200, duration: 700, ease: 'Sine.in', onComplete: () => { this.tubi.delete(img); img.destroy(); } });
-        },
-      }),
+      this.nuovoOrdine();
+      this.nuovoPane();
+      this.prossimoPezzo();
     });
   }
 
-  // --- Marsupino: espressioni, posa di lancio, chiacchiere ---
   espressione(e, sec, poi, secPoi) {
     this.mars.setTexture('marsupino_' + e);
     this.tEspr = sec;
@@ -490,11 +364,6 @@ export class PaninoScene extends MicrogiocoBase {
   }
 
   umore(dt) {
-    this.mars.x = 240 + Math.sin(this.trascorso * 0.9) * 26;
-    if (this.tPosa > 0) {
-      this.tPosa -= dt;
-      if (this.tPosa <= 0 && this.tEspr <= 0) this.mars.setTexture('marsupino_normale');
-    }
     if (this.tEspr > 0) {
       this.tEspr -= dt;
       if (this.tEspr <= 0) {
@@ -505,7 +374,7 @@ export class PaninoScene extends MicrogiocoBase {
     this.tFrase -= dt;
     if (this.tFrase <= 0) {
       this.tFrase = 5 + Math.random() * 3;
-      fumetto(this, this.mars.x + 50, 62, caso(this.cfg.frasi), 1100, 40);
+      fumetto(this, Phaser.Math.Clamp(this.mars.x + 50, 60, 420), 62, caso(this.cfg.frasi), 1100, 40);
     }
   }
 
@@ -513,13 +382,13 @@ export class PaninoScene extends MicrogiocoBase {
     return {
       punteggio: Math.max(0, this.punti),
       vittoria: this.panini >= this.cfg.obiettivoPanini,
-      riepilogo: `${quanti(this.panini, 'ordine servito', 'ordini serviti')}, ${quanti(this.presi, 'ingrediente', 'ingredienti')}, ${quanti(this.crolli, 'crollo', 'crolli')}, ${quanti(this.schifezze, 'schifezza', 'schifezze')}`,
+      riepilogo: `${quanti(this.panini, 'ordine servito', 'ordini serviti')}, ${quanti(this.perfetti, 'perfetto', 'perfetti')} su ${this.presi}, ${quanti(this.crolli, 'crollo', 'crolli')}, ${quanti(this.schifezze, 'schifezza', 'schifezze')}`,
     };
   }
 
   // Marsupino addenta il panino (o lo guarda schifato)
   finale(ris, fatto) {
-    for (const o of [...this.oggetti.map((o) => o.img), ...this.tubi, ...this.hudPanino, this.pila, this.avvisoPila, this.faccia]) o.setVisible(false);
+    for (const o of [this.inMano, ...this.hudPanino, this.pila, this.faccia, this.cliente].filter(Boolean)) o.setVisible(false);
     Audio.sfx('tempo');
     const velo = this.add.rectangle(0, 0, 480, 270, 0x1f1430, 0).setOrigin(0).setDepth(700);
     this.tweens.add({ targets: velo, fillAlpha: 0.7, duration: 300 });
